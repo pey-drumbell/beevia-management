@@ -1,0 +1,2545 @@
+openapi: 3.1.0
+
+# =============================================================================
+# Beevia Backend API — PROPOSED SURFACE  (NOT IMPLEMENTED)
+#
+#   ####################################################################
+#   #  NOTHING IN THIS FILE EXISTS YET.                                #
+#   #  Every operation below returns 404 against a running beevia-api. #
+#   #  Do NOT generate production clients from this file.              #
+#   ####################################################################
+#
+# These operations are derived from the Beevia PRD (cited per-operation via
+# `externalDocs`) and specified to match the conventions the implemented API
+# already uses: /api/v1 prefix, the { success, message, data, meta, timestamp }
+# envelope, snake_case responses, camelCase Zod-validated request bodies,
+# Bearer access token by default, X-Step-Up-Token on anything that moves money
+# or is irreversible.
+#
+# The live surface is openapi.yaml. To ship an operation from this file, MOVE
+# it there — do not copy, and do not leave it in both.
+#
+# Self-contained on purpose: schemas shared with the live surface are duplicated
+# here rather than $ref'd across files, so this document opens in Swagger UI and
+# any generator without a bundling step. The cost is that shared component
+# definitions exist twice; keep them identical when either changes.
+#
+# Section "MODIFICATIONS TO LIVE ENDPOINTS" near the end covers three routes
+# that already exist but need a wider contract — they appear here in their
+# TARGET state, and also (in their current, narrower form) in openapi.yaml.
+#
+# Companion documents (same directory):
+#   openapi.yaml   — the implemented surface
+#   api-rfc.md     — rationale, gap analysis, suggested sequencing
+#   Beevia_PRD.md  — product requirements
+# =============================================================================
+
+info:
+  title: Beevia Backend API — Proposed Surface
+  version: 0.1.0-draft
+  summary: Designed but NOT IMPLEMENTED. Every operation here returns 404 today.
+  description: |
+    **None of these endpoints exist.** This is a design artifact, not a contract.
+
+    Each operation cites the PRD section that motivates it via `externalDocs`,
+    and follows the conventions the live API already uses — see `openapi.yaml`
+    for the envelope, auth and money conventions these inherit.
+
+    Rationale, gap analysis and suggested sequencing: `api-rfc.md`.
+  contact:
+    name: Beevia Engineering
+  license:
+    name: UNLICENSED
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Local development (global prefix `api/v1`)
+  - url: https://api.beevia.com/api/v1
+    description: Production (placeholder)
+  - url: http://localhost:3000
+    description: Root origin — only for `/i/{code}`, which is excluded from the global prefix
+
+security:
+  - accessToken: []
+
+tags:
+  - name: Platform
+    description: Liveness, service status and operational probes.
+  - name: Auth & Onboarding
+    description: Phone-first registration, OTP, PIN, step-up, sessions and onboarding state.
+  - name: KYC
+    description: Identity verification. Local tier (BVN, Nigeria) is live; the international tier is proposed.
+  - name: Users
+    description: Profile, handle, settings, blocks, privacy controls.
+  - name: Contacts
+    description: Address-book sync and discovery.
+  - name: Devices & Keys
+    description: Device registry and the X3DH key directory backing E2EE.
+  - name: Invites
+    description: Invite codes and the shareable landing link.
+  - name: Currencies
+    description: Supported currencies and whether wallet creation is available per currency.
+  - name: Wallets
+    description: Multi-currency wallets, pay-in details, beneficiaries, ledger history and payouts.
+  - name: FX
+    description: Exchange rates and binding quotes for cross-currency movement. Entirely proposed.
+  - name: Payments
+    description: Peer-to-peer send/request with escrow acceptance.
+  - name: Cards
+    description: Virtual card issuance and controls. Entirely proposed.
+  - name: Chat (REST fallback)
+    description: Conversations, messages, receipts and reactions. Mirrors the WebSocket commands.
+  - name: Calls
+    description: Call signaling. Media is relayed by the SFU, never by this API.
+  - name: Attachments
+    description: Presigned upload/download of client-encrypted blobs.
+  - name: Translate
+    description: One-shot translation proxy. Nothing is stored.
+  - name: Notifications
+    description: Push token binding and category preferences.
+  - name: Support
+    description: Disputes and escalation. Entirely proposed.
+  - name: Webhooks
+    description: Partner-facing callbacks. Public, signature-verified, envelope-free.
+
+paths:
+
+  /health:
+    get:
+      tags: [Platform]
+      operationId: getHealth
+      summary: 'Health check'
+      description: |
+        Liveness/readiness probe reporting the state of each hard dependency
+        (Postgres, Redis, object storage) and each partner rail. Needed for the
+        99.9% uptime objective — today the only probe is `GET /` which returns a
+        static string and stays 200 even when Postgres is down.
+
+        Opts out of the response envelope (`@SkipResponseInterceptor()`) so
+        orchestrators can parse it directly. Returns `503` when any hard
+        dependency is down.
+      externalDocs:
+        description: "PRD §6.2 Product Reliability, §7.3 System Reliability"
+        url: ./Beevia_PRD.md
+      security: []
+      responses:
+        '200':
+          description: All hard dependencies healthy.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HealthReport' }
+        '503':
+          description: One or more hard dependencies are unavailable.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HealthReport' }
+
+  /status:
+    get:
+      tags: [Platform]
+      operationId: getServiceStatus
+      summary: 'Partner service availability'
+      description: |
+        Per-capability availability of the licensed partner rails, so the client
+        can render the status banner the PRD requires ("I want to know when a
+        financial service is unavailable so I don't get confused or blocked")
+        without the user ever being told to contact the partner directly.
+
+        Drives: disable "Send" when `payment_execution` is degraded, disable the
+        Create Wallet CTA when `wallet_creation` is down, show a retry affordance
+        with the reason string.
+      externalDocs:
+        description: "PRD §8.3 Security & Account Control, §9 Flow 4/5/7 edge cases"
+        url: ./Beevia_PRD.md
+      responses:
+        '200':
+          description: Current capability availability.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/CapabilityStatus' }
+
+  /auth/sessions:
+    get:
+      tags: [Auth & Onboarding]
+      operationId: listSessions
+      summary: 'List active sessions'
+      description: |
+        The `sessions` table already exists and records user agent and IP at
+        refresh-token issue time, but nothing exposes it. Users cannot see or
+        revoke where they are logged in — a baseline expectation for an app that
+        holds money, and the natural companion to `POST /devices` / `DELETE /devices/{id}`.
+      externalDocs:
+        description: "PRD §8.3 \"I want to protect my account from unauthorized access\""
+        url: ./Beevia_PRD.md
+      responses:
+        '200':
+          description: Active sessions, current one flagged.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Session' }
+    delete:
+      tags: [Auth & Onboarding]
+      operationId: revokeAllSessions
+      summary: 'Log out everywhere'
+      description: Revokes every session except the caller's. Requires a step-up token, matching the treatment of other destructive account actions.
+      externalDocs:
+        description: "PRD §8.3 Security & Account Control"
+        url: ./Beevia_PRD.md
+      security:
+        - accessToken: []
+          stepUpToken: []
+      responses:
+        '200':
+          description: Sessions revoked.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          revoked: { type: integer, example: 3 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/sessions/{sessionId}:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    delete:
+      tags: [Auth & Onboarding]
+      operationId: revokeSession
+      summary: 'Revoke one session'
+      description: Revokes a single session by id. The client should treat a revoked session's refresh token as dead immediately.
+      externalDocs:
+        description: "PRD §8.3 Security & Account Control"
+        url: ./Beevia_PRD.md
+      security:
+        - accessToken: []
+          stepUpToken: []
+      responses:
+        '200': { $ref: '#/components/responses/RevokedOk' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /kyc/status:
+    get:
+      tags: [KYC]
+      operationId: getKycStatus
+      summary: 'Verification tier status'
+      description: |
+        The PRD defines **two independent verification tiers** — a local-market
+        tier and an international tier — each unlocking the wallets relevant to
+        that tier. Today the only signal a client has is the opaque integer
+        `kyc_level` on `/auth/me`, which cannot express "local tier complete,
+        international tier not started", nor which currencies that unlocks.
+
+        This returns each tier with its state, the outstanding requirements, and
+        the currencies it unlocks, so the client can render the verification hub
+        and the Create Wallet gate without hard-coding rules.
+
+        **Partially superseded.** `GET /upgrade/status` shipped and covers the
+        chat_only → chat_banking ladder for the *local* tier. It does not report
+        tier state, currency unlocks, or anything international, so this remains
+        the general answer — but scope it as an extension of the shipped route
+        rather than a replacement, and consider folding `/upgrade/status` into it
+        rather than maintaining two progress endpoints.
+      externalDocs:
+        description: "PRD §1.2 Identity Verification, §1.4 Supported Currencies & Markets"
+        url: ./Beevia_PRD.md
+      responses:
+        '200':
+          description: Per-tier verification status.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/KycStatus' }
+
+  /kyc/requirements:
+    get:
+      tags: [KYC]
+      operationId: getKycRequirements
+      summary: 'Requirements to unlock a currency'
+      description: |
+        Given a currency, returns the ordered list of verification steps still
+        outstanding before a wallet in that currency can be provisioned. Replaces
+        the current behaviour where the client discovers the gate only by
+        calling `POST /wallets` and reading `bvn_required` /
+        `kyc_profile_required` / `provider_not_implemented` back as errors.
+      externalDocs:
+        description: "PRD §1.4 Supported Currencies & Markets, §9 Flow 4 edge cases"
+        url: ./Beevia_PRD.md
+      parameters:
+        - name: currency
+          in: query
+          required: true
+          schema: { type: string, pattern: '^[A-Za-z]{3}$', example: USD }
+          description: ISO-4217 code of the currency the user wants to unlock.
+      responses:
+        '200':
+          description: Outstanding requirements, in the order the client should present them.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/KycRequirements' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /kyc/international/start:
+    post:
+      tags: [KYC]
+      operationId: startInternationalKyc
+      summary: 'Start international-tier verification'
+      description: |
+        Opens an international-tier verification run (passport / proof of
+        address / sanctions screening, per the partner) and returns an SDK token
+        or hosted link, mirroring the shape of `POST /kyc/id/start`. Required
+        before USD, GBP or EUR wallets can be provisioned.
+
+        Only the local (Nigerian BVN) tier exists in the codebase today; the
+        `payment_provider` enum already reserves a second rail for USD/GBP/EUR
+        but no verification path feeds it.
+      externalDocs:
+        description: "PRD §1.2 Identity Verification, §1.4 Supported Currencies & Markets"
+        url: ./Beevia_PRD.md
+      responses:
+        '200':
+          description: Workflow run created.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/IdVerificationStart' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /users/me/consents:
+    get:
+      tags: [Users]
+      operationId: getConsents
+      summary: 'List my consents'
+      description: |
+        The PRD lists Consent Management as an MVP feature ("allow users to
+        revoke consent for location, biometrics, and translation independently")
+        and the compliance objective calls for consent logging and audit trails.
+        No consent record or endpoint exists in the codebase.
+
+        Returns each consent scope with its current state, when it was granted or
+        revoked, and which features it gates.
+      externalDocs:
+        description: "PRD §10.4 Consent Management, §11 Phase 4"
+        url: ./Beevia_PRD.md
+      responses:
+        '200': { $ref: '#/components/responses/ConsentsOk' }
+    patch:
+      tags: [Users]
+      operationId: updateConsents
+      summary: 'Grant or revoke consents'
+      description: |
+        Partial update — send only the scopes being changed, mirroring
+        `PATCH /notifications/preferences`. Revoking a consent that a financial
+        feature depends on disables that feature until consent is restored;
+        the response reports which features were disabled as a result.
+
+        Every transition is expected to be written to an append-only consent log
+        for the audit trail.
+      externalDocs:
+        description: "PRD §10.4 Consent Management"
+        url: ./Beevia_PRD.md
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateConsentsRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/ConsentsOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /users/me/limits:
+    get:
+      tags: [Users]
+      operationId: getMyLimits
+      summary: 'My transaction limits'
+      description: |
+        Returns the effective per-transaction and rolling-window limits for each
+        currency: the regulatory ceiling implied by the user's verification tier,
+        the partner rail's own ceiling, any user-set self-limit, and the
+        remaining headroom in the current window.
+
+        The PRD names "inconsistent user control across platforms" as a gap
+        Beevia solves — "users want to set limits, get alerts, and control who
+        they transact with" — but no limit is surfaced or settable today, and the
+        client cannot pre-empt a limit rejection before the user confirms a send.
+      externalDocs:
+        description: "PRD §3.2 The Gaps Beevia Is Solving, §5.2 One App That Respects Regulation"
+        url: ./Beevia_PRD.md
+      responses:
+        '200': { $ref: '#/components/responses/LimitsOk' }
+    patch:
+      tags: [Users]
+      operationId: updateMyLimits
+      summary: 'Set my self-imposed limits'
+      description: |
+        Lets the user tighten (never loosen beyond) the tier/partner ceiling.
+        Requires a step-up token: relaxing a self-limit is a security-relevant
+        action, consistent with the treatment of every other money-adjacent
+        control.
+      externalDocs:
+        description: "PRD §3.2 The Gaps Beevia Is Solving"
+        url: ./Beevia_PRD.md
+      security:
+        - accessToken: []
+          stepUpToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateLimitsRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/LimitsOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /users/me/deletion:
+    get:
+      tags: [Users]
+      operationId: getDeletionStatus
+      summary: 'Account deletion status'
+      description: |
+        `DELETE /users/me` returns `{ deleted: true }` synchronously, but partner-side
+        deletion is asynchronous. The PRD explicitly requires that a partner
+        deletion delay surface as a "deletion in progress" status rather than a
+        silent failure, and the compliance KPI tracks completion within 5 days.
+
+        Returns the overall state plus per-partner progress. Callable while the
+        account is in `deleting` state (the `user_status` enum already has it).
+      externalDocs:
+        description: "PRD §9 Flow 8 edge cases, §7.4 Compliance and Trust"
+        url: ./Beevia_PRD.md
+      responses:
+        '200':
+          description: Deletion progress.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/DeletionStatus' }
+        '404':
+          description: No deletion has been requested.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /users/me/exports:
+    post:
+      tags: [Users]
+      operationId: requestDataExport
+      summary: 'Request a data export'
+      description: |
+        Queues an export of the user's own data (profile, KYC results, ledger
+        history, conversation metadata — ciphertext bodies stay encrypted and are
+        useless without the client's keys). Data-portability is the counterpart
+        to the deletion right the product already implements, and both sit under
+        the same compliance objective.
+
+        Asynchronous, following the existing BullMQ pattern used for wallet
+        provisioning and escrow expiry.
+      externalDocs:
+        description: "PRD §6.4 Legal and Security Compliance, §7.4 Compliance and Trust"
+        url: ./Beevia_PRD.md
+      security:
+        - accessToken: []
+          stepUpToken: []
+      responses:
+        '202':
+          description: Export queued.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/DataExport' }
+        '409':
+          description: An export is already in progress (`export_in_progress`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /users/me/exports/{exportId}:
+    parameters:
+      - name: exportId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Users]
+      operationId: getDataExport
+      summary: 'Data export status / download'
+      description: Poll until `status` is `ready`, then use the short-lived presigned `download_url` (same presign pattern as attachments).
+      externalDocs:
+        description: "PRD §6.4 Legal and Security Compliance"
+        url: ./Beevia_PRD.md
+      responses:
+        '200':
+          description: Export status.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/DataExport' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /users/me/translation:
+    get:
+      tags: [Translate]
+      operationId: getTranslationPreference
+      summary: 'My global translation preference'
+      description: |
+        The PRD requires translation to be "opt-in, set per conversation **or
+        globally**", with the user's preferred target language. Today
+        `POST /translate` is a stateless one-shot call and the target language
+        must be supplied on every request, so the preference lives only in client
+        storage and does not survive a reinstall or follow the user to a new
+        device.
+      externalDocs:
+        description: "PRD §8.1 Messaging & Calling, §9 Flow 3"
+        url: ./Beevia_PRD.md
+      responses:
+        '200': { $ref: '#/components/responses/TranslationPrefOk' }
+    patch:
+      tags: [Translate]
+      operationId: updateTranslationPreference
+      summary: 'Update my global translation preference'
+      description: |
+        Enable/disable auto-translation globally and set the target language.
+        Gated by the `translation` consent scope — revoking that consent must
+        disable this preference (see `PATCH /users/me/consents`).
+      externalDocs:
+        description: "PRD §8.1 Messaging & Calling, §10.4 Consent Management"
+        url: ./Beevia_PRD.md
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateTranslationPrefRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/TranslationPrefOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /wallets/beneficiaries:
+    post:
+      tags: [Wallets]
+      operationId: createBeneficiary
+      summary: 'Save a beneficiary'
+      description: |
+        The beneficiary list is read-only today — rows only appear as a
+        side-effect of a successful withdrawal, so a user cannot pre-save a
+        recipient, and cannot correct or curate the list. Accepts a resolved
+        account (see `POST /wallets/resolve-account`) and stores it against the
+        user.
+      externalDocs:
+        description: "PRD §9 Flow 5 (Send Money), §5.2 One App That Respects Regulation"
+        url: ./Beevia_PRD.md
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateBeneficiaryRequest' }
+      responses:
+        '201':
+          description: Beneficiary saved.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Beneficiary' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /wallets/beneficiaries/{beneficiaryId}:
+    parameters:
+      - name: beneficiaryId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    delete:
+      tags: [Wallets]
+      operationId: deleteBeneficiary
+      summary: 'Remove a saved beneficiary'
+      description: Unlinks the beneficiary from the caller. The underlying resolved-account record is retained for audit.
+      externalDocs:
+        description: "PRD §9 Flow 5 (Send Money)"
+        url: ./Beevia_PRD.md
+      responses:
+        '200': { $ref: '#/components/responses/RemovedOk' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /wallets/banks:
+    get:
+      tags: [Wallets]
+      operationId: listBanks
+      summary: 'List destination banks'
+      description: |
+        `POST /wallets/withdraw` requires a `bankCode`, but nothing in the API
+        tells the client what codes exist — the mobile client would have to
+        hard-code or hand-maintain the NIP bank list, which drifts. Returns the
+        partner's current bank directory for the given currency, suitable for
+        the withdrawal picker.
+      externalDocs:
+        description: "PRD §9 Flow 5 (Send Money), §8.2 Multi-Currency Wallets"
+        url: ./Beevia_PRD.md
+      parameters:
+        - name: currency
+          in: query
+          required: false
+          schema: { type: string, pattern: '^[A-Za-z]{3}$', default: NGN }
+      responses:
+        '200':
+          description: Bank directory.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Bank' }
+
+  /wallets/resolve-account:
+    post:
+      tags: [Wallets]
+      operationId: resolveAccount
+      summary: 'Resolve a bank account name'
+      description: |
+        Returns the account holder's name for a bank code + account number, so
+        the user can confirm *who* they are paying before confirming a
+        withdrawal. `account_resolution` is already a declared capability in the
+        `provider_capability` enum and the resolver can route it, but no
+        endpoint exposes it — today the account name only comes back **after**
+        the money has already been debited.
+      externalDocs:
+        description: "PRD §3.3 Increased risk of fraud and payment mistakes, §5.2 Multi-Currency by Design"
+        url: ./Beevia_PRD.md
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ResolveAccountRequest' }
+      responses:
+        '200':
+          description: Resolved account.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/ResolvedAccount' }
+        '400':
+          description: Could not resolve (`account_not_found`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /wallets/limits:
+    get:
+      tags: [Wallets]
+      operationId: getWalletLimits
+      summary: 'Effective wallet limits'
+      description: |
+        Per-currency view of the same limit data as `GET /users/me/limits`,
+        scoped to a wallet so the Send and Withdraw screens can show remaining
+        headroom inline. Kept separate because the wallet screen needs it before
+        the user opens settings.
+      externalDocs:
+        description: "PRD §3.2 Inconsistent user control across platforms"
+        url: ./Beevia_PRD.md
+      responses:
+        '200': { $ref: '#/components/responses/LimitsOk' }
+
+  /wallets/transactions/{transactionId}:
+    parameters:
+      - name: transactionId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Wallets]
+      operationId: getTransaction
+      summary: 'Transaction detail'
+      description: |
+        The PRD's wallet flow ends with "tap any transaction to see full detail",
+        but the list rows are the only representation available — there is no way
+        to fetch one transaction with its counterparty, fee breakdown, provider
+        reference, related payment/escrow, and status timeline. That detail is
+        also what a user needs in order to raise a dispute.
+      externalDocs:
+        description: "PRD §9 Flow 4 (View Wallet), §7.4 Dispute Resolution Time"
+        url: ./Beevia_PRD.md
+      responses:
+        '200':
+          description: Full transaction detail.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/TransactionDetail' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /wallets/{walletId}:
+    parameters:
+      - $ref: '#/components/parameters/WalletId'
+    get:
+      tags: [Wallets]
+      operationId: getWallet
+      summary: 'Get one wallet'
+      description: |
+        Fetch a single wallet by id. `GET /wallets` returns the whole list, which
+        is wasteful for a wallet-detail screen refresh and forces the client to
+        re-filter on every pull-to-refresh once a user holds several currencies.
+      externalDocs:
+        description: "PRD §8.2 \"View balance and transaction history per wallet\""
+        url: ./Beevia_PRD.md
+      responses:
+        '200':
+          description: The wallet.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Wallet' }
+        '403':
+          description: Not your wallet (`wallet_not_yours`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /wallets/withdrawals/{reference}:
+    parameters:
+      - name: reference
+        in: path
+        required: true
+        schema: { type: string, example: wdr_abc123 }
+    get:
+      tags: [Wallets]
+      operationId: getWithdrawal
+      summary: 'Withdrawal status'
+      description: |
+        `POST /wallets/withdraw` returns `status: "pending"` and a reference, but
+        there is no way to ask what happened to it. Settlement arrives
+        asynchronously on the partner webhook, so without this the client can only
+        infer the outcome by diffing the ledger. Also the natural place to surface
+        the reference number the error path already tells users to quote to support.
+      externalDocs:
+        description: "PRD §9 Flow 5 edge cases, §7.4 Dispute Resolution Time"
+        url: ./Beevia_PRD.md
+      responses:
+        '200':
+          description: Withdrawal status.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/WithdrawalReceipt' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /fx/rates:
+    get:
+      tags: [FX]
+      operationId: getFxRates
+      summary: 'Indicative exchange rates'
+      description: |
+        Indicative, non-binding rates between supported currencies, for display
+        only (rate strips, currency pickers, "you'll get roughly…" hints).
+
+        **Nothing in the current codebase performs currency conversion.**
+        `PaymentService.send()` and `.request()` both call an internal
+        `activeNgn()` helper and hard-code the NGN currency row, so a transfer
+        can only ever move NGN→NGN. `exchange_rate` is already a declared
+        `provider_capability` and the resolver can route it, but no service or
+        route consumes it. This is the single largest gap between the PRD and the
+        implementation: multi-currency movement is described as the product's
+        core differentiator ("Multi-Currency by Design").
+      externalDocs:
+        description: "PRD §1.2, §5.2 Multi-Currency by Design, §9 Flow 5/6"
+        url: ./Beevia_PRD.md
+      parameters:
+        - name: base
+          in: query
+          required: false
+          schema: { type: string, pattern: '^[A-Za-z]{3}$', example: NGN }
+          description: Base currency. Defaults to the caller's default wallet currency.
+        - name: quote
+          in: query
+          required: false
+          schema: { type: string, example: 'USD,GBP,EUR' }
+          description: Comma-separated target currencies. Defaults to all active currencies.
+      responses:
+        '200':
+          description: Indicative rates.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/FxRate' }
+        '503':
+          description: No provider currently supports `exchange_rate` for this pair (`provider_unavailable`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /fx/quotes:
+    post:
+      tags: [FX]
+      operationId: createFxQuote
+      summary: 'Create a binding rate quote'
+      description: |
+        Creates a short-lived, **binding** quote that a subsequent send, request
+        payment or withdrawal can consume by `quote_id`.
+
+        The PRD is explicit that "the exchange rate is always confirmed before
+        any money moves", that the rate **locks at the moment of confirmation**,
+        and — for requests — that it locks at the *payer's* confirmation rather
+        than when the request was created. A quote object is the mechanism that
+        makes that guarantee auditable: the rate the user saw and the rate the
+        ledger applied are the same row.
+
+        Quotes are single-use and expire (`quote_expired`); re-quote and re-confirm
+        rather than extending.
+      externalDocs:
+        description: "PRD §5.2 Multi-Currency by Design, §9 Flow 5/6, §10.2 Send/Request Money"
+        url: ./Beevia_PRD.md
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateFxQuoteRequest' }
+      responses:
+        '201':
+          description: Quote created.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/FxQuote' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '503':
+          description: Quoting unavailable for this pair (`provider_unavailable`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /fx/quotes/{quoteId}:
+    parameters:
+      - name: quoteId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [FX]
+      operationId: getFxQuote
+      summary: 'Fetch a quote'
+      description: Re-read a quote to check whether it is still `active` before submitting the confirming action.
+      externalDocs:
+        description: "PRD §9 Flow 5/6"
+        url: ./Beevia_PRD.md
+      responses:
+        '200':
+          description: The quote.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/FxQuote' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /payments:
+    get:
+      tags: [Payments]
+      operationId: listPayments
+      summary: 'List my payments'
+      description: |
+        There is currently **no way to read a payment back**. `POST /payments/send`
+        and `/request` return a payment object once, and the only other handles
+        are the `{id}` action routes — so a client that loses the response, cold
+        starts, or reinstalls cannot rediscover its pending sends and requests.
+        The escrow countdown the PRD requires ("a visible countdown shows how
+        long I have to respond") cannot be rendered after a restart.
+
+        Paginated with the standard `page`/`limit` and `meta`, filterable by
+        `status`, `type` and `direction`.
+      externalDocs:
+        description: "PRD §8.2 \"confirm I want incoming money\", §10.2 Transfer Acceptance & Escrow"
+        url: ./Beevia_PRD.md
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, reserved, completed, declined, cancelled, expired]
+        - name: type
+          in: query
+          schema: { type: string, enum: [send, request] }
+        - name: direction
+          in: query
+          description: '`incoming` = the caller is the counterparty; `outgoing` = the caller initiated.'
+          schema: { type: string, enum: [incoming, outgoing] }
+      responses:
+        '200':
+          description: Paginated payments.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Payment' }
+                      meta: { $ref: '#/components/schemas/PaginationMeta' }
+
+  /payments/send/preview:
+    post:
+      tags: [Payments]
+      operationId: previewSendMoney
+      summary: 'Preview a send'
+      description: |
+        Non-binding preview of a send before the user confirms: the debit in the
+        source wallet's currency, the credit in the recipient's currency, the
+        rate and fee, and any limit or eligibility blocker.
+
+        The PRD requires the sender to "see the converted amount and exchange rate
+        before confirming" and to be "blocked with a clear message **before**
+        confirmation" on insufficient funds. Today the only way to discover either
+        is to submit the real send with a step-up token and read the error — which
+        means the user has already been prompted for their PIN.
+
+        Deliberately does **not** require step-up: it moves no money.
+      externalDocs:
+        description: "PRD §8.2 Multi-Currency Wallets, §9 Flow 5 (Send Money) + edge cases"
+        url: ./Beevia_PRD.md
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PreviewSendRequest' }
+      responses:
+        '200':
+          description: Preview, including any blocking reason.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/PaymentPreview' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /payments/request/preview:
+    post:
+      tags: [Payments]
+      operationId: previewRequestMoney
+      summary: 'Preview a request'
+      description: |
+        The PRD asks for a "live, **non-binding** preview of what it may cost the
+        other person to pay, in their currency" when composing a request — i.e.
+        the requester specifies the amount and currency they want to *receive*,
+        and sees an estimate of the payer's debit. That estimate is explicitly
+        indicative: the binding rate is locked later, at the payer's confirmation.
+
+        Returns `is_binding: false` and no quote id, precisely to keep that
+        distinction enforceable in the UI.
+      externalDocs:
+        description: "PRD §8.2 \"See a live, non-binding preview\", §9 Flow 6"
+        url: ./Beevia_PRD.md
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PreviewRequestRequest' }
+      responses:
+        '200':
+          description: Indicative preview.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/PaymentPreview' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /payments/{id}:
+    parameters:
+      - $ref: '#/components/parameters/PaymentId'
+    get:
+      tags: [Payments]
+      operationId: getPayment
+      summary: 'Get one payment'
+      description: |
+        Fetch a single send or request, including its escrow state and remaining
+        hold window. Needed to render the in-thread payment card and its
+        countdown from a cold start, and to poll after a push notification —
+        the `payment_card` message type already exists in the message-type enum
+        and carries only a `ref_id`, so the client must be able to resolve that
+        reference to a payment.
+      externalDocs:
+        description: "PRD §10.2 Transfer Acceptance & Escrow, §8.2"
+        url: ./Beevia_PRD.md
+      responses:
+        '200': { $ref: '#/components/responses/PaymentOk' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /payments/{id}/dispute:
+    parameters:
+      - $ref: '#/components/parameters/PaymentId'
+    post:
+      tags: [Support]
+      operationId: disputePayment
+      summary: 'Raise a dispute on a payment'
+      description: |
+        Opens a support case attached to a specific payment or ledger
+        transaction. The PRD tracks "Dispute Resolution Time — 90 percent of
+        issues resolved within 72 hours" as a compliance KPI and commits that
+        "Beevia handles escalation" rather than sending users to the partner, but
+        the API has no dispute or support surface at all, so neither the promise
+        nor the metric is instrumentable.
+      externalDocs:
+        description: "PRD §7.4 Dispute Resolution Time, §8.3 \"Beevia handles escalation\""
+        url: ./Beevia_PRD.md
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateDisputeRequest' }
+      responses:
+        '201':
+          description: Dispute opened.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/SupportTicket' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409':
+          description: A dispute is already open for this payment (`dispute_already_open`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /cards:
+    get:
+      tags: [Cards]
+      operationId: listCards
+      summary: 'List my virtual cards'
+      description: |
+        **Virtual cards are an MVP feature in the PRD and do not exist anywhere in
+        the codebase** — no module, no controller, no table, no provider
+        capability. They appear in the key modules list, in the user stories, in
+        the detailed feature requirements, and as the headline of roadmap
+        Phase 4. This block specifies the surface in the style the rest of the
+        API already uses.
+
+        Card data is never stored by Beevia beyond the masked descriptor below;
+        PAN, CVV and expiry come from the issuer on demand via
+        `POST /cards/{cardId}/reveal`.
+      externalDocs:
+        description: "PRD §1.2, §8.2, §10.3 Virtual Card Issuance, §11 Phase 4"
+        url: ./Beevia_PRD.md
+      responses:
+        '200':
+          description: The caller's cards, masked.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Card' }
+    post:
+      tags: [Cards]
+      operationId: issueCard
+      summary: 'Issue a virtual card'
+      description: |
+        Issues a virtual card linked to a specific wallet, once the minimum
+        verification tier is met (`kyc_tier_required` otherwise). Requires a
+        step-up token, consistent with every other money-adjacent action.
+
+        Issuance is expected to be asynchronous behind the existing BullMQ
+        pattern, so the card may return `status: "provisioning"` and settle to
+        `active` via the issuer webhook. If the issuer is unavailable, return
+        `provider_unavailable` with a retry affordance rather than a hard failure.
+      externalDocs:
+        description: "PRD §10.3 Virtual Card Issuance, §9 Flow 7"
+        url: ./Beevia_PRD.md
+      security:
+        - accessToken: []
+          stepUpToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/IssueCardRequest' }
+      responses:
+        '201':
+          description: Card issued or provisioning.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Card' }
+        '400':
+          description: '`kyc_tier_required` / `wallet_not_yours` / validation error.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '503':
+          description: Issuer unavailable (`provider_unavailable`) — show a status message and retry option.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /cards/{cardId}:
+    parameters:
+      - $ref: '#/components/parameters/CardId'
+    get:
+      tags: [Cards]
+      operationId: getCard
+      summary: 'Get a card'
+      description: Masked card descriptor plus issuer legal name and the compliance disclosure the PRD requires to be shown in-app.
+      externalDocs:
+        description: "PRD §10.3 Virtual Card Issuance"
+        url: ./Beevia_PRD.md
+      responses:
+        '200': { $ref: '#/components/responses/CardOk' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Cards]
+      operationId: terminateCard
+      summary: 'Terminate a card'
+      description: Permanently closes the card. Irreversible, so step-up is required. Prefer freeze for a temporary block.
+      externalDocs:
+        description: "PRD §10.3 Virtual Card Issuance"
+        url: ./Beevia_PRD.md
+      security:
+        - accessToken: []
+          stepUpToken: []
+      responses:
+        '200': { $ref: '#/components/responses/CardOk' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /cards/{cardId}/reveal:
+    parameters:
+      - $ref: '#/components/parameters/CardId'
+    post:
+      tags: [Cards]
+      operationId: revealCard
+      summary: 'Reveal full card details'
+      description: |
+        Returns PAN, CVV and expiry for a bounded display window. The PRD
+        requires that revealing full details need biometric or PIN confirmation
+        and that the client automatically re-masks after a short fixed window —
+        `reveal_ttl_seconds` carries that window so the client does not invent it.
+
+        Step-up required. Fetched from the issuer per call and never persisted;
+        the route should be excluded from request/response body logging.
+      externalDocs:
+        description: "PRD §8.2 \"Card number masked by default\", §10.3"
+        url: ./Beevia_PRD.md
+      security:
+        - accessToken: []
+          stepUpToken: []
+      responses:
+        '200':
+          description: Full card details, for immediate display only.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/CardSecrets' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /cards/{cardId}/freeze:
+    parameters:
+      - $ref: '#/components/parameters/CardId'
+    post:
+      tags: [Cards]
+      operationId: freezeCard
+      summary: 'Freeze a card'
+      description: |
+        Blocks authorizations immediately. Idempotent. Deliberately **not**
+        step-up gated — freezing is the safe direction, and a user reacting to a
+        suspected compromise should never be slowed by a PIN prompt.
+      externalDocs:
+        description: "PRD §8.2 \"Freeze and unfreeze the card at any time\""
+        url: ./Beevia_PRD.md
+      responses:
+        '200': { $ref: '#/components/responses/CardOk' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /cards/{cardId}/unfreeze:
+    parameters:
+      - $ref: '#/components/parameters/CardId'
+    post:
+      tags: [Cards]
+      operationId: unfreezeCard
+      summary: 'Unfreeze a card'
+      description: Re-enables authorizations. Step-up required — this is the direction that restores spending ability.
+      externalDocs:
+        description: "PRD §8.2 \"Freeze and unfreeze the card at any time\""
+        url: ./Beevia_PRD.md
+      security:
+        - accessToken: []
+          stepUpToken: []
+      responses:
+        '200': { $ref: '#/components/responses/CardOk' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /cards/{cardId}/transactions:
+    parameters:
+      - $ref: '#/components/parameters/CardId'
+    get:
+      tags: [Cards]
+      operationId: listCardTransactions
+      summary: 'Card transaction history'
+      description: Paginated authorizations and settlements for the card, using the same `page`/`limit`/`meta` convention as wallet history.
+      externalDocs:
+        description: "PRD §10.3 \"view card transaction history\""
+        url: ./Beevia_PRD.md
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Paginated card transactions.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/CardTransaction' }
+                      meta: { $ref: '#/components/schemas/PaginationMeta' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /conversations/{id}/translation:
+    parameters:
+      - $ref: '#/components/parameters/ConversationId'
+    patch:
+      tags: [Translate]
+      operationId: updateConversationTranslation
+      summary: 'Per-conversation translation setting'
+      description: |
+        Overrides the global preference for one thread — the "set per
+        conversation **or** globally" half of the PRD's translation requirement.
+        Per-conversation state already has a home (`conversation_participants`
+        carries the per-user archived/muted flags), so this fits the existing model.
+      externalDocs:
+        description: "PRD §8.1 \"Opt-in translation, set per conversation or globally\""
+        url: ./Beevia_PRD.md
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateConversationTranslationRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/TranslationPrefOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /attachments/{attachmentId}/download-url:
+    parameters:
+      - name: attachmentId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Attachments]
+      operationId: createDownloadUrl
+      summary: 'Presign a single attachment download'
+      description: |
+        Presigned download URLs are only ever handed out in bulk, by
+        `GET /conversations/{id}/media`. A client that has a message referencing
+        `attachmentIds` cannot fetch one blob without pulling the entire gallery,
+        and a URL that expires mid-scroll cannot be individually renewed.
+        Symmetric with the existing upload presign.
+      externalDocs:
+        description: "PRD §10.1 File Sharing"
+        url: ./Beevia_PRD.md
+      responses:
+        '200':
+          description: Presigned download URL.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          url: { type: string, format: uri }
+                          expires_in: { type: integer, example: 300 }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /translate/batch:
+    post:
+      tags: [Translate]
+      operationId: translateBatch
+      summary: 'Translate a batch of messages'
+      description: |
+        Translates up to 50 strings in one call. Opening a thread with
+        auto-translate on means translating a whole visible page at once;
+        one HTTP round trip per message is wasteful on mobile networks and makes
+        the per-provider rate limit far easier to trip. Partial failures are
+        reported per item rather than failing the batch, so the PRD's fallback
+        ("translation service unavailable → original message still shown, with a
+        clear notice") stays renderable per row.
+      externalDocs:
+        description: "PRD §9 Flow 3 (Real-Time Translation) + edge cases"
+        url: ./Beevia_PRD.md
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TranslateBatchRequest' }
+      responses:
+        '200':
+          description: Per-item results.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/BatchTranslation' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /translate/languages:
+    get:
+      tags: [Translate]
+      operationId: listTranslateLanguages
+      summary: 'Supported languages'
+      description: |
+        `POST /translate` accepts any 2–10 character `to` value and only fails at
+        provider call time, so the client has no way to populate a language
+        picker or validate a stored preference. Returns the provider's current
+        supported set with display names.
+      externalDocs:
+        description: "PRD §8.1 Messaging & Calling"
+        url: ./Beevia_PRD.md
+      responses:
+        '200':
+          description: Supported languages.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Language' }
+
+  /support/tickets:
+    post:
+      tags: [Support]
+      operationId: createSupportTicket
+      summary: 'Open a support ticket'
+      description: |
+        General escalation path, of which `POST /payments/{id}/dispute` is the
+        payment-scoped specialization. The PRD commits that a user is *never*
+        told to contact the partner directly — Beevia owns escalation — and
+        tracks partner escalations and resolution time as KPIs. Neither is
+        possible without a ticket record.
+      externalDocs:
+        description: "PRD §8.3 \"Never tell the user to contact the partner directly\", §7.4"
+        url: ./Beevia_PRD.md
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateSupportTicketRequest' }
+      responses:
+        '201':
+          description: Ticket opened.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/SupportTicket' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+    get:
+      tags: [Support]
+      operationId: listSupportTickets
+      summary: 'List my tickets'
+      description: Paginated, newest first.
+      externalDocs:
+        description: "PRD §7.4 Compliance and Trust"
+        url: ./Beevia_PRD.md
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - name: status
+          in: query
+          schema: { type: string, enum: [open, pending_partner, resolved, closed] }
+      responses:
+        '200':
+          description: Paginated tickets.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/SupportTicket' }
+                      meta: { $ref: '#/components/schemas/PaginationMeta' }
+
+  /support/tickets/{ticketId}:
+    parameters:
+      - name: ticketId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Support]
+      operationId: getSupportTicket
+      summary: 'Get a ticket'
+      description: Full ticket with its message thread and current SLA state.
+      externalDocs:
+        description: "PRD §7.4 Dispute Resolution Time"
+        url: ./Beevia_PRD.md
+      responses:
+        '200':
+          description: The ticket.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/SupportTicket' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /webhooks/cards:
+    post:
+      tags: [Webhooks]
+      operationId: cardIssuerWebhook
+      summary: 'Card issuer webhook'
+      description: |
+        Authorization, settlement, decline and card-status events from the
+        licensed card issuing partner. Follows the established pattern: `@Public()`,
+        `@SkipResponseInterceptor()`, HMAC over `req.rawBody`, dedup through
+        `partner_webhook_events`.
+      externalDocs:
+        description: "PRD §10.3 Virtual Card Issuance"
+        url: ./Beevia_PRD.md
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        '200': { $ref: '#/components/responses/WebhookAck' }
+
+  # ===========================================================================
+  # MODIFICATIONS TO LIVE ENDPOINTS
+  #
+  # Unlike everything above, these three routes ALREADY EXIST. They are listed
+  # here in their TARGET state because the change is to the request contract,
+  # not the path — there is no way to express "add these fields" in OpenAPI, so
+  # the whole operation is restated.
+  #
+  # Their CURRENT, narrower form is in openapi.yaml. When one of these ships,
+  # update the operation there and DELETE it from here — do not move the whole
+  # block, or the live file will gain fields the API does not accept.
+  # ===========================================================================
+
+  /payments/send:
+    post:
+      tags: [Payments]
+      operationId: sendMoneyMultiCurrency
+      summary: Send money (multi-currency)
+      description: |
+        **Modifies a live endpoint.** Adds `sourceWalletId` and `quoteId` to the
+        existing `POST /payments/send`.
+
+        PRD Flow 5 requires the sender to choose which of their own wallets to
+        debit, to see the converted amount and rate before confirming, and for
+        the rate to lock **at the sender's moment of confirmation**. The live
+        route does none of these: `PaymentService.send()` resolves the NGN wallet
+        unconditionally and no rate exists.
+
+        Passing a `quoteId` is what makes the guarantee auditable — the rate the
+        user was shown and the rate the ledger applies are the same record.
+        Omitting it keeps the current same-currency behaviour.
+      externalDocs:
+        description: "PRD §8.2, §9 Flow 5 (Send Money), §10.2"
+        url: ./Beevia_PRD.md
+      security:
+        - accessToken: []
+          stepUpToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SendMoneyRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/PaymentOk' }
+        '400':
+          description: '`insufficient_funds` / `recipient_not_found` / `cannot_pay_self` / `quote_expired` / `wallet_not_yours`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /payments/request:
+    post:
+      tags: [Payments]
+      operationId: requestMoneyMultiCurrency
+      summary: Request money (multi-currency)
+      description: |
+        **Modifies a live endpoint.** Adds `currencyCode` to the existing
+        `POST /payments/request`.
+
+        PRD Flow 6 has the requester nominate the amount **and the currency they
+        want to receive**, explicitly decoupled from whichever wallet the payer
+        eventually pays from. The live route assumes NGN on both sides.
+
+        No rate is locked here by design — the binding rate is established at the
+        payer's confirmation, not when the request is created.
+      externalDocs:
+        description: "PRD §8.2, §9 Flow 6 (Request Money)"
+        url: ./Beevia_PRD.md
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RequestMoneyRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/PaymentOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /payments/{id}/pay:
+    parameters:
+      - $ref: '#/components/parameters/PaymentId'
+    post:
+      tags: [Payments]
+      operationId: payRequestWithWallet
+      summary: Pay a money request (source wallet + locked rate)
+      description: |
+        **Modifies a live endpoint.** Adds a request body to the existing
+        `POST /payments/{id}/pay`, which currently accepts none.
+
+        PRD Flow 6 requires the payer to select a source wallet at payment time,
+        to see a live converted amount, and to lock the rate at *their*
+        confirmation. It also permits paying an amount that differs from the
+        request — and that is what drives the settlement rule below.
+
+        **Settlement rule.** An exact-match payment settles immediately to the
+        requester with no further step. Any mismatch is held and the requester
+        must actively accept or decline it via
+        `POST /payments/{id}/accept` / `/decline` before funds settle.
+      externalDocs:
+        description: "PRD §8.2, §9 Flow 6, §10.2 Transfer Acceptance & Escrow"
+        url: ./Beevia_PRD.md
+      security:
+        - accessToken: []
+          stepUpToken: []
+      requestBody:
+        required: false
+        description: Omitting the body preserves today's behaviour — pay the exact requested amount from the default wallet.
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PayRequestRequest' }
+      responses:
+        '200':
+          description: |
+            Settled when the amount matched exactly; otherwise `status` is
+            `reserved` and the requester must accept or decline.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Payment' }
+        '400':
+          description: '`insufficient_funds` / `quote_expired` / `wallet_not_yours` / validation error.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+# ===========================================================================
+# Components
+# ===========================================================================
+
+components:
+
+  parameters:
+    CardId:
+      name: cardId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    ConversationId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    Page:
+      name: page
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, default: 1 }
+    PaymentId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    WalletId:
+      name: walletId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    BadRequest:
+      description: Validation or business-rule failure. `error` carries a snake_case code.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+    CardOk:
+      description: A masked card descriptor.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Card' }
+    Conflict:
+      description: 'State conflict or uniqueness violation (`unique_constraint_violation`, `nonzero_balance`, …).'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+    ConsentsOk:
+      description: Consent scopes and their state.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Consent' }
+    Forbidden:
+      description: Authenticated but not permitted for this resource.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+    LimitsOk:
+      description: Effective limits per currency.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/CurrencyLimits' }
+    NotFound:
+      description: 'Record not found (`record_not_found`).'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+    PaymentOk:
+      description: A payment (send or request).
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Payment' }
+
+    RemovedOk:
+      description: Removed.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      removed: { type: boolean, example: true }
+
+    RevokedOk:
+      description: Revoked.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      revoked: { type: boolean, example: true }
+
+    TranslationPrefOk:
+      description: Effective translation preference.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/TranslationPreference' }
+    Unauthorized:
+      description: 'Missing/invalid access token (`unauthorized`) or missing/invalid step-up token (`step_up_required`, `step_up_invalid`, `step_up_mismatch`).'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+    WebhookAck:
+      description: Acknowledged. Bare JSON — not wrapped in the response envelope.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              received: { type: boolean, example: true }
+
+  schemas:
+
+    Bank:
+      type: object
+      properties:
+        code: { type: string, example: '000013' }
+        name: { type: string, example: Guaranty Trust Bank }
+
+    BatchTranslation:
+      type: object
+      properties:
+        id: { type: string, description: Echoed from the request so results can be reattached to messages. }
+        text: { type: [string, 'null'] }
+        from: { type: [string, 'null'] }
+        to: { type: string }
+        error:
+          type: [string, 'null']
+          description: Per-item failure; the client should fall back to showing the original.
+
+    Beneficiary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        account_number: { type: string, example: '0123456789' }
+        account_name: { type: string, example: JANE DOE }
+        bank_code: { type: string, example: '000013' }
+        bank_name: { type: string, example: GTBank }
+
+    CapabilityStatus:
+      type: object
+      properties:
+        capability:
+          type: string
+          enum: [deposit, withdrawal, vba, exchange_rate, beneficiary_management, account_resolution, customer_creation, wallet_creation, card_issuance, messaging, calls, translation]
+        currency:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/CurrencyCode'
+        status: { type: string, enum: [available, degraded, unavailable] }
+        message:
+          type: string
+          description: User-facing copy for the status banner. Must never instruct the user to contact the partner.
+          example: Bank transfers are briefly unavailable. Your money is safe — try again shortly.
+        retry_after_seconds: { type: [integer, 'null'] }
+
+    # ---------------------------------------------------------------------
+    # Cards  (proposed)
+    # ---------------------------------------------------------------------
+
+    Card:
+      type: object
+      description: 'Masked descriptor. Full details only via the reveal route.'
+      properties:
+        id: { type: string, format: uuid }
+        wallet_id: { type: string, format: uuid }
+        currency: { $ref: '#/components/schemas/CurrencyCode' }
+        brand: { type: string, example: visa }
+        last4: { type: string, example: '4242' }
+        expiry_month: { type: integer, example: 11 }
+        expiry_year: { type: integer, example: 2029 }
+        status: { type: string, enum: [provisioning, active, frozen, terminated] }
+        issuer_legal_name:
+          type: string
+          description: Required to be displayed in-app alongside the compliance disclosure.
+          example: Example Issuing Bank Plc
+        compliance_disclosure: { type: string }
+        created_at: { type: string, format: date-time }
+
+    CardSecrets:
+      type: object
+      description: 'Never persisted; display for `reveal_ttl_seconds` then re-mask.'
+      properties:
+        pan: { type: string, example: '4242424242424242' }
+        cvv: { type: string, example: '123' }
+        expiry_month: { type: integer }
+        expiry_year: { type: integer }
+        cardholder_name: { type: string }
+        reveal_ttl_seconds: { type: integer, example: 30 }
+
+    CardTransaction:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        card_id: { type: string, format: uuid }
+        merchant: { type: string, example: Spotify }
+        amount: { $ref: '#/components/schemas/Money' }
+        currency: { $ref: '#/components/schemas/CurrencyCode' }
+        billing_amount: { $ref: '#/components/schemas/Money' }
+        billing_currency: { $ref: '#/components/schemas/CurrencyCode' }
+        status: { type: string, enum: [authorized, settled, declined, reversed] }
+        decline_reason: { type: [string, 'null'] }
+        created_at: { type: string, format: date-time }
+
+    # ---------------------------------------------------------------------
+    # Privacy / compliance  (proposed)
+    # ---------------------------------------------------------------------
+
+    Consent:
+      type: object
+      properties:
+        scope: { type: string, enum: [location, biometrics, translation, contacts, marketing] }
+        granted: { type: boolean }
+        required_for:
+          type: array
+          description: Features disabled while this consent is revoked.
+          items: { type: string, example: biometric_step_up }
+        updated_at: { type: string, format: date-time }
+
+    CreateBeneficiaryRequest:
+      type: object
+      required: [bankCode, accountNumber]
+      properties:
+        bankCode: { type: string, minLength: 3, maxLength: 10 }
+        accountNumber: { type: string, pattern: '^\d{10}$' }
+        nickname: { type: string, maxLength: 64 }
+
+    CreateDisputeRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string, enum: [not_received, wrong_amount, unauthorized, duplicate, other] }
+        details: { type: string, maxLength: 2000 }
+
+    CreateFxQuoteRequest:
+      type: object
+      description: 'Supply exactly one of `sendAmount` or `receiveAmount`.'
+      required: [fromCurrency, toCurrency]
+      properties:
+        fromCurrency: { $ref: '#/components/schemas/CurrencyCode' }
+        toCurrency: { $ref: '#/components/schemas/CurrencyCode' }
+        sendAmount: { $ref: '#/components/schemas/Money' }
+        receiveAmount: { $ref: '#/components/schemas/Money' }
+        purpose: { type: string, enum: [p2p_send, request_payment, withdrawal], default: p2p_send }
+
+    CreateSupportTicketRequest:
+      type: object
+      required: [subject, body]
+      properties:
+        kind: { type: string, enum: [dispute, general, technical], default: general }
+        subject: { type: string, minLength: 1, maxLength: 200 }
+        body: { type: string, minLength: 1, maxLength: 4000 }
+        paymentId: { type: string, format: uuid }
+        transactionId: { type: string, format: uuid }
+
+    CurrencyCode:
+      type: string
+      pattern: '^[A-Z]{3}$'
+      description: ISO-4217. NGN is live; USD, GBP and EUR are seeded but inactive.
+      example: NGN
+
+    CurrencyLimits:
+      type: object
+      properties:
+        currency: { $ref: '#/components/schemas/CurrencyCode' }
+        per_transaction_max: { $ref: '#/components/schemas/Money' }
+        daily_max: { $ref: '#/components/schemas/Money' }
+        daily_remaining: { $ref: '#/components/schemas/Money' }
+        monthly_max: { $ref: '#/components/schemas/Money' }
+        monthly_remaining: { $ref: '#/components/schemas/Money' }
+        source:
+          type: string
+          description: Which ceiling is currently binding.
+          enum: [kyc_tier, provider, user_self_limit]
+        user_self_limit:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/Money'
+
+    DataExport:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        status: { type: string, enum: [queued, processing, ready, failed, expired] }
+        requested_at: { type: string, format: date-time }
+        download_url: { type: [string, 'null'], format: uri }
+        expires_at: { type: [string, 'null'], format: date-time }
+
+    DeletionStatus:
+      type: object
+      properties:
+        status: { type: string, enum: [requested, in_progress, completed, blocked] }
+        requested_at: { type: string, format: date-time }
+        completed_at: { type: [string, 'null'], format: date-time }
+        blocked_reason: { type: [string, 'null'], example: pending_payment }
+        partners:
+          type: array
+          items:
+            type: object
+            properties:
+              partner: { type: string, example: anchor }
+              status: { type: string, enum: [pending, completed, failed] }
+              completed_at: { type: [string, 'null'], format: date-time }
+        retained:
+          type: array
+          description: Data kept for legal or regulatory reasons, with the basis.
+          items:
+            type: object
+            properties:
+              category: { type: string, example: transaction_records }
+              reason: { type: string, example: AML record-keeping obligation }
+              until: { type: [string, 'null'], format: date-time }
+
+    ErrorEnvelope:
+      type: object
+      description: Applied to every error by `AllExceptionsFilter`.
+      required: [success, message, timestamp]
+      properties:
+        success: { type: boolean, const: false }
+        message: { type: string, example: Insufficient funds. }
+        error:
+          type: string
+          description: Machine-readable snake_case code. Absent on unmapped 500s.
+          example: insufficient_funds
+        details:
+          description: Present on validation failures — one entry per Zod issue.
+          type: array
+          items:
+            type: object
+            properties:
+              path: { type: string, example: phone }
+              message: { type: string, example: Phone must be in E.164 format (e.g. +2348012345678) }
+        timestamp: { type: string, format: date-time }
+
+    FxApplied:
+      type: object
+      description: 'The conversion actually applied to a settled movement.'
+      properties:
+        quote_id: { type: string, format: uuid }
+        from_currency: { $ref: '#/components/schemas/CurrencyCode' }
+        to_currency: { $ref: '#/components/schemas/CurrencyCode' }
+        rate: { type: string }
+        locked_at: { type: string, format: date-time }
+
+    FxQuote:
+      type: object
+      description: 'Binding, single-use, short-lived.'
+      properties:
+        id: { type: string, format: uuid }
+        from_currency: { $ref: '#/components/schemas/CurrencyCode' }
+        to_currency: { $ref: '#/components/schemas/CurrencyCode' }
+        rate: { type: string, example: '0.00065' }
+        send_amount: { $ref: '#/components/schemas/Money' }
+        receive_amount: { $ref: '#/components/schemas/Money' }
+        fee: { $ref: '#/components/schemas/Money' }
+        fee_currency: { $ref: '#/components/schemas/CurrencyCode' }
+        status: { type: string, enum: [active, consumed, expired] }
+        expires_at: { type: string, format: date-time }
+        created_at: { type: string, format: date-time }
+
+    # ---------------------------------------------------------------------
+    # FX  (proposed)
+    # ---------------------------------------------------------------------
+
+    FxRate:
+      type: object
+      description: 'Indicative only — never settle against this.'
+      properties:
+        base: { $ref: '#/components/schemas/CurrencyCode' }
+        quote: { $ref: '#/components/schemas/CurrencyCode' }
+        rate: { type: string, example: '0.00065' }
+        inverse_rate: { type: string, example: '1538.46' }
+        as_of: { type: string, format: date-time }
+        provider: { type: string, example: wewire }
+        is_indicative: { type: boolean, const: true }
+
+    HealthReport:
+      type: object
+      description: 'Not wrapped in the response envelope.'
+      properties:
+        status: { type: string, enum: [ok, degraded, down] }
+        version: { type: string, example: 1.0.0 }
+        uptime_seconds: { type: integer }
+        checks:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string, example: postgres }
+              status: { type: string, enum: [ok, degraded, down] }
+              latency_ms: { type: [integer, 'null'] }
+              critical: { type: boolean }
+
+    IdVerificationStart:
+      type: object
+      properties:
+        workflow_run_id: { type: string, example: wr_abc123 }
+        sdk_token: { type: string }
+        link:
+          type: object
+          properties:
+            url: { type: string, format: uri }
+
+    IssueCardRequest:
+      type: object
+      required: [walletId]
+      properties:
+        walletId: { type: string, format: uuid }
+        label: { type: string, maxLength: 64, example: Subscriptions }
+
+    KycRequirements:
+      type: object
+      properties:
+        currency: { $ref: '#/components/schemas/CurrencyCode' }
+        tier: { type: string, enum: [local, international] }
+        eligible: { type: boolean, description: True when nothing is outstanding and a provider is available. }
+        requirements:
+          type: array
+          items:
+            type: object
+            properties:
+              key: { type: string, example: bvn_verification }
+              label: { type: string, example: Verify your BVN }
+              satisfied: { type: boolean }
+              endpoint: { type: string, example: POST /kyc/bvn }
+
+    KycStatus:
+      type: object
+      properties:
+        kyc_level: { type: integer, example: 1 }
+        tiers:
+          type: array
+          items:
+            type: object
+            properties:
+              tier: { type: string, enum: [local, international] }
+              status: { type: string, enum: [not_started, in_progress, pending_review, verified, rejected] }
+              unlocks_currencies:
+                type: array
+                items: { $ref: '#/components/schemas/CurrencyCode' }
+              outstanding:
+                type: array
+                items: { type: string, example: id_document }
+              updated_at: { type: [string, 'null'], format: date-time }
+
+    Language:
+      type: object
+      properties:
+        code: { type: string, example: fr }
+        name: { type: string, example: French }
+        supports_detection: { type: boolean }
+
+    LedgerEntry:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        wallet_id: { type: string, format: uuid }
+        direction: { type: string, enum: [credit, debit] }
+        amount: { $ref: '#/components/schemas/Money' }
+        balance_after: { $ref: '#/components/schemas/Money' }
+        created_at: { type: string, format: date-time }
+
+    Money:
+      type: string
+      description: |
+        Major-unit decimal string. Never a float — persisted as `numeric(20, 8)`
+        and handled as `decimal.js` in code.
+      pattern: '^-?\d+(\.\d+)?$'
+      example: '2500.00'
+
+    PaginationMeta:
+      type: object
+      description: Emitted by `BaseDal.paginate()` / `WalletQueryService.meta()`, snake_cased on the way out.
+      properties:
+        total: { type: integer, example: 42 }
+        current_page: { type: integer, example: 1 }
+        limit: { type: integer, example: 20 }
+        total_pages: { type: integer, example: 3 }
+        has_next_page: { type: boolean, example: true }
+        has_prev_page: { type: boolean, example: false }
+
+    # ---------------------------------------------------------------------
+    # Payments
+    # ---------------------------------------------------------------------
+
+    Payment:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        type: { type: string, enum: [send, request] }
+        initiator_id: { type: string, format: uuid }
+        counterparty_id: { type: string, format: uuid }
+        currency_id: { type: string, format: uuid }
+        amount: { $ref: '#/components/schemas/Money' }
+        status:
+          type: string
+          enum: [pending, reserved, completed, declined, cancelled, expired]
+          description: |
+            `reserved` = held in escrow awaiting acceptance (sends).
+            `pending` = a request awaiting payment.
+        note: { type: [string, 'null'], maxLength: 280 }
+        escrow_id: { type: [string, 'null'], format: uuid }
+        reference: { type: string, format: uuid }
+        expires_at:
+          type: [string, 'null']
+          format: date-time
+          description: End of the 24h hold window. Drives the countdown the PRD requires.
+        completed_at: { type: [string, 'null'], format: date-time }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    Phone:
+      type: string
+      pattern: '^\+[1-9]\d{6,14}$'
+      description: E.164.
+      example: '+2348012345678'
+
+    PayRequestRequest:
+      type: object
+      description: |
+        Body for the modified `POST /payments/{id}/pay`. Every field is optional;
+        omitting all three preserves today's behaviour.
+      properties:
+        sourceWalletId:
+          type: string
+          format: uuid
+          description: Which of the payer's own wallets to debit. Defaults to the wallet matching the request currency.
+        quoteId:
+          type: string
+          format: uuid
+          description: A binding `FxQuote`. The rate locks at the **payer's** confirmation, not when the request was created.
+        amount:
+          allOf: [{ $ref: '#/components/schemas/Money' }]
+          description: |
+            Defaults to the requested amount. Any other value is a mismatch: the
+            payment is held rather than settled, and the requester must accept or
+            decline it.
+
+    PaymentPreview:
+      type: object
+      description: 'Non-binding unless `quote_id` is present.'
+      properties:
+        debit_amount: { $ref: '#/components/schemas/Money' }
+        debit_currency: { $ref: '#/components/schemas/CurrencyCode' }
+        credit_amount: { $ref: '#/components/schemas/Money' }
+        credit_currency: { $ref: '#/components/schemas/CurrencyCode' }
+        fee: { $ref: '#/components/schemas/Money' }
+        rate: { type: [string, 'null'], example: '0.00065' }
+        is_binding: { type: boolean, example: false }
+        quote_id:
+          type: [string, 'null']
+          format: uuid
+          description: Present only when the caller asked to lock the rate.
+        can_proceed: { type: boolean }
+        blocked_reason:
+          type: [string, 'null']
+          description: 'Why the send would fail, evaluated before the user is prompted for a PIN.'
+          enum: [insufficient_funds, limit_exceeded, recipient_no_wallet, currency_unavailable, provider_unavailable, null]
+
+    PreviewRequestRequest:
+      type: object
+      description: 'Always indicative — the binding rate is locked at the payer''s confirmation, not here.'
+      required: [payerPhone, amount]
+      properties:
+        payerPhone: { type: string, minLength: 6, maxLength: 20 }
+        amount: { $ref: '#/components/schemas/Money' }
+        currencyCode: { $ref: '#/components/schemas/CurrencyCode' }
+
+    PreviewSendRequest:
+      type: object
+      required: [recipientPhone, amount]
+      properties:
+        recipientPhone: { type: string, minLength: 6, maxLength: 20 }
+        amount: { $ref: '#/components/schemas/Money' }
+        sourceWalletId: { type: string, format: uuid }
+        lockRate:
+          type: boolean
+          default: false
+          description: When true, also mints an `FxQuote` and returns its id, so the preview the user confirmed is binding.
+
+    PublicProfile:
+      type: object
+      description: The chat-facing projection of another user.
+      properties:
+        id: { type: string, format: uuid }
+        username: { type: [string, 'null'], example: ada_lovelace }
+        display_name: { type: [string, 'null'], example: Ada Lovelace }
+        first_name: { type: [string, 'null'] }
+        last_name: { type: [string, 'null'] }
+        avatar_url: { type: [string, 'null'], format: uri }
+
+    RequestMoneyRequest:
+      type: object
+      description: |
+        Body for the modified `POST /payments/request`. Adds `currencyCode` to
+        the live contract.
+      required: [payerPhone, amount]
+      properties:
+        payerPhone:
+          allOf: [{ $ref: '#/components/schemas/Phone' }]
+          description: Tightened to E.164 here — the live route validates only length (see `suggestions.md` §3.6).
+        amount:
+          allOf: [{ $ref: '#/components/schemas/Money' }]
+          description: The amount the requester wants to **receive**, denominated in `currencyCode`.
+        note: { type: string, maxLength: 280, example: Split the bill }
+        currencyCode:
+          allOf: [{ $ref: '#/components/schemas/CurrencyCode' }]
+          description: |
+            The currency to receive — deliberately independent of whichever
+            wallet the payer settles from. Defaults to the requester's default
+            wallet currency.
+
+    ResolveAccountRequest:
+      type: object
+      required: [bankCode, accountNumber]
+      properties:
+        bankCode: { type: string, minLength: 3, maxLength: 10 }
+        accountNumber: { type: string, pattern: '^\d{10}$' }
+
+    ResolvedAccount:
+      type: object
+      properties:
+        account_number: { type: string }
+        account_name: { type: string }
+        bank_code: { type: string }
+        bank_name: { type: string }
+
+    SendMoneyRequest:
+      type: object
+      description: |
+        Body for the modified `POST /payments/send`. Adds `sourceWalletId` and
+        `quoteId` to the live contract.
+      required: [recipientPhone, amount]
+      properties:
+        recipientPhone:
+          allOf: [{ $ref: '#/components/schemas/Phone' }]
+          description: Tightened to E.164 here — the live route validates only length (see `suggestions.md` §3.6).
+        amount:
+          allOf: [{ $ref: '#/components/schemas/Money' }]
+          description: Denominated in the source wallet's currency.
+        note: { type: string, maxLength: 280, example: 'Lunch 🍜' }
+        sourceWalletId:
+          type: string
+          format: uuid
+          description: |
+            Which of the sender's own wallets to debit. Required by PRD Flow 5
+            ("choose which of the sender's own wallets to send from"). Defaults
+            to the sender's default wallet.
+        quoteId:
+          type: string
+          format: uuid
+          description: |
+            A binding `FxQuote` from `POST /fx/quotes`, consumed at confirmation
+            so the rate the user saw is the rate the ledger applies. Required
+            when the sender's and recipient's currencies differ.
+
+    Session:
+      type: object
+      description: 'Projection of the existing `sessions` table.'
+      properties:
+        id: { type: string, format: uuid }
+        user_agent: { type: [string, 'null'] }
+        ip: { type: [string, 'null'] }
+        current: { type: boolean, description: Whether this is the session making the request. }
+        created_at: { type: string, format: date-time }
+        last_used_at: { type: [string, 'null'], format: date-time }
+        expires_at: { type: string, format: date-time }
+    SuccessEnvelope:
+      type: object
+      description: Applied to every non-webhook JSON response by `ResponseInterceptor`.
+      required: [success, message, timestamp]
+      properties:
+        success: { type: boolean, const: true }
+        message: { type: string, example: Success }
+        data: { description: The payload. Shape varies by route. }
+        meta: { $ref: '#/components/schemas/PaginationMeta' }
+        timestamp: { type: string, format: date-time }
+
+    SupportTicket:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        kind: { type: string, enum: [dispute, general, technical] }
+        status: { type: string, enum: [open, pending_partner, resolved, closed] }
+        subject: { type: string }
+        payment_id: { type: [string, 'null'], format: uuid }
+        transaction_id: { type: [string, 'null'], format: uuid }
+        partner_reference: { type: [string, 'null'] }
+        sla_due_at: { type: [string, 'null'], format: date-time, description: Drives the 72h resolution KPI. }
+        messages:
+          type: array
+          items:
+            type: object
+            properties:
+              author: { type: string, enum: [user, support] }
+              body: { type: string }
+              created_at: { type: string, format: date-time }
+        created_at: { type: string, format: date-time }
+        resolved_at: { type: [string, 'null'], format: date-time }
+
+    TransactionDetail:
+      description: 'A ledger entry with everything the detail sheet and a dispute need.'
+      allOf:
+        - $ref: '#/components/schemas/LedgerEntry'
+        - type: object
+          properties:
+            currency: { $ref: '#/components/schemas/CurrencyCode' }
+            kind: { type: string, enum: [deposit, withdrawal, p2p_send, p2p_receive, fee, reversal, card_purchase] }
+            description: { type: [string, 'null'] }
+            counterparty:
+              oneOf:
+                - type: 'null'
+                - $ref: '#/components/schemas/PublicProfile'
+            fee: { $ref: '#/components/schemas/Money' }
+            fx:
+              oneOf:
+                - type: 'null'
+                - $ref: '#/components/schemas/FxApplied'
+            payment_id: { type: [string, 'null'], format: uuid }
+            provider: { type: [string, 'null'], example: anchor }
+            provider_reference: { type: [string, 'null'] }
+            status: { type: string, enum: [pending, settled, reversed, failed] }
+            timeline:
+              type: array
+              items:
+                type: object
+                properties:
+                  status: { type: string }
+                  at: { type: string, format: date-time }
+
+    TranslateBatchRequest:
+      type: object
+      required: [items, to]
+      properties:
+        to: { type: string, minLength: 2, maxLength: 10 }
+        from: { type: string, minLength: 2, maxLength: 10 }
+        items:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            type: object
+            required: [id, text]
+            properties:
+              id: { type: string, description: Echoed back so results can be reattached to messages. }
+              text: { type: string, minLength: 1, maxLength: 5000 }
+
+    TranslationPreference:
+      type: object
+      properties:
+        scope: { type: string, enum: [global, conversation] }
+        conversation_id: { type: [string, 'null'], format: uuid }
+        enabled: { type: boolean }
+        target_language: { type: [string, 'null'], example: en }
+        inherited: { type: boolean, description: True when a conversation has no override and is following the global setting. }
+
+    UpdateConsentsRequest:
+      type: object
+      description: 'Partial — send only the scopes being changed.'
+      minProperties: 1
+      properties:
+        location: { type: boolean }
+        biometrics: { type: boolean }
+        translation: { type: boolean }
+        contacts: { type: boolean }
+        marketing: { type: boolean }
+
+    UpdateConversationTranslationRequest:
+      type: object
+      description: '`enabled: null` clears the override and falls back to the global preference.'
+      properties:
+        enabled: { type: [boolean, 'null'] }
+        targetLanguage: { type: [string, 'null'], minLength: 2, maxLength: 10 }
+
+    UpdateLimitsRequest:
+      type: object
+      description: 'May only tighten below the tier/provider ceiling.'
+      required: [currency]
+      properties:
+        currency: { $ref: '#/components/schemas/CurrencyCode' }
+        perTransactionMax: { $ref: '#/components/schemas/Money' }
+        dailyMax: { $ref: '#/components/schemas/Money' }
+
+    UpdateTranslationPrefRequest:
+      type: object
+      minProperties: 1
+      properties:
+        enabled: { type: boolean }
+        targetLanguage: { type: string, minLength: 2, maxLength: 10, example: en }
+
+    Wallet:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        type: { type: string, example: user }
+        balance: { $ref: '#/components/schemas/Money' }
+        status: { type: string, example: active }
+        currency:
+          type: object
+          properties:
+            id: { type: string, format: uuid }
+            code: { $ref: '#/components/schemas/CurrencyCode' }
+            symbol: { type: string }
+        vba:
+          description: Virtual bank account. `null` until the partner finishes provisioning.
+          oneOf:
+            - type: 'null'
+            - type: object
+              properties:
+                account_number: { type: string, example: '1234567890' }
+                account_name: { type: string, example: ADA LOVELACE }
+                bank_name: { type: string }
+                bank_code: { type: string }
+
+    WithdrawalReceipt:
+      type: object
+      properties:
+        reference: { type: string, example: wdr_abc123 }
+        status: { type: string, enum: [pending, settled, failed, reversed] }
+        amount: { $ref: '#/components/schemas/Money' }
+        fee: { $ref: '#/components/schemas/Money' }
+        account_name: { type: string, example: JANE DOE }

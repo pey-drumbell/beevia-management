@@ -1,0 +1,3512 @@
+openapi: 3.1.0
+
+# =============================================================================
+# Beevia Backend API — IMPLEMENTED SURFACE
+#
+# Every operation in this file EXISTS TODAY in beevia-api and is exercised by
+# beevia-api/postman/Beevia.postman_collection.json. This file is the current
+# truth: safe to generate clients from, safe to test against, safe to publish.
+#
+# It contains no status markers of any kind — nothing here is aspirational.
+#
+# Endpoints that are DESIGNED BUT NOT BUILT live in a separate file:
+#   openapi.proposed.yaml
+# Shipping one means MOVING its operation from that file into this one, which
+# is a visible diff in review rather than a one-word edit that can be missed.
+#
+# Paths named in descriptions (src/, postman/, docs/) are relative to the
+# beevia-api/ service directory.
+#
+# Companion documents (same directory):
+#   api-rfc.md              — narrative RFC, gap analysis, phasing
+#   suggestions.md          — code/process observations
+#   openapi.proposed.yaml   — the 50 designed-but-unbuilt operations
+#   Beevia_PRD.md           — product requirements
+# =============================================================================
+
+info:
+  title: Beevia Backend API
+  version: 1.0.0
+  summary: Secure messaging + multi-currency wallets — implemented surface.
+  description: |
+    The routes beevia-api serves today.
+
+    ## Response envelope
+
+    Every JSON route (except webhooks and the invite landing page, which opt out
+    via `@SkipResponseInterceptor()`) is wrapped by `ResponseInterceptor`:
+
+    ```json
+    { "success": true, "message": "...", "data": {...}, "meta": {...}, "timestamp": "..." }
+    ```
+
+    Errors are produced by `AllExceptionsFilter`:
+
+    ```json
+    { "success": false, "message": "...", "error": "snake_case_code", "details": [...], "timestamp": "..." }
+    ```
+
+    Response keys are **snake_case**; request bodies are **camelCase** (the Zod
+    schemas define camelCase inputs and only the response is converted). The
+    private fields `pin_hash`, `otp_hash`, `bvn`, `nin`, `password` are stripped
+    from every response tree.
+
+    ## Authentication
+
+    * **Access token** — `Authorization: Bearer <jwt>`, required globally by
+      `JwtAuthGuard` except on `@Public()` routes.
+    * **Step-up token** — `X-Step-Up-Token: <jwt>`, minted by `POST /auth/step-up`
+      (PIN required), short-lived, demanded by `StepUpGuard` on money-moving and
+      irreversible actions. A valid session alone is never sufficient.
+
+    ## Money
+
+    Amounts are **major-unit decimal strings** (`"2500.00"`), never floats.
+    Persisted as `numeric(20, 8)`, handled as `decimal.js` in code.
+
+    ## Transports
+
+    HTTP is the *fallback* transport for chat; the primary is Socket.IO (see
+    `beevia-api/docs/chat-websocket-integration.md`). Every REST chat route wraps
+    the same service the WebSocket gateway calls — never a parallel code path.
+
+    ## Not in this file
+
+    Designed-but-unbuilt endpoints live in `openapi.proposed.yaml`.
+  contact:
+    name: Beevia Engineering
+  license:
+    name: UNLICENSED
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Local development (global prefix `api/v1`)
+  - url: https://api.beevia.com/api/v1
+    description: Production (placeholder)
+  - url: http://localhost:3000
+    description: Root origin — only for `/i/{code}`, which is excluded from the global prefix
+
+security:
+  - accessToken: []
+
+tags:
+  - name: Platform
+    description: Liveness, service status and operational probes.
+  - name: Auth & Onboarding
+    description: Phone-first registration, OTP, PIN, step-up, sessions and onboarding state.
+  - name: KYC
+    description: Identity verification. Local tier (BVN, Nigeria) is live; the international tier is proposed.
+  - name: Upgrade
+    description: The chat_only → chat_banking upgrade ladder. Parallel to KYC, for users who did not choose banking at signup.
+  - name: Users
+    description: Profile, handle, settings, blocks, privacy controls.
+  - name: Contacts
+    description: Address-book sync and discovery.
+  - name: Devices & Keys
+    description: Device registry and the X3DH key directory backing E2EE.
+  - name: Invites
+    description: Invite codes and the shareable landing link.
+  - name: Currencies
+    description: Supported currencies and whether wallet creation is available per currency.
+  - name: Wallets
+    description: Multi-currency wallets, pay-in details, beneficiaries, ledger history and payouts.
+  - name: FX
+    description: Exchange rates and binding quotes for cross-currency movement. Entirely proposed.
+  - name: Payments
+    description: Peer-to-peer send/request with escrow acceptance.
+  - name: Cards
+    description: Virtual card issuance and controls. Entirely proposed.
+  - name: Chat (REST fallback)
+    description: Conversations, messages, receipts and reactions. Mirrors the WebSocket commands.
+  - name: Calls
+    description: Call signaling. Media is relayed by the SFU, never by this API.
+  - name: Attachments
+    description: Presigned upload/download of client-encrypted blobs.
+  - name: Translate
+    description: One-shot translation proxy. Nothing is stored.
+  - name: Notifications
+    description: Push token binding and category preferences.
+  - name: Support
+    description: Disputes and escalation. Entirely proposed.
+  - name: Webhooks
+    description: Partner-facing callbacks. Public, signature-verified, envelope-free.
+
+paths:
+
+  /:
+    get:
+      tags: [Platform]
+      operationId: getRoot
+      summary: Service root
+      description: Liveness sanity check. Returns `"Hello World!"` wrapped in the standard envelope.
+      security: []
+      responses:
+        '200':
+          description: Service is up.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { type: string, example: Hello World! }
+
+  /auth/register:
+    post:
+      tags: [Auth & Onboarding]
+      operationId: register
+      summary: Register / start signup
+      description: |
+        Onboarding step 1/4. Creates the user if new, then sends a signup OTP by
+        SMS. When `OTP_ECHO` is enabled the code is echoed back as `dev_otp`.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '200':
+          description: OTP sent.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/OtpSent' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /auth/login:
+    post:
+      tags: [Auth & Onboarding]
+      operationId: login
+      summary: Login (new device)
+      description: |
+        Sends a login OTP if an account exists for the phone. The response is
+        identical whether or not the account exists (avoids enumeration). Follow
+        with `POST /auth/otp/verify` using `purpose: "login"`.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: OTP sent if the account exists.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/OtpSent' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /auth/otp/request:
+    post:
+      tags: [Auth & Onboarding]
+      operationId: requestOtp
+      summary: Resend an OTP
+      description: Generate and send a fresh OTP for the given purpose. Subject to a resend cooldown (`otp_cooldown`).
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RequestOtpRequest' }
+      responses:
+        '200':
+          description: OTP sent.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/OtpSent' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /auth/otp/verify:
+    post:
+      tags: [Auth & Onboarding]
+      operationId: verifyOtp
+      summary: Verify OTP → open a session
+      description: |
+        Onboarding step 2/4. Verifies the OTP, marks the phone verified, and
+        returns an access + refresh token pair plus the user. An `inviteCode`
+        from a deep link may be redeemed here — this is the first point at which
+        the phone is confirmed.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VerifyOtpRequest' }
+      responses:
+        '200':
+          description: Verified; session opened.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/SessionGrant' }
+        '400':
+          description: 'Bad or expired code — `otp_invalid`, `otp_expired`, `otp_too_many_attempts`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /auth/refresh:
+    post:
+      tags: [Auth & Onboarding]
+      operationId: refreshTokens
+      summary: Refresh tokens (rotation)
+      description: |
+        Exchanges a refresh token for a new access + refresh pair and revokes the
+        old session. Reusing a rotated or expired refresh token returns 401
+        (`refresh_invalid` / `session_invalid`).
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RefreshRequest' }
+      responses:
+        '200':
+          description: Rotated.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/TokenPair' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/me:
+    get:
+      tags: [Auth & Onboarding]
+      operationId: getMe
+      summary: Current user
+      description: Returns the authenticated user profile and onboarding state.
+      responses:
+        '200': { $ref: '#/components/responses/UserOk' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/logout:
+    post:
+      tags: [Auth & Onboarding]
+      operationId: logout
+      summary: Logout
+      description: Revokes the session backing the supplied refresh token. Idempotent.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LogoutRequest' }
+      responses:
+        '200':
+          description: Logged out.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          logged_out: { type: boolean, example: true }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/pin:
+    post:
+      tags: [Auth & Onboarding]
+      operationId: setPin
+      summary: Set / change PIN
+      description: |
+        Onboarding step 3/4. Sets the 4-digit PIN and optionally enables
+        biometrics. Changing an existing PIN requires `currentPin`
+        (`pin_invalid` otherwise).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SetPinRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/UserOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/pin/verify:
+    post:
+      tags: [Auth & Onboarding]
+      operationId: verifyPin
+      summary: Verify PIN
+      description: Confirms the PIN (app unlock / new-device owner confirmation). Does **not** mint a step-up token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PinRequest' }
+      responses:
+        '200':
+          description: PIN correct.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          verified: { type: boolean, example: true }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /auth/step-up:
+    post:
+      tags: [Auth & Onboarding]
+      operationId: stepUp
+      summary: Step-up authentication
+      description: |
+        Verifies the PIN and mints a short-lived step-up token (`JWT_STEP_UP_TTL`,
+        default 5m). Send it as `X-Step-Up-Token` on financial and destructive
+        actions (ADR-0003).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PinRequest' }
+      responses:
+        '200':
+          description: Step-up granted.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          step_up_token: { type: string, example: 'eyJhbGciOiJIUzI1NiJ9.stepup' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /onboarding/state:
+    get:
+      tags: [Auth & Onboarding]
+      operationId: getOnboardingState
+      summary: Onboarding state
+      description: Current onboarding step and chosen path, so a partially-onboarded user can resume.
+      responses:
+        '200': { $ref: '#/components/responses/UserOk' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /onboarding/path:
+    post:
+      tags: [Auth & Onboarding]
+      operationId: chooseOnboardingPath
+      summary: Choose path
+      description: Onboarding step 4/4 — `chat_only` or `chat_banking`. The banking path later requires KYC and a wallet.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChoosePathRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/UserOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /onboarding/profile:
+    post:
+      tags: [Auth & Onboarding]
+      operationId: submitOnboardingProfile
+      summary: Submit profile (chat-only)
+      description: Name + DOB. Enforces age >= 16 (`age_below_minimum`); completes chat-only onboarding.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SubmitProfileRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/UserOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  # ===========================================================================
+  # Upgrade — chat_only → chat_banking
+  #
+  # A parallel KYC ladder for users who onboarded as `chat_only` and later want
+  # banking. Deliberately separate from /kyc/*, which serves users who chose
+  # `chat_banking` during initial onboarding: the steps are near-identical but
+  # the entry conditions, resumability and error codes differ.
+  # ===========================================================================
+
+  /upgrade/status:
+    get:
+      tags: [Upgrade]
+      operationId: getUpgradeStatus
+      summary: Upgrade status
+      description: Derived `chat_only` → `chat_banking` progress, so a partially-upgraded user can resume where they stopped.
+      responses:
+        '200':
+          description: Current upgrade progress.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/UpgradeStatus' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /upgrade/email:
+    post:
+      tags: [Upgrade]
+      operationId: startUpgradeEmail
+      summary: Start upgrade + send email code
+      description: |
+        Entry point for the upgrade. Sets the user's email and sends a
+        verification code. Rejects with `onboarding_incomplete` if base
+        onboarding never finished, or `already_upgraded` if the user is already
+        on the banking path.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SendEmailVerificationRequest' }
+      responses:
+        '200':
+          description: Code sent, or the email was already verified.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          sent: { type: boolean, example: true }
+                          email: { type: string, format: email }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409':
+          description: '`onboarding_incomplete` / `already_upgraded`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /upgrade/email/verify:
+    post:
+      tags: [Upgrade]
+      operationId: verifyUpgradeEmail
+      summary: Verify email code
+      description: Confirms the code and marks the email verified.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VerifyEmailRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/UserOk' }
+        '400':
+          description: '`otp_invalid` / `otp_expired` / `otp_too_many_attempts`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /upgrade/bvn:
+    post:
+      tags: [Upgrade]
+      operationId: upgradeLookupBvn
+      summary: BVN lookup (step 1)
+      description: |
+        Confirms the BVN exists and returns the available ownership-verification
+        methods. Mirrors `POST /kyc/bvn` for the upgrade path. Requires an
+        upgrade already in progress.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BvnLookupRequest' }
+      responses:
+        '200':
+          description: BVN found; returns available verification methods.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/BvnLookupResult' }
+        '400':
+          description: BVN not found (`bvn_not_found`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /upgrade/bvn/verify:
+    post:
+      tags: [Upgrade]
+      operationId: upgradeVerifyBvn
+      summary: Verify BVN ownership (step 2)
+      description: |
+        Prove ownership via `face` (selfie matched to the BVN photo) or `record`
+        (name + DOB). `phone` is accepted by the schema but not implemented
+        (`method_unavailable`) — the same gap as the `/kyc` path.
+
+        Note the path differs from the equivalent KYC route, which is
+        `/kyc/bvn/verify-ownership`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VerifyBvnOwnershipRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/UserOk' }
+        '400':
+          description: '`face_verification_failed` / `record_verification_failed` / `method_unavailable`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /upgrade/profile:
+    post:
+      tags: [Upgrade]
+      operationId: submitUpgradeProfile
+      summary: Submit banking profile
+      description: |
+        Residential address and gender — what the banking rail needs to create a
+        customer. Unlike `POST /kyc/profile`, `email` is not resubmitted (it was
+        established at `/upgrade/email`) and `gender` is optional.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpgradeProfileRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/UserOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /kyc/email:
+    post:
+      tags: [KYC]
+      operationId: sendKycEmailCode
+      summary: Send email verification code
+      description: Sets the user's email and sends a verification code. Required before BVN on the banking route.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SendEmailVerificationRequest' }
+      responses:
+        '200':
+          description: Code sent, or the email was already verified.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          sent: { type: boolean, example: true }
+                          email: { type: string, format: email, example: ada@example.com }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /kyc/email/verify:
+    post:
+      tags: [KYC]
+      operationId: verifyKycEmail
+      summary: Verify email code
+      description: Confirms the code and marks the email verified.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VerifyEmailRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/UserOk' }
+        '400':
+          description: '`otp_invalid` / `otp_expired` / `otp_too_many_attempts`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /kyc/bvn:
+    post:
+      tags: [KYC]
+      operationId: lookupBvn
+      summary: BVN lookup (step 1)
+      description: |
+        Confirms the BVN exists and returns the ownership-verification methods
+        available (`face`, `record`; `phone` is not yet supported). Does **not**
+        validate ownership — call `POST /kyc/bvn/verify-ownership` next.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BvnLookupRequest' }
+      responses:
+        '200':
+          description: BVN found; returns available verification methods.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/BvnLookupResult' }
+        '400':
+          description: BVN not found (`bvn_not_found`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /kyc/bvn/verify-ownership:
+    post:
+      tags: [KYC]
+      operationId: verifyBvnOwnership
+      summary: Verify BVN ownership (step 2)
+      description: |
+        Prove ownership via `face` (a selfie matched to the BVN photo) or
+        `record` (first name + last name + DOB). On success the BVN is validated
+        and stored on the profile. `phone` OTP is declared in the enum but not
+        yet available (`method_unavailable`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VerifyBvnOwnershipRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/UserOk' }
+        '400':
+          description: '`face_verification_failed` / `record_verification_failed` / `method_unavailable`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /kyc/profile:
+    post:
+      tags: [KYC]
+      operationId: submitKycProfile
+      summary: Submit KYC profile
+      description: Email, gender and residential address — the details the banking rail needs to create a customer.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/KycProfileRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/UserOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /kyc/id/start:
+    post:
+      tags: [KYC]
+      operationId: startIdVerification
+      summary: Start ID verification
+      description: |
+        Opens a document-verification workflow run with the identity provider and
+        returns the SDK token / hosted link for the client to capture the
+        document. Requires a verified BVN (`bvn_required`). Completion arrives
+        asynchronously on `POST /kyc/entrust/webhook`.
+      responses:
+        '200':
+          description: Workflow run created.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/IdVerificationStart' }
+        '400':
+          description: BVN not yet verified (`bvn_required`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /users/me:
+    patch:
+      tags: [Users]
+      operationId: updateMe
+      summary: Update my profile
+      description: Display name and/or avatar. At least one field is required.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateMeRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/PublicProfileOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+    delete:
+      tags: [Users]
+      operationId: deleteMe
+      summary: Delete my account
+      description: |
+        Irreversible. Blocked by a nonzero wallet balance (`nonzero_balance`) or
+        an open send/request. Local data is wiped and deletion is relayed to the
+        relevant partners. Requires a step-up token.
+      security:
+        - accessToken: []
+          stepUpToken: []
+      responses:
+        '200':
+          description: Account deleted.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          deleted: { type: boolean, example: true }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /users/me/contact-change:
+    post:
+      tags: [Users]
+      operationId: initiateContactChange
+      summary: Change my phone number or email — step 1/2
+      description: |
+        Sends a verification code to the **new** phone or email. Nothing changes
+        until `POST /users/me/contact-change/verify` confirms possession of the
+        new contact.
+
+        Requires a step-up token: phone is the primary account identity, so
+        changing it is an account-takeover vector and is treated like a financial
+        action.
+      security:
+        - accessToken: []
+          stepUpToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InitiateContactChangeRequest' }
+      responses:
+        '200':
+          description: Verification code sent to the new contact.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          channel: { type: string, enum: [phone, email] }
+                          value: { type: string }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409':
+          description: The new phone or email already belongs to another account.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /users/me/contact-change/verify:
+    post:
+      tags: [Users]
+      operationId: confirmContactChange
+      summary: Change my phone number or email — step 2/2
+      description: |
+        Confirms the code and commits the new contact to the account. No step-up
+        here — possession of the code sent to the new contact, on top of the
+        step-up already required at step 1, is the second factor.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ConfirmContactChangeRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/UserOk' }
+        '400':
+          description: '`otp_invalid` / `otp_expired` / `otp_too_many_attempts`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /users/me/username:
+    post:
+      tags: [Users]
+      operationId: setUsername
+      summary: Set my username
+      description: Claim an `@handle`. Set once — 409 if already set (`username_already_set`) or taken.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SetUsernameRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/PublicProfileOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /users/me/settings:
+    get:
+      tags: [Users]
+      operationId: getMySettings
+      summary: Get my chat settings
+      description: Currently only multi-device history sync.
+      responses:
+        '200': { $ref: '#/components/responses/ChatSettingsOk' }
+    patch:
+      tags: [Users]
+      operationId: updateMySettings
+      summary: Update my chat settings
+      description: Toggle `messageHistorySyncEnabled` — whether a newly-added device is backfilled with history by the user's existing devices.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateSettingsRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/ChatSettingsOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /users/lookup:
+    post:
+      tags: [Users]
+      operationId: lookupPhone
+      summary: Look up a phone number
+      description: |
+        WhatsApp-style check of whether a single E.164 number is on Beevia,
+        returning the chat profile so the client can open a conversation. REST
+        fallback for the WebSocket `number.lookup` command.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LookupPhoneRequest' }
+      responses:
+        '200':
+          description: '`user` is null when the number is not registered.'
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/PhoneLookupResult' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /users/search:
+    get:
+      tags: [Users]
+      operationId: searchUsers
+      summary: Search users
+      description: Match by phone, username, display name or legal name.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string, minLength: 1, maxLength: 100, example: ada }
+      responses:
+        '200': { $ref: '#/components/responses/PublicProfileListOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /users/blocks:
+    get:
+      tags: [Users]
+      operationId: listBlockedUsers
+      summary: List blocked users
+      responses:
+        '200': { $ref: '#/components/responses/PublicProfileListOk' }
+    post:
+      tags: [Users]
+      operationId: blockUser
+      summary: Block a user
+      description: A blocked peer's thread is hidden and messaging is disabled. `cannot_block_self` if the target is the caller.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BlockUserRequest' }
+      responses:
+        '200':
+          description: Blocked.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          blocked: { type: boolean, example: true }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /users/blocks/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    delete:
+      tags: [Users]
+      operationId: unblockUser
+      summary: Unblock a user
+      responses:
+        '200':
+          description: Unblocked.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          blocked: { type: boolean, example: false }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /users/by-username/{username}:
+    parameters:
+      - $ref: '#/components/parameters/Username'
+    get:
+      tags: [Users]
+      operationId: getUserByUsername
+      summary: Get a public profile by @handle
+      responses:
+        '200': { $ref: '#/components/responses/PublicProfileOk' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /users/{id}:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    get:
+      tags: [Users]
+      operationId: getUserById
+      summary: Get a public profile by id
+      description: Declared last in the controller so the static `/users/*` routes take precedence.
+      responses:
+        '200': { $ref: '#/components/responses/PublicProfileOk' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /contacts/sync:
+    post:
+      tags: [Contacts]
+      operationId: syncContacts
+      summary: Sync address book
+      description: |
+        Upload up to 500 E.164 phones (with optional device labels); returns the
+        entries already registered on Beevia. Malformed numbers are skipped
+        server-side rather than rejecting the batch.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SyncContactsRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/ContactListOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /contacts:
+    get:
+      tags: [Contacts]
+      operationId: listContacts
+      summary: Contacts on Beevia
+      description: The registered contacts matched by the last sync.
+      responses:
+        '200': { $ref: '#/components/responses/ContactListOk' }
+
+  /devices:
+    post:
+      tags: [Devices & Keys]
+      operationId: registerDevice
+      summary: Register a device
+      description: |
+        Publishes the device's identity key, signed prekey and an initial
+        one-time prekey pool. A registered device is a precondition for creating
+        conversations and sending messages.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterDeviceRequest' }
+      responses:
+        '201':
+          description: The registered device and its available prekey count.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Device' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+    get:
+      tags: [Devices & Keys]
+      operationId: listDevices
+      summary: List my devices
+      responses:
+        '200':
+          description: Active devices.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Device' }
+
+  /devices/{id}:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    delete:
+      tags: [Devices & Keys]
+      operationId: revokeDevice
+      summary: Revoke a device
+      description: '`not_device_owner` (403) if the device belongs to another user.'
+      responses:
+        '200': { $ref: '#/components/responses/RevokedOk' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /keys/prekeys:
+    post:
+      tags: [Devices & Keys]
+      operationId: uploadPrekeys
+      summary: Replenish one-time prekeys
+      description: Top up the pool for a device you own; returns the new available count. Clients should replenish well before the pool is exhausted.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UploadPrekeysRequest' }
+      responses:
+        '200':
+          description: Prekeys uploaded.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          available: { type: integer, example: 3 }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /keys/by-username/{username}:
+    parameters:
+      - $ref: '#/components/parameters/Username'
+    get:
+      tags: [Devices & Keys]
+      operationId: getKeyBundleByUsername
+      summary: Key bundle by @handle
+      description: X3DH bundle, one entry per active device. **Consumes one one-time prekey per device.**
+      responses:
+        '200': { $ref: '#/components/responses/KeyBundleOk' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /keys/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [Devices & Keys]
+      operationId: getKeyBundle
+      summary: Key bundle by user id
+      description: X3DH bundle, one entry per active device. **Consumes one one-time prekey per device.**
+      responses:
+        '200': { $ref: '#/components/responses/KeyBundleOk' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /invites:
+    post:
+      tags: [Invites]
+      operationId: createInvite
+      summary: Invite someone to Beevia
+      description: |
+        Creates an invite code and returns the share text and link. No SMS or
+        email is dispatched by the server yet — the client shares the returned
+        message itself. `already_registered` if the phone/email already has an
+        account.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateInviteRequest' }
+      responses:
+        '200':
+          description: Invite created.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/InviteCreated' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /invites/{code}:
+    parameters:
+      - $ref: '#/components/parameters/InviteCode'
+    get:
+      tags: [Invites]
+      operationId: getInvite
+      summary: Look up an invite
+      description: Lets the app show "X invited you" before the recipient signs up.
+      security: []
+      responses:
+        '200':
+          description: Invite details.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Invite' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /i/{code}:
+    servers:
+      - url: http://localhost:3000
+        description: Root origin — this route is excluded from the `/api/v1` prefix in `main.ts`.
+    parameters:
+      - $ref: '#/components/parameters/InviteCode'
+    get:
+      tags: [Invites]
+      operationId: getInviteLandingPage
+      summary: Invite landing page (HTML)
+      description: |
+        The short, shareable link a recipient actually clicks. Returns a raw HTML
+        page pointing at the mobile app — **not** JSON, and not wrapped in the
+        response envelope. An unknown code still renders the generic page rather
+        than an error.
+      security: []
+      responses:
+        '200':
+          description: Landing page.
+          content:
+            text/html:
+              schema: { type: string }
+
+  /currencies:
+    get:
+      tags: [Currencies]
+      operationId: listCurrencies
+      summary: List currencies
+      description: |
+        Every currency Beevia knows about, active or not, each with whether
+        wallet creation is currently available. Availability is resolved from
+        `currency_provider_configs` rather than from `is_active` alone, since a
+        currency can be active for some capabilities before wallet creation
+        lands. Drives the currency picker on Create Wallet.
+      responses:
+        '200':
+          description: Known currencies.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Currency' }
+
+  /wallets:
+    get:
+      tags: [Wallets]
+      operationId: listWallets
+      summary: List wallets
+      description: Balances and virtual account details per currency wallet the caller holds.
+      responses:
+        '200': { $ref: '#/components/responses/WalletListOk' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [Wallets]
+      operationId: createWallet
+      summary: Create / enable a wallet
+      description: |
+        Provisions a wallet for the given currency and returns the caller's full
+        wallet list. Idempotent — a repeat call returns the existing wallet.
+
+        Only currencies with an implemented provider succeed today (NGN); others
+        return `provider_not_implemented`. Requires BVN verification and a
+        completed KYC profile (`bvn_required` / `kyc_profile_required`).
+        Provisioning is queued, so the virtual account (`vba`) may be `null` on
+        the first response and populate shortly after.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateWalletRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/WalletListOk' }
+        '400':
+          description: '`bvn_required` / `kyc_profile_required` / `provider_not_implemented`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /wallets/payin-details:
+    get:
+      tags: [Wallets]
+      operationId: getPayinDetails
+      summary: Pay-in details
+      description: |
+        The virtual account(s) to fund from. Pass `walletId` for a single wallet
+        (returns an object) or omit it for all (returns an array). While the
+        partner is still provisioning, `status` is `pending` and the account
+        fields are absent.
+      parameters:
+        - name: walletId
+          in: query
+          required: false
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Pay-in details.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        oneOf:
+                          - $ref: '#/components/schemas/PayinDetails'
+                          - type: array
+                            items: { $ref: '#/components/schemas/PayinDetails' }
+
+  /wallets/beneficiaries:
+    get:
+      tags: [Wallets]
+      operationId: listBeneficiaries
+      summary: Saved beneficiaries
+      description: The user's saved payout recipients.
+      responses:
+        '200': { $ref: '#/components/responses/BeneficiaryListOk' }
+
+  /wallets/transactions:
+    get:
+      tags: [Wallets]
+      operationId: listAllTransactions
+      summary: All transactions
+      description: Paginated ledger history across every wallet the caller holds.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200': { $ref: '#/components/responses/TransactionPageOk' }
+
+  /wallets/{walletId}/transactions:
+    parameters:
+      - $ref: '#/components/parameters/WalletId'
+    get:
+      tags: [Wallets]
+      operationId: listWalletTransactions
+      summary: Wallet transaction history
+      description: Paginated ledger history for one wallet. `wallet_not_yours` (403) if the wallet belongs to another user.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200': { $ref: '#/components/responses/TransactionPageOk' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /wallets/withdraw:
+    post:
+      tags: [Wallets]
+      operationId: withdraw
+      summary: Withdraw to a bank account
+      description: |
+        Optimistic NGN payout: the wallet is debited immediately and settled on
+        the bank webhook, reversing on failure. `insufficient_funds` if the
+        balance cannot cover amount + fee. Requires a step-up token.
+      security:
+        - accessToken: []
+          stepUpToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WithdrawRequest' }
+      responses:
+        '200':
+          description: Withdrawal initiated.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/WithdrawalReceipt' }
+        '400':
+          description: '`insufficient_funds` / validation error.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /payments/send:
+    post:
+      tags: [Payments]
+      operationId: sendMoney
+      summary: Send money
+      description: |
+        Holds the amount in escrow on the sender's ledger until the recipient
+        accepts; auto-returns after 24h or on decline. Both parties must hold a
+        wallet in the currency. Requires a step-up token.
+
+        The currency is fixed to NGN server-side (`PaymentService` resolves the
+        NGN row unconditionally), so this is NGN → NGN only. A wider contract —
+        source-wallet selection and a locked FX quote — is designed in
+        `openapi.proposed.yaml`.
+      security:
+        - accessToken: []
+          stepUpToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SendMoneyRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/PaymentOk' }
+        '400':
+          description: '`insufficient_funds` / `recipient_not_found` / `cannot_pay_self` / validation error.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /payments/request:
+    post:
+      tags: [Payments]
+      operationId: requestMoney
+      summary: Request money from another user
+      description: |
+        Creates a pending request against the payer. When the payer pays, funds
+        are held and settled in one step. No step-up is required to *create* a
+        request — nothing moves until the payer confirms.
+
+        NGN only; the requester cannot nominate a receive currency. The wider
+        contract is designed in `openapi.proposed.yaml`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RequestMoneyRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/PaymentOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /payments/{id}/accept:
+    parameters:
+      - $ref: '#/components/parameters/PaymentId'
+    post:
+      tags: [Payments]
+      operationId: acceptPayment
+      summary: Accept a received payment
+      description: |
+        Settles the escrow into the recipient's wallet. Only the counterparty may
+        accept (`not_recipient`). Note that no step-up is required to accept —
+        the action only moves money *toward* the caller.
+      responses:
+        '200': { $ref: '#/components/responses/PaymentOk' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /payments/{id}/decline:
+    parameters:
+      - $ref: '#/components/parameters/PaymentId'
+    post:
+      tags: [Payments]
+      operationId: declinePayment
+      summary: Decline a received payment
+      description: Refunds the escrow to the sender. Only the counterparty may decline.
+      responses:
+        '200': { $ref: '#/components/responses/PaymentOk' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /payments/{id}/pay:
+    parameters:
+      - $ref: '#/components/parameters/PaymentId'
+    post:
+      tags: [Payments]
+      operationId: payRequest
+      summary: Pay a money request
+      description: |
+        Holds and settles to the requester in one step. Requires a step-up token.
+
+        **Takes no request body.** The payer cannot choose a source wallet,
+        attach a locked FX quote, or pay an amount other than the one requested.
+        A body covering all three is designed in `openapi.proposed.yaml`.
+      security:
+        - accessToken: []
+          stepUpToken: []
+      responses:
+        '200': { $ref: '#/components/responses/PaymentOk' }
+        '400':
+          description: '`insufficient_funds` / validation error.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /payments/{id}/cancel:
+    parameters:
+      - $ref: '#/components/parameters/PaymentId'
+    post:
+      tags: [Payments]
+      operationId: cancelRequest
+      summary: Cancel a money request you sent
+      description: Closes a pending request. Nothing has moved, so nothing is reversed.
+      responses:
+        '200': { $ref: '#/components/responses/PaymentOk' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /conversations:
+    post:
+      tags: [Chat (REST fallback)]
+      operationId: createConversation
+      summary: Create a conversation
+      description: |
+        Direct (`peerUserId`) or group (`memberIds`, optional `title`) — exactly
+        one of the two. Mirrors the `conversation.create` WS command. Requires
+        the caller to have a registered device.
+      parameters:
+        - $ref: '#/components/parameters/DeviceIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateConversationRequest' }
+      responses:
+        '201': { $ref: '#/components/responses/ConversationOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+    get:
+      tags: [Chat (REST fallback)]
+      operationId: listConversations
+      summary: List conversations
+      description: Mirrors `conversations.list`.
+      parameters:
+        - $ref: '#/components/parameters/DeviceIdHeader'
+        - name: archived
+          in: query
+          schema: { type: boolean, default: false }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 100 }
+      responses:
+        '200':
+          description: Conversations.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Conversation' }
+
+  /conversations/bulk:
+    post:
+      tags: [Chat (REST fallback)]
+      operationId: bulkConversations
+      summary: Bulk archive / unarchive
+      description: Up to 100 ids per call. Mirrors `conversations.bulk`. Declared before `/{id}` routes so the literal path wins.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BulkConversationsRequest' }
+      responses:
+        '200':
+          description: Updated.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          updated: { type: integer, example: 1 }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /conversations/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ConversationId'
+    get:
+      tags: [Chat (REST fallback)]
+      operationId: getConversation
+      summary: Get a conversation
+      description: Mirrors `conversation.get`.
+      parameters:
+        - $ref: '#/components/parameters/DeviceIdHeader'
+      responses:
+        '200': { $ref: '#/components/responses/ConversationOk' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Chat (REST fallback)]
+      operationId: updateConversation
+      summary: Update a group
+      description: Title and/or avatar. Admin only. Mirrors `conversation.update`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateConversationRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/ConversationOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /conversations/{id}/members:
+    parameters:
+      - $ref: '#/components/parameters/ConversationId'
+    post:
+      tags: [Chat (REST fallback)]
+      operationId: addConversationMembers
+      summary: Add group members
+      description: Admin only; capped at 64 members including the creator. Mirrors `conversation.members.add`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AddMembersRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/ConversationOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /conversations/{id}/members/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/ConversationId'
+      - $ref: '#/components/parameters/UserId'
+    delete:
+      tags: [Chat (REST fallback)]
+      operationId: removeConversationMember
+      summary: Remove member / leave
+      description: An admin removes another member, or a member removes themselves to leave. Mirrors `conversation.members.remove`.
+      responses:
+        '200': { $ref: '#/components/responses/RemovedOk' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /conversations/{id}/archive:
+    parameters:
+      - $ref: '#/components/parameters/ConversationId'
+    post:
+      tags: [Chat (REST fallback)]
+      operationId: archiveConversation
+      summary: Archive / unarchive
+      description: Per-user state. Body `{ archived }` defaults to `true`. Mirrors `conversation.archive`.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ArchiveConversationRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/ConversationOk' }
+
+  /conversations/{id}/clear:
+    parameters:
+      - $ref: '#/components/parameters/ConversationId'
+    post:
+      tags: [Chat (REST fallback)]
+      operationId: clearConversation
+      summary: Clear chat
+      description: |
+        Empties this conversation's history **for the caller alone**, across every
+        device they own. The thread stays in their list and other members keep
+        everything. Works identically for groups and 1:1. No body. Mirrors
+        `conversation.clear`.
+
+        Distinct from the `delete` bulk action, which hides the thread but keeps
+        its messages and restores it on the next message. Cleared history is
+        **not** restored by a new message — new messages simply arrive on top.
+
+        Implemented as a per-user `cleared_seq` watermark, returned on the
+        conversation view so a client can prune its local cache without a full
+        resync. Idempotent — clearing an empty conversation returns
+        `cleared_seq: null`.
+      responses:
+        '200':
+          description: Cleared.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          cleared_seq:
+                            type: [integer, 'null']
+                            description: The watermark below which messages are hidden for the caller. `null` when the conversation was already empty.
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /conversations/{id}/mute:
+    parameters:
+      - $ref: '#/components/parameters/ConversationId'
+    post:
+      tags: [Chat (REST fallback)]
+      operationId: muteConversation
+      summary: Mute / unmute
+      description: |
+        A timestamp mutes until then; `null` unmutes; omitting `mutedUntil`
+        entirely mutes indefinitely. Mirrors `conversation.mute`.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MuteConversationRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/ConversationOk' }
+
+  /conversations/{id}/report:
+    parameters:
+      - $ref: '#/components/parameters/ConversationId'
+    post:
+      tags: [Chat (REST fallback)]
+      operationId: reportConversation
+      summary: Report a conversation
+      description: |
+        Records a report with an optional reason. Because chat is genuinely
+        end-to-end encrypted, the server cannot inspect message content — the
+        report is metadata only. Mirrors `conversation.report`.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReportConversationRequest' }
+      responses:
+        '200':
+          description: Reported.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          reported: { type: boolean, example: true }
+
+  /conversations/{id}/media:
+    parameters:
+      - $ref: '#/components/parameters/ConversationId'
+    get:
+      tags: [Chat (REST fallback)]
+      operationId: listConversationMedia
+      summary: Media gallery
+      description: Ready attachments with short-lived presigned download URLs. Mirrors `conversation.media`.
+      responses:
+        '200':
+          description: Media gallery.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Attachment' }
+
+  /conversations/{id}/messages:
+    parameters:
+      - $ref: '#/components/parameters/ConversationId'
+    get:
+      tags: [Chat (REST fallback)]
+      operationId: getMessageHistory
+      summary: Message history
+      description: |
+        Seq-cursored history. Pass `X-Device-Id` so per-device ciphertext can be
+        resolved for the caller's device. Mirrors `sync.messages`.
+      parameters:
+        - $ref: '#/components/parameters/DeviceIdHeader'
+        - name: afterSeq
+          in: query
+          schema: { type: integer, minimum: 0 }
+        - name: beforeSeq
+          in: query
+          schema: { type: integer, minimum: 0 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+      responses:
+        '200':
+          description: Message page.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/MessageHistory' }
+    post:
+      tags: [Chat (REST fallback)]
+      operationId: sendMessage
+      summary: Send a message
+      description: |
+        The body is opaque ciphertext — either a single `ciphertext` blob
+        (group / sender-key) or per-device `envelopes` (1:1). At least one is
+        required. `clientId` is the idempotency key. Mirrors `message.send`.
+      parameters:
+        - $ref: '#/components/parameters/DeviceIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SendMessageRequest' }
+      responses:
+        '201':
+          description: Message accepted.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Message' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /messages/backfill:
+    post:
+      tags: [Chat (REST fallback)]
+      operationId: backfillMessages
+      summary: Backfill history to a new device
+      description: |
+        An existing device re-encrypts history to a newly-added device of the
+        same user and uploads the envelopes; the server only relays ciphertext.
+        Gated by the user's `messageHistorySyncEnabled` setting. Mirrors
+        `message.backfill`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BackfillRequest' }
+      responses:
+        '200':
+          description: Envelopes stored.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          inserted: { type: integer, example: 1 }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /messages/{messageId}:
+    parameters:
+      - $ref: '#/components/parameters/MessageId'
+    delete:
+      tags: [Chat (REST fallback)]
+      operationId: deleteMessage
+      summary: Delete a message
+      description: |
+        Mirrors the WS `message.delete` command.
+
+        `?forEveryone=true` destroys the ciphertext and every per-device envelope
+        and fans out `message.deleted` to the conversation. Omitted or `false`
+        hides it for the sender only.
+
+        **Sender-only in both modes.** `deleted_for` is a single scope on the
+        message row, not a per-user flag, so a recipient has nowhere to record
+        hiding it and receives 403 rather than a no-op that looks like it
+        worked. Idempotent.
+      parameters:
+        - name: forEveryone
+          in: query
+          required: false
+          schema: { type: boolean, default: false }
+          description: Destroy the ciphertext for every participant, rather than hiding it for the sender.
+      responses:
+        '200': { $ref: '#/components/responses/RemovedOk' }
+        '403':
+          description: The caller is not the sender.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /messages/{messageId}/receipts:
+    parameters:
+      - $ref: '#/components/parameters/MessageId'
+    post:
+      tags: [Chat (REST fallback)]
+      operationId: sendReceipt
+      summary: Send a receipt
+      description: '`read` supersedes `delivered`. Mirrors `receipt.send`.'
+      parameters:
+        - $ref: '#/components/parameters/DeviceIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReceiptRequest' }
+      responses:
+        '200':
+          description: Receipt recorded.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          recorded: { type: boolean, example: true }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /messages/{messageId}/reactions:
+    parameters:
+      - $ref: '#/components/parameters/MessageId'
+    post:
+      tags: [Chat (REST fallback)]
+      operationId: addReaction
+      summary: Add a reaction
+      description: Mirrors `reaction.add`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReactionRequest' }
+      responses:
+        '200':
+          description: Reaction added.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          added: { type: boolean, example: true }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /messages/{messageId}/reactions/{emoji}:
+    parameters:
+      - $ref: '#/components/parameters/MessageId'
+      - name: emoji
+        in: path
+        required: true
+        description: URL-encoded emoji.
+        schema: { type: string, example: '👍' }
+    delete:
+      tags: [Chat (REST fallback)]
+      operationId: removeReaction
+      summary: Remove a reaction
+      description: Mirrors `reaction.remove`.
+      responses:
+        '200': { $ref: '#/components/responses/RemovedOk' }
+
+  /conversations/{id}/calls:
+    parameters:
+      - $ref: '#/components/parameters/ConversationId'
+    post:
+      tags: [Calls]
+      operationId: startCall
+      summary: Start a call
+      description: |
+        Creates a call session and returns a join token for the SFU. Media never
+        transits this API. Mirrors `call.start`; peers are notified via the
+        `call.incoming` socket event and push.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StartCallRequest' }
+      responses:
+        '201': { $ref: '#/components/responses/CallOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    get:
+      tags: [Calls]
+      operationId: listCalls
+      summary: Call history
+      description: Calls in this conversation, including missed and declined, for the in-thread call log.
+      responses:
+        '200':
+          description: Call history.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Call' }
+
+  /calls/{id}/answer:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    post:
+      tags: [Calls]
+      operationId: answerCall
+      summary: Answer a call
+      description: Returns the join token for the answering participant. Mirrors `call.answer`.
+      responses:
+        '200':
+          description: Answered.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          token: { type: string }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /calls/{id}/decline:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    post:
+      tags: [Calls]
+      operationId: declineCall
+      summary: Decline a call
+      description: Mirrors `call.decline`.
+      responses:
+        '200': { $ref: '#/components/responses/CallOk' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /calls/{id}/end:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    post:
+      tags: [Calls]
+      operationId: endCall
+      summary: End a call
+      description: Either party may end. Duration and outcome are logged to the conversation. Mirrors `call.end`.
+      responses:
+        '200': { $ref: '#/components/responses/CallOk' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /attachments/upload-url:
+    post:
+      tags: [Attachments]
+      operationId: createUploadUrl
+      summary: Presign an attachment upload
+      description: |
+        Returns a pending attachment plus a presigned `PUT` URL for the
+        **ciphertext** blob. `encMeta` (IV, algorithm id) is opaque to the server.
+        `sizeBytes` is a hint; the real size is enforced at finalize from the
+        stored object.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateUploadUrlRequest' }
+      responses:
+        '201':
+          description: Upload ticket.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/UploadTicket' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /attachments/{id}/finalize:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    post:
+      tags: [Attachments]
+      operationId: finalizeAttachment
+      summary: Finalize an attachment
+      description: Marks the uploaded blob ready and enforces the size limit from the stored object. Reference the id in a subsequent `message.send`.
+      responses:
+        '200':
+          description: Attachment ready.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Attachment' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /translate:
+    post:
+      tags: [Translate]
+      operationId: translateText
+      summary: Translate text
+      description: |
+        One-shot translation. The client decrypts a message on-device and sends
+        only the plaintext needed for conversion; nothing is stored and the
+        provider never gains standing access to a conversation. The original text
+        always remains the client's source of truth.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TranslateRequest' }
+      responses:
+        '200':
+          description: Translated.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Translation' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /notifications/token:
+    post:
+      tags: [Notifications]
+      operationId: registerPushToken
+      summary: Register / refresh a push token
+      description: |
+        Binds (or updates) the push registration token for a device the caller
+        owns. Kept separate from `POST /devices` because the routing token
+        rotates independently of the E2EE key material.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterTokenRequest' }
+      responses:
+        '200':
+          description: Token bound.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Device' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    delete:
+      tags: [Notifications]
+      operationId: clearPushToken
+      summary: Clear a device push token
+      description: For logout or opt-out. Takes a JSON body (`deviceId`), not a path parameter.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ClearTokenRequest' }
+      responses:
+        '200':
+          description: Token cleared.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SuccessEnvelope' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /notifications/preferences:
+    get:
+      tags: [Notifications]
+      operationId: getNotificationPreferences
+      summary: Get my notification preferences
+      responses:
+        '200': { $ref: '#/components/responses/NotificationPreferencesOk' }
+    patch:
+      tags: [Notifications]
+      operationId: updateNotificationPreferences
+      summary: Toggle notification categories
+      description: Partial update — send only the categories being changed. At least one is required.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NotificationPreferences' }
+      responses:
+        '200': { $ref: '#/components/responses/NotificationPreferencesOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /notifications/test:
+    post:
+      tags: [Notifications]
+      operationId: sendTestPush
+      summary: Send a test push to my devices
+      description: Queues a test notification to every push-enabled device the caller owns. Returns how many were queued.
+      responses:
+        '200':
+          description: Queued.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          queued: { type: integer, example: 2 }
+
+  /webhooks/anchor:
+    post:
+      tags: [Webhooks]
+      operationId: anchorWebhook
+      summary: Banking rail webhook
+      description: |
+        Deposit settlement, payout results and virtual-account events from the
+        NGN banking partner. Verified by HMAC over the raw request bytes
+        (`x-anchor-signature`); `rawBody: true` is enabled in `main.ts` for this
+        reason. Events are deduplicated through `partner_webhook_events`.
+      security: []
+      parameters:
+        - name: x-anchor-signature
+          in: header
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        '200': { $ref: '#/components/responses/WebhookAck' }
+        '401':
+          description: Signature verification failed.
+
+  /kyc/entrust/webhook:
+    post:
+      tags: [Webhooks]
+      operationId: identityWebhook
+      summary: Identity-verification webhook
+      description: |
+        Document-verification workflow results. Verified by HMAC-SHA2 over the
+        raw bytes (`X-SHA2-Signature`). Note the path sits under `/kyc`, not
+        `/webhooks`, unlike the other two partner callbacks.
+      security: []
+      parameters:
+        - name: x-sha2-signature
+          in: header
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        '200': { $ref: '#/components/responses/WebhookAck' }
+
+  /webhooks/livekit:
+    post:
+      tags: [Webhooks]
+      operationId: livekitWebhook
+      summary: Realtime media webhook
+      description: |
+        Room lifecycle events used to reconcile call state (e.g. `room_finished`
+        → mark the call ended). Signed via a JWT in the standard `Authorization`
+        header rather than a custom `x-*-signature`.
+      security: []
+      parameters:
+        - name: authorization
+          in: header
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        '200': { $ref: '#/components/responses/WebhookAck' }
+
+# ===========================================================================
+# Components
+# ===========================================================================
+
+components:
+
+  parameters:
+    ConversationId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    DeviceIdHeader:
+      name: X-Device-Id
+      in: header
+      required: false
+      description: The caller's device. Used to resolve per-device ciphertext and to attribute a sent message to a device.
+      schema: { type: string, format: uuid }
+    InviteCode:
+      name: code
+      in: path
+      required: true
+      schema: { type: string, example: aB3dEfGh1jK }
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    MessageId:
+      name: messageId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    Page:
+      name: page
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, default: 1 }
+    PathId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    PaymentId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    Username:
+      name: username
+      in: path
+      required: true
+      schema: { type: string, pattern: '^[a-zA-Z0-9_]{3,30}$', example: ada_lovelace }
+    WalletId:
+      name: walletId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    BadRequest:
+      description: Validation or business-rule failure. `error` carries a snake_case code.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+    BeneficiaryListOk:
+      description: Saved beneficiaries.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Beneficiary' }
+
+    CallOk:
+      description: A call session.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Call' }
+
+    ChatSettingsOk:
+      description: Chat settings.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message_history_sync_enabled: { type: boolean, example: true }
+    Conflict:
+      description: 'State conflict or uniqueness violation (`unique_constraint_violation`, `nonzero_balance`, …).'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+    ContactListOk:
+      description: Contacts registered on Beevia.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Contact' }
+
+    ConversationOk:
+      description: A conversation, from the caller's perspective.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Conversation' }
+    Forbidden:
+      description: Authenticated but not permitted for this resource.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+    KeyBundleOk:
+      description: X3DH key bundle.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/KeyBundle' }
+    NotFound:
+      description: 'Record not found (`record_not_found`).'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+    NotificationPreferencesOk:
+      description: Notification category preferences.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/NotificationPreferences' }
+
+    PaymentOk:
+      description: A payment (send or request).
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Payment' }
+
+    PublicProfileListOk:
+      description: A list of public chat profiles.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/PublicProfile' }
+
+    PublicProfileOk:
+      description: A public chat profile.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/PublicProfile' }
+
+    RemovedOk:
+      description: Removed.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      removed: { type: boolean, example: true }
+
+    RevokedOk:
+      description: Revoked.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      revoked: { type: boolean, example: true }
+
+    TransactionPageOk:
+      description: |
+        Paginated ledger entries. **Note:** the `meta` shape emitted by the code
+        is `{ total, current_page, limit, total_pages, has_next_page, has_prev_page }`
+        (`PaginationMeta` snake_cased). The saved Postman examples show an older
+        `{ total, page, limit, pages }` shape and are stale — see `suggestions.md`.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/LedgerEntry' }
+                  meta: { $ref: '#/components/schemas/PaginationMeta' }
+    Unauthorized:
+      description: 'Missing/invalid access token (`unauthorized`) or missing/invalid step-up token (`step_up_required`, `step_up_invalid`, `step_up_mismatch`).'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+    UserOk:
+      description: The authenticated user.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/User' }
+
+    WalletListOk:
+      description: The caller's wallets.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Wallet' }
+
+    WebhookAck:
+      description: Acknowledged. Bare JSON — not wrapped in the response envelope.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              received: { type: boolean, example: true }
+
+  schemas:
+
+    AddMembersRequest:
+      type: object
+      required: [memberIds]
+      properties:
+        memberIds:
+          type: array
+          minItems: 1
+          maxItems: 63
+          items: { type: string, format: uuid }
+
+    ArchiveConversationRequest:
+      type: object
+      properties:
+        archived: { type: boolean, default: true }
+
+    Attachment:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        message_id: { type: [string, 'null'], format: uuid }
+        mime: { type: [string, 'null'], example: image/jpeg }
+        size_bytes: { type: [integer, 'null'] }
+        enc_meta:
+          type: object
+          description: Client encryption params (IV, algorithm id). Opaque to the server.
+          additionalProperties: true
+        status: { type: string, enum: [pending, ready, failed] }
+        created_at: { type: string, format: date-time }
+        download_url:
+          type: string
+          format: uri
+          description: Presigned, short-lived. Only present in the media gallery response.
+
+    BackfillRequest:
+      type: object
+      required: [targetDeviceId, envelopes]
+      properties:
+        targetDeviceId: { type: string, format: uuid }
+        envelopes:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items:
+            type: object
+            required: [messageId, ciphertext]
+            properties:
+              messageId: { type: string, format: uuid }
+              ciphertext: { type: string, maxLength: 64000 }
+
+    Beneficiary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        account_number: { type: string, example: '0123456789' }
+        account_name: { type: string, example: JANE DOE }
+        bank_code: { type: string, example: '000013' }
+        bank_name: { type: string, example: GTBank }
+
+    BlockUserRequest:
+      type: object
+      required: [userId]
+      properties:
+        userId: { type: string, format: uuid }
+
+    BulkConversationsRequest:
+      type: object
+      required: [ids, action]
+      properties:
+        ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items: { type: string, format: uuid }
+        action: { type: string, enum: [archive, unarchive] }
+
+    BvnLookupRequest:
+      type: object
+      required: [bvn]
+      properties:
+        bvn: { type: string, pattern: '^\d{11}$', example: '12345678901' }
+
+    # ---------------------------------------------------------------------
+    # KYC
+    # ---------------------------------------------------------------------
+
+    BvnLookupResult:
+      type: object
+      properties:
+        found: { type: boolean }
+        methods:
+          type: array
+          items:
+            type: object
+            properties:
+              method: { type: string, enum: [face, record, phone] }
+              available: { type: boolean }
+              supported: { type: boolean }
+              description: { type: string, example: Take a selfie that matches the photo on your BVN. }
+
+    Call:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        conversation_id: { type: string, format: uuid }
+        initiator_user_id: { type: string, format: uuid }
+        kind: { type: string, enum: [audio, video] }
+        status: { type: string, enum: [ringing, active, ended, missed, declined] }
+        started_at: { type: [string, 'null'], format: date-time }
+        ended_at: { type: [string, 'null'], format: date-time }
+        created_at: { type: string, format: date-time }
+        token: { type: string, description: Join token for the media SFU. }
+
+    ChoosePathRequest:
+      type: object
+      required: [path]
+      properties:
+        path: { type: string, enum: [chat_only, chat_banking] }
+
+    ClearTokenRequest:
+      type: object
+      required: [deviceId]
+      properties:
+        deviceId: { type: string, format: uuid }
+
+    Contact:
+      type: object
+      properties:
+        phone: { $ref: '#/components/schemas/Phone' }
+        contact_name: { type: [string, 'null'], description: The label from the device address book. }
+        user: { $ref: '#/components/schemas/PublicProfile' }
+
+    # ---------------------------------------------------------------------
+    # Chat
+    # ---------------------------------------------------------------------
+
+    Conversation:
+      type: object
+      description: A conversation joined with the caller's per-user participant state.
+      properties:
+        id: { type: string, format: uuid }
+        type: { type: string, enum: [direct, group] }
+        title: { type: [string, 'null'] }
+        avatar_url: { type: [string, 'null'], format: uri }
+        created_by: { type: string, format: uuid }
+        last_message:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/Message'
+        created_at: { type: string, format: date-time }
+        role: { type: string, enum: [member, admin] }
+        archived_at: { type: [string, 'null'], format: date-time }
+        muted_until: { type: [string, 'null'], format: date-time }
+        last_read_message_id: { type: [string, 'null'], format: uuid }
+        unread_count: { type: integer }
+        member_ids:
+          type: array
+          items: { type: string, format: uuid }
+        peers:
+          type: array
+          items: { $ref: '#/components/schemas/PublicProfile' }
+
+    CreateConversationRequest:
+      type: object
+      description: Exactly one of `peerUserId` (direct) or `memberIds` (group).
+      properties:
+        peerUserId: { type: string, format: uuid }
+        title: { type: string, minLength: 1, maxLength: 128 }
+        memberIds:
+          type: array
+          minItems: 1
+          maxItems: 63
+          items: { type: string, format: uuid }
+
+    CreateInviteRequest:
+      type: object
+      description: At least one of `phone` or `email` is required.
+      properties:
+        phone: { $ref: '#/components/schemas/Phone' }
+        email: { type: string, format: email }
+        displayName: { type: string, minLength: 1, maxLength: 255, description: What the inviter typed. Display only. }
+
+    CreateUploadUrlRequest:
+      type: object
+      properties:
+        mime: { type: string, minLength: 1, maxLength: 128, example: image/jpeg }
+        sizeBytes: { type: integer, minimum: 1, description: Hint only — the real size is enforced at finalize. }
+        encMeta:
+          type: object
+          description: Client encryption params (IV, algorithm id). Opaque to the server.
+          additionalProperties: true
+
+    CreateWalletRequest:
+      type: object
+      required: [currencyCode]
+      properties:
+        currencyCode: { $ref: '#/components/schemas/CurrencyCode' }
+
+    # ---------------------------------------------------------------------
+    # Money
+    # ---------------------------------------------------------------------
+
+    Currency:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        code: { $ref: '#/components/schemas/CurrencyCode' }
+        name: { type: string, example: Nigerian Naira }
+        symbol: { type: string, example: '₦' }
+        image: { type: [string, 'null'], format: uri }
+        decimals: { type: integer, example: 2 }
+        is_active: { type: boolean }
+        is_default: { type: boolean }
+        wallet_creation_available:
+          type: boolean
+          description: Resolved from `currency_provider_configs`, not from `is_active` alone.
+
+    CurrencyCode:
+      type: string
+      pattern: '^[A-Z]{3}$'
+      description: ISO-4217. NGN is live; USD, GBP and EUR are seeded but inactive.
+      example: NGN
+
+    Device:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        platform: { type: string, enum: [ios, android, web] }
+        registration_id: { type: [integer, 'null'] }
+        last_seen_at: { type: [string, 'null'], format: date-time }
+        revoked_at: { type: [string, 'null'], format: date-time }
+        created_at: { type: string, format: date-time }
+        prekey_count: { type: integer, description: Remaining one-time prekeys. Replenish before this hits zero. }
+
+    ErrorEnvelope:
+      type: object
+      description: Applied to every error by `AllExceptionsFilter`.
+      required: [success, message, timestamp]
+      properties:
+        success: { type: boolean, const: false }
+        message: { type: string, example: Insufficient funds. }
+        error:
+          type: string
+          description: Machine-readable snake_case code. Absent on unmapped 500s.
+          example: insufficient_funds
+        details:
+          description: Present on validation failures — one entry per Zod issue.
+          type: array
+          items:
+            type: object
+            properties:
+              path: { type: string, example: phone }
+              message: { type: string, example: Phone must be in E.164 format (e.g. +2348012345678) }
+        timestamp: { type: string, format: date-time }
+
+    IdVerificationStart:
+      type: object
+      properties:
+        workflow_run_id: { type: string, example: wr_abc123 }
+        sdk_token: { type: string }
+        link:
+          type: object
+          properties:
+            url: { type: string, format: uri }
+
+    Invite:
+      type: object
+      properties:
+        code: { type: string, example: aB3dEfGh1jK }
+        status: { type: string, enum: [pending, accepted] }
+        inviter: { $ref: '#/components/schemas/PublicProfile' }
+
+    InviteCreated:
+      type: object
+      properties:
+        code: { type: string }
+        link: { type: string, format: uri, example: 'http://localhost:3000/i/aB3dEfGh1jK' }
+        channel: { type: string, enum: [sms, email] }
+        message: { type: string, description: Share text for the client to send. The server does not dispatch it. }
+
+    KeyBundle:
+      type: object
+      properties:
+        user_id: { type: string, format: uuid }
+        devices:
+          type: array
+          items:
+            type: object
+            properties:
+              device_id: { type: string, format: uuid }
+              registration_id: { type: [integer, 'null'] }
+              identity_key: { type: string }
+              signed_prekey_id: { type: integer }
+              signed_prekey: { type: string }
+              signed_prekey_sig: { type: string }
+              one_time_prekey:
+                oneOf:
+                  - type: 'null'
+                  - type: object
+                    properties:
+                      key_id: { type: integer }
+                      public_key: { type: string }
+
+    KycProfileRequest:
+      type: object
+      required: [email, gender, addressLine1, city, state, postalCode]
+      properties:
+        email: { type: string, format: email }
+        gender: { type: string, enum: [male, female] }
+        addressLine1: { type: string, minLength: 1, maxLength: 255 }
+        addressLine2: { type: string, maxLength: 255 }
+        city: { type: string, minLength: 1, maxLength: 128 }
+        state: { type: string, minLength: 1, maxLength: 128 }
+        postalCode: { type: string, minLength: 1, maxLength: 16 }
+        country: { type: string, minLength: 2, maxLength: 2, default: NG }
+
+    LedgerEntry:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        wallet_id: { type: string, format: uuid }
+        direction: { type: string, enum: [credit, debit] }
+        amount: { $ref: '#/components/schemas/Money' }
+        balance_after: { $ref: '#/components/schemas/Money' }
+        created_at: { type: string, format: date-time }
+
+    LoginRequest:
+      type: object
+      required: [phone]
+      properties:
+        phone: { $ref: '#/components/schemas/Phone' }
+
+    LogoutRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken: { type: string, minLength: 10 }
+
+    LookupPhoneRequest:
+      type: object
+      required: [phone]
+      properties:
+        phone: { $ref: '#/components/schemas/Phone' }
+
+    Message:
+      type: object
+      description: The body is always ciphertext. `type` and `content_meta` are the only server-visible routing/preview metadata.
+      properties:
+        id: { type: string, format: uuid }
+        seq: { type: integer, description: Monotonic per conversation; the sync cursor. }
+        conversation_id: { type: string, format: uuid }
+        sender_user_id: { type: string, format: uuid }
+        sender_device_id: { type: [string, 'null'], format: uuid }
+        type:
+          type: string
+          enum: [text, image, audio, file, location, contact, payment_card, call_event, system, key_exchange]
+        ciphertext:
+          type: [string, 'null']
+          description: Base64. Resolved for the device in `X-Device-Id`; `null` when no envelope exists for that device.
+        content_meta: { type: object, additionalProperties: true }
+        reply_to_message_id: { type: [string, 'null'], format: uuid }
+        ref_id:
+          type: [string, 'null']
+          format: uuid
+          description: 'Cross-domain reference — e.g. the payment id behind a `payment_card` message.'
+        client_id: { type: string, format: uuid, description: Client idempotency key. }
+        sent_at: { type: string, format: date-time }
+        edited_at: { type: [string, 'null'], format: date-time }
+        deleted_for:
+          type: array
+          description: Populated once message deletion is implemented; always empty today.
+          items: { type: string, format: uuid }
+
+    MessageHistory:
+      type: object
+      properties:
+        conversation_id: { type: string, format: uuid }
+        messages:
+          type: array
+          items: { $ref: '#/components/schemas/Message' }
+        has_more: { type: boolean }
+
+    Money:
+      type: string
+      description: |
+        Major-unit decimal string. Never a float — persisted as `numeric(20, 8)`
+        and handled as `decimal.js` in code.
+      pattern: '^-?\d+(\.\d+)?$'
+      example: '2500.00'
+
+    MuteConversationRequest:
+      type: object
+      properties:
+        mutedUntil:
+          type: [string, 'null']
+          format: date-time
+          description: A timestamp mutes until then; `null` unmutes; omitting the field mutes indefinitely.
+
+    NotificationPreferences:
+      type: object
+      properties:
+        chat: { type: boolean }
+        calls: { type: boolean }
+        payments: { type: boolean }
+        security: { type: boolean }
+        system: { type: boolean }
+
+    OneTimePrekey:
+      type: object
+      required: [keyId, publicKey]
+      properties:
+        keyId: { type: integer, minimum: 0 }
+        publicKey: { type: string, description: Base64. Opaque to the server — shape is validated, never the cryptography. }
+
+    OtpSent:
+      type: object
+      properties:
+        phone: { $ref: '#/components/schemas/Phone' }
+        dev_otp:
+          type: string
+          description: Only present when `OTP_ECHO` is enabled in non-production environments.
+          example: '123456'
+
+    PaginationMeta:
+      type: object
+      description: Emitted by `BaseDal.paginate()` / `WalletQueryService.meta()`, snake_cased on the way out.
+      properties:
+        total: { type: integer, example: 42 }
+        current_page: { type: integer, example: 1 }
+        limit: { type: integer, example: 20 }
+        total_pages: { type: integer, example: 3 }
+        has_next_page: { type: boolean, example: true }
+        has_prev_page: { type: boolean, example: false }
+
+    PayinDetails:
+      type: object
+      properties:
+        status: { type: string, enum: [ready, pending] }
+        currency:
+          type: object
+          properties:
+            id: { type: string, format: uuid }
+            code: { $ref: '#/components/schemas/CurrencyCode' }
+        account_number: { type: string }
+        account_name: { type: string }
+        bank_name: { type: string }
+        bank_code: { type: string }
+        provider: { type: string, enum: [anchor, wewire] }
+
+    # ---------------------------------------------------------------------
+    # Payments
+    # ---------------------------------------------------------------------
+
+    Payment:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        type: { type: string, enum: [send, request] }
+        initiator_id: { type: string, format: uuid }
+        counterparty_id: { type: string, format: uuid }
+        currency_id: { type: string, format: uuid }
+        amount: { $ref: '#/components/schemas/Money' }
+        status:
+          type: string
+          enum: [pending, reserved, completed, declined, cancelled, expired]
+          description: |
+            `reserved` = held in escrow awaiting acceptance (sends).
+            `pending` = a request awaiting payment.
+        note: { type: [string, 'null'], maxLength: 280 }
+        escrow_id: { type: [string, 'null'], format: uuid }
+        reference: { type: string, format: uuid }
+        expires_at:
+          type: [string, 'null']
+          format: date-time
+          description: End of the 24h hold window. Drives the countdown the PRD requires.
+        completed_at: { type: [string, 'null'], format: date-time }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    Phone:
+      type: string
+      pattern: '^\+[1-9]\d{6,14}$'
+      description: E.164.
+      example: '+2348012345678'
+
+    PhoneLookupResult:
+      type: object
+      properties:
+        phone: { $ref: '#/components/schemas/Phone' }
+        exists: { type: boolean }
+        user:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/PublicProfile'
+
+    PinRequest:
+      type: object
+      required: [pin]
+      properties:
+        pin: { type: string, pattern: '^\d{4}$', example: '1234' }
+
+    PublicProfile:
+      type: object
+      description: The chat-facing projection of another user.
+      properties:
+        id: { type: string, format: uuid }
+        username: { type: [string, 'null'], example: ada_lovelace }
+        display_name: { type: [string, 'null'], example: Ada Lovelace }
+        first_name: { type: [string, 'null'] }
+        last_name: { type: [string, 'null'] }
+        avatar_url: { type: [string, 'null'], format: uri }
+
+    ReactionRequest:
+      type: object
+      required: [emoji]
+      properties:
+        emoji: { type: string, minLength: 1, maxLength: 32, example: '👍' }
+
+    ReceiptRequest:
+      type: object
+      required: [state]
+      properties:
+        state: { type: string, enum: [delivered, read] }
+
+    RefreshRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken: { type: string, minLength: 10 }
+
+    RegisterDeviceRequest:
+      type: object
+      required: [platform, identityKey, signedPrekeyId, signedPrekey, signedPrekeySig]
+      properties:
+        platform: { type: string, enum: [ios, android, web] }
+        identityKey: { type: string }
+        signedPrekeyId: { type: integer, minimum: 0 }
+        signedPrekey: { type: string }
+        signedPrekeySig: { type: string }
+        registrationId: { type: integer, minimum: 0 }
+        pushToken: { type: string, maxLength: 4096 }
+        pushProvider: { type: string, maxLength: 64, example: fcm }
+        oneTimePrekeys:
+          type: array
+          maxItems: 200
+          default: []
+          items: { $ref: '#/components/schemas/OneTimePrekey' }
+
+    # ---------------------------------------------------------------------
+    # Request bodies
+    #
+    # Request keys are camelCase (the Zod schemas define camelCase inputs);
+    # only responses are converted to snake_case.
+    # ---------------------------------------------------------------------
+
+    RegisterRequest:
+      type: object
+      required: [phone, countryCode]
+      properties:
+        phone: { $ref: '#/components/schemas/Phone' }
+        countryCode: { type: string, pattern: '^[A-Za-z]{2}$', description: ISO-3166-1 alpha-2, normalized to uppercase., example: NG }
+        displayName: { type: string, minLength: 1, maxLength: 255, example: John Doe }
+
+    RegisterTokenRequest:
+      type: object
+      required: [deviceId, pushToken]
+      properties:
+        deviceId: { type: string, format: uuid }
+        pushToken: { type: string, minLength: 1, maxLength: 4096 }
+        pushProvider: { type: string, maxLength: 64, default: fcm }
+
+    ReportConversationRequest:
+      type: object
+      properties:
+        reason: { type: string, maxLength: 2000, example: spam }
+
+    RequestMoneyRequest:
+      type: object
+      description: |
+        No currency field — the amount is always NGN. `payerPhone` is validated
+        only as a 6–20 character string, unlike every other phone field in the
+        API, which enforces E.164.
+      required: [payerPhone, amount]
+      properties:
+        payerPhone: { type: string, minLength: 6, maxLength: 20, example: '+2348012345678' }
+        amount: { $ref: '#/components/schemas/Money' }
+        note: { type: string, maxLength: 280, example: Split the bill }
+
+    RequestOtpRequest:
+      type: object
+      required: [phone]
+      properties:
+        phone: { $ref: '#/components/schemas/Phone' }
+        purpose: { type: string, enum: [signup, login, step_up], default: signup }
+
+    SendEmailVerificationRequest:
+      type: object
+      required: [email]
+      properties:
+        email: { type: string, format: email }
+
+    SendMessageRequest:
+      type: object
+      description: At least one of `ciphertext` or `envelopes` is required.
+      required: [type, clientId]
+      properties:
+        type:
+          type: string
+          enum: [text, image, audio, file, location, contact, payment_card, key_exchange]
+        clientId: { type: string, format: uuid, description: Idempotency key. }
+        ciphertext: { type: string, maxLength: 64000, description: Base64. Single blob for group / sender-key delivery. }
+        envelopes:
+          type: array
+          maxItems: 64
+          description: Per-recipient-device ciphertext for 1:1 delivery.
+          items:
+            type: object
+            required: [deviceId, ciphertext]
+            properties:
+              deviceId: { type: string, format: uuid }
+              ciphertext: { type: string, maxLength: 64000 }
+        contentMeta:
+          type: object
+          description: Server-visible, non-sensitive metadata only (mime, sizes, payment ref). Never plaintext body.
+          additionalProperties: true
+        replyToMessageId: { type: string, format: uuid }
+        refId: { type: string, format: uuid }
+        attachmentIds:
+          type: array
+          maxItems: 16
+          items: { type: string, format: uuid }
+
+    SendMoneyRequest:
+      type: object
+      description: |
+        No source-wallet field — the service resolves the sender's NGN wallet
+        unconditionally, so a multi-wallet user has no way to choose.
+      required: [recipientPhone, amount]
+      properties:
+        recipientPhone:
+          type: string
+          minLength: 6
+          maxLength: 20
+          description: Looser than E.164 today — validated only as a 6–20 character string.
+          example: '+2348012345678'
+        amount: { $ref: '#/components/schemas/Money' }
+        note: { type: string, maxLength: 280, example: 'Lunch 🍜' }
+
+    SessionGrant:
+      allOf:
+        - $ref: '#/components/schemas/TokenPair'
+        - type: object
+          properties:
+            user: { $ref: '#/components/schemas/User' }
+
+    SetPinRequest:
+      type: object
+      required: [pin]
+      properties:
+        pin: { type: string, pattern: '^\d{4}$', example: '1234' }
+        currentPin: { type: string, pattern: '^\d{4}$', description: Required only when changing an existing PIN. }
+        enableBiometrics: { type: boolean }
+
+    SetUsernameRequest:
+      type: object
+      required: [username]
+      properties:
+        username:
+          type: string
+          pattern: '^[a-zA-Z0-9_]{3,30}$'
+          description: Stored lowercased. Set once.
+          example: ada_lovelace
+
+    StartCallRequest:
+      type: object
+      required: [kind]
+      properties:
+        kind: { type: string, enum: [audio, video] }
+
+    UpgradeStatus:
+      type: object
+      description: Derived progress through the chat_only → chat_banking ladder.
+      properties:
+        eligible: { type: boolean, description: False when base onboarding is incomplete or the user is already on the banking path. }
+        in_progress: { type: boolean }
+        email_verified: { type: boolean }
+        bvn_verified: { type: boolean }
+        profile_submitted: { type: boolean }
+        next_step:
+          type: [string, 'null']
+          enum: [email, email_verify, bvn, bvn_verify, profile, null]
+          description: The endpoint the client should resume at.
+
+    UpgradeProfileRequest:
+      type: object
+      description: |
+        Banking profile for the upgrade path. Unlike `KycProfileRequest`, `email`
+        is not resubmitted (established at `/upgrade/email`) and `gender` is
+        optional.
+      required: [addressLine1, city, state, postalCode]
+      properties:
+        gender: { type: string, enum: [male, female] }
+        addressLine1: { type: string, minLength: 1, maxLength: 255 }
+        addressLine2: { type: string, maxLength: 255 }
+        city: { type: string, minLength: 1, maxLength: 128 }
+        state: { type: string, minLength: 1, maxLength: 128 }
+        postalCode: { type: string, minLength: 1, maxLength: 16 }
+        country: { type: string, minLength: 2, maxLength: 2, default: NG }
+
+    InitiateContactChangeRequest:
+      description: Discriminated on `channel` — `phone` requires E.164, `email` requires an email address.
+      oneOf:
+        - type: object
+          required: [channel, value]
+          properties:
+            channel: { type: string, const: phone }
+            value: { $ref: '#/components/schemas/Phone' }
+        - type: object
+          required: [channel, value]
+          properties:
+            channel: { type: string, const: email }
+            value: { type: string, format: email }
+
+    ConfirmContactChangeRequest:
+      description: Same discriminator as step 1, plus the code sent to the new contact.
+      oneOf:
+        - type: object
+          required: [channel, value, code]
+          properties:
+            channel: { type: string, const: phone }
+            value: { $ref: '#/components/schemas/Phone' }
+            code: { type: string, pattern: '^\d{6}$' }
+        - type: object
+          required: [channel, value, code]
+          properties:
+            channel: { type: string, const: email }
+            value: { type: string, format: email }
+            code: { type: string, pattern: '^\d{6}$' }
+
+    SubmitProfileRequest:
+      type: object
+      required: [firstName, lastName, dob]
+      properties:
+        firstName: { type: string, minLength: 1, maxLength: 255, example: Ada }
+        lastName: { type: string, minLength: 1, maxLength: 255, example: Lovelace }
+        dob: { type: string, pattern: '^\d{4}-\d{2}-\d{2}$', description: Must be at least 16 years ago., example: '1990-03-31' }
+    SuccessEnvelope:
+      type: object
+      description: Applied to every non-webhook JSON response by `ResponseInterceptor`.
+      required: [success, message, timestamp]
+      properties:
+        success: { type: boolean, const: true }
+        message: { type: string, example: Success }
+        data: { description: The payload. Shape varies by route. }
+        meta: { $ref: '#/components/schemas/PaginationMeta' }
+        timestamp: { type: string, format: date-time }
+
+    SyncContactsRequest:
+      type: object
+      required: [entries]
+      properties:
+        entries:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items:
+            type: object
+            required: [phone]
+            properties:
+              phone: { type: string, minLength: 3, maxLength: 20 }
+              name: { type: string, maxLength: 255, example: Ada (work) }
+
+    TokenPair:
+      type: object
+      properties:
+        access_token: { type: string }
+        refresh_token: { type: string }
+
+    TranslateRequest:
+      type: object
+      required: [text, to]
+      properties:
+        text: { type: string, minLength: 1, maxLength: 5000 }
+        from: { type: string, minLength: 2, maxLength: 10, description: Auto-detected if omitted. }
+        to: { type: string, minLength: 2, maxLength: 10 }
+
+    Translation:
+      type: object
+      properties:
+        text: { type: string, example: Hello world }
+        from: { type: string, example: fr }
+        to: { type: string, example: en }
+
+    UpdateConversationRequest:
+      type: object
+      minProperties: 1
+      properties:
+        title: { type: string, minLength: 1, maxLength: 128 }
+        avatarUrl: { type: string, format: uri, maxLength: 2048 }
+
+    UpdateMeRequest:
+      type: object
+      minProperties: 1
+      properties:
+        displayName: { type: string, minLength: 1, maxLength: 255 }
+        avatarUrl: { type: string, format: uri, maxLength: 2048 }
+
+    UpdateSettingsRequest:
+      type: object
+      required: [messageHistorySyncEnabled]
+      properties:
+        messageHistorySyncEnabled: { type: boolean }
+
+    UploadPrekeysRequest:
+      type: object
+      required: [deviceId, prekeys]
+      properties:
+        deviceId: { type: string, format: uuid }
+        prekeys:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items: { $ref: '#/components/schemas/OneTimePrekey' }
+
+    UploadTicket:
+      type: object
+      properties:
+        attachment: { $ref: '#/components/schemas/Attachment' }
+        upload:
+          type: object
+          properties:
+            url: { type: string, format: uri }
+            method: { type: string, const: PUT }
+            expires_in: { type: integer, example: 900 }
+
+    # ---------------------------------------------------------------------
+    # Identity
+    # ---------------------------------------------------------------------
+
+    User:
+      type: object
+      description: The self view returned by `/auth/me` and every onboarding/KYC mutation. `bvn` and `nin` are stripped by the response interceptor.
+      properties:
+        id: { type: string, format: uuid }
+        phone: { $ref: '#/components/schemas/Phone' }
+        country_code: { type: string, example: NG }
+        phone_verified: { type: boolean }
+        first_name: { type: [string, 'null'] }
+        last_name: { type: [string, 'null'] }
+        path:
+          type: [string, 'null']
+          enum: [chat_only, chat_banking, null]
+        onboarding_step:
+          type: string
+          enum: [phone_pending, phone_verified, pin_set, path_chosen, profile_done, kyc_pending, kyc_done, completed]
+        status:
+          type: string
+          enum: [active, suspended, deleting, deleted]
+        pin_set: { type: boolean }
+        biometrics_enabled: { type: boolean }
+        kyc_level: { type: integer, example: 1 }
+
+    VerifyBvnOwnershipRequest:
+      type: object
+      required: [bvn, method]
+      description: '`selfieImage` is required when `method` is `face`; `firstName` + `lastName` + `dateOfBirth` when `record`.'
+      properties:
+        bvn: { type: string, pattern: '^\d{11}$' }
+        method: { type: string, enum: [face, record, phone] }
+        selfieImage: { type: string, description: Base64 or data-URL selfie. }
+        firstName: { type: string, maxLength: 255 }
+        lastName: { type: string, maxLength: 255 }
+        dateOfBirth: { type: string, pattern: '^\d{4}-\d{2}-\d{2}$' }
+
+    VerifyEmailRequest:
+      type: object
+      required: [code]
+      properties:
+        code: { type: string, pattern: '^\d{4,8}$' }
+
+    VerifyOtpRequest:
+      type: object
+      required: [phone, code]
+      properties:
+        phone: { $ref: '#/components/schemas/Phone' }
+        purpose: { type: string, enum: [signup, login, step_up], default: signup }
+        code: { type: string, pattern: '^\d{6}$', example: '123456' }
+        inviteCode: { type: string, minLength: 1, description: Redeems an invite from a deep link. }
+
+    Wallet:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        type: { type: string, example: user }
+        balance: { $ref: '#/components/schemas/Money' }
+        status: { type: string, example: active }
+        currency:
+          type: object
+          properties:
+            id: { type: string, format: uuid }
+            code: { $ref: '#/components/schemas/CurrencyCode' }
+            symbol: { type: string }
+        vba:
+          description: Virtual bank account. `null` until the partner finishes provisioning.
+          oneOf:
+            - type: 'null'
+            - type: object
+              properties:
+                account_number: { type: string, example: '1234567890' }
+                account_name: { type: string, example: ADA LOVELACE }
+                bank_name: { type: string }
+                bank_code: { type: string }
+
+    WithdrawRequest:
+      type: object
+      required: [amount, bankCode, accountNumber]
+      properties:
+        amount: { $ref: '#/components/schemas/Money' }
+        bankCode: { type: string, minLength: 3, maxLength: 10, example: '000013' }
+        accountNumber: { type: string, pattern: '^\d{10}$', description: 10-digit NUBAN., example: '0123456789' }
+
+    WithdrawalReceipt:
+      type: object
+      properties:
+        reference: { type: string, example: wdr_abc123 }
+        status: { type: string, enum: [pending, settled, failed, reversed] }
+        amount: { $ref: '#/components/schemas/Money' }
+        fee: { $ref: '#/components/schemas/Money' }
+        account_name: { type: string, example: JANE DOE }

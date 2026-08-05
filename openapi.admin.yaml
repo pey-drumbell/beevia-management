@@ -1,0 +1,1292 @@
+openapi: 3.1.0
+
+# =============================================================================
+# Beevia Admin API — IMPLEMENTED SURFACE
+#
+# Every operation in this file EXISTS TODAY in beevia-admin-api. This file is
+# the current truth: safe to generate clients from, safe to test against.
+#
+# It contains no status markers of any kind — nothing here is aspirational.
+#
+# Dashboard modules that are SPECIFIED BUT NOT BUILT live in:
+#   openapi.admin.proposed.yaml
+# Shipping one means MOVING its operation from that file into this one.
+#
+# This is a SEPARATE SERVICE from the consumer API (openapi.yaml). It shares the
+# database through the `@drumbell-technologies/beevia-db-schema` package but has
+# its own process, port, principal (`admins`, not `users`) and token type.
+#
+# Paths named in descriptions (src/, docs/) are relative to the
+# beevia-admin-api/ service directory.
+#
+# Companion documents (same directory):
+#   admin-api-rfc.md              — narrative RFC, module coverage, gap analysis
+#   openapi.admin.proposed.yaml   — the unbuilt dashboard modules
+#   Beevia Admin Dashboard.md     — the product spec this is measured against
+#   openapi.yaml                  — the consumer API
+# =============================================================================
+
+info:
+  title: Beevia Admin API
+  version: 1.0.0
+  summary: Internal back-office API for the Beevia admin dashboard.
+  description: |
+    Staff-facing API backing the Beevia admin dashboard. Separate service from
+    the consumer API, sharing the database via a published schema package.
+
+    ## Principal
+
+    The caller is an **admin** (`admins` table), never a `users` row. Admin
+    accounts are invite-only — there is no self-service registration.
+
+    ## Authentication
+
+    `Authorization: Bearer <jwt>` where the token carries `type: "admin_access"`
+    and `sub` = `admins.id`, enforced by `AdminAuthGuard`.
+
+    > **Note:** the token is signed with the **same secret** as the consumer
+    > API's tokens. The two are separated only by the `type` claim — the consumer
+    > API issues `type: "access"` and each side rejects the other's value. See
+    > `admin-api-rfc.md` §4.1.
+
+    ## Authorization
+
+    Every protected route declares `@RequirePermission(module, action)` and is
+    checked by `PermissionGuard` against the caller's role.
+
+    * **Modules** (11): `dashboard`, `users`, `chats`, `wallets`, `transactions`,
+      `kyc`, `reports`, `analytics`, `roles_permissions`, `admin_accounts`,
+      `system_settings`.
+    * **Actions** (7): `view`, `create`, `edit`, `delete`, `approve`, `export`,
+      `manage`.
+    * `can_manage` on a module is a superset flag — it satisfies any action check
+      for that module.
+
+    Roles are **dynamic rows**, not a fixed enum. The dashboard spec describes
+    three fixed roles (Support, Compliance, Super Admin); the implementation is a
+    general role builder, and those three are seed data rather than a constraint.
+    An `access_level` of `full` / `limited` / `read_only` is *derived* from the
+    permission matrix for display, never stored.
+
+    > **Both guards are applied per-controller via `@UseGuards(...)`, not
+    > globally.** A new controller that omits them is completely unauthenticated.
+    > See `admin-api-rfc.md` §4.2.
+
+    ## Response envelope
+
+    Identical to the consumer API — `ResponseInterceptor` and
+    `AllExceptionsFilter` are duplicated in this service:
+
+    ```json
+    { "success": true, "message": "...", "data": {...}, "meta": {...}, "timestamp": "..." }
+    ```
+
+    Responses are snake_case; request bodies are camelCase.
+
+  contact:
+    name: Beevia Engineering
+  license:
+    name: UNLICENSED
+
+servers:
+  - url: http://localhost:3001/api/v1
+    description: Local development
+  - url: https://admin-api.beevia.internal/api/v1
+    description: Production (placeholder — must not be publicly routable)
+
+security:
+  - adminToken: []
+
+tags:
+  - name: Platform
+    description: Liveness.
+  - name: Admin Auth
+    description: Staff sign-in and invite acceptance. Public.
+  - name: Admin Accounts
+    description: Inviting, re-roling and deactivating staff accounts.
+  - name: Roles & Permissions
+    description: The dynamic role builder and its module/action permission matrix.
+  - name: User Management
+    description: Search, inspect and action consumer accounts.
+  - name: KYC Review
+    description: Verification checks, masked-value reveal, and approve/reject decisions.
+  - name: Case Notes
+    description: Append-only support and compliance notes on a user.
+
+paths:
+
+  /:
+    get:
+      tags: [Platform]
+      operationId: adminRoot
+      summary: Service root
+      description: Liveness sanity check.
+      security: []
+      responses:
+        '200':
+          description: Service is up.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { type: string }
+
+  # ===========================================================================
+  # Admin Auth
+  # ===========================================================================
+
+  /admin/auth/login:
+    post:
+      tags: [Admin Auth]
+      operationId: adminLogin
+      summary: Admin sign-in
+      description: |
+        Email + password, returning an `admin_access` token.
+
+        Deliberately minimal today: **no 2FA, no lockout, no rate limiting, no
+        password reset.** The dashboard spec makes 2FA mandatory for every admin
+        account — see `admin-api-rfc.md` §4.3.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AdminLoginRequest' }
+      responses:
+        '200':
+          description: Signed in.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/AdminSession' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401':
+          description: Bad credentials, or the account is not active.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /admin/auth/accept-invite:
+    post:
+      tags: [Admin Auth]
+      operationId: acceptAdminInvite
+      summary: Accept an admin invite
+      description: |
+        Exchanges an emailed invite token for a set password, moving the account
+        from `invited` to `active`. This is the only way an admin account comes
+        into existence — there is no registration endpoint.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AcceptInviteRequest' }
+      responses:
+        '200':
+          description: Invite accepted; account activated.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/AdminSession' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401':
+          description: Invalid or expired invite token.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  # ===========================================================================
+  # Admin Accounts
+  # ===========================================================================
+
+  /admin/accounts:
+    get:
+      tags: [Admin Accounts]
+      operationId: listAdminAccounts
+      summary: List admin accounts
+      description: 'Paginated, filterable by search term, derived access level and status.'
+      x-required-permission: 'admin_accounts:view'
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Search'
+        - name: accessLevel
+          in: query
+          schema: { type: string, enum: [full, limited, read_only] }
+        - name: status
+          in: query
+          schema: { type: string, enum: [invited, active, inactive] }
+      responses:
+        '200':
+          description: Paginated admin accounts.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/AdminAccount' }
+                      meta: { $ref: '#/components/schemas/PaginationMeta' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/accounts/invite:
+    post:
+      tags: [Admin Accounts]
+      operationId: inviteAdmin
+      summary: Invite an admin
+      description: Creates an `invited` account and emails an invite token. The role is assigned up front.
+      x-required-permission: 'admin_accounts:create'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InviteAdminRequest' }
+      responses:
+        '201':
+          description: Invite created and sent.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/AdminAccount' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: An admin with this email already exists.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /admin/accounts/{id}:
+    parameters:
+      - $ref: '#/components/parameters/AdminId'
+    patch:
+      tags: [Admin Accounts]
+      operationId: updateAdminAccount
+      summary: Update an admin account
+      description: |
+        Change the assigned role and/or activate/deactivate. Deactivation is the
+        revocation mechanism — the spec requires access to be revocable
+        immediately when someone leaves or changes function.
+      x-required-permission: 'admin_accounts:edit'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateAdminAccountRequest' }
+      responses:
+        '200':
+          description: Updated.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/AdminAccount' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ===========================================================================
+  # Roles & Permissions
+  # ===========================================================================
+
+  /admin/roles:
+    get:
+      tags: [Roles & Permissions]
+      operationId: listRoles
+      summary: List roles
+      description: Paginated, with the derived access level and assigned-admin count per role.
+      x-required-permission: 'roles_permissions:view'
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Search'
+        - name: accessLevel
+          in: query
+          schema: { type: string, enum: [full, limited, read_only] }
+        - name: status
+          in: query
+          schema: { type: string, enum: [active, inactive] }
+      responses:
+        '200':
+          description: Paginated roles.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Role' }
+                      meta: { $ref: '#/components/schemas/PaginationMeta' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Roles & Permissions]
+      operationId: createRole
+      summary: Create a role
+      description: |
+        Creates a role with a full permission matrix and optionally assigns it to
+        admins immediately. `RolesService` maintains the invariant that a role has
+        exactly one permission row per module.
+      x-required-permission: 'roles_permissions:create'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateRoleRequest' }
+      responses:
+        '201':
+          description: Role created.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Role' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: A role with this name already exists.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /admin/roles/{id}:
+    parameters:
+      - $ref: '#/components/parameters/RoleId'
+    get:
+      tags: [Roles & Permissions]
+      operationId: getRole
+      summary: Get a role
+      description: Full permission matrix plus the admins assigned to this role.
+      x-required-permission: 'roles_permissions:view'
+      responses:
+        '200':
+          description: The role.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Role' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Roles & Permissions]
+      operationId: updateRole
+      summary: Edit a role
+      description: Rename, re-describe, activate/deactivate, or replace the permission matrix. At least one field required.
+      x-required-permission: 'roles_permissions:edit'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateRoleRequest' }
+      responses:
+        '200':
+          description: Updated.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Role' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /admin/roles/{id}/assign-admins:
+    parameters:
+      - $ref: '#/components/parameters/RoleId'
+    post:
+      tags: [Roles & Permissions]
+      operationId: assignRoleToAdmins
+      summary: Assign this role to admins
+      description: Bulk-assigns the role to up to 500 admin accounts.
+      x-required-permission: 'roles_permissions:manage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AssignAdminsRequest' }
+      responses:
+        '200':
+          description: Assigned.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Role' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ===========================================================================
+  # User Management
+  # ===========================================================================
+
+  /admin/users:
+    get:
+      tags: [User Management]
+      operationId: listUsers
+      summary: List users
+      description: Paginated consumer-account search with filters across country, account type, status, verification state and wallet state.
+      x-required-permission: 'users:view'
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - name: search
+          in: query
+          description: Matches phone, name, username or email.
+          schema: { type: string, minLength: 1, maxLength: 200 }
+        - name: country
+          in: query
+          schema: { type: string, minLength: 2, maxLength: 2 }
+        - name: accountType
+          in: query
+          schema: { type: string, enum: [chat_only, chat_banking] }
+        - name: accountStatus
+          in: query
+          schema: { type: string, enum: [active, restricted, suspended, deleting, deleted] }
+        - name: verification
+          in: query
+          schema: { type: string, enum: [verified, pending, failed] }
+        - name: wallet
+          in: query
+          schema: { type: string, enum: [none, active, frozen, closed] }
+        - name: joinedFrom
+          in: query
+          schema: { type: string, format: date-time }
+        - name: joinedTo
+          in: query
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: Paginated users.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/AdminUserSummary' }
+                      meta: { $ref: '#/components/schemas/PaginationMeta' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/users/export:
+    get:
+      tags: [User Management]
+      operationId: exportUsers
+      summary: Export users as CSV
+      description: Same filter set as the list route, streamed as CSV. Gated behind a distinct `export` action rather than `view`.
+      x-required-permission: 'users:export'
+      parameters:
+        - $ref: '#/components/parameters/Search'
+      responses:
+        '200':
+          description: CSV export.
+          content:
+            text/csv:
+              schema: { type: string }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/users/recent-searches:
+    get:
+      tags: [User Management]
+      operationId: listRecentSearches
+      summary: My recent searches
+      description: The calling admin's own recent search terms, for the search box.
+      x-required-permission: 'users:view'
+      responses:
+        '200':
+          description: Recent search terms.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/RecentSearch' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [User Management]
+      operationId: recordSearch
+      summary: Record a search term
+      description: Appends to the calling admin's recent-search list.
+      x-required-permission: 'users:view'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RecordSearchRequest' }
+      responses:
+        '200':
+          description: Recorded.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/RecentSearch' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/users/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [User Management]
+      operationId: getUser
+      summary: Get a user
+      description: |
+        Full account detail: profile, onboarding progress, wallet state and
+        lifecycle status. Verification detail is **not** included here — it lives
+        behind `GET /admin/users/{id}/verification`, which requires the separate
+        `kyc:view` permission, so Support can open an account without seeing KYC.
+      x-required-permission: 'users:view'
+      responses:
+        '200':
+          description: The user.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/AdminUserDetail' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /admin/users/{id}/actions:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [User Management]
+      operationId: listUserActions
+      summary: Lifecycle history for a user
+      description: Every suspend / restrict / activate / deactivate taken against this account, with actor, reason and timestamp. This is the audit trail for account-level actions.
+      x-required-permission: 'users:view'
+      responses:
+        '200':
+          description: Action history, newest first.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/AdminUserAction' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/users/{id}/suspend:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    post:
+      tags: [User Management]
+      operationId: suspendUser
+      summary: Suspend a user
+      description: Blocks access pending review. Requires a structured reason; the action is recorded in the user's lifecycle history.
+      x-required-permission: 'users:edit'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserActionRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/UserActionOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /admin/users/{id}/restrict:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    post:
+      tags: [User Management]
+      operationId: restrictUser
+      summary: Restrict a user
+      description: A softer sanction than suspension — the account remains usable in a limited state.
+      x-required-permission: 'users:edit'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserActionRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/UserActionOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/users/{id}/activate:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    post:
+      tags: [User Management]
+      operationId: activateUser
+      summary: Activate a user
+      description: Lifts a suspension or restriction, returning the account to `active`.
+      x-required-permission: 'users:edit'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserActionRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/UserActionOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/users/{id}/deactivate:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    post:
+      tags: [User Management]
+      operationId: deactivateUser
+      summary: Deactivate a user
+      description: |
+        The terminal account action. Gated behind `users:delete` rather than
+        `users:edit`, so a role can be allowed to suspend without being allowed
+        to deactivate.
+      x-required-permission: 'users:delete'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserActionRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/UserActionOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  # ===========================================================================
+  # KYC Review
+  # ===========================================================================
+
+  /admin/users/{id}/verification:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [KYC Review]
+      operationId: getVerificationOverview
+      summary: Verification overview
+      description: |
+        Every KYC check for the user — `phone`, `email`, `bvn`, `liveness`,
+        `address` — with status and provider outcome. **Sensitive values are
+        masked**; revealing one is a separate, logged call.
+      x-required-permission: 'kyc:view'
+      responses:
+        '200':
+          description: Verification checks, masked.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/KycCheck' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /admin/users/{id}/verification/{type}/unmask:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+      - $ref: '#/components/parameters/KycCheckType'
+    get:
+      tags: [KYC Review]
+      operationId: unmaskVerificationValue
+      summary: Reveal a masked verification value
+      description: |
+        Returns the unmasked value for one check. **Logged with the admin id —
+        looking at someone's BVN is itself an event**, independent of whether
+        anything is changed as a result.
+      x-required-permission: 'kyc:view'
+      responses:
+        '200':
+          description: Unmasked value.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          type: { type: string, enum: [phone, email, bvn, liveness, address] }
+                          value: { type: string }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /admin/users/{id}/verification/{type}/approve:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+      - $ref: '#/components/parameters/KycCheckType'
+    post:
+      tags: [KYC Review]
+      operationId: approveVerification
+      summary: Approve a verification check
+      description: Manually marks the check verified. Gated behind the distinct `approve` action, so viewing KYC and deciding on it are separable permissions.
+      x-required-permission: 'kyc:approve'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReviewCheckRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/KycCheckOk' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /admin/users/{id}/verification/{type}/reject:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+      - $ref: '#/components/parameters/KycCheckType'
+    post:
+      tags: [KYC Review]
+      operationId: rejectVerification
+      summary: Reject a verification check
+      description: Marks the check failed, with an optional note explaining the decision.
+      x-required-permission: 'kyc:approve'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReviewCheckRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/KycCheckOk' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /admin/users/{id}/verification/{type}/request-reverification:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+      - $ref: '#/components/parameters/KycCheckType'
+    post:
+      tags: [KYC Review]
+      operationId: requestReverification
+      summary: Ask the user to re-verify a check
+      description: Puts the check back into a state the user must action, without discarding the existing record.
+      x-required-permission: 'kyc:edit'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReviewCheckRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/KycCheckOk' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /admin/users/{id}/verification/{type}/reset:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+      - $ref: '#/components/parameters/KycCheckType'
+    post:
+      tags: [KYC Review]
+      operationId: resetVerification
+      summary: Reset a verification check
+      description: |
+        Clears the check back to `not_started`, discarding the prior result.
+        The most destructive KYC action, and the only one requiring `kyc:manage`.
+      x-required-permission: 'kyc:manage'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReviewCheckRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/KycCheckOk' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ===========================================================================
+  # Case Notes
+  # ===========================================================================
+
+  /admin/users/{id}/case-notes:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [Case Notes]
+      operationId: listCaseNotes
+      summary: Case notes on a user
+      description: Newest first, with the authoring admin resolved. Visible to any admin with `users:view`.
+      x-required-permission: 'users:view'
+      responses:
+        '200': { $ref: '#/components/responses/CaseNoteListOk' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Case Notes]
+      operationId: addCaseNote
+      summary: Add a case note
+      description: |
+        **Append-only** — a note is part of the record of a review and is never
+        edited or deleted. Returns the full list. Categorised so compliance and
+        support notes are separable.
+      x-required-permission: 'users:create'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CaseNoteRequest' }
+      responses:
+        '201': { $ref: '#/components/responses/CaseNoteListOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+# =============================================================================
+# Components
+# =============================================================================
+
+components:
+
+  securitySchemes:
+    adminToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Token from `POST /admin/auth/login`, carrying `type: "admin_access"` and
+        `sub` = `admins.id`. Enforced by `AdminAuthGuard`. Shares a signing
+        secret with the consumer API — see `admin-api-rfc.md` §4.1.
+
+  parameters:
+    AdminId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    RoleId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    UserId:
+      name: id
+      in: path
+      required: true
+      description: A consumer `users.id`.
+      schema: { type: string, format: uuid }
+    KycCheckType:
+      name: type
+      in: path
+      required: true
+      schema: { type: string, enum: [phone, email, bvn, liveness, address] }
+    Page:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 1, default: 1 }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    Search:
+      name: search
+      in: query
+      schema: { type: string, minLength: 1, maxLength: 200 }
+
+  responses:
+    BadRequest:
+      description: 'Validation failure (`validation_error`) with a `details[]` array.'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    Forbidden:
+      description: |
+        Authenticated but the caller's role lacks the required module+action
+        (`insufficient_permission`). The message names both, e.g.
+        `Missing "approve" permission on "kyc"`.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    NotFound:
+      description: 'Record not found (`record_not_found`).'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    UserActionOk:
+      description: The action, as recorded in the user's lifecycle history.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/AdminUserAction' }
+    KycCheckOk:
+      description: The updated check.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/KycCheck' }
+    CaseNoteListOk:
+      description: Case notes, newest first.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/CaseNote' }
+
+  schemas:
+
+    SuccessEnvelope:
+      type: object
+      required: [success, message, timestamp]
+      properties:
+        success: { type: boolean, const: true }
+        message: { type: string }
+        data: {}
+        meta: { $ref: '#/components/schemas/PaginationMeta' }
+        timestamp: { type: string, format: date-time }
+
+    ErrorEnvelope:
+      type: object
+      required: [success, message, timestamp]
+      properties:
+        success: { type: boolean, const: false }
+        message: { type: string }
+        error: { type: string, example: insufficient_permission }
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              path: { type: string }
+              message: { type: string }
+        timestamp: { type: string, format: date-time }
+
+    PaginationMeta:
+      type: object
+      properties:
+        total: { type: integer }
+        current_page: { type: integer }
+        limit: { type: integer }
+        total_pages: { type: integer }
+        has_next_page: { type: boolean }
+        has_prev_page: { type: boolean }
+
+    AdminSession:
+      type: object
+      properties:
+        access_token: { type: string }
+        admin: { $ref: '#/components/schemas/AdminAccount' }
+
+    AdminAccount:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        full_name: { type: string }
+        email: { type: string, format: email }
+        status: { type: string, enum: [invited, active, inactive] }
+        role:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/RoleSummary'
+        access_level:
+          type: string
+          enum: [full, limited, read_only]
+          description: Derived from the role's permission matrix, never stored.
+        last_login_at: { type: [string, 'null'], format: date-time }
+        created_at: { type: string, format: date-time }
+
+    RoleSummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, example: Compliance }
+
+    Role:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: [string, 'null'] }
+        status: { type: string, enum: [active, inactive] }
+        access_level: { type: string, enum: [full, limited, read_only] }
+        admin_count: { type: integer }
+        permissions:
+          type: array
+          items: { $ref: '#/components/schemas/PermissionRow' }
+        created_at: { type: string, format: date-time }
+
+    PermissionRow:
+      type: object
+      description: One row per module. `can_manage` is a superset flag satisfying any action check for that module.
+      properties:
+        module: { $ref: '#/components/schemas/AdminModule' }
+        can_view: { type: boolean }
+        can_create: { type: boolean }
+        can_edit: { type: boolean }
+        can_delete: { type: boolean }
+        can_approve: { type: boolean }
+        can_export: { type: boolean }
+        can_manage: { type: boolean }
+
+    AdminModule:
+      type: string
+      enum: [dashboard, users, chats, wallets, transactions, kyc, reports, analytics, roles_permissions, admin_accounts, system_settings]
+
+    AdminUserSummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        phone: { type: string }
+        email: { type: [string, 'null'], format: email }
+        full_name: { type: [string, 'null'] }
+        username: { type: [string, 'null'] }
+        country_code: { type: [string, 'null'] }
+        account_type: { type: [string, 'null'], enum: [chat_only, chat_banking, null] }
+        status: { type: string, enum: [active, restricted, suspended, deleting, deleted] }
+        verification: { type: string, enum: [verified, pending, failed] }
+        wallet: { type: string, enum: [none, active, frozen, closed] }
+        joined_at: { type: string, format: date-time }
+
+    AdminUserDetail:
+      description: The list projection plus onboarding progress and wallet detail. Verification detail is deliberately excluded — see `GET /admin/users/{id}/verification`.
+      allOf:
+        - $ref: '#/components/schemas/AdminUserSummary'
+        - type: object
+          properties:
+            onboarding_step: { type: string }
+            kyc_level: { type: integer }
+            pin_set: { type: boolean }
+            biometrics_enabled: { type: boolean }
+            wallets:
+              type: array
+              items:
+                type: object
+                properties:
+                  id: { type: string, format: uuid }
+                  currency: { type: string }
+                  balance: { type: string }
+                  status: { type: string }
+
+    AdminUserAction:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        action: { type: string, enum: [suspend, restrict, activate, deactivate] }
+        reason: { $ref: '#/components/schemas/AdminActionReason' }
+        note: { type: [string, 'null'] }
+        performed_by:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/AdminSummary'
+        created_at: { type: string, format: date-time }
+
+    AdminActionReason:
+      type: string
+      enum: [suspected_account_compromise, repeated_policy_violations, fraud_investigation, compliance_review, regulatory_or_legal_request, other]
+
+    AdminSummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        full_name: { type: string }
+        email: { type: string, format: email }
+
+    KycCheck:
+      type: object
+      properties:
+        type: { type: string, enum: [phone, email, bvn, liveness, address] }
+        status: { type: string, enum: [not_started, pending, verified, failed] }
+        masked_value:
+          type: [string, 'null']
+          description: 'Masked per policy, e.g. `123*****901`. Reveal via the unmask route, which is logged.'
+        provider: { type: [string, 'null'] }
+        reviewed_by:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/AdminSummary'
+        note: { type: [string, 'null'] }
+        updated_at: { type: string, format: date-time }
+
+    CaseNote:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        category: { type: string, enum: [compliance, fraud, support, kyc, other] }
+        body: { type: string, maxLength: 4000 }
+        author:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/AdminSummary'
+        created_at: { type: string, format: date-time }
+
+    RecentSearch:
+      type: object
+      properties:
+        term: { type: string }
+        searched_at: { type: string, format: date-time }
+
+    # --- Request bodies (camelCase) --- #
+
+    AdminLoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 1, maxLength: 200 }
+
+    AcceptInviteRequest:
+      type: object
+      required: [adminId, token, password]
+      properties:
+        adminId: { type: string, format: uuid }
+        token: { type: string, minLength: 1, maxLength: 200 }
+        password: { type: string, minLength: 8, maxLength: 200 }
+
+    InviteAdminRequest:
+      type: object
+      required: [fullName, email, roleId]
+      properties:
+        fullName: { type: string, minLength: 1, maxLength: 200 }
+        email: { type: string, format: email }
+        roleId: { type: string, format: uuid }
+
+    UpdateAdminAccountRequest:
+      type: object
+      description: At least one field required.
+      minProperties: 1
+      properties:
+        roleId: { type: string, format: uuid }
+        status: { type: string, enum: [active, inactive] }
+
+    PermissionRowRequest:
+      type: object
+      required: [module]
+      properties:
+        module: { $ref: '#/components/schemas/AdminModule' }
+        canView: { type: boolean, default: false }
+        canCreate: { type: boolean, default: false }
+        canEdit: { type: boolean, default: false }
+        canDelete: { type: boolean, default: false }
+        canApprove: { type: boolean, default: false }
+        canExport: { type: boolean, default: false }
+        canManage: { type: boolean, default: false }
+
+    CreateRoleRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        description: { type: string, maxLength: 2000 }
+        permissions:
+          type: array
+          maxItems: 11
+          default: []
+          items: { $ref: '#/components/schemas/PermissionRowRequest' }
+        adminIds:
+          type: array
+          maxItems: 500
+          default: []
+          items: { type: string, format: uuid }
+
+    UpdateRoleRequest:
+      type: object
+      description: At least one field required.
+      minProperties: 1
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        description: { type: string, maxLength: 2000 }
+        status: { type: string, enum: [active, inactive] }
+        permissions:
+          type: array
+          maxItems: 11
+          items: { $ref: '#/components/schemas/PermissionRowRequest' }
+
+    AssignAdminsRequest:
+      type: object
+      required: [adminIds]
+      properties:
+        adminIds:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items: { type: string, format: uuid }
+
+    UserActionRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason: { $ref: '#/components/schemas/AdminActionReason' }
+        note: { type: string, maxLength: 2000 }
+
+    ReviewCheckRequest:
+      type: object
+      properties:
+        note: { type: string, maxLength: 2000 }
+
+    CaseNoteRequest:
+      type: object
+      required: [body]
+      properties:
+        category: { type: string, enum: [compliance, fraud, support, kyc, other], default: other }
+        body: { type: string, minLength: 1, maxLength: 4000 }
+
+    RecordSearchRequest:
+      type: object
+      required: [term]
+      properties:
+        term: { type: string, minLength: 1, maxLength: 200 }

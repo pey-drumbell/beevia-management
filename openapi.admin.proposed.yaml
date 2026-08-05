@@ -1,0 +1,1298 @@
+openapi: 3.1.0
+
+# =============================================================================
+# Beevia Admin API — PROPOSED SURFACE  (NOT IMPLEMENTED)
+#
+#   ####################################################################
+#   #  NOTHING IN THIS FILE EXISTS YET.                                #
+#   #  Every operation below returns 404 against beevia-admin-api.     #
+#   #  Do NOT generate production clients from this file.              #
+#   ####################################################################
+#
+# These operations cover the five dashboard modules specified in
+# "Beevia Admin Dashboard.md" that have no code, plus the capabilities missing
+# from the two modules that are only partially built.
+#
+# Coverage of the spec's 8 modules today:
+#   1. Authentication & Access Control ... PARTIAL — no 2FA (spec says mandatory)
+#   2. Admin Account Management ......... BUILT
+#   3. User Management & Support Tools ... PARTIAL — no assisted PIN reset
+#   4. Trust & Safety / Moderation ...... NOT BUILT   ← see the E2EE note below
+#   5. Transaction & Wallet Oversight ... NOT BUILT
+#   6. Country & Feature Configuration .. NOT BUILT
+#   7. Analytics & Reporting ............ NOT BUILT
+#   8. Account Deletion Requests ........ NOT BUILT
+#
+# ---------------------------------------------------------------------------
+# LOAD-BEARING CONSTRAINT: Module 4 cannot be built as specified.
+#
+# The spec asks the moderation queue to show "reported messages". Beevia's chat
+# is genuinely end-to-end encrypted — the server stores ciphertext and per-device
+# envelopes and holds no key that can decrypt them. The PRD states this directly
+# (§1.5: E2EE "limits any form of message moderation") and §2.2 commits that
+# Beevia "is not a content policing platform".
+#
+# No endpoint can return message content. What is proposed instead is a queue
+# built on report *metadata* plus any plaintext excerpt the REPORTING USER
+# voluntarily attaches from their own device at report time — which requires a
+# corresponding change on the consumer side (see admin-api-rfc.md §5.1).
+# ---------------------------------------------------------------------------
+#
+# The live surface is openapi.admin.yaml. To ship an operation from this file,
+# MOVE it there — do not copy, and do not leave it in both.
+#
+# Self-contained on purpose: schemas shared with the live surface are duplicated
+# here rather than $ref'd across files, so this opens in Swagger UI without a
+# bundling step. Keep shared definitions identical when either changes.
+#
+# Companion documents (same directory):
+#   openapi.admin.yaml         — the implemented admin surface
+#   admin-api-rfc.md           — rationale, module gap analysis, sequencing
+#   Beevia Admin Dashboard.md  — the product spec
+# =============================================================================
+
+info:
+  title: Beevia Admin API — Proposed Surface
+  version: 0.1.0-draft
+  summary: Designed but NOT IMPLEMENTED. Every operation here returns 404 today.
+  description: |
+    **None of these endpoints exist.** This is a design artifact, not a contract.
+
+    Conventions are inherited from `openapi.admin.yaml`: `/api/v1` prefix, the
+    `{ success, message, data, meta, timestamp }` envelope, snake_case responses,
+    camelCase request bodies, `AdminAuthGuard` + `PermissionGuard`, and a
+    `module:action` permission on every route.
+
+    Proposed routes reuse the existing `admin_module` enum wherever possible —
+    `reports`, `transactions`, `wallets`, `analytics`, `system_settings` and
+    `dashboard` are already declared in the enum with no routes behind them.
+
+  contact:
+    name: Beevia Engineering
+  license:
+    name: UNLICENSED
+
+servers:
+  - url: http://localhost:3001/api/v1
+    description: Local development
+
+security:
+  - adminToken: []
+
+tags:
+  - name: Admin Auth
+    description: Two-factor enrolment and verification. Mandatory per spec Module 1.
+  - name: User Management
+    description: Support capabilities missing from the built module.
+  - name: Trust & Safety
+    description: Moderation queue. Constrained by E2EE — see the file header.
+  - name: Transaction Oversight
+    description: Wallet and ledger visibility, plus partner reconciliation.
+  - name: Configuration
+    description: Country gating and feature flags.
+  - name: Analytics
+    description: Signup, funnel and engagement reporting.
+  - name: Deletion Requests
+    description: The deletion queue and retention visibility.
+
+paths:
+
+  # ===========================================================================
+  # Module 1 — Authentication & Access Control  (PARTIAL: 2FA missing)
+  # ===========================================================================
+
+  /admin/auth/2fa/enrol:
+    post:
+      tags: [Admin Auth]
+      operationId: enrolTwoFactor
+      summary: Begin 2FA enrolment
+      description: |
+        Returns a TOTP secret and provisioning URI for an authenticator app.
+
+        The dashboard spec lists "Mandatory two-factor authentication (2FA) for
+        every admin account" as a key capability of Module 1. `AdminAuthService`
+        states plainly that there is none — the admin API is currently protected
+        by email and password alone, for accounts that can read BVNs and suspend
+        users. This is the highest-severity gap in the admin surface.
+
+        Enrolment should be forced on first login and non-optional thereafter.
+      externalDocs:
+        description: 'Beevia Admin Dashboard.md — Module 1'
+        url: ./Beevia%20Admin%20Dashboard.md
+      responses:
+        '200':
+          description: Enrolment secret issued.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/TwoFactorEnrolment' }
+
+  /admin/auth/2fa/verify:
+    post:
+      tags: [Admin Auth]
+      operationId: verifyTwoFactor
+      summary: Confirm 2FA enrolment
+      description: Validates the first TOTP code and activates 2FA on the account, returning single-use recovery codes.
+      externalDocs:
+        description: 'Beevia Admin Dashboard.md — Module 1'
+        url: ./Beevia%20Admin%20Dashboard.md
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TotpCodeRequest' }
+      responses:
+        '200':
+          description: 2FA active; recovery codes returned once.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          recovery_codes:
+                            type: array
+                            items: { type: string }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /admin/auth/2fa/challenge:
+    post:
+      tags: [Admin Auth]
+      operationId: challengeTwoFactor
+      summary: Complete login with a TOTP code
+      description: |
+        Second leg of sign-in. `POST /admin/auth/login` should be changed to
+        return a short-lived challenge token rather than a full `admin_access`
+        token; this route exchanges that plus a valid TOTP code for the real
+        session.
+      security: []
+      externalDocs:
+        description: 'Beevia Admin Dashboard.md — Module 1'
+        url: ./Beevia%20Admin%20Dashboard.md
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TwoFactorChallengeRequest' }
+      responses:
+        '200':
+          description: Session issued.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          access_token: { type: string }
+        '401':
+          description: Bad or expired challenge, or wrong code.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  # ===========================================================================
+  # Module 3 — User Management  (PARTIAL: assisted PIN reset missing)
+  # ===========================================================================
+
+  /admin/users/{id}/pin-reset:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    post:
+      tags: [User Management]
+      operationId: initiatePinReset
+      summary: Initiate assisted PIN reset
+      description: |
+        The spec gives the Support role "initiate assisted PIN reset" as a core
+        capability; no route exists, and the consumer API has no
+        admin-initiated reset path either.
+
+        Deliberately **initiates** rather than sets: the admin triggers a
+        verification flow the user completes on their own device, so staff never
+        learn or choose a customer's PIN. Recorded in the user's lifecycle
+        history like any other account action.
+      x-required-permission: 'users:edit'
+      externalDocs:
+        description: 'Beevia Admin Dashboard.md — Module 3 (Support role)'
+        url: ./Beevia%20Admin%20Dashboard.md
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserActionRequest' }
+      responses:
+        '200':
+          description: Reset initiated; the user must complete it on their device.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          initiated: { type: boolean }
+                          expires_at: { type: string, format: date-time }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  # ===========================================================================
+  # Module 4 — Trust & Safety / Content Moderation  (NOT BUILT)
+  #
+  # See the file header: message content is unavailable to the server by
+  # construction. These endpoints expose report metadata only.
+  # ===========================================================================
+
+  /admin/reports:
+    get:
+      tags: [Trust & Safety]
+      operationId: listReports
+      summary: Moderation queue
+      description: |
+        Reported conversations awaiting review. The `conversation_reports` table
+        already exists and is populated by the consumer app's
+        `POST /conversations/{id}/report`, but nothing reads it — reports
+        currently accumulate with no queue and no reviewer.
+
+        **Returns metadata only**: who reported whom, when, the free-text reason
+        the reporter typed, and the reported user's history. Message content is
+        not available and no endpoint can make it available.
+      x-required-permission: 'reports:view'
+      externalDocs:
+        description: 'Beevia Admin Dashboard.md — Module 4'
+        url: ./Beevia%20Admin%20Dashboard.md
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - name: status
+          in: query
+          schema: { type: string, enum: [open, reviewing, actioned, dismissed] }
+      responses:
+        '200':
+          description: Paginated reports.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Report' }
+                      meta: { $ref: '#/components/schemas/PaginationMeta' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/reports/{reportId}:
+    parameters:
+      - $ref: '#/components/parameters/ReportId'
+    get:
+      tags: [Trust & Safety]
+      operationId: getReport
+      summary: Report detail
+      description: |
+        Everything available to assess a report:
+
+        * the reporting and reported users, with their account status and prior
+          report history on both sides,
+        * the reason text the reporter supplied,
+        * conversation metadata — type, member count, message volume, first and
+          last activity,
+        * `reporter_excerpts`: plaintext the **reporter** chose to attach from
+          their own device at report time. Empty unless the consumer app is
+          changed to offer this (see `admin-api-rfc.md` §5.1).
+
+        There is deliberately no field for server-decrypted content.
+      x-required-permission: 'reports:view'
+      externalDocs:
+        description: 'Beevia Admin Dashboard.md — Module 4'
+        url: ./Beevia%20Admin%20Dashboard.md
+      responses:
+        '200':
+          description: Report detail.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/ReportDetail' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /admin/reports/{reportId}/resolve:
+    parameters:
+      - $ref: '#/components/parameters/ReportId'
+    post:
+      tags: [Trust & Safety]
+      operationId: resolveReport
+      summary: Action a report
+      description: |
+        Closes the report with an outcome: `warn`, `suspend`, `ban` or `dismiss`.
+        Suspension and ban delegate to the existing account-action routes so
+        there is one lifecycle path and one audit trail, rather than a second way
+        to suspend an account.
+      x-required-permission: 'reports:approve'
+      externalDocs:
+        description: 'Beevia Admin Dashboard.md — Module 4'
+        url: ./Beevia%20Admin%20Dashboard.md
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ResolveReportRequest' }
+      responses:
+        '200':
+          description: Report resolved.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Report' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  # ===========================================================================
+  # Module 5 — Transaction & Wallet Oversight  (NOT BUILT)
+  # ===========================================================================
+
+  /admin/users/{id}/wallets:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [Transaction Oversight]
+      operationId: getUserWallets
+      summary: A user's wallets
+      description: |
+        Balances and virtual-account detail per wallet, with the ledger balance
+        shown alongside the partner-reported balance so a mismatch is visible at
+        a glance rather than requiring a manual reconciliation run.
+      x-required-permission: 'wallets:view'
+      externalDocs:
+        description: 'Beevia Admin Dashboard.md — Module 5'
+        url: ./Beevia%20Admin%20Dashboard.md
+      responses:
+        '200':
+          description: The user's wallets.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/AdminWallet' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/users/{id}/transactions:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [Transaction Oversight]
+      operationId: getUserTransactions
+      summary: A user's transaction history
+      description: |
+        Paginated ledger history across all of a user's wallets, filterable by
+        direction, kind and date. This is what the spec means by "investigate a
+        specific user's transaction history if a dispute or regulatory inquiry
+        comes in".
+      x-required-permission: 'transactions:view'
+      externalDocs:
+        description: 'Beevia Admin Dashboard.md — Module 5'
+        url: ./Beevia%20Admin%20Dashboard.md
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - name: direction
+          in: query
+          schema: { type: string, enum: [credit, debit] }
+        - name: from
+          in: query
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: Paginated ledger entries.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/AdminLedgerEntry' }
+                      meta: { $ref: '#/components/schemas/PaginationMeta' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/transactions/{transactionId}/flag:
+    parameters:
+      - name: transactionId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [Transaction Oversight]
+      operationId: flagTransaction
+      summary: Flag suspicious activity
+      description: |
+        Marks a transaction for investigation with a reason and note. Flagging is
+        an annotation, never a mutation — it does not reverse, hold or alter the
+        ledger entry. Reversals must go through the consumer API's ledger
+        primitives so there is a single implementation of money movement.
+      x-required-permission: 'transactions:edit'
+      externalDocs:
+        description: 'Beevia Admin Dashboard.md — Module 5'
+        url: ./Beevia%20Admin%20Dashboard.md
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FlagTransactionRequest' }
+      responses:
+        '200':
+          description: Flagged.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/AdminLedgerEntry' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/reconciliation:
+    get:
+      tags: [Transaction Oversight]
+      operationId: getReconciliation
+      summary: Partner reconciliation report
+      description: |
+        Compares Beevia's ledger against the banking partner's records for a
+        period and lists the discrepancies: entries the ledger has and the
+        partner does not, the reverse, and amount mismatches.
+
+        The spec frames this as answering "does this user's balance match what
+        the banking partner's records say". Note the dependency: this needs a
+        statement or balance-report call on the partner adapter, which does not
+        exist in the consumer API today either.
+      x-required-permission: 'transactions:view'
+      externalDocs:
+        description: 'Beevia Admin Dashboard.md — Module 5'
+        url: ./Beevia%20Admin%20Dashboard.md
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: to
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: currency
+          in: query
+          schema: { type: string, default: NGN }
+      responses:
+        '200':
+          description: Reconciliation result.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/ReconciliationReport' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  # ===========================================================================
+  # Module 6 — Country & Feature Configuration  (NOT BUILT)
+  # ===========================================================================
+
+  /admin/countries:
+    get:
+      tags: [Configuration]
+      operationId: listCountries
+      summary: Country configuration
+      description: |
+        Which countries have Chat + Banking enabled, and therefore which
+        onboarding paths their users are offered.
+
+        The spec's motivation is explicit: "Expanding banking to a second country
+        requires an engineering release." Today that is accurate — country
+        eligibility is not modelled anywhere, and currency/provider routing lives
+        in `currency_provider_configs`, which is documented as admin-managed but
+        has no admin route in either service.
+      x-required-permission: 'system_settings:view'
+      externalDocs:
+        description: 'Beevia Admin Dashboard.md — Module 6'
+        url: ./Beevia%20Admin%20Dashboard.md
+      responses:
+        '200':
+          description: Country configuration.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/CountryConfig' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/countries/{code}:
+    parameters:
+      - name: code
+        in: path
+        required: true
+        schema: { type: string, minLength: 2, maxLength: 2 }
+    patch:
+      tags: [Configuration]
+      operationId: updateCountryConfig
+      summary: Toggle banking for a country
+      description: |
+        Enables or disables Chat + Banking for a country without a code change.
+        Disabling should gate **new** onboarding and wallet creation only —
+        existing wallets and balances must be unaffected, or a toggle becomes a
+        way to strand customer funds.
+      x-required-permission: 'system_settings:edit'
+      externalDocs:
+        description: 'Beevia Admin Dashboard.md — Module 6'
+        url: ./Beevia%20Admin%20Dashboard.md
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateCountryConfigRequest' }
+      responses:
+        '200':
+          description: Updated.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/CountryConfig' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/feature-flags:
+    get:
+      tags: [Configuration]
+      operationId: listFeatureFlags
+      summary: List feature flags
+      description: The spec designates this module as the general home for feature flags — "a new country, a beta feature, a gradual rollout" — as the product grows.
+      x-required-permission: 'system_settings:view'
+      externalDocs:
+        description: 'Beevia Admin Dashboard.md — Module 6'
+        url: ./Beevia%20Admin%20Dashboard.md
+      responses:
+        '200':
+          description: Feature flags.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/FeatureFlag' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/feature-flags/{key}:
+    parameters:
+      - name: key
+        in: path
+        required: true
+        schema: { type: string }
+    patch:
+      tags: [Configuration]
+      operationId: updateFeatureFlag
+      summary: Update a feature flag
+      description: Toggle globally, or scope to a country list or a percentage rollout.
+      x-required-permission: 'system_settings:edit'
+      externalDocs:
+        description: 'Beevia Admin Dashboard.md — Module 6'
+        url: ./Beevia%20Admin%20Dashboard.md
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateFeatureFlagRequest' }
+      responses:
+        '200':
+          description: Updated.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/FeatureFlag' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  # ===========================================================================
+  # Module 7 — Analytics & Reporting  (NOT BUILT)
+  # ===========================================================================
+
+  /admin/analytics/signups:
+    get:
+      tags: [Analytics]
+      operationId: getSignupAnalytics
+      summary: Signups over time
+      description: Registration counts bucketed by day, week or month, optionally split by country and account type.
+      x-required-permission: 'analytics:view'
+      externalDocs:
+        description: 'Beevia Admin Dashboard.md — Module 7'
+        url: ./Beevia%20Admin%20Dashboard.md
+      parameters:
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+        - $ref: '#/components/parameters/Interval'
+      responses:
+        '200': { $ref: '#/components/responses/TimeSeriesOk' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/analytics/onboarding-funnel:
+    get:
+      tags: [Analytics]
+      operationId: getOnboardingFunnel
+      summary: Onboarding funnel drop-off
+      description: |
+        Count and conversion rate at each `onboarding_step`, so the team can see
+        where users abandon. The `onboarding_step` enum already models the whole
+        state machine, so this is a query over existing data rather than new
+        instrumentation.
+      x-required-permission: 'analytics:view'
+      externalDocs:
+        description: 'Beevia Admin Dashboard.md — Module 7'
+        url: ./Beevia%20Admin%20Dashboard.md
+      parameters:
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+      responses:
+        '200':
+          description: Funnel stages in order.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/FunnelStage' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/analytics/path-split:
+    get:
+      tags: [Analytics]
+      operationId: getPathSplit
+      summary: Chat Only vs Chat + Banking split
+      description: The distribution of `user_path` over time, including users who upgraded via `/upgrade/*` after initially choosing chat-only.
+      x-required-permission: 'analytics:view'
+      externalDocs:
+        description: 'Beevia Admin Dashboard.md — Module 7'
+        url: ./Beevia%20Admin%20Dashboard.md
+      parameters:
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+        - $ref: '#/components/parameters/Interval'
+      responses:
+        '200': { $ref: '#/components/responses/TimeSeriesOk' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/analytics/engagement:
+    get:
+      tags: [Analytics]
+      operationId: getEngagementAnalytics
+      summary: Message and call volume
+      description: |
+        Message and call counts over time. **Counts only** — this reads message
+        and call *metadata* rows, never content, which the server cannot read in
+        any case.
+      x-required-permission: 'analytics:view'
+      externalDocs:
+        description: 'Beevia Admin Dashboard.md — Module 7'
+        url: ./Beevia%20Admin%20Dashboard.md
+      parameters:
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+        - $ref: '#/components/parameters/Interval'
+      responses:
+        '200': { $ref: '#/components/responses/TimeSeriesOk' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/analytics/overview:
+    get:
+      tags: [Analytics]
+      operationId: getDashboardOverview
+      summary: Dashboard landing metrics
+      description: |
+        Headline counters for the dashboard home — total and active users, the
+        path split, wallets provisioned, transaction volume, and the open
+        report and deletion queues. Uses the `dashboard` permission module, which
+        exists in the enum with no routes behind it.
+      x-required-permission: 'dashboard:view'
+      externalDocs:
+        description: 'Beevia Admin Dashboard.md — Module 7'
+        url: ./Beevia%20Admin%20Dashboard.md
+      responses:
+        '200':
+          description: Overview counters.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/DashboardOverview' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  # ===========================================================================
+  # Module 8 — Account Deletion Requests  (NOT BUILT)
+  # ===========================================================================
+
+  /admin/deletion-requests:
+    get:
+      tags: [Deletion Requests]
+      operationId: listDeletionRequests
+      summary: Deletion queue
+      description: |
+        Pending and completed account deletions. The `user_status` enum already
+        has a `deleting` state, and the consumer API's `DELETE /users/me` moves
+        accounts into it, but nothing surfaces the queue — so no one can confirm
+        a deletion completed rather than silently failing.
+
+        The PRD tracks completion within 5 days as a compliance KPI, which is
+        unmeasurable without this.
+      x-required-permission: 'users:view'
+      externalDocs:
+        description: 'Beevia Admin Dashboard.md — Module 8'
+        url: ./Beevia%20Admin%20Dashboard.md
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - name: status
+          in: query
+          schema: { type: string, enum: [pending, in_progress, completed, blocked] }
+      responses:
+        '200':
+          description: Paginated deletion requests.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/DeletionRequest' }
+                      meta: { $ref: '#/components/schemas/PaginationMeta' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/deletion-requests/{requestId}:
+    parameters:
+      - name: requestId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Deletion Requests]
+      operationId: getDeletionRequest
+      summary: Deletion request detail
+      description: |
+        Per-partner deletion progress plus what is being **retained** and why —
+        the spec's requirement that Compliance can see "financial and KYC records
+        are being retained appropriately even after a user's account is gone",
+        and that messages left in other users' conversations are accounted for.
+      x-required-permission: 'users:view'
+      externalDocs:
+        description: 'Beevia Admin Dashboard.md — Module 8'
+        url: ./Beevia%20Admin%20Dashboard.md
+      responses:
+        '200':
+          description: Deletion detail.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/DeletionRequestDetail' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /admin/deletion-requests/{requestId}/confirm:
+    parameters:
+      - name: requestId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [Deletion Requests]
+      operationId: confirmDeletion
+      summary: Confirm a deletion completed
+      description: |
+        Records an explicit sign-off that a deletion finished, with the admin id
+        and timestamp. The spec asks for "a way to confirm a deletion completed,
+        for audit purposes" — an auditor needs a human attestation, not only a
+        job status.
+      x-required-permission: 'users:manage'
+      externalDocs:
+        description: 'Beevia Admin Dashboard.md — Module 8'
+        url: ./Beevia%20Admin%20Dashboard.md
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ConfirmDeletionRequest' }
+      responses:
+        '200':
+          description: Confirmed.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/DeletionRequestDetail' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: Deletion has not finished yet.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+# =============================================================================
+# Components
+# =============================================================================
+
+components:
+
+  securitySchemes:
+    adminToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    UserId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    ReportId:
+      name: reportId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    Page:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 1, default: 1 }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    From:
+      name: from
+      in: query
+      schema: { type: string, format: date }
+    To:
+      name: to
+      in: query
+      schema: { type: string, format: date }
+    Interval:
+      name: interval
+      in: query
+      schema: { type: string, enum: [day, week, month], default: day }
+
+  responses:
+    BadRequest:
+      description: Validation failure.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    Forbidden:
+      description: 'Role lacks the required module+action (`insufficient_permission`).'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    NotFound:
+      description: Not found.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    TimeSeriesOk:
+      description: Bucketed time series.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/TimeSeriesPoint' }
+
+  schemas:
+
+    SuccessEnvelope:
+      type: object
+      required: [success, message, timestamp]
+      properties:
+        success: { type: boolean, const: true }
+        message: { type: string }
+        data: {}
+        meta: { $ref: '#/components/schemas/PaginationMeta' }
+        timestamp: { type: string, format: date-time }
+
+    ErrorEnvelope:
+      type: object
+      required: [success, message, timestamp]
+      properties:
+        success: { type: boolean, const: false }
+        message: { type: string }
+        error: { type: string, example: insufficient_permission }
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              path: { type: string }
+              message: { type: string }
+        timestamp: { type: string, format: date-time }
+
+    AdminActionReason:
+      type: string
+      enum: [suspected_account_compromise, repeated_policy_violations, fraud_investigation, compliance_review, regulatory_or_legal_request, other]
+
+    PaginationMeta:
+      type: object
+      properties:
+        total: { type: integer }
+        current_page: { type: integer }
+        limit: { type: integer }
+        total_pages: { type: integer }
+        has_next_page: { type: boolean }
+        has_prev_page: { type: boolean }
+
+    AdminSummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        full_name: { type: string }
+        email: { type: string, format: email }
+
+    UserSummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        phone: { type: string }
+        username: { type: [string, 'null'] }
+        full_name: { type: [string, 'null'] }
+        status: { type: string }
+
+    TwoFactorEnrolment:
+      type: object
+      properties:
+        secret: { type: string }
+        otpauth_uri: { type: string, description: 'Provisioning URI for an authenticator app.' }
+
+    Report:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        conversation_id: { type: string, format: uuid }
+        reporter: { $ref: '#/components/schemas/UserSummary' }
+        reported_user: { $ref: '#/components/schemas/UserSummary' }
+        reason: { type: [string, 'null'], maxLength: 2000, description: Free text the reporter supplied. }
+        status: { type: string, enum: [open, reviewing, actioned, dismissed] }
+        outcome: { type: [string, 'null'], enum: [warn, suspend, ban, dismiss, null] }
+        reviewed_by:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/AdminSummary'
+        created_at: { type: string, format: date-time }
+        resolved_at: { type: [string, 'null'], format: date-time }
+
+    ReportDetail:
+      allOf:
+        - $ref: '#/components/schemas/Report'
+        - type: object
+          properties:
+            reporter_prior_reports: { type: integer, description: How many reports this user has filed before. }
+            reported_prior_reports: { type: integer, description: How many times this user has been reported before. }
+            conversation:
+              type: object
+              description: Metadata only — no content.
+              properties:
+                type: { type: string, enum: [direct, group] }
+                member_count: { type: integer }
+                message_count: { type: integer }
+                first_message_at: { type: [string, 'null'], format: date-time }
+                last_message_at: { type: [string, 'null'], format: date-time }
+            reporter_excerpts:
+              type: array
+              description: |
+                Plaintext the reporter voluntarily attached from their own device
+                at report time. Empty until the consumer app offers this. The
+                server can never populate this itself.
+              items:
+                type: object
+                properties:
+                  message_id: { type: string, format: uuid }
+                  text: { type: string }
+                  sent_at: { type: string, format: date-time }
+
+    AdminWallet:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        currency: { type: string }
+        ledger_balance: { type: string, description: Beevia's own ledger balance. }
+        partner_balance: { type: [string, 'null'], description: As reported by the banking partner. Null when unavailable. }
+        in_sync: { type: [boolean, 'null'] }
+        status: { type: string }
+        virtual_account:
+          oneOf:
+            - type: 'null'
+            - type: object
+              properties:
+                account_number: { type: string }
+                bank_name: { type: string }
+
+    AdminLedgerEntry:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        wallet_id: { type: string, format: uuid }
+        direction: { type: string, enum: [credit, debit] }
+        amount: { type: string }
+        balance_after: { type: string }
+        counterparty:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/UserSummary'
+        provider_reference: { type: [string, 'null'] }
+        flagged: { type: boolean }
+        flag_reason: { type: [string, 'null'] }
+        created_at: { type: string, format: date-time }
+
+    ReconciliationReport:
+      type: object
+      properties:
+        from: { type: string, format: date }
+        to: { type: string, format: date }
+        currency: { type: string }
+        ledger_total: { type: string }
+        partner_total: { type: string }
+        in_sync: { type: boolean }
+        discrepancies:
+          type: array
+          items:
+            type: object
+            properties:
+              kind: { type: string, enum: [missing_in_partner, missing_in_ledger, amount_mismatch] }
+              reference: { type: string }
+              ledger_amount: { type: [string, 'null'] }
+              partner_amount: { type: [string, 'null'] }
+              occurred_at: { type: string, format: date-time }
+
+    CountryConfig:
+      type: object
+      properties:
+        code: { type: string, minLength: 2, maxLength: 2 }
+        name: { type: string }
+        chat_enabled: { type: boolean }
+        banking_enabled: { type: boolean }
+        currency: { type: [string, 'null'] }
+        updated_by:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/AdminSummary'
+        updated_at: { type: string, format: date-time }
+
+    FeatureFlag:
+      type: object
+      properties:
+        key: { type: string, example: fx_quotes }
+        description: { type: [string, 'null'] }
+        enabled: { type: boolean }
+        countries:
+          type: array
+          description: Empty means all countries.
+          items: { type: string }
+        rollout_percentage: { type: [integer, 'null'], minimum: 0, maximum: 100 }
+        updated_by:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/AdminSummary'
+        updated_at: { type: string, format: date-time }
+
+    TimeSeriesPoint:
+      type: object
+      properties:
+        bucket: { type: string, format: date }
+        value: { type: integer }
+        series: { type: [string, 'null'], description: 'Set when the query is split, e.g. by country or path.' }
+
+    FunnelStage:
+      type: object
+      properties:
+        step: { type: string, example: phone_verified }
+        reached: { type: integer }
+        conversion_rate: { type: number, description: Fraction of the previous stage that reached this one. }
+        dropped: { type: integer }
+
+    DashboardOverview:
+      type: object
+      properties:
+        total_users: { type: integer }
+        active_users_30d: { type: integer }
+        chat_only: { type: integer }
+        chat_banking: { type: integer }
+        wallets_provisioned: { type: integer }
+        transaction_volume_30d: { type: string }
+        open_reports: { type: integer }
+        pending_deletions: { type: integer }
+
+    DeletionRequest:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        user: { $ref: '#/components/schemas/UserSummary' }
+        status: { type: string, enum: [pending, in_progress, completed, blocked] }
+        blocked_reason: { type: [string, 'null'] }
+        requested_at: { type: string, format: date-time }
+        completed_at: { type: [string, 'null'], format: date-time }
+
+    DeletionRequestDetail:
+      allOf:
+        - $ref: '#/components/schemas/DeletionRequest'
+        - type: object
+          properties:
+            partners:
+              type: array
+              items:
+                type: object
+                properties:
+                  partner: { type: string }
+                  status: { type: string, enum: [pending, completed, failed] }
+                  completed_at: { type: [string, 'null'], format: date-time }
+            retained:
+              type: array
+              description: Data kept for legal or regulatory reasons, with the basis.
+              items:
+                type: object
+                properties:
+                  category: { type: string, example: transaction_records }
+                  reason: { type: string }
+                  until: { type: [string, 'null'], format: date-time }
+            residual_messages:
+              type: integer
+              description: Ciphertext left in other users' conversations, which the deleted user's keys no longer exist to read.
+            confirmed_by:
+              oneOf:
+                - type: 'null'
+                - $ref: '#/components/schemas/AdminSummary'
+            confirmed_at: { type: [string, 'null'], format: date-time }
+
+    # --- Request bodies --- #
+
+    TotpCodeRequest:
+      type: object
+      required: [code]
+      properties:
+        code: { type: string, pattern: '^\d{6}$' }
+
+    TwoFactorChallengeRequest:
+      type: object
+      required: [challengeToken, code]
+      properties:
+        challengeToken: { type: string }
+        code: { type: string, pattern: '^\d{6}$' }
+
+    UserActionRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason: { $ref: '#/components/schemas/AdminActionReason' }
+        note: { type: string, maxLength: 2000 }
+
+    ResolveReportRequest:
+      type: object
+      required: [outcome]
+      properties:
+        outcome: { type: string, enum: [warn, suspend, ban, dismiss] }
+        note: { type: string, maxLength: 2000 }
+        reason:
+          type: string
+          description: Required when the outcome suspends or bans; forwarded to the account-action path.
+          enum: [suspected_account_compromise, repeated_policy_violations, fraud_investigation, compliance_review, regulatory_or_legal_request, other]
+
+    FlagTransactionRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string, enum: [unusual_volume, unusual_pattern, sanctions_match, user_report, other] }
+        note: { type: string, maxLength: 2000 }
+
+    UpdateCountryConfigRequest:
+      type: object
+      minProperties: 1
+      properties:
+        chatEnabled: { type: boolean }
+        bankingEnabled: { type: boolean }
+
+    UpdateFeatureFlagRequest:
+      type: object
+      minProperties: 1
+      properties:
+        enabled: { type: boolean }
+        countries:
+          type: array
+          items: { type: string, minLength: 2, maxLength: 2 }
+        rolloutPercentage: { type: integer, minimum: 0, maximum: 100 }
+
+    ConfirmDeletionRequest:
+      type: object
+      properties:
+        note: { type: string, maxLength: 2000 }
