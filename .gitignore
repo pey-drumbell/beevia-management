@@ -3,3 +3,7 @@ beevia-mobile/
 beevia-admin/
 beevia-admin-api/
 beevia-db-schema/
+
+# Local secrets
+.env
+.zoho-token-cache.json
