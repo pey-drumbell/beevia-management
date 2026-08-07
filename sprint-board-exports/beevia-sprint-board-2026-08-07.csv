@@ -1,7 +1,7 @@
 ﻿Team Name,blomgram,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 Project Name,Beevia,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 Exported By,Victor Peynado,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
-Date,07/Aug/2026 11:43 AM,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Date,07/Aug/2026 12:29 PM,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 Filter,Sprints Contains 0702,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 Item Id,Item Name,Description,Created On,Sprint,Created by,Tags,Completed On,Assignee,Status,Epic,Item Type,Priority,Start Date,End Date,Start After,Duration,Estimation Points,Release,Total Workhours,Work hours per owner,Work hours type,Parent Id,Sprint Type,Sprint Start Date,Sprint End Date,Comments,Created Time,Last Modified,Blocked by,Blocked On
 BVA-I72,Invite Link Generation & Invite Tracking,"Build the endpoint that generates an invitelink for a given contact and records that an invite was sent (so the app knowsto show ""Invited"" afterward). Should route an opened invite link intothe signup flow correctly, whether or not the invited person already has theapp installed.",15/Jul/2026 11:38 AM,0702,Fortune Okwu,,,Ayomikun Araoye,REVIEW/QA,,Story,None,,,,,0,,00:00/day,00:00,hrs/day,,Start,21/Jul/2026,07/Aug/2026,,15/Jul/2026 11:38 AM,07/Aug/2026,,

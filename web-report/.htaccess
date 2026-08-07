@@ -1,0 +1,36 @@
+# Basic-auth privacy gate for the Beevia status reports.
+# Not hardened security — just keeps the reports off the open internet so
+# only people with the shared password can read them.
+#
+# ── SETUP ────────────────────────────────────────────────────────────────
+# AuthUserFile is an absolute filesystem path — Apache cannot resolve one
+# relative to this file. The path below is derived from deploy_staging.sh's
+# REMOTE_PATH (/home/peytec5/beevia-management.peytechnologies.com), which
+# rsyncs this folder's contents directly into that directory, so .htpasswd
+# lands at its root rather than in a subfolder. If the deploy target ever
+# changes, update REMOTE_PATH in deploy_staging.sh and this line together.
+#
+# ── ONE-CLICK LINKS (optional, no backend needed) ──────────────────────────
+# Basic Auth accepts credentials embedded in the URL itself:
+#   https://USERNAME:PASSWORD@yourdomain.com/path/to/web-report/
+# The browser turns that into the same Authorization header a login prompt
+# would send — nothing server-side changes. Percent-encode special
+# characters in the password (@ -> %40, : -> %3A, etc.), and know that the
+# link is the credential in plain text: readable in browser history, and
+# visible to anyone the link is shared with (including chat apps that
+# server-side fetch a preview). Fine for "a bit of privacy", not for
+# anything that needs to stay secret from someone who has the link.
+# ────────────────────────────────────────────────────────────────────────
+
+AuthType Basic
+AuthName "Beevia Project Status"
+AuthUserFile /home/peytec5/beevia-management.peytechnologies.com/.htpasswd
+Require valid-user
+
+# Never serve the credentials file itself, however it's requested.
+<FilesMatch "^\.ht">
+    Require all denied
+</FilesMatch>
+
+# No need to expose the report folder listing.
+Options -Indexes

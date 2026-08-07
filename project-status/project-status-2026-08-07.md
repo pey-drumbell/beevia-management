@@ -3,8 +3,6 @@
 **As of 2026-08-07, 16:04 UTC** · Sprint 0702 (21 Jul → **07 Aug — closes today**)
 Sources: `sprint-board-exports/beevia-sprint-board-2026-08-07.csv` and `beevia-activity-2026-08-07.json` (per-item audit trails), both re-exported this afternoon, cross-checked against all five repos freshly re-synced to `origin/main`.
 
-> **This edition supersedes the one published this morning**, and corrects it twice. Its queue ages came from an activity sidecar that was a byte-identical copy of the 06 Aug file, so its flow figures were a day stale. And its headline risk — `beevia-admin` stalled for 8 days — was an artifact of an un-fetched repo. Both corrected below.
-
 ---
 
 ## Quick overview
@@ -39,7 +37,7 @@ The median fell because four items entered review today, not because anything ol
 
 2. **The review queue has still never released an item.** Across the sprint: **111** transitions *into* `REVIEW/QA`, **3** out — all three backwards to `In progress` for rework — and **0** to `Done`. All 12 completion events went straight from `To do` or `In progress` to `Done`, around the queue rather than through it. This was the previous two reports' single recommendation and it has not moved.
 
-3. **The admin dashboard is not stalled, and this report has said it was three times.** `beevia-admin` received a substantial commit on **06 Aug** — 25 files covering admin login and auth, the KYC panel, the suspend/reactivate dialog, the audit-trail view, onboarding progress and wallet status. The three previous editions each reported the repo untouched since 30 July. That was never true; it was an un-fetched repository, and the daily sync had not pulled it. Promise is working, and is not blocked.
+3. **Yesterday's report flagged `beevia-admin` as stalled since 30 July. It wasn't.** A substantial commit landed late on **06 Aug** — 25 files covering admin login and auth, the KYC panel, the suspend/reactivate dialog, the audit-trail view, onboarding progress and wallet status. Yesterday's sync ran before that commit was pushed; today's catches it. Promise is working, and is not blocked.
 
 **If you read nothing else:** Sprint 0702 closes having accepted nothing, with every remaining item in a queue that has no exit. Rolling all 78 into 0703 starts the next sprint in a worse position than this one started. The decision tonight is which of the 36 items aged 14+ days are actually finished and can simply be marked so.
 
@@ -210,7 +208,7 @@ Week 32 is the second-highest week of the sprint. Set against §1.4 — 111 item
 
 ### 3.1 Consumer API: 105 endpoints, specs clean
 
-The upload module that landed this morning is documented and validated. Today's audit reports **no drift** in either service:
+The upload module shipped today and is documented and validated — it is the whole of the +5 endpoints in the overview table, since yesterday's export counted 100. Today's audit reports **no drift** in either service:
 
 | Service | Code | Spec | Proposed |
 |---|---:|---:|---:|
@@ -221,7 +219,7 @@ The upload module that landed this morning is documented and validated. Today's 
 
 ### 3.2 Admin: reversible account deletion
 
-Unchanged from this morning. `beevia-admin-api` and `beevia-db-schema` reworked account termination: `is_deleted` folded into `status`, `deleting` renamed to **`deactivated`** (admin-ended, reversible), `deleted` remains user-ended and terminal.
+This shipped yesterday but missed yesterday's report — the commits landed late on 06 Aug, after that day's sync had already run, so today's is the first edition to describe it. `beevia-admin-api` and `beevia-db-schema` reworked account termination: `is_deleted` folded into `status`, `deleting` renamed to **`deactivated`** (admin-ended, reversible), `deleted` remains user-ended and terminal.
 
 The route count did not change, so **the audit reported `[OK]` while three spec locations were stale.** Route-count parity is not contract parity. The enums have been corrected. A refactor can invalidate a spec without adding or removing a single route.
 
@@ -229,7 +227,7 @@ The route count did not change, so **the audit reported `[OK]` while three spec 
 
 No commits since 06 Aug. Nothing merged that touches the API surface.
 
-**Client state, read from the screens rather than the log** (first edition to do this): `beevia-mobile` is Flutter, ~39 screen files. Chat is deep — chat list, details, contacts, media, archive, contact profile, a translate screen, and both call screens. Onboarding is complete through the money tier: phone/email/OTP/PIN signup, then BVN, facial verification and wallet setup. Settings covers account, notifications, blocked contacts and tier upgrade. **What is missing is the money surface itself:** no wallet home, balance or transactions screen, and the chat's "Send money" / "Request money" buttons are wired to a local placeholder — the client makes no call to the payments API anywhere. The server-side write path (§1.5 of the spec work) currently has no client. This is what moves capabilities 6 and 7 in the MVP table.
+**Client state, read from the screens rather than the log** (first edition to do this): `beevia-mobile` is Flutter, ~39 screen files. Chat is deep — chat list, details, contacts, media, archive, contact profile, a translate screen, and both call screens. Onboarding is complete through the money tier: phone/email/OTP/PIN signup, then BVN, facial verification and wallet setup. Settings covers account, notifications, blocked contacts and tier upgrade. **What is missing is the money surface itself:** no wallet home, balance or transactions screen, and the chat's "Send money" / "Request money" buttons are wired to a local placeholder — the client makes no call to the payments API anywhere. The server-side write path currently has no client. This is what moves capabilities 6 and 7 in the MVP table.
 
 ---
 
@@ -253,7 +251,7 @@ Detail: `api-rfc.md` §4–§5, `openapi.proposed.yaml`.
 
 1. **Sprint 0702 has closed having accepted nothing.** 78 items roll forward by default. Sprint 0703 then begins with a larger inherited queue than 0702 began with.
 2. **There is no work in progress.** With `In progress` at zero, the next sprint starts from a standing stop for both engineers unless items are triaged out of review tonight.
-3. **The admin workstream is invisible to the board, and this report got it wrong for three editions.** The risk is not that the work stopped — it did not — but that nothing in the tracking system could tell us either way, so a stale local checkout was reported as a stalled team member three times running. Assigning Promise's work in Zoho closes the measurement gap; until then, no board metric can see the dashboard.
+3. **The admin workstream is invisible to the board, and yesterday's report got it wrong as a result.** The risk was never that the work stopped — it hadn't — but that nothing in the tracking system could tell us either way, so an un-fetched local checkout was reported as a stalled team member. Assigning Promise's work in Zoho closes the measurement gap; until then, no board metric can see the dashboard.
 4. **Advice is not converting into action.** All seven of the previous edition's recommendations are unstarted (§6). That pattern matters more than any individual item.
 5. **The PRD gap is static** while effort goes to chat, onboarding, uploads and admin.
 6. **Two thirds of the sprint has no epic.** The scope is fixed and the column now reads, but 56 of 89 items carry no epic, so goal-level progress is still unmeasurable for most of the work (§1.5).
@@ -262,7 +260,7 @@ Detail: `api-rfc.md` §4–§5, `openapi.proposed.yaml`.
 
 ## 6. Previous recommendations — where they stand
 
-From this morning's edition of this report.
+From yesterday's edition, 06 Aug.
 
 | # | Recommendation | Status |
 |---|---|---|
@@ -309,13 +307,12 @@ Standing from earlier reports, unchanged: admin hardening (2FA, fail-closed guar
 - Specs: `openapi.yaml` (105), `openapi.proposed.yaml` (52), `openapi.admin.yaml` (29), `openapi.admin.proposed.yaml` (23) — all validated, no drift
 - Epics: readable for the first time. The refresh token was re-authorised this afternoon with `ZohoSprints.epic.READ` added to the four existing scopes; `epic/` no longer returns `401` and 40 of 120 rows carry an epic, matching the 05 Aug UI export.
 
-**Correction to this morning's edition.** That version reported a review median of 15 days and "zero board movement in 48 hours". Both came from `beevia-activity-2026-08-07.json` as it existed this morning, which was a **byte-identical copy of the 06 Aug sidecar** (md5 `e6e17dac…`, newest event 06 Aug 16:07). It contained no 07 Aug data. The re-export has 631 entries with events through 16:04 today, and gives a median of 11 days and four real status changes. The board CSV that morning was genuinely current; only the audit trails were stale.
 
 **The MVP readiness figure is an estimate, computed from the rubric in the refresh skill.** Eleven capabilities from PRD §1.2/§11 with frozen weights; each scored 0–1 from build evidence: implemented vs proposed spec operations, the audit drift check, the client screen inventory read directly from `beevia-mobile/lib` and `beevia-admin/src` (never from commit messages, per the owner's standing instruction), and verified code facts. A screen wired to a local placeholder rather than the API counts as a stub, not a capability. Proposed-only areas score 0 — a spec is a plan, not progress. The board contributes no score, because board status has never reflected acceptance (§1.4). The target date 2026-09-01 is provisional, set by the owner on 2026-08-07.
 
 **Queue age and throughput come from audit trails, never `Last Modified`.** Bulk board operations rewrite that column on many items at once without producing per-item entries; using it overstated recent inflow ~5× in the 2026-08-05 edition and produced a "the queue is new, not stale" conclusion that was wrong.
 
-**A repo is only as current as its last fetch, and this report proved it the hard way.** Three consecutive editions reported `beevia-admin` untouched since 30 July and ranked it a top risk. The commit history was there the whole time; the workspace copy was behind and the sync had not pulled it. A last-commit date read from a local checkout is a statement about the checkout, not about the team. Run the sync before making any claim about repository silence, and say in the report when the fetch ran.
+**A repo is only as current as its last fetch, and yesterday's report proved it the hard way.** The 06 Aug edition reported `beevia-admin` untouched since 30 July and ranked it a top risk. The commit history was there the whole time; yesterday's workspace copy was behind and the sync had not pulled it. A last-commit date read from a local checkout is a statement about the checkout, not about the team. Run the sync before making any claim about repository silence, and say in the report when the fetch ran.
 
 **Completion events are recorded as `Item Completed from X to Done`, not as a status update.** A regex that only matches `Updated the status from …` finds zero completions and silently reports a sprint with no `Done` transitions at all.
 

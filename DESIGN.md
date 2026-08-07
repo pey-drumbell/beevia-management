@@ -306,6 +306,8 @@ Sticky at `top: 0`, `z-index: 20`, minimum 3rem tall (2.75rem below 40rem), blac
 
 Rules the component must keep: the percentage is always written with `≈` and the word "estimate"; fill measures build evidence, never board acceptance; the capability names live in the appendix table, not crammed into the strip; and the strip stays pure data — no icons, no colour, no motion. Weights come from the rubric in the refresh skill and are frozen across editions so the strip is comparable date to date.
 
+**Lives on two pages, not one** (owner, 2026-08-07): the dated report carries the full strip with its method paragraph; `index.html` carries the identical markup and fill values directly under its own masthead, so the archive shows MVP status without a click. Both are written from the same edition's numbers and must never disagree. `index.html`'s reading line links to the dated report's `#mvp-method` anchor rather than duplicating the capability table a third time.
+
 ### Inverted Block
 
 `.invert` — white ground, black type, full hairline border, 1.5rem padding (1rem below 40rem). Carries the lede, a standing question, or a closing statement. It re-declares `::selection` inverted and re-draws any contained barcode in black.

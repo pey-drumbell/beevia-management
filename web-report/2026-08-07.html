@@ -133,11 +133,6 @@
         <p class="lede">The sprint ends with nothing in progress and nothing accepted. <code style="border-color:#000">In progress</code> emptied into the review queue rather than into Done, leaving 78 of 89 items (88%) parked in a status that has never released a single item in the sprint's entire history.</p>
       </div>
 
-      <div class="note">
-        <span class="label">Supersedes this morning's edition, and corrects it twice</span>
-        <p style="margin-bottom:0">Its queue ages came from an activity sidecar that was a byte-identical copy of the 06 Aug file, so its flow figures were a day stale. And its headline risk &mdash; <code>beevia-admin</code> stalled for 8 days &mdash; was an artifact of an un-fetched repo. Both corrected throughout; the detail is in <a href="#method">the appendix</a>.</p>
-      </div>
-
       <div class="tbl-wrap">
         <table>
           <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">Movement, 06 &rarr; 07 Aug</caption>
@@ -200,7 +195,7 @@
         <div class="finding">
           <div class="finding__n num">3</div>
           <div>
-            <p><strong>The admin dashboard is not stalled, and this report has said it was three times.</strong> <code>beevia-admin</code> received a substantial commit on <strong>06 Aug</strong> &mdash; 25 files covering admin login and auth, the KYC panel, the suspend/reactivate dialog, the audit-trail view, onboarding progress and wallet status. The three previous editions each reported the repo untouched since 30 July. That was never true; it was an un-fetched repository, and the daily sync had not pulled it. Promise is working, and is not blocked.</p>
+            <p><strong>Yesterday's report flagged <code>beevia-admin</code> as stalled since 30 July. It wasn't.</strong> A substantial commit landed late on <strong>06 Aug</strong> &mdash; 25 files covering admin login and auth, the KYC panel, the suspend/reactivate dialog, the audit-trail view, onboarding progress and wallet status. Yesterday's sync ran before that commit was pushed; today's catches it. Promise is working, and is not blocked.</p>
           </div>
         </div>
       </div>
@@ -354,7 +349,7 @@
       <div class="sec__h"><span class="sec__n">03</span><h2>What shipped this cycle</h2></div>
 
       <h3>3.1 Consumer API: 105 endpoints, specs clean</h3>
-      <p>The upload module that landed this morning is documented and validated. Today's audit reports <strong>no drift</strong> in either service:</p>
+      <p>The upload module shipped today and is documented and validated &mdash; it is the whole of the +5 endpoints in the overview table, since yesterday's export counted 100. Today's audit reports <strong>no drift</strong> in either service:</p>
       <div class="tbl-wrap">
         <table>
           <thead><tr><th scope="col">Service</th><th scope="col" class="r">Code</th><th scope="col" class="r">Spec</th><th scope="col" class="r">Proposed</th></tr></thead>
@@ -370,7 +365,7 @@
       </div>
 
       <h3>3.2 Admin: reversible account deletion</h3>
-      <p>Unchanged from this morning. <code>beevia-admin-api</code> and <code>beevia-db-schema</code> reworked account termination: <code>is_deleted</code> folded into <code>status</code>, <code>deleting</code> renamed to <strong>deactivated</strong> (admin-ended, reversible), <code>deleted</code> remains user-ended and terminal.</p>
+      <p>This shipped yesterday but missed yesterday's report &mdash; the commits landed late on 06 Aug, after that day's sync had already run, so today's is the first edition to describe it. <code>beevia-admin-api</code> and <code>beevia-db-schema</code> reworked account termination: <code>is_deleted</code> folded into <code>status</code>, <code>deleting</code> renamed to <strong>deactivated</strong> (admin-ended, reversible), <code>deleted</code> remains user-ended and terminal.</p>
       <p>The route count did not change, so <strong>the audit reported <code>[OK]</code> while three spec locations were stale.</strong> Route-count parity is not contract parity. The enums have been corrected. A refactor can invalidate a spec without adding or removing a single route.</p>
 
       <h3>3.3 Mobile</h3>
@@ -401,7 +396,7 @@
       <div class="stack">
         <div class="finding"><div class="finding__n num">1</div><div><p><strong>Sprint 0702 has closed having accepted nothing.</strong> 78 items roll forward by default. Sprint 0703 then begins with a larger inherited queue than 0702 began with.</p></div></div>
         <div class="finding"><div class="finding__n num">2</div><div><p><strong>There is no work in progress.</strong> With <code>In progress</code> at zero, the next sprint starts from a standing stop for both engineers unless items are triaged out of review tonight.</p></div></div>
-        <div class="finding"><div class="finding__n num">3</div><div><p><strong>The admin workstream is invisible to the board, and this report got it wrong for three editions.</strong> The risk is not that the work stopped &mdash; it did not &mdash; but that nothing in the tracking system could tell us either way, so a stale local checkout was reported as a stalled team member three times running. Assigning Promise's work in Zoho closes the measurement gap; until then, no board metric can see the dashboard.</p></div></div>
+        <div class="finding"><div class="finding__n num">3</div><div><p><strong>The admin workstream is invisible to the board, and yesterday's report got it wrong as a result.</strong> The risk was never that the work stopped &mdash; it hadn't &mdash; but that nothing in the tracking system could tell us either way, so an un-fetched local checkout was reported as a stalled team member. Assigning Promise's work in Zoho closes the measurement gap; until then, no board metric can see the dashboard.</p></div></div>
         <div class="finding"><div class="finding__n num">4</div><div><p><strong>Advice is not converting into action.</strong> All seven of the previous edition's recommendations are unstarted (<a href="#s6">&sect;6</a>). That pattern matters more than any individual item.</p></div></div>
         <div class="finding"><div class="finding__n num">5</div><div><p><strong>The PRD gap is static</strong> while effort goes to chat, onboarding, uploads and admin.</p></div></div>
         <div class="finding"><div class="finding__n num">6</div><div><p><strong>Two thirds of the sprint has no epic.</strong> The scope is fixed and the column now reads, but 56 of 89 items carry no epic, so goal-level progress is still unmeasurable for most of the work (1.5).</p></div></div>
@@ -410,7 +405,7 @@
 
     <section class="sec" id="s6">
       <div class="sec__h"><span class="sec__n">06</span><h2>Previous recommendations &mdash; where they stand</h2></div>
-      <p>From this morning's edition of this report.</p>
+      <p>From yesterday's edition, 06 Aug.</p>
       <div class="tbl-wrap">
         <table>
           <thead><tr><th scope="col" class="r">#</th><th scope="col">Recommendation</th><th scope="col">Status</th></tr></thead>
@@ -473,11 +468,6 @@
         </table>
       </div>
 
-      <div class="invert">
-        <span class="label" style="display:block;margin-bottom:var(--s-3)">Correction to this morning's edition</span>
-        <p style="margin-bottom:0;max-width:64ch">That version reported a review median of 15 days and &ldquo;zero board movement in 48 hours&rdquo;. Both came from <code style="border-color:#000">beevia-activity-2026-08-07.json</code> as it existed this morning, which was a <strong>byte-identical copy of the 06 Aug sidecar</strong> (md5 <code style="border-color:#000">e6e17dac&hellip;</code>, newest event 06 Aug 16:07). It contained no 07 Aug data. The re-export has 631 entries with events through 16:04 today, and gives a median of 11 days and four real status changes. The board CSV that morning was genuinely current; only the audit trails were stale.</p>
-      </div>
-
       <p><strong>Queue age and throughput come from audit trails, never <code>Last Modified</code>.</strong> Bulk board operations rewrite that column on many items at once without producing per-item entries; using it overstated recent inflow ~5&times; in the 2026-08-05 edition and produced a &ldquo;the queue is new, not stale&rdquo; conclusion that was wrong.</p>
 
       <h3 id="mvp-method">MVP readiness &mdash; how the &asymp;46% is computed</h3>
@@ -486,7 +476,7 @@
         <table class="wide">
           <thead><tr><th scope="col" class="r">#</th><th scope="col">Capability</th><th scope="col" class="r">Weight</th><th scope="col" class="r">Score</th><th scope="col">Evidence</th></tr></thead>
           <tbody>
-            <tr><th scope="row" class="r">1</th><td>E2EE messaging</td><td class="r">15</td><td class="r">0.9</td><td>22 conversation/message/key/attachment paths + uploads live; mobile client catching up</td></tr>
+            <tr><th scope="row" class="r">1</th><td>E2EE messaging</td><td class="r">15</td><td class="r">0.9</td><td>22 conversation/message/key/attachment paths + uploads live; 12+ chat screens with crypto, socket and attachment layers in the client</td></tr>
             <tr><th scope="row" class="r">2</th><td>Voice &amp; video calling</td><td class="r">8</td><td class="r">0.8</td><td>4 call endpoints live; recent mobile call fixes</td></tr>
             <tr><th scope="row" class="r">3</th><td>Message translation</td><td class="r">7</td><td class="r">0.7</td><td><code>POST /translate</code> live and <code>translate_chat_screen</code> in the client; batch + language list still proposed</td></tr>
             <tr><th scope="row" class="r">4</th><td>Local KYC tier (BVN)</td><td class="r">8</td><td class="r">0.9</td><td>13 KYC/upgrade endpoints + provider webhook live; full client onboarding flow &mdash; BVN, facial verification, wallet setup</td></tr>
@@ -503,7 +493,7 @@
       </div>
       <p>The shape matters more than the number: the communication half of the MVP is genuinely built end to end, and the money half is thinner than the API suggests &mdash; beyond the zeros (FX, cards, international KYC, consent: 34 of 100 weight points, two waiting on a partner decision), the send-money capability that looks 60% done from the server is a stubbed button on the phone. 46% by weight is not 46% by remaining calendar.</p>
 
-      <p><strong>A repo is only as current as its last fetch, and this report proved it the hard way.</strong> Three consecutive editions reported <code>beevia-admin</code> untouched since 30 July and ranked it a top risk. The commit history was there the whole time; the workspace copy was behind and the sync had not pulled it. A last-commit date read from a local checkout is a statement about the checkout, not about the team. Run the sync before making any claim about repository silence, and say in the report when the fetch ran.</p>
+      <p><strong>A repo is only as current as its last fetch, and yesterday's report proved it the hard way.</strong> The 06 Aug edition reported <code>beevia-admin</code> untouched since 30 July and ranked it a top risk. The commit history was there the whole time; yesterday's workspace copy was behind and the sync had not pulled it. A last-commit date read from a local checkout is a statement about the checkout, not about the team. Run the sync before making any claim about repository silence, and say in the report when the fetch ran.</p>
 
       <p><strong>Completion events are recorded as <code>Item Completed from X to Done</code>, not as a status update.</strong> A regex that only matches <code>Updated the status from &hellip;</code> finds zero completions and silently reports a sprint with no <code>Done</code> transitions at all.</p>
 

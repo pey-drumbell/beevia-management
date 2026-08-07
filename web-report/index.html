@@ -71,13 +71,35 @@
   </div>
 </header>
 
+<section class="mvp" aria-label="MVP readiness estimate">
+  <div class="mvp__head">
+    <span class="label">MVP readiness &mdash; estimate</span>
+    <span class="mvp__pct num">&asymp;46%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 25 days out</span>
+  </div>
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 46 percent built. Communication capabilities largely built end to end; the money surface is thin on the client, and international KYC, cross-currency FX, virtual cards and consent management are not started.">
+    <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.9"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.8"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:7" title="Message translation — 0.7"><i style="width:70%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.9"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
+    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.45"><i style="width:45%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.45"><i style="width:45%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
+    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0"></span>
+    <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
+    <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.45"><i style="width:45%"></i></span>
+  </div>
+  <p class="mvp__read">Segment width = weight in the MVP definition &middot; fill = build evidence read from the code and screens, not board acceptance and not commit messages. Empty outlines, left to right: international KYC, cross-currency FX, virtual cards, consent &mdash; 34 of 100 weight points, all unstarted, two waiting on a partner decision. From the latest frame, 07 Aug 2026 &mdash; <a href="2026-08-07.html#mvp-method">method and capability table</a>.</p>
+</section>
+
 <main class="frames">
 
   <a class="frame" href="2026-08-07.html">
     <span class="frame__idx num">03</span>
     <span>
       <span class="frame__date">07 Aug 2026</span>
-      <span class="frame__sum">The sprint ends with nothing in progress and nothing accepted &mdash; 78 of 89 items (88%) parked in a status that has never released one. Corrects two faults in the morning edition: stale audit trails, and an un-fetched repo reported as a stalled workstream.</span>
+      <span class="frame__sum">The sprint ends with nothing in progress and nothing accepted &mdash; 78 of 89 items (88%) parked in a status that has never released one. Corrects yesterday's <code>beevia-admin</code> stalled read (an un-fetched repo, not a stalled workstream) and adds the first epic breakdown, now that the epic scope is live.</span>
       <span class="frame__bar" aria-hidden="true"><i style="flex:78"></i><u style="flex:11"></u></span>
     </span>
     <span class="frame__stats">

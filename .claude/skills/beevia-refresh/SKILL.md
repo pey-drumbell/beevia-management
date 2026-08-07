@@ -110,6 +110,21 @@ date and days remaining beside the percentage. It is the one page-top graphic
 the owner has asked for (2026-08-07); keep it data-only and keep the
 capability names in the appendix table, not crammed into the strip.
 
+**It belongs on two pages, not one.** The dated report (`YYYY-MM-DD.html`)
+carries the full strip with its method paragraph and reading line. `index.html`
+— the archive/main page — carries the **same markup, same fill values**,
+directly under its own masthead, using the current edition's numbers. This is
+a standing requirement (owner, 2026-08-07): whoever opens the archive first
+sees MVP status without a click, and the two strips must never show different
+percentages. Every report edition updates both.
+
+Do not build a second component for the archive — copy the `.mvp` section
+verbatim (percentage, `<title>` per segment, empty-segment list, method link)
+from the report just written. If `index.html`'s method link (`#mvp-method`)
+would point off-page, point it at the latest dated report's anchor instead
+(`YYYY-MM-DD.html#mvp-method`) rather than duplicating the capability table a
+third time.
+
 ## The team
 
 Confirmed by the project owner. **Use this; do not infer roles from the board** —
@@ -381,6 +396,34 @@ Prefer these over totals — they are what changes day to day:
 The board mixes 54 parent Stories with 66 child Tasks. Report both, and say
 which you are using: totals that silently double-count parents and their
 children make a sprint look twice as large as it is.
+
+## Deploying the web report — access gate
+
+`web-report/` is meant for shared hosting so the other co-founders can open
+it without a build step. It is gated with plain Apache Basic Auth — privacy,
+not real security, per the owner (2026-08-07).
+
+- `web-report/.htaccess` — the Apache config. **Its `AuthUserFile` line is a
+  placeholder** (`/REPLACE/WITH/ABSOLUTE/PATH/...`); Apache requires an
+  absolute filesystem path and cannot resolve one relative to the file, so it
+  must be edited to the real path once uploaded. The file's own comment block
+  explains how to find it on a typical cPanel host.
+- `web-report/.htpasswd` — the credentials file, `username:apr1-hash`.
+  Generate or regenerate it with:
+  ```bash
+  python3 .claude/skills/beevia-refresh/scripts/gen_htpasswd.py
+  ```
+  It reads `WEB_REPORTS_USER` (defaults to `beevia`) and
+  `WEB_REPORTS_PASSWORD` from `.env`, hashes via `openssl passwd -apr1` —
+  the exact format Apache's own `htpasswd -m` produces — and never prints or
+  logs the password. Rerun it any time either value changes; it overwrites
+  `.htpasswd` in place. `.htpasswd` is gitignored, like `.env`.
+- Never `cat`, `grep`, or `Read` `.env` without confining the query to a
+  single non-secret key. A wildcard read prints every value in it —
+  including the live Zoho refresh token — into the session transcript, which
+  has happened before and is treated as a credential leak each time. Prefer
+  `grep -c "^KEY=" .env` (existence only) or a Python loader that never
+  echoes the values it read.
 
 ## Guardrails
 

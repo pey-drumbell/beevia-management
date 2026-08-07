@@ -7,6 +7,7 @@ beevia-db-schema/
 # Local secrets
 .env
 .zoho-token-cache.json
+web-report/.htpasswd
 
 # Python bytecode from skill scripts
 __pycache__/
