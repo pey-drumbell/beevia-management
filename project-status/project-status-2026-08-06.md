@@ -26,7 +26,6 @@ Sources: `sprint-board-exports/beevia-sprint-board-2026-08-06.csv` and `beevia-a
 | Ayomikun Araoye | backend + admin API | 12 | 5d | 3 | 41 | — |
 | Philip Chidera | design | 0 | 4d | 0 | — | no tracked activity in 7d |
 | Promise Udo | admin dashboard | *not on board* | — | — | **0** | **`beevia-admin` untouched since 30 Jul** |
-| Fortune Okwu | supervision | — | — | — | — | not a contributor by design |
 
 **Two questions for standup:** why has nothing been accepted out of review in a
 month, and is Promise blocked? Everything else is healthy.
@@ -137,8 +136,8 @@ process. It means a status that work enters and does not leave. The 11 Done
 items did not pass through it; they went around it.
 
 This also answers §1.5's open question about who reviews, in the negative:
-**nobody does.** The only person who has ever moved an item out of REVIEW/QA is
-Fortune Okwu, three times, each time sending it back for rework.
+**nobody does.** Only three items have ever left REVIEW/QA, and all three were
+sent back for rework rather than accepted.
 
 ### 1.5 Who is doing what
 
@@ -150,11 +149,10 @@ Fortune Okwu, three times, each time sending it back for rework.
 
 Every item is assigned — the 31 unassigned items in the previous export were parent stories, and that is now clean.
 
-Five people, with roles as confirmed by the project owner:
+Four people, with roles as confirmed by the project owner:
 
 | Person | Role | Owns | Assigned | Audit actions |
 |---|---|---|---:|---:|
-| **Fortune Okwu** | Co-founder — supervises, no development responsibilities | — | **0** | 488 |
 | **Promise Udo** | Admin dashboard | `beevia-admin`, `beevia-admin-api` | **absent from the board** | **0** |
 | **David Samuel** | Mobile front end | `beevia-mobile` | 47 | 71 |
 | **Ayomikun Araoye** | App backend lead; also contributes to the admin API | `beevia-api`, `beevia-db-schema` | 28 | 39 |
@@ -165,11 +163,6 @@ export or the audit trails at all — no assigned items, no recorded actions, th
 name absent from both files — yet the admin dashboard and its 29-endpoint API
 are being built. Every completion percentage in this report therefore covers
 mobile, app-backend and design only.
-
-Fortune's 488 audit actions are the other thing not to misread. They are item
-creation and status administration — supervision, not delivery. High activity
-here does not mean contribution, and his zero assigned items do not mean
-idleness.
 
 So the "zero engineering completions" finding needs qualifying: true of
 everything the board tracks, not true of the project. An admin service reached
@@ -267,8 +260,7 @@ State this every time; the metrics are easy to over-read.
   no estimation points (§1.6) there is no way to normalise them.
 - **Not individual accountability for the queue.** Nobody's items are stuck
   because of them; they are stuck because review has no exit (§1.4).
-- **Not complete.** One of the five people does no tracked work by design
-  (Fortune supervises) and another is absent from the board entirely (Promise).
+- **Not complete.** Promise is absent from the board entirely.
 
 ---
 

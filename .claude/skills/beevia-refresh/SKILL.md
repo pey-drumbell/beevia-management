@@ -25,31 +25,120 @@ their output by hand** — it is slower, burns context, and gives different
 answers on different days. Steps 4–5 are the parts that need reading and
 judgement, and they are where the time should go.
 
+## MVP progress estimate
+
+Every report carries an MVP-readiness estimate: one number at the top of the
+web report (rendered as the segmented strip — see below) and a capability
+table in the Markdown. It answers the question the board cannot: *how far is
+the product from the PRD's MVP*, independent of sprint mechanics.
+
+**Target date: 2026-09-01.** Provisional — set by the project owner on
+2026-08-07 as a working anchor, not a commitment. Replace it here when a real
+date is decided, and always print it with the word "provisional" until then.
+
+### The rubric
+
+Fixed capability list derived from PRD §1.2 and §11 (Phases 1–4). **Weights are
+frozen** so the number is comparable across reports; changing a weight is a
+methodology change and must be called out in the report that does it.
+
+| # | Capability | Weight | Score from |
+|---|---|---:|---|
+| 1 | E2EE messaging | 15 | `/conversations` `/messages` `/keys` `/attachments` surface; chat screen inventory + crypto/socket layers in `beevia-mobile/lib` |
+| 2 | Voice & video calling | 8 | `/calls` surface; `audio_call_screen` / `video_call_screen` present and wired |
+| 3 | Message translation | 7 | `/translate` implemented vs proposed (`batch`, `languages`); `translate_chat_screen` in the client |
+| 4 | Local KYC tier (BVN) | 8 | `/kyc/*` + `/upgrade/*` implemented; provider webhook; the client's full onboarding/wallet flow (BVN, facial verification) |
+| 5 | International KYC tier | 6 | `/kyc/international/*` — proposed-only until it ships |
+| 6 | Multi-currency wallets | 12 | `/wallets` surface; whether non-NGN wallets exist (`activeNgn()` is the tell); whether the client has a wallet home/balance/transactions screen beyond onboarding setup |
+| 7 | Send / request / receive in chat | 12 | `/payments/*` implemented (send, request, accept, decline, pay, cancel) vs the missing read path; whether the client's money UI actually calls the payments API (see wired-vs-stub below) |
+| 8 | Cross-currency FX settlement | 12 | `/fx/*` — proposed-only until it ships; `PaymentService` hard-coding |
+| 9 | Virtual cards | 10 | `/cards/*` — proposed-only until it ships |
+| 10 | Consent management | 4 | any consent endpoint or record; none exists yet |
+| 11 | Admin oversight | 6 | admin endpoints implemented vs proposed; dashboard modules landed in `beevia-admin/src` (screens and features, not commits) |
+
+### Client evidence: read the screens, never the commit log
+
+Standing instruction from the project owner (2026-08-07): **commit messages are not
+evidence of client progress.** Score the mobile and admin front ends from the
+code itself:
+
+- `beevia-mobile` is **Flutter**. The screen inventory is
+  `lib/features/*/screens/` (plus `chat/call/`); enumerate it and map screens to
+  capabilities. ~39 screen files across chat, onboarding, settings, home as of
+  2026-08-07.
+- **Wired vs stub, one grep apart.** A screen with buttons is not a capability.
+  Check that the flow reaches the API: grep `lib` for the endpoint path
+  (`/payments`, `/wallets`, `/translate`). Found on 2026-08-07: "Send money" /
+  "Request money" buttons exist in chat with a local placeholder handler and
+  **zero calls to the payments API** — screens present, capability absent.
+  A wired flow scores; a stub adds at most ~0.1 over nothing.
+- `beevia-admin` is Next.js; the equivalent inventory is `src/app` routes and
+  `src/features/*` against the dashboard spec's eight modules.
+- **Correctness and testing are explicitly out of scope for now** (owner,
+  2026-08-07): tests will be added to the repos separately. The bar is
+  *implementation of the design* — the screen exists, matches the designed
+  flow, and is wired to the real API. Do not discount a score for missing
+  tests, and do not claim functional correctness either; the report's
+  "cannot tell you" list carries that caveat.
+
+Score each 0.0–1.0 **from evidence, per line, at report time**: the spec split
+(implemented vs proposed operations in that area), the audit's drift check,
+the sync report's changed files, and the code facts already verified in past
+reports. The board contributes context (epic states, what is in review) but
+never the score — the board has never accepted an item, so board status is not
+evidence of build state. Weighted sum → the headline percentage, always
+written with `≈` and the word "estimate".
+
+Rules:
+
+- **A proposed-only area scores 0.** A spec is a plan, not progress.
+- **Score build, not acceptance**, and say so next to the number — the strip
+  measures what exists in code, while the review queue measures what has been
+  verified, and conflating them flatters the project.
+- **Show the table.** The percentage alone is not publishable; the Markdown
+  report carries the full capability table with each line's evidence, and the
+  web report carries it in the appendix.
+- **Never move a score up without naming the evidence** (endpoint shipped,
+  module landed, migration merged). "Probably done, sitting in review" keeps
+  its old score.
+
+### Rendering
+
+Web report: the `.mvp` strip sits directly under the masthead — one segment
+per capability, segment width = weight, solid fill fraction = score, target
+date and days remaining beside the percentage. It is the one page-top graphic
+the owner has asked for (2026-08-07); keep it data-only and keep the
+capability names in the appendix table, not crammed into the strip.
+
 ## The team
 
 Confirmed by the project owner. **Use this; do not infer roles from the board** —
-an earlier report inferred them from activity counts and got Fortune badly
-wrong, reading a supervisor's high action count as evidence he was building the
-admin dashboard.
+an earlier report inferred them from activity counts and got a non-contributor
+badly wrong, reading a high action count as evidence of building the admin
+dashboard. Board administration produces the highest action counts on the
+board, and it is not delivery.
+
+**Only people whose work is tracked appear in the report.** Supervisors and
+other non-contributors are readers of it, not rows in it: do not give them a
+team-table row, a per-person section, or an attribution in a finding. Where an
+audit trail names one as the actor, state the transition without the name
+("3 items left review, all sent back for rework"). This is a standing
+instruction from the project owner, not a per-report judgement call.
 
 | Person | Role | Owns | On the board? |
 |---|---|---|---|
-| **Fortune Okwu** | Co-founder. **Supervises only — no development responsibilities.** | — | Creates every item; 0 assigned |
 | **Promise Udo** | Admin dashboard | `beevia-admin`, `beevia-admin-api` | **Absent entirely** |
 | **Ayomikun Araoye** | App backend lead; also contributes to the admin API | `beevia-api`, `beevia-db-schema` | 28 items |
 | **David Samuel** | Mobile front end | `beevia-mobile` | 47 items |
 | **Philip Chidera** | UI/UX design | — | 14 items |
 
-### Two people do development that the board cannot see
+### One workstream is invisible to the board
 
 - **Promise has no board presence at all** — zero assigned items, zero audit
   actions, name absent from both the CSV and the activity sidecar. The admin
   dashboard is nevertheless being built. Until tasks are assigned to Promise,
   report the responsibility and judge the work from commits in `beevia-admin` /
   `beevia-admin-api`, which step 2's sync report lists.
-- **Fortune's 488 audit actions are supervision, not delivery.** He creates
-  every item and moves statuses. Do not read that volume as contribution, and
-  do not read his 0 assigned items as idleness — neither is what it looks like.
 
 Consequences for the report:
 
@@ -57,7 +146,9 @@ Consequences for the report:
   dashboard, 29 endpoints) happens outside them. Say so when quoting completion
   percentages, rather than reporting "12% done" as if it covered the project.
 - **Never infer a role from activity counts.** Cross-check against this table;
-  if someone appears who is not listed, say so and ask rather than guessing.
+  if someone appears who is not listed, say so and ask rather than guessing —
+  a name that is absent may be a non-contributor who is deliberately not
+  reported, and adding them back is a regression, not a fix.
 
 Roles also tell you which repo a person's board items belong to: David's are
 mobile, Ayomikun's are backend, Philip's are design. A backend item in review
@@ -269,8 +360,8 @@ Performance sections are easy to write badly. Four rules:
 3. **Always include a "what this does not measure" subsection.** Without
    estimation points there is no workload normalisation, so a raw item count
    says nothing about who is carrying more.
-4. **Absence of data is not absence of work.** Promise has no board presence;
-   Fortune does no development by design. Report both explicitly rather than
+4. **Absence of data is not absence of work.** Promise has no board presence,
+   yet the admin dashboard is being built. Report that explicitly rather than
    letting a blank row read as a zero.
 
 #### The standup-useful signals

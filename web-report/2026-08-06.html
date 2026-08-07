@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beevia — Project Status — 06 Aug 2026</title>
+<meta name="description" content="The review queue is a month-old backlog, not a pile-up, and nothing has come out of it in 24 hours.">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!--
+  DIRECTION CONTRACT · seed 6c4a0ed0
+  THESIS: A status report whose subject is the disagreement between its sources.
+  It refuses the PM dashboard: no donuts, no RAG pills, no burndown, no avatars.
+  OWN-WORLD: Ryoji Ikeda datamatics. Pure #000/#fff, no grey and no colour; tone
+  comes from hairline weight, bar coverage and type width. One mono face
+  (Martian Mono) at three widths. Barcode marks, hairline rules, tabular
+  columns, in-body bar fields, and full-frame inversion held for what matters
+  most. No masthead graphic — removed at the user's request.
+  STORY: The reader learns the queue is a month-old backlog rather than a
+  pile-up, that the previous frame read it wrong, and that review has no exit.
+  FIRST VIEWPORT: PROJECT STATUS set large on clean ground, date and sprint
+  beneath, flanked by numeric rails carrying the queue figures on the left and
+  the API and transition counts on the right. The lede inverts to white ground
+  directly below.
+  FORM: Datamatics, dealt as a challenger against assigned index 6 (ship's log)
+  and chosen by the user over it. Seed key 6c4a0ed0.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+  finish review, the verdict, and DESIGN.md
+-->
+
+<div class="topbar">
+    <div class="topbar__mark">
+      <span class="barcode" aria-hidden="true"></span>
+      <span class="topbar__wordmark">Beevia</span>
+    </div>
+    <nav class="topbar__nav label" aria-label="Report">
+      <a href="index.html">Archive</a>
+      <a href="#overview">Overview</a>
+      <a href="#s7">What to do</a>
+      <a href="#method">Method</a>
+    </nav>
+</div>
+
+<header class="masthead">
+  <div class="field">
+    <div class="field__rail field__rail--l">
+      <dl>
+        <dt>In review</dt>
+        <dd>74 of 89 · 83%</dd>
+        <dt>Median age</dt>
+        <dd>14d · oldest 27d</dd>
+        <dt>Done</dt>
+        <dd>11 · unchanged in 24h</dd>
+      </dl>
+    </div>
+
+    <div class="field__stage">
+      <div class="field__title">
+        <h1>Project<br>Status</h1>
+      </div>
+      <div class="field__meta num">
+        <span>2026-08-06</span>
+        <span>Sprint 0702</span>
+        <span>21 Jul &rarr; 07 Aug</span>
+        <span>Ends tomorrow</span>
+      </div>
+    </div>
+
+    <div class="field__rail field__rail--r">
+      <dl>
+        <dt>API consumer</dt>
+        <dd>100 &nbsp;+0</dd>
+        <dt>API admin</dt>
+        <dd>29 &nbsp;+0</dd>
+        <dt>Spec drift</dt>
+        <dd>None</dd>
+        <dt>Transitions</dt>
+        <dd>214 recorded</dd>
+        <dt>Out of review</dt>
+        <dd>0 ever</dd>
+      </dl>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="contents label" aria-label="Contents">
+    Contents
+    <ol>
+      <li><a href="#overview"><span>00</span> Quick overview</a></li>
+      <li><a href="#s1"><span>01</span> Sprint 0702 in detail</a></li>
+      <li><a href="#s2"><span>02</span> Team performance</a></li>
+      <li><a href="#s3"><span>03</span> What shipped</a></li>
+      <li><a href="#s4"><span>04</span> Product-vs-PRD gap</a></li>
+      <li><a href="#s5"><span>05</span> Risks</a></li>
+      <li><a href="#s6"><span>06</span> Previous recommendations</a></li>
+      <li><a href="#s7"><span>07</span> What I would do this week</a></li>
+      <li><a href="#method"><span>&mdash;</span> Method</a></li>
+    </ol>
+  </nav>
+
+  <main class="doc">
+
+    <section class="sec" id="overview">
+      <div class="invert" style="margin-bottom:var(--s-6)">
+        <p class="lede">The review queue is not a pile-up from this week &mdash; it is a backlog that has been accumulating for a month, and nothing has come out of it in 24 hours.</p>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <tbody>
+            <tr><th scope="row">Sprint</th><td>0702 &middot; ends <strong>07 Aug &mdash; tomorrow</strong></td></tr>
+            <tr><th scope="row">Work items</th><td>89 real tasks (+31 parent stories that roll up)</td></tr>
+            <tr><th scope="row">Done</th><td><strong>11</strong> (12%) &mdash; unchanged in 24h, all design. Board-tracked only: the admin dashboard is built off-board</td></tr>
+            <tr><th scope="row">In review</th><td><strong>74</strong> (83%) &mdash; <strong>median age 14 days</strong>, and nothing has ever left it for <code>Done</code></td></tr>
+            <tr><th scope="row">In progress</th><td>4 (4%) &mdash; down from 6 yesterday</td></tr>
+            <tr><th scope="row">API surface</th><td>100 consumer + 29 admin endpoints &middot; <strong>no drift</strong>, specs match code exactly</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">Team at a glance &mdash; last 7 days</caption>
+          <thead>
+            <tr><th scope="col">Person</th><th scope="col">Owns</th><th scope="col" class="r">Sub.</th><th scope="col" class="r">Cycle</th><th scope="col" class="r">WIP</th><th scope="col" class="r">Commits</th><th scope="col">Flag</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">David Samuel</th><td>mobile</td><td class="r">17</td><td class="r">1d</td><td class="r">1</td><td class="r">32</td><td>&mdash;</td></tr>
+            <tr><th scope="row">Ayomikun Araoye</th><td>backend + admin API</td><td class="r">12</td><td class="r">5d</td><td class="r">3</td><td class="r">41</td><td>&mdash;</td></tr>
+            <tr><th scope="row">Philip Chidera</th><td>design</td><td class="r">0</td><td class="r">4d</td><td class="r">0</td><td class="r">&mdash;</td><td>no tracked activity in 7d</td></tr>
+            <tr><th scope="row">Promise Udo</th><td>admin dashboard</td><td class="r"><em>not on board</em></td><td class="r">&mdash;</td><td class="r">&mdash;</td><td class="r hi">0</td><td class="hi"><code>beevia-admin</code> untouched since 30 Jul</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <span class="label">Two questions for standup</span>
+        <p style="margin-bottom:0">Why has nothing been accepted out of review in a month, and is Promise blocked? Everything else is healthy.</p>
+      </div>
+
+      <h3>The three things worth knowing</h3>
+
+      <div class="stack">
+        <div class="finding">
+          <div class="finding__n num">1</div>
+          <div><p><strong>Yesterday's report got the queue backwards, and this one corrects it.</strong> It said the review queue was &ldquo;new, not stale&rdquo;. That was measured from the board's <code>Last Modified</code> column, which bulk operations rewrite en masse &mdash; it showed 57 items arriving in two days. The audit trail shows only <strong>11</strong> arrived in the last two days. Half the queue (37 items) has been waiting <strong>14+ days</strong>, and the oldest entered review on <strong>10 July</strong> &mdash; before this sprint began.</p></div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">2</div>
+          <div><p><strong>Throughput over the last 24 hours was zero.</strong> <code>Done</code> sat at 11 while <code>In progress</code> fell 6 &rarr; 4 and review grew 72 &rarr; 74. Work is flowing <em>into</em> review and nothing is coming out. With one day left, 83% of the sprint is parked in a queue that is not draining.</p></div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">3</div>
+          <div><p><strong>REVIEW/QA has never produced a single completion.</strong> Across the sprint's entire history, 103 items entered review and 3 left &mdash; all three sent <em>backwards</em> for rework. All 12 completion events bypassed review entirely. The queue is not a slow verification step; it is a status with no exit.</p></div>
+        </div>
+      </div>
+
+      <div class="invert">
+        <span class="label" style="display:block;margin-bottom:var(--s-3)">If you read nothing else</span>
+        <p style="margin-bottom:0;font-variation-settings:'wdth' 75,'wght' 500;max-width:60ch">The sprint will not close tomorrow in any meaningful sense. The question is not &ldquo;can we finish the remaining work&rdquo; &mdash; it is that no verification step is actually running, so nothing can be finished. All 11 board completions came from the designer, routed around review entirely &mdash; and the person delivering the admin dashboard (Promise) has no board presence at all, so the board understates what shipped.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s1">
+      <div class="sec__h"><span class="sec__n">01</span><h2>Sprint 0702 in detail</h2></div>
+
+      <h3>1.1 How to read the board</h3>
+      <p>The export has 120 rows, but that double-counts: 31 are parent Stories that exist only to group their children. <strong>89 rows are real, assignable work.</strong> Every percentage below uses the 89.</p>
+      <p>Two columns cannot be used, and both are measurement gaps rather than findings:</p>
+      <div class="note">
+        <p><strong>Estimation Points</strong> is <code>0</code> on all 120 items &rarr; velocity, burndown and &ldquo;will it fit&rdquo; are not derivable from this board.</p>
+        <p style="margin-bottom:0"><strong>Epic</strong> is blank on all 89 leaves &rarr; <em>not</em> because epics are unassigned, but because the Zoho token lacks the <code>ZohoSprints.epic.READ</code> scope. The 2026-08-05 export (taken through the UI) shows 40 items <em>do</em> carry epics. Do not read the blank column as an absence.</p>
+      </div>
+
+      <h3>1.2 Status</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Status</th><th scope="col" class="r">Leaves</th><th scope="col" class="r">Share</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">REVIEW/QA</th><td class="r hi">74</td><td class="r hi">83%</td></tr>
+            <tr><th scope="row">Done</th><td class="r">11</td><td class="r">12%</td></tr>
+            <tr><th scope="row">In progress</th><td class="r">4</td><td class="r">4%</td></tr>
+            <tr><th scope="row" class="hi">Total</th><td class="r hi">89</td><td class="r"></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">Movement since yesterday</caption>
+          <thead><tr><th scope="col">Measure</th><th scope="col" class="r">05 Aug</th><th scope="col" class="r">06 Aug</th><th scope="col" class="r">&Delta;</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Done</th><td class="r">11</td><td class="r">11</td><td class="r hi">0</td></tr>
+            <tr><th scope="row">In review</th><td class="r">72</td><td class="r">74</td><td class="r">+2</td></tr>
+            <tr><th scope="row">In progress</th><td class="r">6</td><td class="r">4</td><td class="r">&minus;2</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The two items that left <code>In progress</code> went into review. Nothing left review. This is the shape of a system with an input and no output.</p>
+
+      <h3>1.3 The queue is stale &mdash; correcting yesterday's report</h3>
+      <p>This is the most important change from the previous edition, and it is a correction, not new information.</p>
+      <p>The board's <code>Last Modified</code> column is rewritten in bulk: dozens of items share a single identical timestamp with no corresponding entry in their audit trail. Bucketing by it produced a false picture of a sudden end-of-sprint surge.</p>
+      <p>Measuring instead from each item's <strong>actual status-change entry</strong> in the audit trail:</p>
+      <div class="bars bars--share">
+        <div class="bars__row"><span class="bars__label">14+ days</span><span class="r">37</span><span class="r">50%</span><span class="bar" aria-hidden="true"><i style="width:118px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">6&ndash;13 days</span><span class="r">20</span><span class="r">27%</span><span class="bar" aria-hidden="true"><i style="width:64px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">0&ndash;5 days</span><span class="r">17</span><span class="r">23%</span><span class="bar" aria-hidden="true"><i style="width:54px"></i></span></div>
+      </div>
+      <p><strong>Median age: 14 days. Oldest: 27 days.</strong> Exactly half the queue has been waiting longer than the sprint is old. When items entered their current status:</p>
+      <div class="bars">
+        <div class="bars__row"><span class="bars__label">10 Jul</span><span class="r">5</span><span class="bar" aria-hidden="true"><i style="width:50px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">14 Jul</span><span class="r">10</span><span class="bar" aria-hidden="true"><i style="width:100px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">15 Jul</span><span class="r">7</span><span class="bar" aria-hidden="true"><i style="width:70px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">16&ndash;21 Jul</span><span class="r">7</span><span class="bar" aria-hidden="true"><i style="width:70px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">22 Jul</span><span class="r">6</span><span class="bar" aria-hidden="true"><i style="width:60px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">23&ndash;30 Jul</span><span class="r">10</span><span class="bar" aria-hidden="true"><i style="width:100px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">31 Jul</span><span class="r">11</span><span class="bar" aria-hidden="true"><i style="width:110px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">03 Aug</span><span class="r">6</span><span class="bar" aria-hidden="true"><i style="width:60px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">04 Aug</span><span class="r">5</span><span class="bar" aria-hidden="true"><i style="width:50px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">05 Aug</span><span class="r">4</span><span class="bar" aria-hidden="true"><i style="width:40px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">06 Aug</span><span class="r">2</span><span class="bar" aria-hidden="true"><i style="width:20px"></i></span></div>
+      </div>
+      <p>Five items have been in review since <strong>10 July</strong> &mdash; they were carried in from sprint 0701 and have sat through this entire sprint. The inflow is steady, roughly 4&ndash;6 per working day, with a bump on 31 Jul. There is no cliff. There is a slow, constant accumulation that nobody is draining.</p>
+
+      <h3>1.4 REVIEW/QA has never produced a completion</h3>
+      <p>The audit trails hold 214 status transitions for this sprint. Aggregated:</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">From</th><th scope="col">To</th><th scope="col" class="r">Count</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">To do</th><td>In progress</td><td class="r">64</td></tr>
+            <tr><th scope="row">In progress</th><td>REVIEW/QA</td><td class="r">52</td></tr>
+            <tr><th scope="row">To do</th><td>REVIEW/QA</td><td class="r">44</td></tr>
+            <tr><th scope="row">To do / In progress</th><td>BLOCKED</td><td class="r">19</td></tr>
+            <tr><th scope="row">BLOCKED</th><td>In progress / REVIEW/QA / To do</td><td class="r">19</td></tr>
+            <tr><th scope="row">In progress</th><td><strong>Done</strong></td><td class="r hi">9</td></tr>
+            <tr><th scope="row">To do</th><td><strong>Done</strong></td><td class="r hi">3</td></tr>
+            <tr><th scope="row" class="hi">REVIEW/QA</th><td><strong>In progress</strong></td><td class="r hi">3</td></tr>
+            <tr><th scope="row" class="hi">REVIEW/QA</th><td><strong>Done</strong></td><td class="r hi">0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Two facts follow, and together they reframe the whole sprint:</p>
+      <div class="stack">
+        <div class="finding"><div class="finding__n num">1</div><div><p><strong>No item has ever moved from REVIEW/QA to Done.</strong> 103 transitions went <em>into</em> review; 3 came out, all of them backwards to <code>In progress</code>. The queue has an inlet and a return valve, and no outlet.</p></div></div>
+        <div class="finding"><div class="finding__n num">2</div><div><p><strong>Every completion bypassed review entirely.</strong> All 12 completion events went straight from <code>In progress</code> or <code>To do</code> to <code>Done</code>, never from REVIEW/QA. (12 events, 11 items currently Done &mdash; BVA-I68 was completed on 17 Jul and reopened into REVIEW/QA the same day, where it still sits.)</p></div></div>
+      </div>
+      <p>So &ldquo;74 items in review&rdquo; does not mean 74 items awaiting a verdict in a working process. It means a status that work enters and does not leave. The 11 Done items did not pass through it; they went around it.</p>
+      <p>This also answers 1.5's open question about who reviews, in the negative: <strong>nobody does.</strong> Only three items have ever left REVIEW/QA, and all three were sent back for rework rather than accepted.</p>
+
+      <h3>1.5 Who is doing what</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Person</th><th scope="col" class="r">In review</th><th scope="col" class="r">In progress</th><th scope="col" class="r">Done</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">David Samuel</th><td class="r">46</td><td class="r">1</td><td class="r">0</td></tr>
+            <tr><th scope="row">Ayomikun Araoye</th><td class="r">25</td><td class="r">3</td><td class="r">0</td></tr>
+            <tr><th scope="row">Philip Chidera</th><td class="r">3</td><td class="r">0</td><td class="r hi">11</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Every item is assigned &mdash; the 31 unassigned items in the previous export were parent stories, and that is now clean.</p>
+      <p>Four people, with roles as confirmed by the project owner:</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Person</th><th scope="col">Role</th><th scope="col">Owns</th><th scope="col" class="r">Assigned</th><th scope="col" class="r">Audit actions</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Promise Udo</th><td>Admin dashboard</td><td><code>beevia-admin</code>, <code>beevia-admin-api</code></td><td class="r hi">absent</td><td class="r hi">0</td></tr>
+            <tr><th scope="row">David Samuel</th><td>Mobile front end</td><td><code>beevia-mobile</code></td><td class="r">47</td><td class="r">71</td></tr>
+            <tr><th scope="row">Ayomikun Araoye</th><td>App backend lead; also contributes to the admin API</td><td><code>beevia-api</code>, <code>beevia-db-schema</code></td><td class="r">28</td><td class="r">39</td></tr>
+            <tr><th scope="row">Philip Chidera</th><td>UI/UX design</td><td>&mdash;</td><td class="r">14</td><td class="r">25</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>A whole workstream is invisible to the board.</strong> Promise does not appear in the export or the audit trails at all &mdash; no assigned items, no recorded actions, the name absent from both files &mdash; yet the admin dashboard and its 29-endpoint API are being built. Every completion percentage in this report therefore covers mobile, app-backend and design only.</p>
+      <p>So the &ldquo;zero engineering completions&rdquo; finding needs qualifying: true of everything the board tracks, not true of the project. An admin service reached 29 working endpoints this cycle without a single board item behind it.</p>
+      <div class="note">
+        <span class="label">Action</span>
+        <p style="margin-bottom:0">Assigning Promise's work in Zoho would close the largest measurement gap in this report. Until then, judge admin-dashboard progress from commits in <code>beevia-admin</code> / <code>beevia-admin-api</code>, not from here.</p>
+      </div>
+      <p>Neither engineer has completed anything, but both have large review queues &mdash; consistent with &ldquo;the work is done but unreviewed&rdquo; rather than &ldquo;the work is not done&rdquo;. 1.4 supports that reading: their items reached REVIEW/QA and stopped there, and the only completions in the sprint took a route that skips review altogether.</p>
+
+      <h3>1.6 The board cannot measure velocity</h3>
+      <p>With every item at 0 points and no tags, there is no burndown, no velocity, and no basis for forecasting. Any statement about whether the remaining work &ldquo;fits&rdquo; would be invented. Sizing even coarsely (S/M/L) would make the next sprint measurable; without it, each of these reports can only describe state, never trajectory.</p>
+    </section>
+
+    <section class="sec" id="s2">
+      <div class="sec__h"><span class="sec__n">02</span><h2>Team performance</h2></div>
+      <p>Measured from audit trails (when work moved) and git (what was written). Both are flow measures. Neither measures quality, difficulty, or effort, and none of this separates &ldquo;did less&rdquo; from &ldquo;was given less&rdquo; &mdash; see the limits at the end.</p>
+
+      <h3>2.1 Per person</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Person</th><th scope="col" class="r">Sub. 7d</th><th scope="col" class="r">Median cycle</th><th scope="col" class="r">Open WIP</th><th scope="col" class="r">Oldest WIP</th><th scope="col" class="r">Commits 7d</th><th scope="col" class="r">Board completions</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">David Samuel</th><td class="r hi">17</td><td class="r hi">1 day</td><td class="r">1</td><td class="r">1d</td><td class="r">32</td><td class="r">0</td></tr>
+            <tr><th scope="row">Ayomikun Araoye</th><td class="r">12</td><td class="r">5 days</td><td class="r">3</td><td class="r">6d</td><td class="r">41</td><td class="r">0</td></tr>
+            <tr><th scope="row">Philip Chidera</th><td class="r">0</td><td class="r">4 days</td><td class="r">0</td><td class="r">&mdash;</td><td class="r">&mdash;</td><td class="r hi">11</td></tr>
+            <tr><th scope="row">Promise Udo</th><td class="r"><em>not on board</em></td><td class="r">&mdash;</td><td class="r">&mdash;</td><td class="r">&mdash;</td><td class="r hi">0</td><td class="r"><em>not on board</em></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Cycle time = days from an item entering <code>In progress</code> to reaching <code>REVIEW/QA</code>. Commits combine each person's two git identities (1.5).</p>
+
+      <p><strong>David</strong> has the highest throughput on the team: 49 items submitted across the sprint, a 1-day median cycle, 17 in the last week, and only one item open. That is a fast, consistently clearing pipeline.</p>
+      <p><strong>Ayomikun</strong> submits at roughly two-thirds David's rate with a 5-day median cycle and the most commits of anyone (41 this week). The longer cycle is expected &mdash; backend items and a second workstream on the admin API are heavier than mobile screens. His 3 open items, oldest 6 days, are the team's only meaningful WIP.</p>
+      <p><strong>Philip</strong> has completed 11 items &mdash; every completion on the board &mdash; but has submitted nothing in the last 7 days and holds no open work. His design items finished earlier in the sprint. Whether he is now idle, working on untracked design, or blocked is not visible here and is worth one standup question.</p>
+      <p><strong>Promise</strong> cannot be measured from the board at all, and the git signal is concerning: <strong>2 commits ever, none in the last 7 days.</strong> <code>beevia-admin</code> has had no commit since <strong>30 July</strong>. That is the one genuine delivery risk in this section, and it is invisible in every board metric.</p>
+
+      <h3>2.2 The team's output rate is not the problem</h3>
+      <div class="bars">
+        <div class="bars__row"><span class="bars__label">Week 28</span><span class="r">5</span><span class="bar" aria-hidden="true"><i style="width:20px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">Week 29</span><span class="r">25</span><span class="bar" aria-hidden="true"><i style="width:100px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">Week 30</span><span class="r">10</span><span class="bar" aria-hidden="true"><i style="width:40px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">Week 31</span><span class="r">20</span><span class="bar" aria-hidden="true"><i style="width:80px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">Week 32</span><span class="r">17</span><span class="bar" aria-hidden="true"><i style="width:68px"></i></span></div>
+      </div>
+      <p>Sustained ~17&ndash;25 items a week with no decline. Set against 1.4 &mdash; where 103 items entered review and <strong>zero</strong> were ever accepted out of it &mdash; the conclusion is unambiguous: <strong>the team is producing at a steady rate and the acceptance step is not running.</strong> Nothing in this data supports a story about slow developers.</p>
+
+      <h3>2.3 Repository activity</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Repo</th><th scope="col">Last commit</th><th scope="col">Status</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>beevia-mobile</code></th><td>06 Aug (today)</td><td>Active</td></tr>
+            <tr><th scope="row"><code>beevia-api</code></th><td>05 Aug</td><td>Active</td></tr>
+            <tr><th scope="row"><code>beevia-admin-api</code></th><td>05 Aug</td><td>Active</td></tr>
+            <tr><th scope="row"><code>beevia-db-schema</code></th><td>04 Aug</td><td>Active</td></tr>
+            <tr><th scope="row"><code>beevia-admin</code></th><td class="hi">30 Jul</td><td class="hi">Stalled 7 days</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>2.4 What these numbers do not measure</h3>
+      <p>State this every time; the metrics are easy to over-read.</p>
+      <div class="note">
+        <p><strong>Not productivity.</strong> Commit counts reward many small commits; cycle time rewards small items. Neither says anything about difficulty or quality.</p>
+        <p><strong>Not workload fairness.</strong> David has 47 assigned items to Ayomikun's 28, but a mobile screen and a payments endpoint are not comparable units &mdash; and with no estimation points (1.6) there is no way to normalise them.</p>
+        <p><strong>Not individual accountability for the queue.</strong> Nobody's items are stuck because of them; they are stuck because review has no exit (1.4).</p>
+        <p style="margin-bottom:0"><strong>Not complete.</strong> Promise is absent from the board entirely.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s3">
+      <div class="sec__h"><span class="sec__n">03</span><h2>What shipped this cycle</h2></div>
+
+      <h3>3.1 API surface is stable and fully documented</h3>
+      <p>The audit found <strong>no drift</strong> &mdash; every route in code appears in the specs, and every spec operation exists in code:</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Service</th><th scope="col" class="r">Implemented</th><th scope="col" class="r">Proposed</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>beevia-api</code></th><td class="r">100</td><td class="r">52</td></tr>
+            <tr><th scope="row"><code>beevia-admin-api</code></th><td class="r">29</td><td class="r">23</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>All four spec files validate. Nothing was added to either API since the previous report, which is consistent with 1.2: the work in flight is in review, not merged.</p>
+
+      <h3>3.2 Mobile moved, backend did not</h3>
+      <p><code>beevia-mobile</code> was 31 commits behind and has been fast-forwarded to <code>main</code>. That work covers voice and video call fixes, message attachments, media/link segmentation, and the contact-profile screen &mdash; the client catching up to endpoints the API already exposes.</p>
+      <p>No controller, DTO or schema file changed in any repo, which is why the specs needed no edits.</p>
+      <div class="note">
+        <span class="label">Note</span>
+        <p style="margin-bottom:0"><code>beevia-mobile</code> was checked out from a <code>Mock-data</code> branch to <code>main</code> as part of this refresh. If someone was mid-task there, that branch still exists and nothing was lost.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s4">
+      <div class="sec__h"><span class="sec__n">04</span><h2>Product-vs-PRD gap</h2></div>
+      <p>Unchanged from the previous report &mdash; none of it moved this cycle, because nothing merged.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">PRD capability</th><th scope="col">State</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Cross-currency conversion</th><td><strong>Not built.</strong> <code>PaymentService</code> still hard-codes NGN via <code>activeNgn()</code>. The PRD's headline differentiator.</td></tr>
+            <tr><th scope="row">Virtual cards</th><td><strong>Not built.</strong> No module, table or provider capability. An MVP feature with a flow, a spec and a roadmap phase.</td></tr>
+            <tr><th scope="row">Two KYC tiers</th><td><strong>Local only.</strong> No international path for USD/GBP/EUR.</td></tr>
+            <tr><th scope="row">Consent management</th><td><strong>Not built.</strong> Listed as MVP; required for the Phase 4 compliance gate.</td></tr>
+            <tr><th scope="row">Payments read path</th><td><strong>Missing.</strong> No <code>GET /payments</code>; the 24h escrow countdown cannot be rendered after an app restart.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Full detail and proposed contracts: <code>api-rfc.md</code> &sect;4&ndash;&sect;5, <code>openapi.proposed.yaml</code>.</p>
+    </section>
+
+    <section class="sec" id="s5">
+      <div class="sec__h"><span class="sec__n">05</span><h2>Risks</h2></div>
+      <div class="stack">
+        <div class="finding"><div class="finding__n num">1</div><div><p><strong>The review queue is the delivery system right now.</strong> 83% of the sprint sits in it, half of it for two weeks or more, and nothing exited in 24 hours. Everything else is downstream of this.</p></div></div>
+        <div class="finding"><div class="finding__n num">2</div><div><p><strong>Zero engineering completions on the board.</strong> Real, but narrower than it sounds: it covers mobile and app-backend work only. The admin API reached 29 working endpoints this cycle with no board items behind it at all (1.5). If review is the only obstacle for the tracked work, it resolves once someone reviews; if not, the remaining effort is unknown and unmeasurable per 1.6.</p></div></div>
+        <div class="finding"><div class="finding__n num">3</div><div><p><strong>The sprint ends tomorrow.</strong> It will roll over substantially. Rolling 74 items forward without triage moves the problem rather than solving it.</p></div></div>
+        <div class="finding"><div class="finding__n num">4</div><div><p><strong>The PRD gap is static.</strong> Four MVP capabilities remain unbuilt while effort goes to chat, onboarding and admin. That is a reasonable sequencing choice, but it is not converging on the MVP definition.</p></div></div>
+        <div class="finding"><div class="finding__n num">5</div><div><p><strong>The admin dashboard front end has stalled.</strong> <code>beevia-admin</code> has had no commit since <strong>30 July</strong> &mdash; 7 days &mdash; and Promise has 2 commits total and none this week (2.1). Because Promise has no board presence, no board metric would ever surface this. It is the only delivery risk in this report that the sprint board is structurally blind to.</p></div></div>
+        <div class="finding"><div class="finding__n num">6</div><div><p><strong>Epic reporting is blind</strong> until the Zoho token gains <code>ZohoSprints.epic.READ</code> &mdash; 40 items' epic assignment is invisible to this pipeline.</p></div></div>
+      </div>
+    </section>
+
+    <section class="sec" id="s6">
+      <div class="sec__h"><span class="sec__n">06</span><h2>Previous recommendations &mdash; where they stand</h2></div>
+      <p>From <code>project-status-2026-08-05.md</code>. Verifiable items are judged against the board and the repos; the rest are marked as such rather than guessed at.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col" class="r">#</th><th scope="col">Recommendation</th><th scope="col">Status</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" class="r">1</th><td>Triage the review queue before 07 Aug</td><td class="hi">Not done. Queue grew 72 &rarr; 74; 0 items left review.</td></tr>
+            <tr><th scope="row" class="r">2</th><td>Settle what &ldquo;Done&rdquo; means for engineering</td><td class="hi">Not done. Still zero engineering completions; <code>Done</code> unchanged at 11.</td></tr>
+            <tr><th scope="row" class="r">3</th><td>Admin hardening: 2FA, fail-closed guards, separate JWT secret, Swagger off in prod</td><td class="hi">Not done. <code>beevia-admin-api</code> has no new commits since the last report.</td></tr>
+            <tr><th scope="row" class="r">4</th><td>Decide on FX and card-issuing partners</td><td>No evidence either way. A partner decision leaves no trace in code; no FX or card module has appeared.</td></tr>
+            <tr><th scope="row" class="r">5</th><td>Resolve the Trust &amp; Safety / E2EE conflict</td><td>No evidence either way. No related code change; the conflict remains in the dashboard spec.</td></tr>
+            <tr><th scope="row" class="r">6</th><td>Add estimates and epics</td><td class="hi">Not done. All 120 items still carry 0 points.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Four of the six are verifiably unstarted, and the two that carried a hard deadline &mdash; triage and the &ldquo;Done&rdquo; definition &mdash; are the two the sprint most needed. That is the clearest signal in this report: the previous edition's advice did not translate into action, so repeating it unchanged would be pointless.</p>
+    </section>
+
+    <section class="sec" id="s7">
+      <div class="sec__h"><span class="sec__n">07</span><h2>What I would do this week</h2></div>
+      <p>Deliberately shorter than the previous list. Six recommendations produced zero actions; one is worth more than a menu.</p>
+
+      <div class="invert" style="margin-bottom:var(--s-5)">
+        <div class="finding" style="border-top:0;padding-top:0">
+          <div class="finding__n num">1</div>
+          <div><p style="margin-bottom:0"><strong>Name the reviewer, today.</strong> 74 items, no reviewer field, nothing accepted in a month. This is recommendation #2 from the previous report restated with its cause identified &mdash; it did not move, and nothing else can move until it does. Everything below is secondary to it.</p></div>
+        </div>
+      </div>
+
+      <p>Then, in order:</p>
+      <div class="stack">
+        <div class="finding"><div class="finding__n num">2</div><div><p><strong>Triage the 37 items aged 14+ days before the sprint closes.</strong> Some are probably done and merely unmarked; those are free wins. Ones needing real review should be scheduled, not rolled silently.</p></div></div>
+        <div class="finding"><div class="finding__n num">3</div><div><p><strong>Do not roll all 74 forward.</strong> A sprint that begins with 74 inherited review items has the same problem on day one.</p></div></div>
+        <div class="finding"><div class="finding__n num">4</div><div><p><strong>Add coarse sizing to the next sprint.</strong> S/M/L is enough to make 1.6 answerable.</p></div></div>
+        <div class="finding"><div class="finding__n num">5</div><div><p><strong>Check whether Promise is blocked.</strong> No commits in 7 days on a workstream with no board coverage. If he is stuck, nothing in the current tooling would have told you.</p></div></div>
+        <div class="finding"><div class="finding__n num">6</div><div><p><strong>Get Promise's work onto the board.</strong> It closes the largest measurement gap here, and would have surfaced #5 automatically.</p></div></div>
+        <div class="finding"><div class="finding__n num">7</div><div><p><strong>Add the epic scope to the Zoho token</strong> &mdash; a re-authorisation, no code change, and it restores the epic breakdown.</p></div></div>
+      </div>
+      <p>The admin-hardening and partner-decision items from the previous report (<a href="#s6">&sect;6</a>, rows 3&ndash;5) still stand and are unchanged; they are not repeated here to keep this list short enough to act on.</p>
+    </section>
+
+    <section class="sec" id="method">
+      <div class="sec__h"><span class="sec__n">&mdash;</span><h2>Appendix &mdash; method</h2></div>
+
+      <p><strong>Pipeline.</strong> Produced by the <code>beevia-refresh</code> skill: sprint export &rarr; repo sync &rarr; drift audit &rarr; this report.</p>
+
+      <h3>Sources</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Stream</th><th scope="col">Artifact</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Board</th><td><code>beevia-sprint-board-2026-08-06.csv</code> &mdash; 120 rows, 89 leaves</td></tr>
+            <tr><th scope="row">Flow</th><td><code>beevia-activity-2026-08-06.json</code> &mdash; 120 audit trails, 623 entries</td></tr>
+            <tr><th scope="row">Code</th><td><code>beevia-api</code>, <code>beevia-admin-api</code>, <code>beevia-db-schema</code>, <code>beevia-admin</code>, <code>beevia-mobile</code> at <code>origin/main</code> as of 2026-08-06</td></tr>
+            <tr><th scope="row">Specs</th><td><code>openapi.yaml</code>, <code>openapi.proposed.yaml</code>, <code>openapi.admin.yaml</code>, <code>openapi.admin.proposed.yaml</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p><strong>Queue age is measured from audit trails, not <code>Last Modified</code>.</strong> Bulk board operations rewrite that column on many items at once without producing per-item audit entries. Using it overstated recent inflow by roughly 5&times; and produced the incorrect &ldquo;the queue is new, not stale&rdquo; conclusion in the 2026-08-05 edition. The audit script has been corrected to read the sidecar; if the sidecar is missing it now reports queue age as unknown rather than falling back.</p>
+
+      <h3>What this report cannot tell you</h3>
+      <div class="note">
+        <p><strong>Velocity, burndown, or whether remaining work fits</strong> &mdash; no estimation points.</p>
+        <p><strong>Epic distribution</strong> &mdash; blocked on an OAuth scope.</p>
+        <p><strong>Who <em>should</em> review</strong> &mdash; the board has no reviewer field. Who <em>does</em> is now answerable from the audit trails: nobody has ever accepted an item out of REVIEW/QA.</p>
+        <p><strong>Whether an item in review is genuinely complete</strong> &mdash; only that its status changed and when.</p>
+        <p style="margin-bottom:0"><strong>Anything about the admin dashboard's progress</strong> &mdash; Promise has no board presence (1.5). Judge it from commits in <code>beevia-admin</code> / <code>beevia-admin-api</code>, not from this report's percentages.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="foot">
+  <span class="barcode barcode--lg" aria-hidden="true"></span>
+  <span>Beevia project status &middot; 2026-08-06 &middot; Sprint 0702</span>
+  <span><a href="index.html">All frames</a></span>
+</footer>
+
+<script src="ui.js"></script>
+</body>
+</html>

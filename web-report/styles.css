@@ -1,0 +1,1048 @@
+/* ==========================================================================
+   BEEVIA PROJECT STATUS — DATAMATICS
+   Pure black and pure white. No grey, no colour. Tone is produced by pattern
+   density, hairline weight and type width — never by tinted ink.
+   ========================================================================== */
+
+@font-face {
+  font-family: 'Martian Mono';
+  src: url('fonts/martian-mono-latin.woff2') format('woff2-variations');
+  font-weight: 300 700;
+  font-stretch: 75% 112.5%;
+  font-display: swap;
+}
+
+:root {
+  --ground: #000;
+  --ink: #fff;
+
+  /* Hairlines. Fractional widths antialias to optical grey while the ink
+     itself stays pure white — the print behaviour the world depends on. */
+  --hair: 1px solid var(--ink);
+  --hair-half: 0.5px solid var(--ink);
+
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-5: 1.5rem;
+  --s-6: 2rem;
+  --s-7: 3rem;
+  --s-8: 4.5rem;
+  --s-9: 7rem;
+
+  --rail: 13.5rem;
+  --measure: 68ch;
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: 'Martian Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-variation-settings: 'wdth' 75, 'wght' 300;
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--ink);
+  color: var(--ground);
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+/* --------------------------------------------------------------------------
+   TYPE REGISTERS
+   Three widths of one face: condensed for prose, normal for data, extended
+   for display. Quiet is achieved with weight and width, never with grey.
+   -------------------------------------------------------------------------- */
+
+.label {
+  font-variation-settings: 'wdth' 100, 'wght' 600;
+  font-size: 0.625rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+
+.num {
+  font-variation-settings: 'wdth' 100, 'wght' 400;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.display {
+  font-variation-settings: 'wdth' 112.5, 'wght' 700;
+  letter-spacing: -0.045em;
+  line-height: 0.9;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   MASTHEAD — the full-bleed data field
+   -------------------------------------------------------------------------- */
+
+.masthead {
+  position: relative;
+  border-bottom: var(--hair);
+}
+
+/* Sticky at every width: on a phone the contents rail is gone, so this bar is
+   the only route to "What I would do today" — the section the reader opened
+   the report for. It sits outside .masthead so it survives the scroll. */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: stretch;
+  background: var(--ground);
+  border-bottom: var(--hair);
+  min-height: 3rem;
+}
+
+.topbar__mark {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 0 var(--s-4);
+  border-right: var(--hair);
+}
+
+.topbar__wordmark {
+  font-variation-settings: 'wdth' 112.5, 'wght' 700;
+  font-size: 0.9375rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.topbar__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--s-5);
+  padding: 0 var(--s-4);
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.topbar__nav a {
+  text-decoration: none;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s var(--ease);
+}
+
+.topbar__nav a:hover {
+  border-bottom-color: var(--ink);
+}
+
+/* Barcode mark — drawn from hairlines, never an icon font or an emoji. */
+.barcode {
+  display: block;
+  width: 2.25rem;
+  height: 1.125rem;
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--ink) 0 1px,
+    transparent 1px 3px,
+    var(--ink) 3px 4px,
+    transparent 4px 7px,
+    var(--ink) 7px 9px,
+    transparent 9px 11px
+  );
+  flex: none;
+}
+
+.barcode--sm {
+  width: 1.5rem;
+  height: 0.75rem;
+}
+
+.barcode--lg {
+  width: 4rem;
+  height: 1.5rem;
+}
+
+/* The masthead: title and meta flanked by numeric rails. */
+
+.field {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--rail) minmax(0, 1fr) var(--rail);
+}
+
+.field__rail {
+  padding: var(--s-4);
+  font-size: 0.625rem;
+  line-height: 1.85;
+  font-variation-settings: 'wdth' 100, 'wght' 400;
+  font-variant-numeric: tabular-nums;
+  align-self: stretch;
+}
+
+.field__rail--l {
+  border-right: var(--hair);
+}
+
+.field__rail--r {
+  border-left: var(--hair);
+  text-align: right;
+}
+
+.field__rail dl {
+  margin: 0 0 var(--s-4);
+}
+
+.field__rail dt {
+  font-variation-settings: 'wdth' 100, 'wght' 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 0.5625rem;
+  margin-bottom: 0.15rem;
+}
+
+.field__rail dd {
+  margin: 0 0 var(--s-3);
+}
+
+/* No graphic in the masthead: the title sits on clean ground and the rails
+   either side carry the figures the field used to. */
+.field__stage {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 14rem;
+  min-width: 0;
+}
+
+.field__title {
+  position: relative;
+  padding: var(--s-6) var(--s-5) var(--s-4);
+}
+
+.field__title h1 {
+  font-variation-settings: 'wdth' 112.5, 'wght' 700;
+  letter-spacing: -0.05em;
+  line-height: 0.86;
+  text-transform: uppercase;
+  margin: 0;
+  font-size: clamp(2.25rem, 7.5vw, 5.25rem);
+}
+
+.field__meta {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-5);
+  padding: 0 var(--s-5) var(--s-5);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------------------
+   INVERSION — the full-frame negative.
+   Reserved for what matters most: the lede, the standing question, the close.
+   -------------------------------------------------------------------------- */
+
+.invert {
+  background: var(--ink);
+  color: var(--ground);
+  padding: var(--s-5);
+  border: var(--hair);
+}
+
+.invert ::selection {
+  background: var(--ground);
+  color: var(--ink);
+}
+
+.invert .barcode {
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--ground) 0 1px,
+    transparent 1px 3px,
+    var(--ground) 3px 4px,
+    transparent 4px 7px,
+    var(--ground) 7px 9px,
+    transparent 9px 11px
+  );
+}
+
+.lede {
+  font-variation-settings: 'wdth' 75, 'wght' 500;
+  font-size: clamp(1rem, 2.1vw, 1.375rem);
+  line-height: 1.5;
+  letter-spacing: -0.025em;
+  margin: 0;
+  max-width: 46ch;
+}
+
+/* --------------------------------------------------------------------------
+   MVP READINESS STRIP
+   Requested by the owner as the one page-top graphic (2026-08-07). Pure data:
+   one segment per rubric capability, segment width = weight, solid fill
+   fraction = evidence score. An empty outline is a capability at zero — the
+   absence is drawn, not hidden.
+   -------------------------------------------------------------------------- */
+
+.mvp {
+  border-bottom: var(--hair);
+  padding: var(--s-4) var(--s-6) var(--s-5);
+}
+
+.mvp__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+}
+
+.mvp__pct {
+  font-variation-settings: 'wdth' 112.5, 'wght' 700;
+  font-size: 2.25rem;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.mvp__meta {
+  margin-left: auto;
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.mvp__bar {
+  display: flex;
+  gap: 2px;
+  height: 1.375rem;
+  margin-top: var(--s-3);
+}
+
+.mvp__seg {
+  position: relative;
+  border: var(--hair-half);
+  min-width: 3px;
+}
+
+.mvp__seg > i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background: var(--ink);
+}
+
+.mvp__read {
+  margin-top: var(--s-2);
+  font-size: 0.625rem;
+  line-height: 1.7;
+}
+
+.mvp__read a {
+  text-decoration: none;
+  border-bottom: var(--hair-half);
+}
+
+@media (max-width: 40rem) {
+  .mvp {
+    padding: var(--s-4);
+  }
+
+  .mvp__pct {
+    font-size: 1.75rem;
+  }
+
+  .mvp__meta {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .mvp__bar {
+    height: 1rem;
+    gap: 1px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   DOCUMENT SHELL
+   -------------------------------------------------------------------------- */
+
+.shell {
+  display: grid;
+  grid-template-columns: var(--rail) minmax(0, 1fr);
+  align-items: start;
+}
+
+.contents {
+  position: sticky;
+  top: 3rem;
+  padding: var(--s-5) var(--s-4);
+  border-right: var(--hair);
+  font-size: 0.625rem;
+  line-height: 1.9;
+  max-height: calc(100vh - 3rem);
+  overflow-y: auto;
+}
+
+.contents ol {
+  list-style: none;
+  margin: var(--s-3) 0 0;
+  padding: 0;
+  counter-reset: toc;
+}
+
+.contents li {
+  margin-bottom: 0.15rem;
+}
+
+.contents a {
+  text-decoration: none;
+  display: flex;
+  gap: var(--s-2);
+  padding: 0.1rem 0;
+  font-variation-settings: 'wdth' 75, 'wght' 400;
+  letter-spacing: 0.02em;
+}
+
+.contents a:hover {
+  font-variation-settings: 'wdth' 75, 'wght' 700;
+}
+
+.contents a span {
+  font-variant-numeric: tabular-nums;
+  opacity: 1;
+  flex: none;
+  width: 1.25rem;
+}
+
+.doc {
+  padding: var(--s-7) var(--s-6) var(--s-9);
+  min-width: 0;
+}
+
+/* Prose holds a reading measure. Data does not — tables and bar fields take
+   the width they need, which is what stops the columns from being crushed. */
+.doc p,
+.doc h3,
+.doc .stack,
+.doc .note {
+  max-width: var(--measure);
+}
+
+.doc .tbl-wrap,
+.doc .bars,
+.doc .invert {
+  max-width: 62rem;
+}
+
+/* --------------------------------------------------------------------------
+   SECTIONS
+   Numbers are kept because the report cross-references them (§1.4, §6).
+   -------------------------------------------------------------------------- */
+
+.sec {
+  margin-top: var(--s-8);
+  scroll-margin-top: var(--s-4);
+}
+
+.sec:first-child {
+  margin-top: 0;
+}
+
+.sec__h {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-4);
+  border-top: var(--hair);
+  padding-top: var(--s-3);
+  margin: 0 0 var(--s-5);
+  max-width: none;
+}
+
+.sec__n {
+  font-variation-settings: 'wdth' 100, 'wght' 700;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.1em;
+  flex: none;
+}
+
+.sec__h h2 {
+  font-variation-settings: 'wdth' 112.5, 'wght' 700;
+  font-size: clamp(1.125rem, 2.4vw, 1.625rem);
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+h3 {
+  font-variation-settings: 'wdth' 100, 'wght' 700;
+  font-size: 0.8125rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: var(--s-7) 0 var(--s-3);
+  line-height: 1.4;
+}
+
+h3:first-child {
+  margin-top: 0;
+}
+
+p {
+  margin: 0 0 var(--s-4);
+}
+
+strong {
+  font-variation-settings: 'wdth' 75, 'wght' 700;
+}
+
+em {
+  font-style: normal;
+  font-variation-settings: 'wdth' 75, 'wght' 300;
+  border-bottom: var(--hair-half);
+}
+
+code {
+  font-variation-settings: 'wdth' 100, 'wght' 400;
+  font-size: 0.875em;
+  padding: 0.05em 0.3em;
+  border: var(--hair-half);
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   TABLES — tight tabular columns, hairline rules
+   -------------------------------------------------------------------------- */
+
+.tbl-wrap {
+  overflow-x: auto;
+  margin: 0 0 var(--s-5);
+  border: var(--hair);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-variation-settings: 'wdth' 100, 'wght' 400;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+  min-width: 34rem;
+}
+
+thead th {
+  font-variation-settings: 'wdth' 100, 'wght' 700;
+  font-size: 0.5625rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-align: left;
+  padding: var(--s-3) var(--s-3);
+  border-bottom: var(--hair);
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+tbody td,
+tbody th {
+  padding: var(--s-2) var(--s-3);
+  border-bottom: var(--hair-half);
+  text-align: left;
+  font-weight: inherit;
+}
+
+tbody th {
+  font-variation-settings: 'wdth' 100, 'wght' 600;
+  white-space: nowrap;
+}
+
+tbody tr:last-child td,
+tbody tr:last-child th {
+  border-bottom: 0;
+}
+
+.r {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+}
+
+td.hi,
+th.hi {
+  font-variation-settings: 'wdth' 100, 'wght' 700;
+}
+
+/* Sample a row: it pulls into focus and the surrounding field drops to a
+   faint bar pattern — the world's own selection behaviour. */
+tbody tr {
+  transition: background 0.12s var(--ease), color 0.12s var(--ease);
+}
+
+/* The sampled row inverts on its own. Sibling rows are left alone — an
+   ambient pattern on every other row was removed at the user's request. */
+tbody tr:hover {
+  background: var(--ink);
+  color: var(--ground);
+}
+
+tbody tr:hover code {
+  border-color: var(--ground);
+}
+
+tbody tr:hover .bar i {
+  background: var(--ground);
+}
+
+/* --------------------------------------------------------------------------
+   BAR FIELDS — quantities rendered as bars, never as a sparkline ornament
+   -------------------------------------------------------------------------- */
+
+.bars {
+  margin: 0 0 var(--s-5);
+  border: var(--hair);
+}
+
+.bars__row {
+  display: grid;
+  grid-template-columns: 7.5rem 3.25rem minmax(0, 1fr);
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  border-bottom: var(--hair-half);
+  font-size: 0.6875rem;
+  font-variation-settings: 'wdth' 100, 'wght' 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.bars__row:last-child {
+  border-bottom: 0;
+}
+
+/* Groups that carry a share alongside the count get a fourth column, so the
+   percentages the source report prints are not dropped in translation. */
+.bars--share .bars__row {
+  grid-template-columns: 7.5rem 3.25rem 3.25rem minmax(0, 1fr);
+}
+
+.bars__label {
+  font-variation-settings: 'wdth' 100, 'wght' 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.5625rem;
+  white-space: nowrap;
+}
+
+.bar {
+  display: flex;
+  gap: 2px;
+  height: 0.75rem;
+  align-items: stretch;
+}
+
+.bar i {
+  display: block;
+  width: 3px;
+  background: var(--ink);
+}
+
+/* --------------------------------------------------------------------------
+   CALLOUTS
+   -------------------------------------------------------------------------- */
+
+.note {
+  border-top: var(--hair);
+  border-bottom: var(--hair);
+  padding: var(--s-4) 0;
+  margin: 0 0 var(--s-5);
+}
+
+.note .label {
+  display: block;
+  margin-bottom: var(--s-2);
+}
+
+.stack {
+  display: grid;
+  gap: var(--s-4);
+  margin: 0 0 var(--s-5);
+}
+
+.finding {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: var(--s-4);
+  border-top: var(--hair);
+  padding-top: var(--s-3);
+}
+
+.finding__n {
+  font-variation-settings: 'wdth' 112.5, 'wght' 700;
+  font-size: 1.5rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.finding p:last-child {
+  margin-bottom: 0;
+}
+
+/* --------------------------------------------------------------------------
+   ARCHIVE — frames
+   -------------------------------------------------------------------------- */
+
+.frames {
+  border-top: var(--hair);
+}
+
+.frame {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr) 12rem;
+  gap: var(--s-5);
+  align-items: start;
+  padding: var(--s-5) var(--s-6);
+  border-bottom: var(--hair);
+  text-decoration: none;
+  transition: background 0.14s var(--ease), color 0.14s var(--ease);
+}
+
+.frame:hover,
+.frame:focus-visible {
+  background: var(--ink);
+  color: var(--ground);
+}
+
+.frame:hover .barcode,
+.frame:focus-visible .barcode {
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--ground) 0 1px,
+    transparent 1px 3px,
+    var(--ground) 3px 4px,
+    transparent 4px 7px,
+    var(--ground) 7px 9px,
+    transparent 9px 11px
+  );
+}
+
+.frame:hover .frame__bar i,
+.frame:focus-visible .frame__bar i {
+  background: var(--ground);
+}
+
+.frame__idx {
+  font-variation-settings: 'wdth' 100, 'wght' 700;
+  font-size: 0.625rem;
+  letter-spacing: 0.16em;
+  font-variant-numeric: tabular-nums;
+  padding-top: 0.35rem;
+}
+
+.frame__date {
+  display: block;
+  font-variation-settings: 'wdth' 112.5, 'wght' 700;
+  font-size: clamp(1.125rem, 3vw, 1.75rem);
+  letter-spacing: -0.04em;
+  line-height: 1;
+  text-transform: uppercase;
+  margin: 0 0 var(--s-3);
+}
+
+.frame__sum {
+  display: block;
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  max-width: 54ch;
+}
+
+.frame__stats {
+  font-size: 0.625rem;
+  font-variation-settings: 'wdth' 100, 'wght' 400;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.7;
+  padding-top: 0.3rem;
+}
+
+.frame__stats div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+/* Proportional: the solid run is the share sitting in review. How much of the
+   bar is filled is how much of the sprint is stuck. */
+.frame__bar {
+  display: flex;
+  gap: 2px;
+  height: 0.6rem;
+  margin-top: var(--s-2);
+}
+
+.frame__bar i {
+  display: block;
+  background: var(--ink);
+}
+
+.frame__bar u {
+  display: block;
+  border: var(--hair-half);
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--ink) 0 1px,
+    transparent 1px 4px
+  );
+}
+
+.frame:hover .frame__bar u,
+.frame:focus-visible .frame__bar u {
+  border-color: var(--ground);
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--ground) 0 1px,
+    transparent 1px 4px
+  );
+}
+
+/* --------------------------------------------------------------------------
+   FOOTER
+   -------------------------------------------------------------------------- */
+
+.foot {
+  border-top: var(--hair);
+  padding: var(--s-6);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-5);
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.625rem;
+  font-variation-settings: 'wdth' 100, 'wght' 400;
+}
+
+.foot a {
+  text-decoration: none;
+  border-bottom: var(--hair-half);
+}
+
+/* --------------------------------------------------------------------------
+   MOTION — none on entry.
+   The page loads still. Hover and focus state changes are the whole budget.
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   RESPONSIVE — columns thin and drop from the edges as width shrinks
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 78rem) {
+  :root {
+    --rail: 11rem;
+  }
+
+  .field {
+    grid-template-columns: var(--rail) minmax(0, 1fr);
+  }
+
+  .field__rail--r {
+    display: none;
+  }
+}
+
+@media (max-width: 60rem) {
+  .field {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .field__rail--l {
+    display: none;
+  }
+
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* The phone read happens minutes before standup. A screenful of contents
+     ahead of the lede costs the reader the only screen that matters, and the
+     top bar already carries the jumps that earn their place. */
+  .contents {
+    display: none;
+  }
+
+  .doc {
+    padding: var(--s-6) var(--s-5) var(--s-8);
+  }
+
+  .frame {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-3);
+    padding: var(--s-5);
+  }
+
+  .frame__stats {
+    border-top: var(--hair-half);
+    padding-top: var(--s-3);
+  }
+}
+
+@media (max-width: 40rem) {
+  body {
+    font-size: 0.875rem;
+  }
+
+  .field__stage {
+    min-height: 0;
+  }
+
+  .field__title {
+    padding: var(--s-5) var(--s-4) var(--s-3);
+  }
+
+  /* One row that scrolls, never two rows that eat the viewport. */
+  .topbar {
+    min-height: 2.75rem;
+  }
+
+  .topbar__mark {
+    padding: 0 var(--s-3);
+    gap: var(--s-2);
+  }
+
+  .topbar__wordmark {
+    font-size: 0.8125rem;
+  }
+
+  .topbar__nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: var(--s-3);
+    padding: 0 var(--s-3);
+    font-size: 0.5rem;
+    letter-spacing: 0.1em;
+    scrollbar-width: none;
+  }
+
+  /* A table that continues past the edge says so with a broken border, the
+     only edge treatment this world has. Borders sit on the scroll container,
+     so the mark stays put while the columns move under it. `.scrolls` is the
+     no-JS default; `is-clipped` is set from measured overflow and removed the
+     moment the reader reaches the end, so the mark never lies. */
+  .tbl-wrap.scrolls {
+    border-right-style: dashed;
+  }
+
+  .tbl-wrap.measured {
+    border-right-style: solid;
+  }
+
+  .tbl-wrap.measured.is-clipped {
+    border-right-style: dashed;
+  }
+
+  .topbar__nav.is-clipped {
+    border-right: var(--hair);
+    border-right-style: dashed;
+  }
+
+  .bars--share .bars__row {
+    grid-template-columns: 5.5rem 2.25rem 2.5rem minmax(0, 1fr);
+  }
+
+  .topbar__nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .topbar__nav a {
+    white-space: nowrap;
+  }
+
+  .field__meta {
+    padding: 0 var(--s-4) var(--s-4);
+    gap: var(--s-1) var(--s-4);
+    font-size: 0.6875rem;
+  }
+
+  .doc {
+    padding: var(--s-5) var(--s-4) var(--s-7);
+  }
+
+  .invert {
+    padding: var(--s-4);
+  }
+
+  .sec {
+    margin-top: var(--s-7);
+  }
+
+  .bars__row {
+    grid-template-columns: 5.5rem 2.5rem minmax(0, 1fr);
+    gap: var(--s-2);
+  }
+
+  /* Let narrow tables collapse to fit rather than parking their numbers
+     off-screen. A label column with no value beside it is worthless on the
+     screen this report is actually read on. Genuinely wide tables still
+     scroll inside their own frame. */
+  table {
+    min-width: 0;
+    font-size: 0.6875rem;
+  }
+
+  thead th {
+    padding: var(--s-2);
+    font-size: 0.5rem;
+    letter-spacing: 0.1em;
+  }
+
+  tbody td,
+  tbody th {
+    padding: var(--s-2);
+  }
+
+  .doc .tbl-wrap table:not(.wide) th,
+  .doc .tbl-wrap table:not(.wide) td {
+    white-space: normal;
+  }
+
+  .foot {
+    padding: var(--s-5) var(--s-4);
+    gap: var(--s-3);
+  }
+}
+
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+}

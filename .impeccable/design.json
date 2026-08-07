@@ -1,0 +1,351 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-07T00:00:00Z",
+  "title": "Design System: Beevia Project Status",
+  "extensions": {
+    "colorMeta": {
+      "ground": {
+        "role": "neutral",
+        "displayName": "Absolute Ground",
+        "canonical": "#000",
+        "tonalRamp": [
+          "#000",
+          "#000",
+          "#000",
+          "#000",
+          "#000",
+          "#000",
+          "#000",
+          "#000"
+        ],
+        "note": "The system has exactly two values and no ramp. The array is flat by design — intermediate tones are produced by white geometry at low coverage, never by a tinted hex."
+      },
+      "ink": {
+        "role": "primary",
+        "displayName": "Signal White",
+        "canonical": "#fff",
+        "tonalRamp": [
+          "#fff",
+          "#fff",
+          "#fff",
+          "#fff",
+          "#fff",
+          "#fff",
+          "#fff",
+          "#fff"
+        ],
+        "note": "Apparent greys come from 0.5px hairlines and repeating bar patterns at full opacity. No alpha, no grey, no colour anywhere — including hover and focus."
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The masthead h1 only. Extended (wdth 112.5), heavy, uppercase, set on clean ground with nothing behind it."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Numbered section headings and the archive frame's date."
+      },
+      "lede": {
+        "displayName": "Lede",
+        "purpose": "The one-paragraph statement inside an inverted block. Condensed, medium weight, capped at 46ch."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "h3 sub-headings inside a section. Data register, heavy, uppercase, tracked 0.08em."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "All running prose. Condensed (wdth 75) at weight 300, measure 68ch."
+      },
+      "data": {
+        "displayName": "Data",
+        "purpose": "Table cells, bar rows, masthead rails, frame stats. Normal width, tabular figures, zero tracking."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Field names, table column heads, rail terms, nav. Normal width, semibold, tracked 0.16em, uppercase."
+      }
+    },
+    "fonts": [
+      {
+        "family": "Martian Mono",
+        "src": "web-report/fonts/martian-mono-latin.woff2",
+        "format": "woff2-variations",
+        "fontWeight": "300 700",
+        "fontStretch": "75% 112.5%",
+        "fontDisplay": "swap",
+        "purpose": "The only typeface in the system. Self-hosted so the page opens from file:// with nothing fetched at runtime. Three width registers do the work a second and third family would normally do.",
+        "fallback": "ui-monospace, 'SF Mono', Menlo, Consolas, monospace"
+      }
+    ],
+    "shadows": [],
+    "rules_hairline": [
+      {
+        "name": "hair",
+        "value": "1px solid #fff",
+        "purpose": "Structural division: masthead bottom, topbar bottom, rail edges, section top rules, table frame and head underline, note top/bottom, archive frame separators, footer top."
+      },
+      {
+        "name": "hair-half",
+        "value": "0.5px solid #fff",
+        "purpose": "Subordinate division inside an already-framed region: table body rows, bar-field rows, code outline, em underline, footer link underline. Antialiases to optical grey while the ink stays #fff."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "The only easing curve in the system."
+      },
+      {
+        "name": "state-fast",
+        "value": "0.12s",
+        "purpose": "Table row hover inversion (background and color)."
+      },
+      {
+        "name": "state-frame",
+        "value": "0.14s",
+        "purpose": "Archive frame hover/focus inversion."
+      },
+      {
+        "name": "state-link",
+        "value": "0.15s",
+        "purpose": "Topbar link underline border-color."
+      },
+      {
+        "name": "entrance",
+        "value": "none",
+        "purpose": "There is no entrance animation anywhere on the site — no reveal, stagger, or load sequence. State transitions only. A prefers-reduced-motion block collapses all durations to 0.001ms."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "rails-right-drop",
+        "value": "78rem",
+        "purpose": "--rail narrows 13.5rem to 11rem; the masthead's right numeric rail is dropped and the field becomes rail | 1fr."
+      },
+      {
+        "name": "single-column",
+        "value": "60rem",
+        "purpose": "Both masthead rails gone; shell collapses to one column; the contents rail is hidden entirely so the lede reaches the phone's first screen. Archive frames stack."
+      },
+      {
+        "name": "phone",
+        "value": "40rem",
+        "purpose": "Body type to 0.875rem; topbar to 2.75rem with a single horizontally scrolling nav row; narrow tables release their 34rem min-width and collapse to fit while table.wide still scrolls inside its dashed-edge frame."
+      }
+    ],
+    "layout": {
+      "rail": "13.5rem (11rem below 78rem)",
+      "measure": "68ch for prose; data blocks run to 62rem",
+      "mastheadGrid": "rail | minmax(0,1fr) | rail",
+      "shellGrid": "rail | minmax(0,1fr)",
+      "stickyOffsets": "topbar top:0 z-index 20 (outside .masthead); contents top:3rem, max-height calc(100vh - 3rem)"
+    },
+    "deadCode": [],
+    "staleComments": []
+  },
+  "components": [
+    {
+      "name": "Topbar",
+      "kind": "nav",
+      "refersTo": "topbar",
+      "description": "Sticky navigation bar with the barcode mark and wordmark; sits outside the masthead so it survives the scroll, and below 60rem it is the only navigation left.",
+      "html": "<div class=\"ds-topbar\"><div class=\"ds-topbar__mark\"><span class=\"ds-barcode ds-barcode--sm\" aria-hidden=\"true\"></span><span class=\"ds-topbar__wordmark\">Beevia</span></div><nav class=\"ds-topbar__nav\" aria-label=\"Report\"><a href=\"#overview\">Overview</a><a href=\"#s5\">Risks</a><a href=\"#s7\">What I would do today</a></nav></div>",
+      "css": ".ds-topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: stretch; background: #000; color: #fff; border-bottom: 1px solid #fff; min-height: 3rem; font-family: 'Martian Mono', ui-monospace, Menlo, monospace; } .ds-topbar__mark { display: flex; align-items: center; gap: 0.75rem; padding: 0 1rem; border-right: 1px solid #fff; } .ds-topbar__wordmark { font-variation-settings: 'wdth' 112.5, 'wght' 700; font-size: 0.9375rem; letter-spacing: 0.1em; text-transform: uppercase; } .ds-topbar__nav { display: flex; align-items: center; gap: 1.5rem; padding: 0 1rem; margin-left: auto; flex-wrap: wrap; font-variation-settings: 'wdth' 100, 'wght' 600; font-size: 0.625rem; letter-spacing: 0.16em; text-transform: uppercase; line-height: 1.4; } .ds-topbar__nav a { color: inherit; text-decoration: none; padding: 0.25rem 0; border-bottom: 1px solid transparent; transition: border-color 0.15s cubic-bezier(0.16,1,0.3,1); } .ds-topbar__nav a:hover { border-bottom-color: #fff; } .ds-topbar__nav a:focus-visible { outline: 2px solid #fff; outline-offset: 3px; } .ds-barcode { display: block; width: 2.25rem; height: 1.125rem; flex: none; background-image: repeating-linear-gradient(90deg, #fff 0 1px, transparent 1px 3px, #fff 3px 4px, transparent 4px 7px, #fff 7px 9px, transparent 9px 11px); } .ds-barcode--sm { width: 1.5rem; height: 0.75rem; }"
+    },
+    {
+      "name": "Masthead",
+      "kind": "custom",
+      "refersTo": "masthead-rail",
+      "description": "Display title on clean ground flanked by two numeric rails carrying real measured figures. No graphic, no canvas, no background.",
+      "html": "<header class=\"ds-masthead\"><div class=\"ds-field\"><div class=\"ds-field__rail ds-field__rail--l\"><dl><dt>In review</dt><dd>74 of 89 &middot; 83%</dd><dt>Median age</dt><dd>15d &middot; oldest 28d</dd><dt>Done</dt><dd>11 &middot; unchanged in 48h</dd></dl></div><div class=\"ds-field__stage\"><div class=\"ds-field__title\"><h1>Project<br>Status</h1></div><div class=\"ds-field__meta\"><span>2026-08-07</span><span>Sprint 0702</span><span>Ends today</span></div></div><div class=\"ds-field__rail ds-field__rail--r\"><dl><dt>Board moves 48h</dt><dd>0</dd><dt>Commits 48h</dt><dd>13</dd></dl></div></div></header>",
+      "css": ".ds-masthead { position: relative; background: #000; color: #fff; border-bottom: 1px solid #fff; font-family: 'Martian Mono', ui-monospace, Menlo, monospace; } .ds-field { display: grid; grid-template-columns: 13.5rem minmax(0,1fr) 13.5rem; } .ds-field__rail { padding: 1rem; font-size: 0.625rem; line-height: 1.85; font-variation-settings: 'wdth' 100, 'wght' 400; font-variant-numeric: tabular-nums; align-self: stretch; } .ds-field__rail--l { border-right: 1px solid #fff; } .ds-field__rail--r { border-left: 1px solid #fff; text-align: right; } .ds-field__rail dl { margin: 0 0 1rem; } .ds-field__rail dt { font-variation-settings: 'wdth' 100, 'wght' 600; letter-spacing: 0.16em; text-transform: uppercase; font-size: 0.5625rem; margin-bottom: 0.15rem; } .ds-field__rail dd { margin: 0 0 0.75rem; } .ds-field__stage { display: flex; flex-direction: column; justify-content: flex-end; min-height: 14rem; min-width: 0; } .ds-field__title { padding: 2rem 1.5rem 1rem; } .ds-field__title h1 { font-variation-settings: 'wdth' 112.5, 'wght' 700; letter-spacing: -0.05em; line-height: 0.86; text-transform: uppercase; margin: 0; font-size: clamp(2.25rem, 7.5vw, 5.25rem); } .ds-field__meta { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; padding: 0 1.5rem 1.5rem; font-variation-settings: 'wdth' 100, 'wght' 400; font-variant-numeric: tabular-nums; font-size: 0.75rem; } @media (max-width: 78rem) { .ds-field { grid-template-columns: 11rem minmax(0,1fr); } .ds-field__rail--r { display: none; } } @media (max-width: 60rem) { .ds-field { grid-template-columns: minmax(0,1fr); } .ds-field__rail--l { display: none; } }"
+    },
+    {
+      "name": "MVP Readiness Strip",
+      "description": "The one sanctioned page-top graphic (user-requested 2026-08-07). One hairline-outlined segment per rubric capability, flex = frozen weight, solid-ink fill width = evidence score; zero scores render as empty outlines. Percentage always written with an approx sign and the word 'estimate'; fill measures build evidence, never board acceptance.",
+      "html": "<section class=\"ds-mvp\"><div class=\"ds-mvp__head\"><span class=\"ds-mvp__label\">MVP readiness — estimate</span><span class=\"ds-mvp__pct\">≈48%</span><span class=\"ds-mvp__meta\">target 2026-09-01 · provisional · 25 days out</span></div><div class=\"ds-mvp__bar\"><span class=\"ds-mvp__seg\" style=\"flex:15\"><i style=\"width:90%\"></i></span><span class=\"ds-mvp__seg\" style=\"flex:12\"><i style=\"width:55%\"></i></span><span class=\"ds-mvp__seg\" style=\"flex:12\"></span><span class=\"ds-mvp__seg\" style=\"flex:10\"></span></div></section>",
+      "css": ".ds-mvp { background: #000; color: #fff; border-bottom: 1px solid #fff; padding: 1rem 2rem 1.5rem; font-family: 'Martian Mono', ui-monospace, Menlo, monospace; } .ds-mvp__head { display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; } .ds-mvp__label { font-variation-settings: 'wdth' 100, 'wght' 600; font-size: 0.625rem; letter-spacing: 0.16em; text-transform: uppercase; } .ds-mvp__pct { font-variation-settings: 'wdth' 112.5, 'wght' 700; font-size: 2.25rem; line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; } .ds-mvp__meta { margin-left: auto; font-size: 0.6875rem; font-variant-numeric: tabular-nums; } .ds-mvp__bar { display: flex; gap: 2px; height: 1.375rem; margin-top: 0.75rem; } .ds-mvp__seg { position: relative; border: 0.5px solid #fff; min-width: 3px; } .ds-mvp__seg > i { position: absolute; top: 0; bottom: 0; left: 0; background: #fff; }"
+    },
+    {
+      "name": "Inverted Block",
+      "kind": "card",
+      "refersTo": "invert",
+      "description": "Full-frame negative carrying the lede, a standing question, or the close. The loudest device in the system; spend it three times per page at most.",
+      "html": "<div class=\"ds-invert\"><p class=\"ds-lede\">The board recorded nothing for two days. The repositories took 13 commits and five new endpoints in the same window.</p></div>",
+      "css": ".ds-invert { background: #fff; color: #000; padding: 1.5rem; border: 1px solid #fff; font-family: 'Martian Mono', ui-monospace, Menlo, monospace; } .ds-invert ::selection { background: #000; color: #fff; } .ds-lede { font-variation-settings: 'wdth' 75, 'wght' 500; font-size: clamp(1rem, 2.1vw, 1.375rem); line-height: 1.5; letter-spacing: -0.025em; margin: 0; max-width: 46ch; }"
+    },
+    {
+      "name": "Data Table",
+      "kind": "custom",
+      "refersTo": "table-row",
+      "description": "The core component. Hairline-framed tabular columns; sampling a row inverts it to solid white. Sibling rows are untouched — there is no ambient whole-table hover state.",
+      "html": "<div class=\"ds-tbl-wrap scrolls\"><table><thead><tr><th>Repo</th><th class=\"ds-r\">Last commit</th><th class=\"ds-r\">Status</th></tr></thead><tbody><tr><th>repo-one</th><td class=\"ds-r\">06 Aug</td><td class=\"ds-r\">Active</td></tr><tr><th>repo-two</th><td class=\"ds-r hi\">30 Jul</td><td class=\"ds-r hi\">Stalled</td></tr></tbody></table></div>",
+      "css": ".ds-tbl-wrap { overflow-x: auto; margin: 0 0 1.5rem; border: 1px solid #fff; background: #000; color: #fff; } .ds-tbl-wrap table { border-collapse: collapse; width: 100%; min-width: 34rem; font-family: 'Martian Mono', ui-monospace, Menlo, monospace; font-variation-settings: 'wdth' 100, 'wght' 400; font-size: 0.75rem; font-variant-numeric: tabular-nums; line-height: 1.5; } .ds-tbl-wrap thead th { font-variation-settings: 'wdth' 100, 'wght' 700; font-size: 0.5625rem; letter-spacing: 0.16em; text-transform: uppercase; text-align: left; padding: 0.75rem; border-bottom: 1px solid #fff; white-space: nowrap; vertical-align: bottom; } .ds-tbl-wrap tbody td, .ds-tbl-wrap tbody th { padding: 0.5rem 0.75rem; border-bottom: 0.5px solid #fff; text-align: left; font-weight: inherit; } .ds-tbl-wrap tbody th { font-variation-settings: 'wdth' 100, 'wght' 600; white-space: nowrap; } .ds-tbl-wrap tbody tr:last-child td, .ds-tbl-wrap tbody tr:last-child th { border-bottom: 0; } .ds-r { text-align: right !important; } .ds-tbl-wrap .hi { font-variation-settings: 'wdth' 100, 'wght' 700; } .ds-tbl-wrap tbody tr { transition: background 0.12s cubic-bezier(0.16,1,0.3,1), color 0.12s cubic-bezier(0.16,1,0.3,1); } .ds-tbl-wrap tbody tr:hover { background: #fff; color: #000; } @media (max-width: 40rem) { .ds-tbl-wrap.scrolls { border-right-style: dashed; } .ds-tbl-wrap.measured { border-right-style: solid; } .ds-tbl-wrap.measured.is-clipped { border-right-style: dashed; } .ds-tbl-wrap table { min-width: 0; font-size: 0.6875rem; } .ds-tbl-wrap table:not(.wide) th, .ds-tbl-wrap table:not(.wide) td { white-space: normal; } }"
+    },
+    {
+      "name": "Bar Field",
+      "kind": "custom",
+      "refersTo": "table-row",
+      "description": "Quantities drawn as runs of 3px white ticks beside their real figure. The --share variant adds a percentage column so a share printed by the source report is not dropped.",
+      "html": "<div class=\"ds-bars ds-bars--share\"><div class=\"ds-bars__row\"><span class=\"ds-bars__label\">14+ days</span><span class=\"ds-r\">37</span><span class=\"ds-r\">50%</span><span class=\"ds-bar\" aria-hidden=\"true\"><i style=\"width:118px\"></i></span></div><div class=\"ds-bars__row\"><span class=\"ds-bars__label\">0&ndash;5 days</span><span class=\"ds-r\">17</span><span class=\"ds-r\">23%</span><span class=\"ds-bar\" aria-hidden=\"true\"><i style=\"width:54px\"></i></span></div></div>",
+      "css": ".ds-bars { margin: 0 0 1.5rem; border: 1px solid #fff; background: #000; color: #fff; font-family: 'Martian Mono', ui-monospace, Menlo, monospace; } .ds-bars__row { display: grid; grid-template-columns: 7.5rem 3.25rem minmax(0,1fr); align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; border-bottom: 0.5px solid #fff; font-size: 0.6875rem; font-variation-settings: 'wdth' 100, 'wght' 400; font-variant-numeric: tabular-nums; } .ds-bars--share .ds-bars__row { grid-template-columns: 7.5rem 3.25rem 3.25rem minmax(0,1fr); } .ds-bars__row:last-child { border-bottom: 0; } .ds-bars__label { font-variation-settings: 'wdth' 100, 'wght' 600; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.5625rem; white-space: nowrap; } .ds-bar { display: flex; gap: 2px; height: 0.75rem; align-items: stretch; } .ds-bar i { display: block; width: 3px; background: #fff; } .ds-r { text-align: right; }"
+    },
+    {
+      "name": "Section Header",
+      "kind": "custom",
+      "refersTo": "section-heading",
+      "description": "Full hairline above, then a tabular section number beside the display headline. Section count and titles are authored per report, so this never assumes a schema.",
+      "html": "<div class=\"ds-sec__h\"><span class=\"ds-sec__n\">04</span><h2>Product-vs-PRD gap</h2></div>",
+      "css": ".ds-sec__h { display: flex; align-items: baseline; gap: 1rem; border-top: 1px solid #fff; padding-top: 0.75rem; margin: 0 0 1.5rem; max-width: none; color: #fff; font-family: 'Martian Mono', ui-monospace, Menlo, monospace; } .ds-sec__n { font-variation-settings: 'wdth' 100, 'wght' 700; font-size: 0.75rem; font-variant-numeric: tabular-nums; letter-spacing: 0.1em; flex: none; } .ds-sec__h h2 { font-variation-settings: 'wdth' 112.5, 'wght' 700; font-size: clamp(1.125rem, 2.4vw, 1.625rem); letter-spacing: -0.04em; line-height: 1.05; text-transform: uppercase; margin: 0; }"
+    },
+    {
+      "name": "Note",
+      "kind": "card",
+      "refersTo": "invert",
+      "description": "Rules above and below, no side borders, opened by a block label. Carries the report's caveats and measurement gaps at the same visual weight as a finding.",
+      "html": "<div class=\"ds-note\"><span class=\"ds-label\">Measurement gap</span><p>The Epic column is blank because the API token lacks the scope, not because no epics exist.</p></div>",
+      "css": ".ds-note { border-top: 1px solid #fff; border-bottom: 1px solid #fff; padding: 1rem 0; margin: 0 0 1.5rem; max-width: 68ch; background: #000; color: #fff; font-family: 'Martian Mono', ui-monospace, Menlo, monospace; font-variation-settings: 'wdth' 75, 'wght' 300; font-size: 0.9375rem; line-height: 1.75; letter-spacing: -0.01em; } .ds-note p { margin: 0; } .ds-label { display: block; margin-bottom: 0.5rem; font-variation-settings: 'wdth' 100, 'wght' 600; font-size: 0.625rem; letter-spacing: 0.16em; text-transform: uppercase; line-height: 1.4; }"
+    },
+    {
+      "name": "Finding",
+      "kind": "custom",
+      "refersTo": "section-heading",
+      "description": "A numbered claim: display-register numeral beside its prose, opened by a hairline. Stacked in a 1rem-gapped grid.",
+      "html": "<div class=\"ds-stack\"><div class=\"ds-finding\"><div class=\"ds-finding__n\">1</div><div><p><strong>Sprint 0702 closes today having accepted nothing.</strong> 74 items roll forward unless triaged in the next few hours.</p></div></div><div class=\"ds-finding\"><div class=\"ds-finding__n\">2</div><div><p><strong>The board no longer describes the work.</strong> Two days of zero recorded movement against 13 commits.</p></div></div></div>",
+      "css": ".ds-stack { display: grid; gap: 1rem; margin: 0 0 1.5rem; max-width: 68ch; background: #000; color: #fff; font-family: 'Martian Mono', ui-monospace, Menlo, monospace; font-variation-settings: 'wdth' 75, 'wght' 300; font-size: 0.9375rem; line-height: 1.75; letter-spacing: -0.01em; } .ds-finding { display: grid; grid-template-columns: 2rem minmax(0,1fr); gap: 1rem; border-top: 1px solid #fff; padding-top: 0.75rem; } .ds-finding__n { font-variation-settings: 'wdth' 112.5, 'wght' 700; font-size: 1.5rem; line-height: 1; font-variant-numeric: tabular-nums; } .ds-finding p { margin: 0; } .ds-finding strong { font-variation-settings: 'wdth' 75, 'wght' 700; }"
+    },
+    {
+      "name": "Contents Rail",
+      "kind": "nav",
+      "refersTo": "topbar",
+      "description": "Sticky jump list beside the document, numbered in a fixed tabular column. Hover thickens the weight rather than changing colour. Hidden below 60rem so the lede reaches the phone's first screen.",
+      "html": "<nav class=\"ds-contents\" aria-label=\"Contents\">Contents<ol><li><a href=\"#overview\"><span>00</span> Quick overview</a></li><li><a href=\"#s1\"><span>01</span> Sprint 0702 in detail</a></li><li><a href=\"#method\"><span>&mdash;</span> Method</a></li></ol></nav>",
+      "css": ".ds-contents { position: sticky; top: 3rem; padding: 1.5rem 1rem; border-right: 1px solid #fff; font-size: 0.625rem; line-height: 1.9; max-height: calc(100vh - 3rem); overflow-y: auto; background: #000; color: #fff; font-family: 'Martian Mono', ui-monospace, Menlo, monospace; font-variation-settings: 'wdth' 100, 'wght' 600; letter-spacing: 0.16em; text-transform: uppercase; } .ds-contents ol { list-style: none; margin: 0.75rem 0 0; padding: 0; } .ds-contents li { margin-bottom: 0.15rem; } .ds-contents a { color: inherit; text-decoration: none; display: flex; gap: 0.5rem; padding: 0.1rem 0; font-variation-settings: 'wdth' 75, 'wght' 400; letter-spacing: 0.02em; } .ds-contents a:hover { font-variation-settings: 'wdth' 75, 'wght' 700; } .ds-contents a:focus-visible { outline: 2px solid #fff; outline-offset: 3px; } .ds-contents a span { font-variant-numeric: tabular-nums; flex: none; width: 1.25rem; } @media (max-width: 60rem) { .ds-contents { display: none; } }"
+    },
+    {
+      "name": "Archive Frame",
+      "kind": "card",
+      "refersTo": "archive-frame",
+      "description": "A whole-row link to a dated report. The proportion bar's solid run is the share sitting in review; hover and focus invert the entire row including the barcode and both bar runs.",
+      "html": "<a class=\"ds-frame\" href=\"2026-08-07.html\"><span class=\"ds-frame__idx\">03</span><span><span class=\"ds-frame__date\">07 Aug 2026</span><span class=\"ds-frame__sum\">The board and the code have decoupled. Sprint 0702 ends today with 83% of its work in a queue that has never released anything.</span><span class=\"ds-frame__bar\" aria-hidden=\"true\"><i style=\"flex:74\"></i><u style=\"flex:15\"></u></span></span><span class=\"ds-frame__stats\"><div><span>In review</span><span>74</span></div><div><span>Commits 48h</span><span>13</span></div></span></a>",
+      "css": ".ds-frame { display: grid; grid-template-columns: 4.5rem minmax(0,1fr) 12rem; gap: 1.5rem; align-items: start; padding: 1.5rem 2rem; border-bottom: 1px solid #fff; text-decoration: none; background: #000; color: #fff; font-family: 'Martian Mono', ui-monospace, Menlo, monospace; transition: background 0.14s cubic-bezier(0.16,1,0.3,1), color 0.14s cubic-bezier(0.16,1,0.3,1); } .ds-frame:hover, .ds-frame:focus-visible { background: #fff; color: #000; } .ds-frame:focus-visible { outline: 2px solid #fff; outline-offset: 3px; } .ds-frame__idx { font-variation-settings: 'wdth' 100, 'wght' 700; font-size: 0.625rem; letter-spacing: 0.16em; font-variant-numeric: tabular-nums; padding-top: 0.35rem; } .ds-frame__date { display: block; font-variation-settings: 'wdth' 112.5, 'wght' 700; font-size: clamp(1.125rem, 3vw, 1.75rem); letter-spacing: -0.04em; line-height: 1; text-transform: uppercase; margin: 0 0 0.75rem; } .ds-frame__sum { display: block; margin: 0; font-variation-settings: 'wdth' 75, 'wght' 300; font-size: 0.8125rem; line-height: 1.6; max-width: 54ch; } .ds-frame__stats { font-size: 0.625rem; font-variation-settings: 'wdth' 100, 'wght' 400; font-variant-numeric: tabular-nums; line-height: 1.7; padding-top: 0.3rem; } .ds-frame__stats div { display: flex; justify-content: space-between; gap: 0.75rem; } .ds-frame__bar { display: flex; gap: 2px; height: 0.6rem; margin-top: 0.5rem; } .ds-frame__bar i { display: block; background: #fff; } .ds-frame__bar u { display: block; border: 0.5px solid #fff; background-image: repeating-linear-gradient(90deg, #fff 0 1px, transparent 1px 4px); } .ds-frame:hover .ds-frame__bar i, .ds-frame:focus-visible .ds-frame__bar i { background: #000; } .ds-frame:hover .ds-frame__bar u, .ds-frame:focus-visible .ds-frame__bar u { border-color: #000; background-image: repeating-linear-gradient(90deg, #000 0 1px, transparent 1px 4px); } @media (max-width: 60rem) { .ds-frame { grid-template-columns: minmax(0,1fr); gap: 0.75rem; padding: 1.5rem; } .ds-frame__stats { border-top: 0.5px solid #fff; padding-top: 0.75rem; } }"
+    },
+    {
+      "name": "Barcode Mark",
+      "kind": "custom",
+      "refersTo": "topbar",
+      "description": "The project's only mark, drawn entirely from a repeating gradient of uneven strokes. Never an icon font, an emoji, or an image file. Restates itself in black inside any inverted or hovered surface.",
+      "html": "<span class=\"ds-barcode ds-barcode--lg\" aria-hidden=\"true\"></span>",
+      "css": ".ds-barcode { display: block; width: 2.25rem; height: 1.125rem; flex: none; background-image: repeating-linear-gradient(90deg, #fff 0 1px, transparent 1px 3px, #fff 3px 4px, transparent 4px 7px, #fff 7px 9px, transparent 9px 11px); } .ds-barcode--sm { width: 1.5rem; height: 0.75rem; } .ds-barcode--lg { width: 4rem; height: 1.5rem; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Datamatics Print",
+    "overview": "This is a report about disagreement between measuring instruments, and it is drawn the way an instrument draws: pure black ground, pure white ink, hairline rules, tabular columns, and figures set at a width that lets them stack. There is no grey and no colour anywhere in the system. Every tone the page appears to have is produced by coverage — hairlines at 0.5px, hatched bar fills, the varying width of a single type face — never by tinting the ink. The world is Ryoji Ikeda datamatics: a page that looks measured rather than styled.\n\nThe surface refuses the project-management dashboard on purpose. No donuts, no RAG status pills, no burndown, no avatars, no progress rings. A generic dashboard reports the board; this report reconciles the Zoho board, the commit history of five repositories, and the diffed API surface against each other, and the design exists to let that disagreement land rather than average it into a tidy metric. Where the board and the code contradict one another, the two figures sit side by side in the masthead rails and the reader draws the conclusion.\n\nDensity is high and deliberate. The reader is the project owner, minutes before standup, on a phone. The overview block, its deltas, and the three things worth knowing must resolve before any scrolling — so nothing decorative is allowed to occupy the first screen. A masthead data-field graphic was built here and then removed at the user's request; the masthead is now type and numeric rails on clean ground, and the rails carry real figures (queue counts, median age, API surface, board-moves-vs-commits) instead of annotating a picture. Nothing on the site animates on entry.",
+    "keyCharacteristics": [
+      "Two ink values only: pure black ground (#000), pure white ink (#fff). No grey, no colour, no alpha — including hover.",
+      "One self-hosted variable mono face at three widths: 75 for prose, 100 for data and labels, 112.5 for display.",
+      "Tone from coverage: sub-pixel hairlines, bar-pattern fills, type weight and width.",
+      "Full-frame inversion (white ground, black type) reserved for the lede, the standing question, and the close.",
+      "Flat by construction — no shadow, no radius, no gradient except as a literal bar pattern.",
+      "Static HTML with one classic script; opens by double-click from file://."
+    ],
+    "rules": [
+      {
+        "name": "The Two-Value Rule",
+        "body": "The palette is #000 and #fff. No grey, no colour, no rgba(), no opacity below 1 anywhere in the system — including hover, focus and disabled states. If a value looks like it needs to be quieter, change its coverage, its hairline weight, or its type weight and width. A hex that is not #000 or #fff is a defect.",
+        "section": "colors"
+      },
+      {
+        "name": "The Coverage-Not-Alpha Rule",
+        "body": "Apparent grey is produced by pure-white geometry at low density. The canonical instance is the archive frame's proportional bar: the share sitting in review is a solid white run, the remainder a hairline box filled with a 1px-on-4px-off hatch. Both marks are #fff; only coverage changes, and the difference in coverage is the datum. An earlier ambient table-hover hatch (0.5px on a 7px pitch across every non-hovered row) was removed at the user's request — do not reintroduce a whole-table ambient state.",
+        "section": "colors"
+      },
+      {
+        "name": "The Inversion Rule",
+        "body": "Full-frame inversion (white ground, black type) is the loudest device in the system and is spent only on the lede, a standing question, and the close of a report. If a third inverted block appears on a screen, one of them is not load-bearing. Inverted blocks re-derive their own ::selection and their own barcode so no white-on-white gap opens.",
+        "section": "colors"
+      },
+      {
+        "name": "The Print Exception",
+        "body": "@media print is the single place the ink values invert to #fff ground / #000 type. That is a substrate change, not a palette change; nothing else may take that exemption.",
+        "section": "colors"
+      },
+      {
+        "name": "The One-Face Rule",
+        "body": "The system has exactly one typeface. New weight or emphasis is bought on the wght and wdth axes of Martian Mono, never by importing a second family and never by falling back to a system display face. Emphasis inside prose stays in the condensed register: strong is wdth 75 / wght 700; em is wdth 75 / wght 300 with a 0.5px hairline underline rather than an italic.",
+        "section": "typography"
+      },
+      {
+        "name": "The Register Rule",
+        "body": "Width encodes what a thing is, not how important it is. 75 is prose, 100 is data and labels, 112.5 is display. A number typeset in the prose register or a sentence typeset in the data register is a category error, and it shows immediately because the columns stop lining up.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Rule",
+        "body": "Every quantity carries font-variant-numeric: tabular-nums — table cells, rails, bar rows, section numbers, finding numbers, frame indices. Figures that change between dated reports must not shift the layout under them.",
+        "section": "typography"
+      },
+      {
+        "name": "The Data-Escapes-The-Measure Rule",
+        "body": "Prose holds 68ch; tables and bar fields take the width they need up to 62rem. A number pushed off-screen or wrapped into a two-line cell to satisfy a text measure is a worse outcome than a wide block.",
+        "section": "layout"
+      },
+      {
+        "name": "The One-Row Topbar Rule",
+        "body": "The sticky bar is a single row at every width. Below 40rem its links scroll horizontally rather than wrapping, because on the phone read a second bar row costs the reader the only screen that matters.",
+        "section": "layout"
+      },
+      {
+        "name": "The No-Depth Rule",
+        "body": "No box-shadow, no filter, no backdrop-filter, no gradient used as shading. The only linear-gradient permitted is a repeating-linear-gradient producing a literal bar pattern at full opacity.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Two-Weights Rule",
+        "body": "Rules come in exactly two weights, 1px and 0.5px, and the choice is structural: 1px frames a region, 0.5px divides inside one. A third weight is not available.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Square-Corner Rule",
+        "body": "border-radius: 0 everywhere, implicitly — the property is simply never written. A rounded corner is off-world.",
+        "section": "shapes"
+      },
+      {
+        "name": "The Dashed-Edge Rule",
+        "body": "A dashed border means one thing and only one thing: content continues past this edge. It is never decorative and never used for emphasis.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do keep the entire surface to #000 and #fff. If something needs to recede, reduce its coverage (hairline weight, bar density) or its type weight and width.",
+      "Do buy emphasis on the type axes: wdth 75 for prose, 100 for data and labels, 112.5 for display; wght 300–700 within a register.",
+      "Do put font-variant-numeric: tabular-nums on every quantity, in every component.",
+      "Do frame regions with the 1px hairline and divide inside them with the 0.5px hairline — those two weights only.",
+      "Do let data escape the 68ch prose measure. Tables and bar fields run to 62rem.",
+      "Do render whatever section structure the report actually has. The 05 Aug frame has five numbered sections; the 07 Aug frame has seven with sub-sections; only #overview and #method are stable across every date. Section titles are authored per report.",
+      "Do show only real, measured quantities. Every figure on these pages comes from the Zoho board, the five repositories, or the four OpenAPI specs, and the reports name real colleagues — invented people, metrics or dates are out of bounds even in a mockup.",
+      "Do state a frame's own measurement weakness on the page when it has one. The 05 Aug left rail says its queue age was measured from Last Modified, a reading the next frame corrects; that admission is content and keeps its position in the rail.",
+      "Do measure overflow before marking it. .scrolls is the no-JS default; .measured / .is-clipped come from real geometry and clear when the reader reaches the end.",
+      "Do keep the topbar sticky and one row tall at every width — below 60rem it is the only navigation left.",
+      "Do ship every page as a self-contained static file with one classic <script src> at the end of <body>. It must open by double-click from file://."
+    ],
+    "donts": [
+      "Don't reintroduce a decorative masthead graphic, canvas field, hero chart, or generative background. One was built here and removed at the user's explicit request. The one sanctioned page-top graphic is the .mvp readiness strip, requested by the user on 2026-08-07 — pure data: segment width = rubric weight, fill = evidence score.",
+      "Don't add an entrance animation, load reveal, stagger, or scroll-triggered transition. Motion is state-change only, 0.12s–0.15s. There is currently none on load anywhere, and that is the state to preserve.",
+      "Don't introduce grey, colour, rgba(), or any opacity below 1 — including on hover, focus, and disabled states. @media print is the only permitted departure.",
+      "Don't use a second typeface, an icon font, an emoji, an SVG icon set, or a raster image. The barcode is the only mark, and it is drawn with a gradient.",
+      "Don't round a corner, cast a shadow, or apply a blur or backdrop-filter. The only gradients allowed are repeating-linear-gradient bar patterns at full opacity.",
+      "Don't use a dashed border for anything except \"content continues past this edge\".",
+      "Don't spend full-frame inversion on more than the lede, a standing question, and the close. Its scarcity is what makes it land.",
+      "Don't assume a fixed section schema, and never bend a report's structure to fit the template. If a layout only works when the prose is trimmed, the layout is wrong.",
+      "Don't demote a report's caveats or measurement gaps into fine print. They are set at the same weight as findings on purpose.",
+      "Don't add a framework, build step, bundler, npm dependency, or backend, and never write type=\"module\" — module scripts are blocked by CORS on file:// and would break the double-click open. Nothing may be fetched at runtime.",
+      "Don't cross-reference dates in the chrome (trend charts, two-date comparison, follow-through tracking). Each frame stands alone; the archive is navigation only.",
+      "Don't write anything into the five sub-repositories (beevia-admin, beevia-admin-api, beevia-api, beevia-db-schema, beevia-mobile) — a hard rule in .claude/rules.md."
+    ]
+  }
+}
