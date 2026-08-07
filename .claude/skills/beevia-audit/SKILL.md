@@ -17,6 +17,27 @@ python3 .claude/skills/beevia-audit/scripts/audit.py --quiet  # problems only
 
 Exit `0` = clean, `1` = drift or inconsistency found, `2` = the audit could not run.
 
+## Period-over-period
+
+The script compares the two most recent board exports and prints a
+`SINCE <previous export>` section (`delta` in `--json`): status movement, items
+that **left** review, items newly Done, items that entered, and scope changes.
+
+This exists because **throughput cannot be derived from one export.** A review
+queue of 74 looks the same whether it is frozen or turning over completely, and
+only the delta distinguishes them. "Nothing left REVIEW/QA since the last
+export" is raised as a problem, not a note — it is the difference between a
+busy team and a blocked one.
+
+Two exports are required. With only one, the section is skipped and a note says
+so; never present a first snapshot as though it showed a trend.
+
+Queue **age** comes from the activity sidecar
+(`beevia-activity-<date>.json`), never from the `Last Modified` column — bulk
+board operations rewrite that column on dozens of items at once with no
+per-item audit entry, and using it once overstated recent inflow ~5×. If the
+sidecar is missing, age is reported as unknown rather than falling back.
+
 ## Hard constraint
 
 `.claude/rules.md` forbids modifying the sub-repositories. **`beevia-api/`, `beevia-admin-api/`, `beevia-db-schema/`, `beevia-admin/` and `beevia-mobile/` are read-only.** Every deliverable is written at the workspace root. Never edit a service repo, even to fix something the audit finds — report it instead.

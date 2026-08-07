@@ -165,11 +165,12 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | Chat (REST) | 19 | 0 | +2 clear, delete. Message deletion now shipped |
 | Calls | 5 | 0 | Complete |
 | Attachments | 2 | 1 | No single-attachment download presign |
+| Upload | 5 | 0 | Public, permanent objects — distinct from Attachments (encrypted, presigned-only) |
 | Translate | 1 | 5 | Stateless only; no preference storage |
 | Notifications | 5 | 0 | Complete |
 | Support | **0** | 4 | Does not exist. Includes `POST /payments/{id}/dispute`, listed under §7.2 but tagged Support |
 | Webhooks | 3 | 1 | Card issuer callback missing |
-| **Total** | **100** | **49** | +3 live-endpoint modifications = 52 operations in the proposed file |
+| **Total** | **105** | **49** | +3 live-endpoint modifications = 52 operations in the proposed file |
 
 ---
 

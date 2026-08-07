@@ -478,7 +478,7 @@ paths:
           schema: { type: string, enum: [chat_only, chat_banking] }
         - name: accountStatus
           in: query
-          schema: { type: string, enum: [active, restricted, suspended, deleting, deleted] }
+          schema: { type: string, enum: [active, restricted, suspended, deactivated, deleted] }
         - name: verification
           in: query
           schema: { type: string, enum: [verified, pending, failed] }
@@ -1095,7 +1095,7 @@ components:
         username: { type: [string, 'null'] }
         country_code: { type: [string, 'null'] }
         account_type: { type: [string, 'null'], enum: [chat_only, chat_banking, null] }
-        status: { type: string, enum: [active, restricted, suspended, deleting, deleted] }
+        status: { type: string, enum: [active, restricted, suspended, deactivated, deleted] }
         verification: { type: string, enum: [verified, pending, failed] }
         wallet: { type: string, enum: [none, active, frozen, closed] }
         joined_at: { type: string, format: date-time }

@@ -122,6 +122,11 @@ tags:
     description: Call signaling. Media is relayed by the SFU, never by this API.
   - name: Attachments
     description: Presigned upload/download of client-encrypted blobs.
+  - name: Upload
+    description: >-
+      Multipart upload of files meant to be seen — avatars, group images,
+      documents. Objects are PUBLIC and permanently readable; distinct from
+      Attachments, which are client-encrypted and presigned-only.
   - name: Translate
     description: One-shot translation proxy. Nothing is stored.
   - name: Notifications
@@ -2104,6 +2109,129 @@ paths:
         '400': { $ref: '#/components/responses/BadRequest' }
         '403': { $ref: '#/components/responses/Forbidden' }
 
+  # ===========================================================================
+  # Upload
+  #
+  # PUBLIC objects. Every file uploaded here is served from a URL with no expiry
+  # and no authentication — the routes require a session, but the resulting
+  # object does not. Nothing private belongs here; client-encrypted material
+  # goes through /attachments, which shares the bucket but not the key prefix
+  # and stays presigned-only.
+  #
+  # All four upload routes take `multipart/form-data` with a single `file`
+  # field, return 201 with `{ url, key }`, and reject with `file_required`,
+  # `file_too_large` or `unsupported_file_type`. The content type is derived
+  # from the extension, not the request, so a file cannot be served as
+  # something it claims to be.
+  # ===========================================================================
+
+  /upload/image:
+    post:
+      tags: [Upload]
+      operationId: uploadImage
+      summary: Upload an image
+      description: '`jpg`, `jpeg`, `png`, `gif` or `webp` — up to 5 MB. Returns a public URL.'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: '#/components/schemas/FileUpload' }
+      responses:
+        '201': { $ref: '#/components/responses/UploadOk' }
+        '400': { $ref: '#/components/responses/UploadRejected' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /upload/thumbnail:
+    post:
+      tags: [Upload]
+      operationId: uploadThumbnail
+      summary: Upload a thumbnail
+      description: '`jpg`, `jpeg`, `png` or `webp` — up to 2 MB.'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: '#/components/schemas/FileUpload' }
+      responses:
+        '201': { $ref: '#/components/responses/UploadOk' }
+        '400': { $ref: '#/components/responses/UploadRejected' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /upload/video:
+    post:
+      tags: [Upload]
+      operationId: uploadVideo
+      summary: Upload a video
+      description: '`mp4`, `webm` or `ogv` — up to 50 MB.'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: '#/components/schemas/FileUpload' }
+      responses:
+        '201': { $ref: '#/components/responses/UploadOk' }
+        '400': { $ref: '#/components/responses/UploadRejected' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /upload/document:
+    post:
+      tags: [Upload]
+      operationId: uploadDocument
+      summary: Upload a document
+      description: '`pdf`, `doc`, `docx` or `txt` — up to 20 MB.'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: '#/components/schemas/FileUpload' }
+      responses:
+        '201': { $ref: '#/components/responses/UploadOk' }
+        '400': { $ref: '#/components/responses/UploadRejected' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /upload:
+    delete:
+      tags: [Upload]
+      operationId: deleteUpload
+      summary: Delete an uploaded file
+      description: |
+        Pass `key` exactly as an upload response returned it.
+
+        A query parameter rather than a path segment because the key contains
+        slashes — a path would need every caller to escape and unescape it
+        identically to mean the same object.
+
+        Only keys this service issued are accepted (`public/<kind>/<uuid><ext>`).
+        Anything else is rejected with `invalid_key`: the bucket also holds
+        encrypted attachment ciphertext, and this route must not be able to
+        reach it.
+      parameters:
+        - name: key
+          in: query
+          required: true
+          schema: { type: string }
+          example: public/image/3f2a1b7c-9d4e-4a52-b8c1-0e6f7a8b9c01.png
+      responses:
+        '200':
+          description: Deleted.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          key: { type: string }
+        '400':
+          description: Not a key this service issued (`invalid_key`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
   /translate:
     post:
       tags: [Translate]
@@ -2495,6 +2623,23 @@ components:
               - type: object
                 properties:
                   data: { $ref: '#/components/schemas/PublicProfile' }
+
+    UploadOk:
+      description: Stored. The URL is public and permanent — no expiry, no authentication.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/UploadResult' }
+
+    UploadRejected:
+      description: '`file_required` / `file_too_large` / `unsupported_file_type`.'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 
     RemovedOk:
       description: Removed.
@@ -3359,6 +3504,30 @@ components:
         access_token: { type: string }
         refresh_token: { type: string }
 
+    FileUpload:
+      type: object
+      description: Multipart body. A single file under the field name `file`.
+      required: [file]
+      properties:
+        file:
+          type: string
+          format: binary
+
+    UploadResult:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          description: >-
+            Public, permanent, unauthenticated. Anyone with this URL can read
+            the object indefinitely.
+          example: https://cdn.beevia.com/public/image/3f2a1b7c-9d4e-4a52-b8c1-0e6f7a8b9c01.png
+        key:
+          type: string
+          description: Storage key. Pass this to `DELETE /upload`.
+          example: public/image/3f2a1b7c-9d4e-4a52-b8c1-0e6f7a8b9c01.png
+
     TranslateRequest:
       type: object
       required: [text, to]
@@ -3438,7 +3607,12 @@ components:
           enum: [phone_pending, phone_verified, pin_set, path_chosen, profile_done, kyc_pending, kyc_done, completed]
         status:
           type: string
-          enum: [active, suspended, deleting, deleted]
+          enum: [active, restricted, suspended, deactivated, deleted]
+          description: >-
+            `deactivated` is an admin-ended account and is REVERSIBLE — nothing
+            is destroyed and reactivating restores it exactly. `deleted` is
+            user-ended and TERMINAL: the PII is scrubbed and the phone number
+            recycled, so there is nothing to restore.
         pin_set: { type: boolean }
         biometrics_enabled: { type: boolean }
         kyc_level: { type: integer, example: 1 }

@@ -301,9 +301,141 @@ def check_docs() -> dict:
 # 5. Sprint board
 # --------------------------------------------------------------------------- #
 
+def is_status_move(display: str) -> bool:
+    """Whether an audit entry represents a status transition.
+
+    Zoho phrases these THREE ways, and matching only "status" silently drops
+    completions and reopenings — which made the transition matrix show zero
+    items ever reaching Done:
+
+        "Updated the status from In progress to REVIEW/QA"
+        "Item Completed from In progress to Done"
+        "Item Reopened from Done to REVIEW/QA"
+
+    "Item Moved from 0701 to 0702" is a SPRINT move, not a status move, and is
+    deliberately excluded — matching it would date every carried-over item to
+    the day the sprint rolled rather than the day its status last changed.
+    """
+    d = display.lower()
+    return ("the status from" in d or "completed from" in d
+            or "reopened from" in d)
+
+
+def parse_iso(value: str) -> "dt.date | None":
+    """Date part of an ISO-8601 instant, or None."""
+    try:
+        return dt.date.fromisoformat(value[:10])
+    except (ValueError, IndexError):
+        return None
+
+
+def load_activity(board_csv: str) -> dict:
+    """The audit-trail sidecar written alongside a board export, if present.
+
+    Produced by `zoho_export.py --activity`. Absent when the export was run
+    without that flag, in which case queue-age analysis is skipped rather than
+    silently falling back to `Last Modified` — which measures something else
+    (see the comment at the call site).
+    """
+    side = board_csv.replace("beevia-sprint-board-", "beevia-activity-") \
+                    .replace(".csv", ".json")
+    try:
+        with open(side, encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def board_files() -> list[str]:
+    """Board exports oldest-first. Filenames are date-stamped, so this sorts
+    chronologically."""
+    return sorted(glob.glob(os.path.join(ROOT, "sprint-board-exports", "*.csv")))
+
+
 def latest_board() -> str | None:
-    files = sorted(glob.glob(os.path.join(ROOT, "sprint-board-exports", "*.csv")))
+    files = board_files()
     return files[-1] if files else None
+
+
+def previous_board() -> str | None:
+    """The export before the latest, if there is one."""
+    files = board_files()
+    return files[-2] if len(files) >= 2 else None
+
+
+def read_board(path: str) -> list[dict]:
+    """Rows of a board export, past the 5-line preamble."""
+    lines = open(path, encoding="utf-8-sig").readlines()
+    hdr = next((i for i, l in enumerate(lines)
+                if l.split(",")[0].strip() == "Item Id"), 5)
+    return list(csv.DictReader(lines[hdr:]))
+
+
+def check_delta() -> dict | None:
+    """Movement between the two most recent exports.
+
+    Throughput — how many items actually LEFT review — cannot be derived from a
+    single export, and it is the number that says whether the queue is draining.
+    A snapshot can only ever show the queue's size, which looks identical
+    whether nothing is moving or work is flowing through at a steady rate.
+
+    Items are matched on `Item Id`, so items added or removed between exports
+    are reported separately rather than silently distorting the counts.
+    """
+    new_path, old_path = latest_board(), previous_board()
+    if not new_path or not old_path:
+        notes.append("only one board export — no period-over-period comparison "
+                     "possible; keep exports to enable it")
+        return None
+
+    old = {r.get("Item Id", ""): r for r in read_board(old_path)}
+    new = {r.get("Item Id", ""): r for r in read_board(new_path)}
+
+    def leaf(rows: dict) -> set:
+        parents = {r.get("Parent Id", "").strip()
+                   for r in rows.values() if r.get("Parent Id", "").strip()}
+        return {k for k in rows if k and k not in parents}
+
+    old_leaves, new_leaves = leaf(old), leaf(new)
+    shared = old_leaves & new_leaves
+
+    moved, done_now, left_review, entered_review = [], [], [], []
+    for k in sorted(shared):
+        a = old[k].get("Status", "").strip()
+        b = new[k].get("Status", "").strip()
+        if a == b:
+            continue
+        moved.append({"item": k, "from": a, "to": b,
+                      "name": new[k].get("Item Name", "")[:60]})
+        if b == "Done":
+            done_now.append(k)
+        if a == "REVIEW/QA" and b != "REVIEW/QA":
+            left_review.append(k)
+        if b == "REVIEW/QA" and a != "REVIEW/QA":
+            entered_review.append(k)
+
+    old_counts = collections.Counter(old[k].get("Status", "") for k in old_leaves)
+    new_counts = collections.Counter(new[k].get("Status", "") for k in new_leaves)
+
+    if left_review == [] and new_counts.get("REVIEW/QA", 0) > 0:
+        problem(f"nothing left REVIEW/QA between "
+                f"{os.path.basename(old_path)} and {os.path.basename(new_path)} "
+                f"— queue is not draining")
+
+    return {
+        "from_file": os.path.basename(old_path),
+        "to_file": os.path.basename(new_path),
+        "status_before": dict(old_counts),
+        "status_after": dict(new_counts),
+        "status_delta": {s: new_counts.get(s, 0) - old_counts.get(s, 0)
+                         for s in set(old_counts) | set(new_counts)},
+        "moved": moved,
+        "newly_done": done_now,
+        "left_review": left_review,
+        "entered_review": entered_review,
+        "added_items": sorted(new_leaves - old_leaves),
+        "removed_items": sorted(old_leaves - new_leaves),
+    }
 
 
 def check_board() -> dict | None:
@@ -350,11 +482,37 @@ def check_board() -> dict | None:
     today = export_date or dt.date.today()
 
     review = [r for r in leaves if g(r, "Status") == "REVIEW/QA"]
+
+    # Queue age comes from the ACTIVITY SIDECAR, never from `Last Modified`.
+    #
+    # Bulk board operations rewrite `Last Modified` on dozens of items at once
+    # without producing any per-item audit entry, so bucketing by it invents a
+    # cliff: it once reported 97 items entering review in three days when the
+    # audit trail showed the same work spread across the whole sprint.
+    #
+    # `entered_review` is the timestamp of the newest status-change entry, i.e.
+    # when the item actually reached its current status.
+    activity = load_activity(path)
+    entered: dict[str, dt.date] = {}
+    for item_id, trail in activity.items():
+        # Zoho uses TWO verbs for a status move and matching only the first
+        # loses every completion:
+        #   "Updated the status from In progress to REVIEW/QA"
+        #   "Item Completed from In progress to Done"     <- also a status move
+        moves = [e for e in trail
+                 if is_status_move(str(e.get("display", "")))]
+        if moves:
+            d = parse_iso(str(moves[-1].get("actiontime") or ""))
+            if d:
+                entered[item_id] = d
+
     inflow = collections.Counter(
-        g(r, "Last Modified").split(" ")[0] for r in review)
-    ages = [(today - d).days for d in
-            (parse(g(r, "Last Modified")) for r in review) if d]
+        str(entered[g(r, "Item Id")]) for r in review
+        if g(r, "Item Id") in entered)
+    ages = [(today - entered[g(r, "Item Id")]).days for r in review
+            if g(r, "Item Id") in entered]
     recent = sum(1 for a in ages if a <= 2)
+    unmeasured = len(review) - len(ages)
 
     sprint_end = parse(g(rows[0], "Sprint End Date"))
     days_left = (sprint_end - today).days if sprint_end else None
@@ -381,6 +539,10 @@ def check_board() -> dict | None:
         "by_assignee": {k: dict(v) for k, v in by_assignee.items()},
         "review_queue": len(review),
         "review_arrived_last_2d": recent,
+        "review_age_source": "activity-sidecar" if entered else "unavailable",
+        "review_unmeasured": unmeasured,
+        "review_median_age_days": (sorted(ages)[len(ages) // 2]
+                                   if ages else None),
         "review_inflow_by_date": dict(sorted(inflow.items())),
         "unestimated": unestimated, "leaves_without_epic": no_epic,
         "unassigned_leaves": unassigned_leaves,
@@ -403,6 +565,7 @@ def main() -> int:
         "specs": check_specs(),
         "docs": check_docs(),
         "board": check_board(),
+        "delta": check_delta(),
     }
     result["problems"] = problems
     result["notes"] = notes
@@ -443,8 +606,34 @@ def main() -> int:
                   f"  ({b['days_left']}d left)")
             print(f"  {b['leaves']} leaf items (+{b['parents']} parent stories)")
             print(f"  status: {b['status']}")
-            print(f"  review queue: {b['review_queue']} "
-                  f"({b['review_arrived_last_2d']} arrived in last 2d)")
+            if b["review_age_source"] == "activity-sidecar":
+                print(f"  review queue: {b['review_queue']} "
+                      f"({b['review_arrived_last_2d']} arrived in last 2d, "
+                      f"median age {b['review_median_age_days']}d)")
+                if b["review_unmeasured"]:
+                    print(f"    {b['review_unmeasured']} item(s) have no "
+                          f"status-change entry — age unknown")
+            else:
+                print(f"  review queue: {b['review_queue']} "
+                      f"(age unknown — no activity sidecar; "
+                      f"re-export with --activity)")
+
+        if result["delta"]:
+            d = result["delta"]
+            print(f"\n-- SINCE {d['from_file']} --")
+            deltas = ", ".join(
+                f"{s} {v:+d}" for s, v in sorted(d["status_delta"].items()) if v)
+            print(f"  status: {deltas or 'no net change'}")
+            print(f"  throughput: {len(d['left_review'])} left review, "
+                  f"{len(d['newly_done'])} newly done, "
+                  f"{len(d['entered_review'])} entered review")
+            if d["added_items"] or d["removed_items"]:
+                print(f"  scope: +{len(d['added_items'])} item(s), "
+                      f"-{len(d['removed_items'])} item(s)")
+            for m in d["moved"][:8]:
+                print(f"    {m['item']:10} {m['from']} -> {m['to']}  {m['name']}")
+            if len(d["moved"]) > 8:
+                print(f"    … {len(d['moved']) - 8} more")
 
         print("\n" + "=" * 68)
 
