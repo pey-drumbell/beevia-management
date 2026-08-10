@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beevia — Project Status — 10 Aug 2026</title>
+<meta name="description" content="Sprint 0702 closed Friday. Nothing has moved since — mostly the weekend — but no sprint 0703 exists yet to hold this week's work.">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!--
+  DIRECTION CONTRACT · seed 6c4a0ed0
+  THESIS: A status report whose subject is the disagreement between its sources.
+  It refuses the PM dashboard: no donuts, no RAG pills, no burndown, no avatars.
+  OWN-WORLD: Ryoji Ikeda datamatics. Pure #000/#fff, no grey and no colour; tone
+  comes from hairline weight, bar coverage and type width. One mono face
+  (Martian Mono) at three widths. Barcode marks, hairline rules, tabular
+  columns, in-body bar fields, and full-frame inversion held for what matters
+  most. No masthead graphic — removed at the user's request.
+  STORY: The reader learns in one viewport that the apparent silence since
+  Friday is mostly the weekend, then that the one real gap is a missing
+  successor sprint, then what to decide today.
+  FIRST VIEWPORT: PROJECT STATUS set large on clean ground, date and sprint
+  beneath, flanked by numeric rails carrying the queue figures on the left and
+  the API and movement counts on the right. The lede inverts to white ground
+  directly below.
+  FORM: Datamatics, dealt as a challenger against assigned index 6 (ship's log)
+  and chosen by the user over it. Seed key 6c4a0ed0.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+  finish review, the verdict, and DESIGN.md
+-->
+
+<div class="topbar">
+    <div class="topbar__mark">
+      <span class="barcode" aria-hidden="true"></span>
+      <span class="topbar__wordmark">Beevia</span>
+    </div>
+    <nav class="topbar__nav label" aria-label="Report">
+      <a href="index.html">Archive</a>
+      <a href="#overview">Overview</a>
+      <a href="#s7">What to do</a>
+      <a href="#method">Method</a>
+    </nav>
+</div>
+
+<header class="masthead">
+  <div class="field">
+    <div class="field__rail field__rail--l">
+      <dl>
+        <dt>In review</dt>
+        <dd>78 of 89 · 88%</dd>
+        <dt>Median age</dt>
+        <dd>13d · oldest 30d</dd>
+        <dt>Done</dt>
+        <dd>11 · unchanged</dd>
+        <dt>In progress</dt>
+        <dd>0</dd>
+      </dl>
+    </div>
+
+    <div class="field__stage">
+      <div class="field__title">
+        <h1>Project<br>Status</h1>
+      </div>
+      <div class="field__meta num">
+        <span>2026-08-10</span>
+        <span>Sprint 0702</span>
+        <span>21 Jul &rarr; 07 Aug</span>
+        <span>No 0703 yet</span>
+      </div>
+    </div>
+
+    <div class="field__rail field__rail--r">
+      <dl>
+        <dt>API consumer</dt>
+        <dd>105 &nbsp;+0</dd>
+        <dt>API admin</dt>
+        <dd>29 &nbsp;+0</dd>
+        <dt>Spec drift</dt>
+        <dd>None</dd>
+        <dt>Left review, ever</dt>
+        <dd>0</dd>
+        <dt>Commits today</dt>
+        <dd>0</dd>
+      </dl>
+    </div>
+  </div>
+</header>
+
+<section class="mvp" aria-label="MVP readiness estimate">
+  <div class="mvp__head">
+    <span class="label">MVP readiness &mdash; estimate</span>
+    <span class="mvp__pct num">&asymp;46%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 22 days out</span>
+  </div>
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 46 percent built, unchanged since Friday because no code moved. Communication capabilities largely built end to end; the money surface is thin on the client, and international KYC, cross-currency FX, virtual cards and consent management are not started.">
+    <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.9"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.8"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:7" title="Message translation — 0.7"><i style="width:70%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.9"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
+    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.45"><i style="width:45%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.45"><i style="width:45%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
+    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0"></span>
+    <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
+    <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.45"><i style="width:45%"></i></span>
+  </div>
+  <p class="mvp__read"><strong>Unchanged since Friday</strong> &mdash; all five repos are at the identical commit, so there is no new evidence to score. Segment width = weight in the MVP definition &middot; fill = build evidence read from the code and screens, not board acceptance and not commit messages. Empty outlines, left to right: international KYC, cross-currency FX, virtual cards, consent &mdash; 34 of 100 weight points, all unstarted, two waiting on a partner decision. <a href="#mvp-method">Method and capability table</a>.</p>
+</section>
+
+<div class="shell">
+  <nav class="contents label" aria-label="Contents">
+    Contents
+    <ol>
+      <li><a href="#overview"><span>00</span> Quick overview</a></li>
+      <li><a href="#s1"><span>01</span> Sprint 0702 in detail &middot; epics</a></li>
+      <li><a href="#s2"><span>02</span> Team performance</a></li>
+      <li><a href="#s3"><span>03</span> What shipped</a></li>
+      <li><a href="#s4"><span>04</span> Product-vs-PRD gap</a></li>
+      <li><a href="#s5"><span>05</span> Risks</a></li>
+      <li><a href="#s6"><span>06</span> Previous recommendations</a></li>
+      <li><a href="#s7"><span>07</span> What I would do today</a></li>
+      <li><a href="#method"><span>&mdash;</span> Method</a></li>
+    </ol>
+  </nav>
+
+  <main class="doc">
+
+    <section class="sec" id="overview">
+      <div class="invert" style="margin-bottom:var(--s-6)">
+        <p class="lede">Nothing has moved since Friday, and that is mostly the calendar, not a problem: the gap spans a weekend. What isn't the calendar is that Zoho has no sprint after 0702 &mdash; the board has nowhere for these 89 items to go, three days after the one that held them ended.</p>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">Movement, 07 &rarr; 10 Aug</caption>
+          <thead>
+            <tr><th scope="col">Measure</th><th scope="col" class="r">07 Aug</th><th scope="col" class="r">10 Aug</th><th scope="col" class="r">&Delta;</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Done</th><td class="r">11</td><td class="r hi">11</td><td class="r hi">0</td></tr>
+            <tr><th scope="row">In review</th><td class="r">78</td><td class="r hi">78</td><td class="r hi">0</td></tr>
+            <tr><th scope="row">In progress</th><td class="r">0</td><td class="r hi">0</td><td class="r hi">0</td></tr>
+            <tr><th scope="row">Review median age</th><td class="r">11d</td><td class="r hi">13d</td><td class="r">+2</td></tr>
+            <tr><th scope="row">Review oldest</th><td class="r">27d</td><td class="r hi">30d</td><td class="r">+3</td></tr>
+            <tr><th scope="row">API surface (consumer)</th><td class="r">105</td><td class="r">105</td><td class="r">0</td></tr>
+            <tr><th scope="row">API surface (admin)</th><td class="r">29</td><td class="r">29</td><td class="r">0</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Every figure above is unchanged except age, which grows on its own even with zero activity: the same 78 items are 2&ndash;3 days older, because nobody moved.</p>
+
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">Team at a glance &mdash; last 7 days (03&ndash;10 Aug)</caption>
+          <thead>
+            <tr>
+              <th scope="col">Person</th><th scope="col">Owns</th>
+              <th scope="col" class="r">Sub.</th><th scope="col" class="r">Cycle</th>
+              <th scope="col" class="r">WIP</th><th scope="col" class="r">Commits</th>
+              <th scope="col" class="r">Today</th><th scope="col">Flag</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Ayomikun Araoye</th><td>backend + admin API</td><td class="r">7</td><td class="r">6d</td><td class="r hi">0</td><td class="r">27</td><td class="r">0</td><td>last commit Friday</td></tr>
+            <tr><th scope="row">David Samuel</th><td>mobile</td><td class="r">14</td><td class="r">1d</td><td class="r hi">0</td><td class="r">21</td><td class="r">0</td><td>last commit Friday</td></tr>
+            <tr><th scope="row">Philip Chidera</th><td>design</td><td class="r">0</td><td class="r">2d</td><td class="r">0</td><td class="r">&mdash;</td><td class="r">&mdash;</td><td>no tracked activity in 11d</td></tr>
+            <tr><th scope="row">Promise Udo</th><td>admin dashboard</td><td class="r"><em>not on board</em></td><td class="r">&mdash;</td><td class="r">&mdash;</td><td class="r">1</td><td class="r">0</td><td>last commit Thu 06 Aug</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <span class="label">The question for standup</span>
+        <p style="margin-bottom:0">Has 0703 been planned anywhere outside Zoho, or does sprint planning need to happen before anyone's Monday work has anywhere to land?</p>
+      </div>
+
+      <h3>The three things worth knowing</h3>
+
+      <div class="stack">
+        <div class="finding">
+          <div class="finding__n num">1</div>
+          <div>
+            <p><strong>No sprint exists after 0702.</strong> Checked directly against Zoho's sprint list, not just the export filter: the project has exactly two sprints on record, 0701 and 0702, and nothing beyond it &mdash; upcoming, active, or otherwise. 0702 closed Friday. Nothing in the tracker currently represents &ldquo;this week's work.&rdquo; That's the one fact in this report that the weekend doesn't explain.</p>
+          </div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">2</div>
+          <div>
+            <p><strong>The zero-commit, zero-board-movement window is mostly a weekend.</strong> Sprint 0702 closed on <strong>Friday 07 Aug</strong>; 08 and 09 Aug were Saturday and Sunday; this report runs on <strong>Monday 10 Aug</strong>, before anything from today has necessarily happened yet. Read as &ldquo;one Friday plus a weekend,&rdquo; not &ldquo;four days of silence&rdquo; &mdash; the previous framing of a multi-day gap would overstate it.</p>
+          </div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">3</div>
+          <div>
+            <p><strong>The review queue is exactly as stuck as Friday, just three days staler.</strong> Across the sprint's whole history: 111 transitions into REVIEW/QA, 3 out (all backwards), 0 to Done &mdash; identical to Friday's figures, because nothing has moved. The oldest item is now 30 days old.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="invert">
+        <span class="label" style="display:block;margin-bottom:var(--s-3)">If you read nothing else</span>
+        <p style="margin-bottom:0;font-variation-settings:'wdth' 75,'wght' 500;max-width:64ch">The one thing that needs a decision today, independent of whether people are back from the weekend yet, is whether 0702 is being formally closed and 0703 opened, or whether 0702 stays open and simply keeps accumulating. Right now it is doing neither &mdash; it is just sitting.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s1">
+      <div class="sec__h"><span class="sec__n">01</span><h2>Sprint 0702 in detail</h2></div>
+
+      <h3>1.1 Zoho has no sprint after this one</h3>
+      <p>Checked directly against the API's own sprint listing (<code>sprints/</code> with all four status types requested, not filtered), independent of the <code>ZOHO_SPRINT_FILTER=0702</code> this pipeline normally uses:</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Sprint</th><th scope="col">Window</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">0701</th><td>05 Jul &rarr; 18 Jul</td></tr>
+            <tr><th scope="row">0702</th><td>21 Jul &rarr; 07 Aug</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>That is the entire list. No sprint is upcoming, active, or otherwise scheduled beyond 0702. This means the 89 items below are not &ldquo;carried forward into 0703&rdquo; in any sense &mdash; there is no 0703 to carry them into. They are simply sitting in a sprint whose end date has passed.</p>
+
+      <h3>1.2 Status &mdash; unchanged from Friday</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Status</th><th scope="col" class="r">Leaves</th><th scope="col" class="r">Share</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">REVIEW/QA</th><td class="r hi">78</td><td class="r hi">88%</td></tr>
+            <tr><th scope="row">Done</th><td class="r">11</td><td class="r">12%</td></tr>
+            <tr><th scope="row">In progress</th><td class="r hi">0</td><td class="r hi">0%</td></tr>
+            <tr><th scope="row" class="hi">Total</th><td class="r hi">89</td><td class="r"></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Zero movement since the 07 Aug export. Every leaf item is exactly where it was Friday afternoon.</p>
+
+      <h3>1.3 Review queue &mdash; same items, three days older</h3>
+      <div class="bars bars--share">
+        <div class="bars__row"><span class="bars__label">14+ days</span><span class="r">36</span><span class="r">47%</span><span class="bar" aria-hidden="true"><i style="width:115px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">6&ndash;13 days</span><span class="r">26</span><span class="r">34%</span><span class="bar" aria-hidden="true"><i style="width:83px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">0&ndash;5 days</span><span class="r">15</span><span class="r">19%</span><span class="bar" aria-hidden="true"><i style="width:48px"></i></span></div>
+      </div>
+      <p><strong>Median 13 days, oldest 30.</strong> 76 of the 78 have a recorded arrival; one remains unaged (created directly into the status). The five items carried in from sprint 0701 since <strong>10 July</strong> are still there &mdash; now 31 days old, having sat through the entirety of 0702 and into whatever comes after it, whenever that is decided.</p>
+      <p>Measured from audit trails, not <code>Last Modified</code> &mdash; see <a href="#method">the appendix</a>.</p>
+
+      <h3>1.4 REVIEW/QA still has no exit</h3>
+      <p>Across the sprint's entire recorded history, identical to Friday:</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Transition</th><th scope="col" class="r">Count</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Into REVIEW/QA</th><td class="r hi">111</td></tr>
+            <tr><th scope="row">Out of REVIEW/QA</th><td class="r">3 &mdash; all backwards to In progress, none forward</td></tr>
+            <tr><th scope="row">REVIEW/QA &rarr; Done</th><td class="r hi">0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Nothing has changed here because nothing has happened here. The finding stands exactly as it did Friday: the queue is a status with an inlet and no outlet.</p>
+
+      <h3>1.5 By epic &mdash; unchanged</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Epic</th><th scope="col" class="r">Items</th><th scope="col" class="r">In review</th><th scope="col" class="r">Done</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><em>(no epic)</em></th><td class="r hi">56</td><td class="r">51</td><td class="r">5</td></tr>
+            <tr><th scope="row">Admin</th><td class="r">14</td><td class="r">8</td><td class="r hi">6</td></tr>
+            <tr><th scope="row">Banking Path (Nigeria / BVN / Anchor)</th><td class="r">8</td><td class="r">8</td><td class="r">0</td></tr>
+            <tr><th scope="row">Onboarding &amp; Authentication</th><td class="r">7</td><td class="r">7</td><td class="r">0</td></tr>
+            <tr><th scope="row">Path Selection &amp; Chat-Only Path</th><td class="r">3</td><td class="r">3</td><td class="r">0</td></tr>
+            <tr><th scope="row">Onboarding Completion &amp; Chat Entry</th><td class="r">1</td><td class="r">1</td><td class="r">0</td></tr>
+            <tr><th scope="row" class="hi">Total</th><td class="r hi">89</td><td class="r hi">78</td><td class="r hi">11</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Identical to 07 Aug. Every named product epic remains at 0% done; 56 of 89 items still carry no epic at all.</p>
+    </section>
+
+    <section class="sec" id="s2">
+      <div class="sec__h"><span class="sec__n">02</span><h2>Team performance</h2></div>
+      <p>From audit trails and git &mdash; unchanged in method, thinner in this window because there were only two working days (Thu 06, Fri 07) inside it before the weekend.</p>
+
+      <h3>2.1 Per person</h3>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead>
+            <tr>
+              <th scope="col">Person</th><th scope="col" class="r">Sub. 7d</th>
+              <th scope="col" class="r">Median cycle</th><th scope="col" class="r">Open WIP</th>
+              <th scope="col" class="r">Commits 7d</th><th scope="col" class="r">Today</th>
+              <th scope="col" class="r">Board completions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Ayomikun Araoye</th><td class="r">7</td><td class="r">6d</td><td class="r hi">0</td><td class="r">27</td><td class="r">0</td><td class="r">0</td></tr>
+            <tr><th scope="row">David Samuel</th><td class="r">14</td><td class="r">1d</td><td class="r hi">0</td><td class="r">21</td><td class="r">0</td><td class="r">0</td></tr>
+            <tr><th scope="row">Philip Chidera</th><td class="r">0</td><td class="r">2d</td><td class="r">0</td><td class="r">&mdash;</td><td class="r">&mdash;</td><td class="r hi">12</td></tr>
+            <tr><th scope="row">Promise Udo</th><td class="r"><em>not on board</em></td><td class="r">&mdash;</td><td class="r">&mdash;</td><td class="r">1</td><td class="r">0</td><td class="r"><em>not on board</em></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Commits sum each person's two git identities. The project owner's one commit this week is excluded, as is any GitHub Actions release-bot activity.</p>
+
+      <p><strong>Both engineers show lower 7-day figures than Friday's edition</strong> &mdash; not because anyone slowed down, but because the 7-day window itself moved: it now runs 03&ndash;10 Aug instead of 31 Jul&ndash;07 Aug, so it has dropped the high-volume early days and gained three empty ones. This is a window artifact, not a change in behaviour; the cycle-time medians, which are whole-sprint statistics, are unchanged.</p>
+      <p><strong>Ayomikun</strong> and <strong>David</strong> both last committed on <strong>Friday</strong>. Neither shows an open item &mdash; everything either wrote is still sitting in the same review queue it was in Friday.</p>
+      <p><strong>Philip</strong> holds all 12 board completions, unchanged, and has now shown no tracked activity for <strong>11 days</strong>.</p>
+      <p><strong>Promise</strong> last committed <strong>Thursday 06 Aug</strong>, four days ago, still the most recent activity on <code>beevia-admin</code>. Not evidence of a new stall &mdash; four days including a weekend is a normal gap &mdash; but worth one more standup check now that a full week has passed since the last report flagged this repo in error.</p>
+
+      <h3>2.2 Output is steady; acceptance is zero</h3>
+      <div class="bars">
+        <div class="bars__row"><span class="bars__label">Week 28</span><span class="r">5</span><span class="bar" aria-hidden="true"><i style="width:20px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">Week 29</span><span class="r">24</span><span class="bar" aria-hidden="true"><i style="width:96px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">Week 30</span><span class="r">10</span><span class="bar" aria-hidden="true"><i style="width:40px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">Week 31</span><span class="r">20</span><span class="bar" aria-hidden="true"><i style="width:80px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">Week 32</span><span class="r">21</span><span class="bar" aria-hidden="true"><i style="width:84px"></i></span></div>
+      </div>
+      <p>Week 32 (which included Friday) is unchanged at 21. No week 33 data exists yet.</p>
+
+      <h3>2.3 Repository activity</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Repo</th><th scope="col">Last commit</th><th scope="col">Status</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>beevia-api</code></th><td>07 Aug (Fri)</td><td>3 days</td></tr>
+            <tr><th scope="row"><code>beevia-admin-api</code></th><td>06 Aug (Thu)</td><td>4 days</td></tr>
+            <tr><th scope="row"><code>beevia-db-schema</code></th><td>06 Aug (Thu, release bot)</td><td>4 days</td></tr>
+            <tr><th scope="row"><code>beevia-mobile</code></th><td>06 Aug (Thu)</td><td>4 days</td></tr>
+            <tr><th scope="row"><code>beevia-admin</code></th><td>06 Aug (Thu)</td><td>4 days</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Every repo's gap includes the weekend.</strong> None of this is a repeat of the earlier reporting error where an un-fetched repo was mistaken for a stalled one &mdash; this edition re-synced all five repos fresh and confirmed zero new commits anywhere, not a stale local checkout.</p>
+
+      <h3>2.4 What these numbers do not measure</h3>
+      <div class="note">
+        <p><strong>Not productivity or absence.</strong> A 3&ndash;4 day gap that includes a weekend says nothing about anyone; the comparable window last week was a live sprint's final push.</p>
+        <p><strong>Not workload fairness.</strong> Still no estimation points to normalise against.</p>
+        <p><strong>Not individual fault.</strong> Review still has no exit (1.4); zero WIP is not idleness.</p>
+        <p style="margin-bottom:0"><strong>Not complete.</strong> Promise is absent from the board; the admin dashboard's real state is only visible through commits.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s3">
+      <div class="sec__h"><span class="sec__n">03</span><h2>What shipped this cycle</h2></div>
+      <div class="invert">
+        <p style="margin-bottom:0;max-width:60ch">Zero commits landed in any of the five repos between the last report and this one, which makes this section short by design rather than by omission: no endpoint changed, no spec needed updating, no client screen moved. The audit's drift check is clean (105/29, no drift) because there is nothing new to have drifted.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s4">
+      <div class="sec__h"><span class="sec__n">04</span><h2>Product-vs-PRD gap</h2></div>
+      <p>Unchanged, and for the same reason nothing else moved this cycle: none of it has shifted.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">PRD capability</th><th scope="col">State</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Cross-currency conversion</th><td><strong>Not built.</strong> <code>PaymentService</code> still hard-codes NGN via <code>activeNgn()</code>.</td></tr>
+            <tr><th scope="row">Virtual cards</th><td><strong>Not built.</strong> No module, table or provider capability.</td></tr>
+            <tr><th scope="row">Two KYC tiers</th><td><strong>Local only.</strong> No international path for USD/GBP/EUR.</td></tr>
+            <tr><th scope="row">Consent management</th><td><strong>Not built.</strong> Required for the Phase 4 compliance gate.</td></tr>
+            <tr><th scope="row">Payments read path</th><td><strong>Missing.</strong> No <code>GET /payments</code>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Detail: <code>api-rfc.md</code> &sect;4&ndash;&sect;5, <code>openapi.proposed.yaml</code>.</p>
+    </section>
+
+    <section class="sec" id="s5">
+      <div class="sec__h"><span class="sec__n">05</span><h2>Risks</h2></div>
+      <div class="stack">
+        <div class="finding"><div class="finding__n num">1</div><div><p><strong>No sprint exists to plan against.</strong> Sprint 0702 closed Friday and nothing has replaced it in Zoho. Until 0703 (or an extension of 0702) is created, any work that starts this week has no board home from the first commit.</p></div></div>
+        <div class="finding"><div class="finding__n num">2</div><div><p><strong>The review queue still has no exit</strong>, now three days staler. 78 items, median age 13 days, oldest 30. Unstarted since the first report flagged it.</p></div></div>
+        <div class="finding"><div class="finding__n num">3</div><div><p><strong>Advice has not converted into action across five editions.</strong> Sizing, epics on the remaining 56 items, naming a reviewer &mdash; none have moved since first recommended.</p></div></div>
+        <div class="finding"><div class="finding__n num">4</div><div><p><strong>The admin workstream remains invisible to the board.</strong> Promise has no board presence; his last commit was four days ago, which is unremarkable given the weekend but worth a direct check now that it has been a full week since this was first flagged.</p></div></div>
+        <div class="finding"><div class="finding__n num">5</div><div><p><strong>The PRD gap is static</strong>, unchanged since 05 Aug.</p></div></div>
+      </div>
+    </section>
+
+    <section class="sec" id="s6">
+      <div class="sec__h"><span class="sec__n">06</span><h2>Previous recommendations &mdash; where they stand</h2></div>
+      <p>From the 07 Aug edition.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col" class="r">#</th><th scope="col">Recommendation</th><th scope="col">Status</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" class="r">1</th><td>Mark the 36 items aged 14+ days that are actually finished</td><td class="hi">Not done. Same 36 items, now older.</td></tr>
+            <tr><th scope="row" class="r">2</th><td>Have whoever accepts work accept one item</td><td class="hi">Not done. REVIEW/QA &rarr; Done remains 0 across the sprint's entire history.</td></tr>
+            <tr><th scope="row" class="r">3</th><td>Do not carry all 78 forward</td><td>Overtaken by events. There is no sprint to carry them into or not into &mdash; 0703 does not exist.</td></tr>
+            <tr><th scope="row" class="r">4</th><td>Assign Promise's admin-dashboard work in Zoho</td><td class="hi">Not done. Still absent from the board.</td></tr>
+            <tr><th scope="row" class="r">5</th><td>Add S/M/L sizing</td><td class="hi">Not done. 0/120 items carry estimates.</td></tr>
+            <tr><th scope="row" class="r">6</th><td>Put the remaining 56 items on an epic</td><td class="hi">Not done. Identical 56/89 with no epic.</td></tr>
+            <tr><th scope="row" class="r">7</th><td>Make the sync's fetch status explicit in the report</td><td>Adopted. This edition and the last both state exactly when the fetch ran and confirm it against a fresh sync rather than a stale checkout.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>One of seven done, one overtaken by the sprint's own absence, five unstarted.</p>
+    </section>
+
+    <section class="sec" id="s7">
+      <div class="sec__h"><span class="sec__n">07</span><h2>What I would do today</h2></div>
+
+      <div class="stack">
+        <div class="finding"><div class="finding__n num">1</div><div><p><strong>Decide what happens to the sprint boundary.</strong> Either open 0703 in Zoho and roll items into it deliberately, or extend 0702's end date if that is the actual intent. Right now the board says neither, and every day that passes without a decision is a day of work with no sprint to belong to.</p></div></div>
+        <div class="finding"><div class="finding__n num">2</div><div><p><strong>Confirm the team is back and check in on Promise specifically.</strong> Four days without a commit on <code>beevia-admin</code> is very likely just the weekend, but this repo has been the subject of a genuine reporting error before (see 07 Aug's appendix) &mdash; worth a direct, low-drama check now that a full week has passed since it was first raised, rather than waiting for a real gap to form an opinion about.</p></div></div>
+        <div class="finding"><div class="finding__n num">3</div><div><p><strong>Go through the 36 items aged 14+ days and mark the ones that are done.</strong> Unstarted for three editions running; still the fastest way to make today's numbers honest.</p></div></div>
+        <div class="finding"><div class="finding__n num">4</div><div><p><strong>Have someone accept one item.</strong> Still zero, ever.</p></div></div>
+        <div class="finding"><div class="finding__n num">5</div><div><p><strong>Add S/M/L sizing and put the remaining 56 items on an epic.</strong> Both cheap, both unstarted since first recommended, both still block any forecast this report could make.</p></div></div>
+      </div>
+    </section>
+
+    <section class="sec" id="method">
+      <div class="sec__h"><span class="sec__n">&mdash;</span><h2>Appendix &mdash; method</h2></div>
+
+      <p><strong>Pipeline.</strong> <code>beevia-refresh</code> skill: sprint export &rarr; repo sync &rarr; drift audit &rarr; spec updates (none needed) &rarr; this report. All three mechanical steps re-ran today; the sync confirmed all five repos already matched <code>origin/main</code> before this run, meaning zero commits landed anywhere between Friday's fetch and today's.</p>
+
+      <h3>Sources</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Stream</th><th scope="col">Artifact</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Board</th><td><code>beevia-sprint-board-2026-08-10.csv</code> &mdash; 120 rows, 89 leaves</td></tr>
+            <tr><th scope="row">Flow</th><td><code>beevia-activity-2026-08-10.json</code> &mdash; 120 audit trails; transition counts (111 in / 3 out / 0 done) identical to Friday's, confirming zero board activity independently of the export</td></tr>
+            <tr><th scope="row">Code</th><td>all five repos, confirmed already at <code>origin/main</code> &mdash; no fast-forward needed</td></tr>
+            <tr><th scope="row">Specs</th><td><code>openapi.yaml</code> (105), <code>openapi.proposed.yaml</code> (52), <code>openapi.admin.yaml</code> (29), <code>openapi.admin.proposed.yaml</code> (23) &mdash; all validated, no drift</td></tr>
+            <tr><th scope="row">Sprint list</th><td>Queried directly against Zoho's <code>sprints/</code> endpoint with all four status types, independent of <code>ZOHO_SPRINT_FILTER</code>, specifically to confirm no 0703 was being missed by the filter rather than genuinely absent. It returned exactly two sprints, 0701 and 0702.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="invert">
+        <span class="label" style="display:block;margin-bottom:var(--s-3)">The weekend matters, and this report tries not to overstate the gap</span>
+        <p style="margin-bottom:0;max-width:64ch">A literal day-count (&ldquo;nothing for N days&rdquo;) reads as far more alarming than &ldquo;the sprint ended on a Friday.&rdquo; Both are true; only one is useful. Future editions should keep doing this &mdash; state the calendar context before the day-count, especially for any Monday report following a Friday sprint close.</p>
+      </div>
+
+      <p><strong>Queue age and throughput still come from audit trails, never <code>Last Modified</code></strong> &mdash; unchanged guidance from every prior edition.</p>
+
+      <h3 id="mvp-method">MVP readiness &mdash; how the &asymp;46% is computed</h3>
+      <p><strong>Unchanged from 07 Aug.</strong> Eleven capabilities from PRD &sect;1.2/&sect;11 with <strong>frozen weights</strong> (the rubric lives in the refresh skill), each scored 0&ndash;1 from build evidence: implemented vs proposed spec operations, the audit's drift check, the client screen inventory read directly from <code>beevia-mobile/lib</code> and <code>beevia-admin/src</code> &mdash; never from commit messages &mdash; and verified code facts. Proposed-only areas score 0. The board contributes no score. Since all five repos are at the identical commit they were on Friday, there is no new evidence and no score moved. Target date 2026-09-01 is provisional, set by the owner on 2026-08-07.</p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col" class="r">#</th><th scope="col">Capability</th><th scope="col" class="r">Weight</th><th scope="col" class="r">Score</th><th scope="col">Evidence</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" class="r">1</th><td>E2EE messaging</td><td class="r">15</td><td class="r">0.9</td><td>22 conversation/message/key/attachment paths + uploads live; 12+ chat screens with crypto, socket and attachment layers in the client</td></tr>
+            <tr><th scope="row" class="r">2</th><td>Voice &amp; video calling</td><td class="r">8</td><td class="r">0.8</td><td>4 call endpoints live; recent mobile call fixes</td></tr>
+            <tr><th scope="row" class="r">3</th><td>Message translation</td><td class="r">7</td><td class="r">0.7</td><td><code>POST /translate</code> live and <code>translate_chat_screen</code> in the client; batch + language list still proposed</td></tr>
+            <tr><th scope="row" class="r">4</th><td>Local KYC tier (BVN)</td><td class="r">8</td><td class="r">0.9</td><td>13 KYC/upgrade endpoints + provider webhook live; full client onboarding flow &mdash; BVN, facial verification, wallet setup</td></tr>
+            <tr><th scope="row" class="r">5</th><td>International KYC tier</td><td class="r">6</td><td class="r hi">0.0</td><td>proposed only</td></tr>
+            <tr><th scope="row" class="r">6</th><td>Multi-currency wallets</td><td class="r">12</td><td class="r">0.45</td><td>API view, transactions, withdraw live &mdash; NGN only, <code>activeNgn()</code> hard-coded; client has wallet <strong>onboarding</strong> screens but no wallet home, balance or transactions screen</td></tr>
+            <tr><th scope="row" class="r">7</th><td>Send / request / receive</td><td class="r">12</td><td class="r">0.45</td><td>full API write path live (send, request, accept, decline, pay, cancel); client &ldquo;Send money&rdquo; / &ldquo;Request money&rdquo; buttons wired to a <strong>local placeholder &mdash; zero calls to the payments API in the client</strong></td></tr>
+            <tr><th scope="row" class="r">8</th><td>Cross-currency FX</td><td class="r">12</td><td class="r hi">0.0</td><td>proposed only; the PRD's headline differentiator</td></tr>
+            <tr><th scope="row" class="r">9</th><td>Virtual cards</td><td class="r">10</td><td class="r hi">0.0</td><td>proposed only</td></tr>
+            <tr><th scope="row" class="r">10</th><td>Consent management</td><td class="r">4</td><td class="r hi">0.0</td><td>no endpoint or record anywhere</td></tr>
+            <tr><th scope="row" class="r">11</th><td>Admin oversight</td><td class="r">6</td><td class="r">0.45</td><td>29/52 admin ops; dashboard Modules 1 &amp; 3 landed in <code>src/features</code></td></tr>
+            <tr><th scope="row" class="r hi"></th><td class="hi">Weighted total</td><td class="r hi">100</td><td class="r hi"></td><td class="hi">&asymp;46%</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>What this report cannot tell you</h3>
+      <div class="note">
+        <p><strong>Whether the team has already planned 0703</strong> somewhere outside Zoho (a meeting, a doc) that simply hasn't been entered yet.</p>
+        <p><strong>Whether Promise's four-day gap is the weekend or something worth a direct question</strong> &mdash; four days is genuinely ambiguous in a way eight days was not.</p>
+        <p><strong>Velocity</strong>, or whether any future sprint's scope fits &mdash; no estimation points, still.</p>
+        <p><strong>Goal progress for the 56 items that carry no epic.</strong></p>
+        <p><strong>Whether an item in review is genuinely complete</strong> &mdash; only that its status hasn't changed.</p>
+        <p><strong>Whether a built screen or endpoint functions correctly</strong> &mdash; testing remains explicitly out of scope, per the owner.</p>
+        <p style="margin-bottom:0"><strong>Why 111 items entered review and none were ever accepted.</strong> Still the most important open question this report cannot answer.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="foot">
+  <span class="barcode barcode--lg" aria-hidden="true"></span>
+  <span>Beevia project status &middot; 2026-08-10 &middot; Sprint 0702</span>
+  <span><a href="index.html">All frames</a></span>
+</footer>
+
+<script src="ui.js"></script>
+</body>
+</html>
