@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beevia — Project Status — 11 Aug 2026</title>
+<meta name="description" content="Sprint 08-01 exists now — the successor every edition since 07 Aug was waiting for. But the 78-item 0702 backlog wasn't carried into it: zero overlap. It's orphaned, not resolved.">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!--
+  DIRECTION CONTRACT · seed 6c4a0ed0 (carried forward unchanged from 10 Aug)
+  THESIS: A status report whose subject is the disagreement between its sources.
+  STORY: The reader learns in one viewport that the missing-sprint question from
+  every prior edition is now answered — but the answer reveals a sharper problem:
+  a fresh sprint that doesn't touch the old backlog at all.
+-->
+
+<div class="topbar">
+    <div class="topbar__mark">
+      <span class="barcode" aria-hidden="true"></span>
+      <span class="topbar__wordmark">Beevia</span>
+    </div>
+    <nav class="topbar__nav label" aria-label="Report">
+      <a href="index.html">Archive</a>
+      <a href="#overview">Overview</a>
+      <a href="#s8">What to do</a>
+      <a href="#method">Method</a>
+    </nav>
+</div>
+
+<header class="masthead">
+  <div class="field">
+    <div class="field__rail field__rail--l">
+      <dl>
+        <dt>0702 in review</dt>
+        <dd>78 of 89 · 88%</dd>
+        <dt>0702 median age</dt>
+        <dd>15d · oldest 31d</dd>
+        <dt>0702 Done</dt>
+        <dd>11 · unchanged</dd>
+        <dt>08-01 items</dt>
+        <dd>50 · all To do</dd>
+      </dl>
+    </div>
+
+    <div class="field__stage">
+      <div class="field__title">
+        <h1>Project<br>Status</h1>
+      </div>
+      <div class="field__meta num">
+        <span>2026-08-11</span>
+        <span>0702 (closed) + 08-01 (new)</span>
+        <span>08-01: 10&ndash;28 Aug</span>
+        <span>Backlog orphaned</span>
+      </div>
+    </div>
+
+    <div class="field__rail field__rail--r">
+      <dl>
+        <dt>API consumer</dt>
+        <dd>105 &nbsp;+0</dd>
+        <dt>API admin</dt>
+        <dd>29 &nbsp;+0</dd>
+        <dt>Spec drift</dt>
+        <dd>None</dd>
+        <dt>0702 left review, ever</dt>
+        <dd>0</dd>
+        <dt>Team commits today</dt>
+        <dd>0</dd>
+      </dl>
+    </div>
+  </div>
+</header>
+
+<section class="mvp" aria-label="MVP readiness estimate">
+  <div class="mvp__head">
+    <span class="label">MVP readiness &mdash; estimate</span>
+    <span class="mvp__pct num">&asymp;46%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 21 days out</span>
+  </div>
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 46 percent built, unchanged since 10 Aug. Communication capabilities largely built end to end; the money surface is thin on the client, and international KYC, cross-currency FX, virtual cards and consent management are not started.">
+    <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.9"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.8"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:7" title="Message translation — 0.7"><i style="width:70%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.9"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
+    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.45"><i style="width:45%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.45"><i style="width:45%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
+    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0"></span>
+    <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
+    <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.45"><i style="width:45%"></i></span>
+  </div>
+  <p class="mvp__read"><strong>Unchanged since 10 Aug</strong> &mdash; the one real commit since then is a bugfix on an already-scored path, and the mobile commit is a test/mock harness, not a shipped screen. Segment width = weight in the MVP definition &middot; fill = build evidence read from the code and screens, not board acceptance and not commit messages. Empty outlines, left to right: international KYC, cross-currency FX, virtual cards, consent &mdash; 34 of 100 weight points, all unstarted. Sprint 08-01 puts translation-provider work on the board for the first time, but nothing in it has shipped yet. <a href="#mvp-method">Method and capability table</a>.</p>
+</section>
+
+<div class="shell">
+  <nav class="contents label" aria-label="Contents">
+    Contents
+    <ol>
+      <li><a href="#overview"><span>00</span> Quick overview</a></li>
+      <li><a href="#s1"><span>01</span> Sprint 08-01 &middot; new</a></li>
+      <li><a href="#s2"><span>02</span> Sprint 0702 &middot; unresolved</a></li>
+      <li><a href="#s3"><span>03</span> Team performance</a></li>
+      <li><a href="#s4"><span>04</span> What shipped</a></li>
+      <li><a href="#s5"><span>05</span> Product-vs-PRD gap</a></li>
+      <li><a href="#s6"><span>06</span> Risks</a></li>
+      <li><a href="#s7"><span>07</span> Previous recommendations</a></li>
+      <li><a href="#s8"><span>08</span> What I would do today</a></li>
+      <li><a href="#method"><span>&mdash;</span> Method</a></li>
+    </ol>
+  </nav>
+
+  <main class="doc">
+
+    <section class="sec" id="overview">
+      <div class="invert" style="margin-bottom:var(--s-6)">
+        <p class="lede">A new sprint exists &mdash; the thing every edition since 07 Aug has been waiting for &mdash; but it starts from zero. The 78-item review backlog in 0702 was not carried into it: zero item-ID overlap. That backlog is now four days older and sitting in a sprint that ended without anyone closing it, while 50 brand-new items begin fresh under a different naming scheme.</p>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">Movement, 10 &rarr; 11 Aug</caption>
+          <thead>
+            <tr><th scope="col">Measure</th><th scope="col" class="r">10 Aug</th><th scope="col" class="r">11 Aug</th><th scope="col" class="r">&Delta;</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">0702 &mdash; Done</th><td class="r">11</td><td class="r hi">11</td><td class="r hi">0</td></tr>
+            <tr><th scope="row">0702 &mdash; In review</th><td class="r">78</td><td class="r hi">78</td><td class="r hi">0</td></tr>
+            <tr><th scope="row">0702 review median age</th><td class="r">13d</td><td class="r hi">15d</td><td class="r">+2</td></tr>
+            <tr><th scope="row">0702 review oldest</th><td class="r">30d</td><td class="r hi">31d</td><td class="r">+1</td></tr>
+            <tr><th scope="row">Active/upcoming sprints</th><td class="r">0</td><td class="r hi">1</td><td class="r hi">+1</td></tr>
+            <tr><th scope="row">08-01 items</th><td class="r">&mdash;</td><td class="r hi">50</td><td class="r hi">new</td></tr>
+            <tr><th scope="row">API surface (consumer)</th><td class="r">105</td><td class="r">105</td><td class="r">0</td></tr>
+            <tr><th scope="row">API surface (admin)</th><td class="r">29</td><td class="r">29</td><td class="r">0</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">Team at a glance &mdash; last 7 days (04&ndash;11 Aug)</caption>
+          <thead>
+            <tr>
+              <th scope="col">Person</th><th scope="col">Owns</th>
+              <th scope="col" class="r">Sub. (0702)</th><th scope="col" class="r">Cycle</th>
+              <th scope="col" class="r">WIP</th><th scope="col" class="r">Commits</th>
+              <th scope="col">Flag</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Ayomikun Araoye</th><td>backend + admin API</td><td class="r">5</td><td class="r">6.5d</td><td class="r hi">0</td><td class="r">18</td><td>First team commit since Friday &mdash; a real bugfix</td></tr>
+            <tr><th scope="row">David Samuel</th><td>mobile</td><td class="r">10</td><td class="r">1.1d</td><td class="r hi">0</td><td class="r">18</td><td>Last real commit Thu &mdash; 5 days</td></tr>
+            <tr><th scope="row">Philip Chidera</th><td>design</td><td class="r">0</td><td class="r">2.1d</td><td class="r">0</td><td class="r">&mdash;</td><td>11-day silence ends: 19 fresh items in 08-01</td></tr>
+            <tr><th scope="row">Promise Udo</th><td>admin dashboard</td><td class="r"><em>not on board</em></td><td class="r">&mdash;</td><td class="r">&mdash;</td><td class="r">0</td><td>Last commit Thu &mdash; <strong>5 days</strong>, weekend no longer explains it</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <span class="label">The question for standup</span>
+        <p style="margin-bottom:0">Was 0702's backlog deliberately left behind, or did sprint planning simply start a clean sheet without touching it? Either answer needs a decision &mdash; leave it, cancel it, or triage it into 08-01 &mdash; because right now nobody has chosen.</p>
+      </div>
+
+      <h3>The three things worth knowing</h3>
+
+      <div class="stack">
+        <div class="finding">
+          <div class="finding__n num">1</div>
+          <div>
+            <p><strong>08-01 answers the open question, and raises a sharper one.</strong> Every edition since 07 Aug flagged &ldquo;no sprint exists to plan against.&rdquo; That's resolved: <code>08-01</code> runs 10&ndash;28 Aug, 50 items, all created <strong>this morning</strong> by a Zoho identity (<code>Fortune Okwu</code>) not previously seen in this pipeline &mdash; a project-manager role doing bulk sprint planning, not a delivery contributor.</p>
+          </div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">2</div>
+          <div>
+            <p><strong>The 78-item backlog is orphaned, not carried forward.</strong> Zero of 0702's 89 leaf items appear anywhere in 08-01's 50 &mdash; checked by direct ID comparison. The naming scheme also changed, sequential (<code>0701</code>/<code>0702</code>) to month-based (<code>08-01</code>), which reads like a fresh start rather than a continuation. Nothing shows 0702 being formally closed.</p>
+          </div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">3</div>
+          <div>
+            <p><strong>Code activity resumed, and it's a real bug.</strong> Ayomikun landed <code>fix(auth): 500 on login with an unregistered number</code> in <code>beevia-api</code> on 10 Aug &mdash; every login from an unregistered number 500'd, which also broke the endpoint's account-enumeration protection. First team commit since Friday.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="invert">
+        <span class="label" style="display:block;margin-bottom:var(--s-3)">If you read nothing else</span>
+        <p style="margin-bottom:0;font-variation-settings:'wdth' 75,'wght' 500;max-width:64ch">Decide what happens to 0702's 78 stuck items before they age any further &mdash; nothing about 08-01 existing makes that decision for you.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s1">
+      <div class="sec__h"><span class="sec__n">01</span><h2>Sprint 08-01 &mdash; new, planned this morning</h2></div>
+
+      <h3>1.1 What it is</h3>
+      <div class="tbl-wrap">
+        <table>
+          <tbody>
+            <tr><th scope="row">Window</th><td>2026-08-10 &rarr; 2026-08-28 (18 days, day 2 of 18)</td></tr>
+            <tr><th scope="row">Items</th><td>50 (18 Story parents, 32 Task children)</td></tr>
+            <tr><th scope="row">Status</th><td class="hi">100% &ldquo;To do&rdquo; &mdash; nothing started</td></tr>
+            <tr><th scope="row">Created by</th><td><code>Fortune Okwu</code>, all 50, between 08:37 AM and 1:08 PM today</td></tr>
+            <tr><th scope="row">Epic</th><td>blank on all 50</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>This is sprint planning captured in the act of happening &mdash; the export ran hours after the items were created, before any of them had moved.</p>
+
+      <h3>1.2 Assignment</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Assignee</th><th scope="col" class="r">Items</th><th scope="col">Type of work</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Ayomikun Araoye (solo)</th><td class="r">17</td><td>Backend: translation service integration, language-preference storage, translate-message endpoint</td></tr>
+            <tr><th scope="row">Philip Chidera (solo)</th><td class="r">12</td><td>Design: logo/brand asset set, dark-mode screens</td></tr>
+            <tr><th scope="row">David Samuel (solo)</th><td class="r">10</td><td>Mobile</td></tr>
+            <tr><th scope="row">Philip + David + Ayomikun (shared)</th><td class="r">7</td><td>Cross-cutting items touching all three</td></tr>
+            <tr><th scope="row">David + Ayomikun (shared)</th><td class="r">3</td><td>Backend/mobile pairs</td></tr>
+            <tr><th scope="row">Unassigned</th><td class="r">1</td><td>&mdash;</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>This is the first board presence Philip has had in 11 days</strong> &mdash; 19 items now carry his name, none started yet.</p>
+
+      <h3>1.3 What's missing from it</h3>
+      <div class="note">
+        <p><strong>None of 0702's 78 stuck review items.</strong> Confirmed by item-ID comparison &mdash; zero overlap.</p>
+        <p><strong>No epic tags</strong> on any of the 50.</p>
+        <p style="margin-bottom:0"><strong>No estimation points</strong> &mdash; the same measurement gap as 0702, unforecastable from day one.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s2">
+      <div class="sec__h"><span class="sec__n">02</span><h2>Sprint 0702 &mdash; unresolved, no longer &ldquo;current,&rdquo; still there</h2></div>
+
+      <h3>2.1 Status &mdash; unchanged since Friday, now stale across a sprint boundary</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Status</th><th scope="col" class="r">Leaves</th><th scope="col" class="r">Share</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">REVIEW/QA</th><td class="r hi">78</td><td class="r hi">88%</td></tr>
+            <tr><th scope="row">Done</th><td class="r">11</td><td class="r">12%</td></tr>
+            <tr><th scope="row">In progress</th><td class="r hi">0</td><td class="r hi">0%</td></tr>
+            <tr><th scope="row" class="hi">Total</th><td class="r hi">89</td><td class="r"></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Zero net movement since 07 Aug, confirmed again today &mdash; same 78 IDs in review, same 11 Done.</p>
+
+      <h3>2.2 Review queue &mdash; 4 days deeper into a sprint that's over</h3>
+      <div class="bars bars--share">
+        <div class="bars__row"><span class="bars__label">14+ days</span><span class="r">41</span><span class="r">53%</span><span class="bar" aria-hidden="true"><i style="width:130px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">6&ndash;13 days</span><span class="r">27</span><span class="r">35%</span><span class="bar" aria-hidden="true"><i style="width:86px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">0&ndash;5 days</span><span class="r">10</span><span class="r">13%</span><span class="bar" aria-hidden="true"><i style="width:32px"></i></span></div>
+      </div>
+      <p><strong>Median 15 days, oldest 31.</strong> The five items carried in from sprint 0701 since <strong>10 July</strong> are now 32 days old. No item's review age reset &mdash; nothing moved.</p>
+
+      <h3>2.3 REVIEW/QA still has no exit</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Transition</th><th scope="col" class="r">Count</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Into REVIEW/QA</th><td class="r hi">112 (whole history)</td></tr>
+            <tr><th scope="row">Out of REVIEW/QA</th><td class="r">3 &mdash; all backwards to In progress</td></tr>
+            <tr><th scope="row">REVIEW/QA &rarr; Done</th><td class="r hi">0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>No transition of any kind has a timestamp after 07 Aug &mdash; nothing entered review after Friday. The finding stands exactly as it has since the first edition: the queue is a status with an inlet and no outlet.</p>
+
+      <h3>2.4 By epic &mdash; unchanged</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Epic</th><th scope="col" class="r">Items</th><th scope="col" class="r">In review</th><th scope="col" class="r">Done</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><em>(no epic)</em></th><td class="r hi">56</td><td class="r">51</td><td class="r">5</td></tr>
+            <tr><th scope="row">Admin</th><td class="r">14</td><td class="r">8</td><td class="r hi">6</td></tr>
+            <tr><th scope="row">Banking Path (Nigeria / BVN / Anchor)</th><td class="r">8</td><td class="r">8</td><td class="r">0</td></tr>
+            <tr><th scope="row">Onboarding &amp; Authentication</th><td class="r">7</td><td class="r">7</td><td class="r">0</td></tr>
+            <tr><th scope="row">Path Selection &amp; Chat-Only Path</th><td class="r">3</td><td class="r">3</td><td class="r">0</td></tr>
+            <tr><th scope="row">Onboarding Completion &amp; Chat Entry</th><td class="r">1</td><td class="r">1</td><td class="r">0</td></tr>
+            <tr><th scope="row" class="hi">Total</th><td class="r hi">89</td><td class="r hi">78</td><td class="r hi">11</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Identical to every edition since epics became readable. Every named product epic remains at 0% done.</p>
+
+      <h3>2.5 A name appears that isn't on the team roster</h3>
+      <div class="note">
+        <p style="margin-bottom:0"><code>Fortune Okwu</code> created all 50 of 08-01's items today and, reading further back into 0702's own audit trail, also performed historical bulk actions there &mdash; status changes and the 0701&rarr;0702 sprint move. The pattern reads as sprint planning and administration rather than hands-on delivery, so no team-table row was added; the identity is flagged here rather than assigned a guessed role.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s3">
+      <div class="sec__h"><span class="sec__n">03</span><h2>Team performance</h2></div>
+
+      <h3>3.1 Per person</h3>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead>
+            <tr>
+              <th scope="col">Person</th><th scope="col" class="r">Sub. (0702, 7d)</th>
+              <th scope="col" class="r">Median cycle</th><th scope="col" class="r">Open WIP</th>
+              <th scope="col" class="r">Commits 7d</th><th scope="col" class="r">Board completions (0702)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Ayomikun Araoye</th><td class="r">5</td><td class="r">6.5d (n=14)</td><td class="r hi">0</td><td class="r">18</td><td class="r">0</td></tr>
+            <tr><th scope="row">David Samuel</th><td class="r">10</td><td class="r">1.1d (n=33)</td><td class="r hi">0</td><td class="r">18</td><td class="r">0</td></tr>
+            <tr><th scope="row">Philip Chidera</th><td class="r">0</td><td class="r">2.1d (n=2)</td><td class="r">0</td><td class="r">&mdash;</td><td class="r hi">11</td></tr>
+            <tr><th scope="row">Promise Udo</th><td class="r"><em>not on board</em></td><td class="r">&mdash;</td><td class="r">&mdash;</td><td class="r">1</td><td class="r"><em>not on board</em></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Commits sum each person's git identities over the 7 days ending this morning. The project owner's 3 commits and GitHub Actions' 5 release-bot commits are excluded.</p>
+
+      <p><strong>Ayomikun's and David's commit counts (18 each) are higher than they look at a glance</strong> &mdash; most of each total is dated 03&ndash;06 Aug, inside this rolling window; only one of Ayomikun's 18 is the new bugfix (10 Aug), and none of David's land after 06 Aug. The shape behind &ldquo;18 this week&rdquo; is a productive start to the week followed by quiet since Thursday, which is a different story than steady ongoing throughput.</p>
+      <p><strong>Promise</strong> last committed Thursday 06 Aug &mdash; <strong>5 days ago</strong>. The 10 Aug edition flagged 4 days as ambiguous and asked for a direct check. That check is now overdue: today is Tuesday, two full business days past the weekend, with no commits across either.</p>
+      <p><strong>Philip</strong> holds all 11 board completions on 0702 and had zero board presence for 11 days &mdash; now ended by 08-01's 19 fresh assignments, though none are started.</p>
+
+      <h3>3.2 Output is steady; acceptance is zero</h3>
+      <div class="bars">
+        <div class="bars__row"><span class="bars__label">Week 28</span><span class="r">5</span><span class="bar" aria-hidden="true"><i style="width:20px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">Week 29</span><span class="r">24</span><span class="bar" aria-hidden="true"><i style="width:96px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">Week 30</span><span class="r">10</span><span class="bar" aria-hidden="true"><i style="width:40px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">Week 31</span><span class="r">20</span><span class="bar" aria-hidden="true"><i style="width:80px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">Week 32</span><span class="r">21</span><span class="bar" aria-hidden="true"><i style="width:84px"></i></span></div>
+      </div>
+      <p>Week 32 (ending 07 Aug) is final at 21 &mdash; 0702 will not produce another week of data.</p>
+
+      <h3>3.3 Repository activity</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Repo</th><th scope="col">Last commit</th><th scope="col">Status</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>beevia-api</code></th><td>10 Aug (Mon, Ayomikun &mdash; real work)</td><td>1 day</td></tr>
+            <tr><th scope="row"><code>beevia-mobile</code></th><td>06 Aug (Thu, David &mdash; real; owner touched 11 Aug for CI)</td><td class="hi">5 days (team)</td></tr>
+            <tr><th scope="row"><code>beevia-admin-api</code></th><td>06 Aug (Thu, Ayomikun)</td><td>5 days</td></tr>
+            <tr><th scope="row"><code>beevia-db-schema</code></th><td>06 Aug (Thu, release bot)</td><td>5 days</td></tr>
+            <tr><th scope="row"><code>beevia-admin</code></th><td>06 Aug (Thu, Promise)</td><td class="hi">5 days</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Four of five repos have had no team commit since Thursday. <code>beevia-api</code> is the exception, carrying both the week's only bugfix and the owner's CI work.</p>
+
+      <h3>3.4 What these numbers do not measure</h3>
+      <div class="note">
+        <p><strong>Not productivity or absence.</strong> Board planning (08-01) happened today and doesn't show up as a commit or flow metric yet.</p>
+        <p><strong>Not workload fairness.</strong> Still no estimation points on either sprint.</p>
+        <p><strong>Not individual fault.</strong> 0702's review queue has no exit regardless of who submitted to it.</p>
+        <p style="margin-bottom:0"><strong>Not complete.</strong> Promise is absent from the board; <code>beevia-admin</code>'s real state is only visible through commits, and those have stopped.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s4">
+      <div class="sec__h"><span class="sec__n">04</span><h2>What shipped this cycle</h2></div>
+      <p>One real change since the 10 Aug edition: <strong><code>fix(auth): 500 on login with an unregistered number</code></strong> (<code>beevia-api</code>, Ayomikun, 10 Aug). <code>findByPhone</code> is typed <code>Row | null</code> but actually returns <code>undefined</code> on a miss; the sign-in gate checked <code>user !== null</code>, which type-checked and then crashed reading <code>.status</code> off <code>undefined</code>. Every login attempt from an unregistered number 500'd &mdash; and the 500-vs-200 split re-opened exactly the account-enumeration oracle the identical-response design was built to close. Fixed with a regression test that fails if the guard regresses.</p>
+      <p>No route, field, or contract changed &mdash; the audit's drift check stayed clean (105/29) because this was an internal fix, not a surface change.</p>
+      <div class="invert">
+        <p style="margin-bottom:0;max-width:64ch">Separately, the project owner added CI/test pipelines to <code>beevia-api</code> and <code>beevia-mobile</code> (including a mock HTTP backend under <code>lib/mock/</code>). This is infrastructure the owner built personally, so it's excluded from the team stats above &mdash; it's noted here only because it explains why <code>beevia-mobile</code> shows a commit today despite zero team activity.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s5">
+      <div class="sec__h"><span class="sec__n">05</span><h2>Product-vs-PRD gap</h2></div>
+      <p>Unchanged from every prior edition. 08-01 puts translation-provider work on the board for the first time &mdash; the first plan against any remaining gap item &mdash; but nothing has shipped yet.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">PRD capability</th><th scope="col">State</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Cross-currency conversion</th><td><strong>Not built.</strong> <code>PaymentService</code> still hard-codes NGN via <code>activeNgn()</code>.</td></tr>
+            <tr><th scope="row">Virtual cards</th><td><strong>Not built.</strong> No module, table or provider capability.</td></tr>
+            <tr><th scope="row">Two KYC tiers</th><td><strong>Local only.</strong> No international path for USD/GBP/EUR.</td></tr>
+            <tr><th scope="row">Consent management</th><td><strong>Not built.</strong> Required for the Phase 4 compliance gate.</td></tr>
+            <tr><th scope="row">Payments read path</th><td><strong>Missing.</strong> No <code>GET /payments</code>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Detail: <code>api-rfc.md</code> &sect;4&ndash;&sect;5, <code>openapi.proposed.yaml</code>.</p>
+    </section>
+
+    <section class="sec" id="s6">
+      <div class="sec__h"><span class="sec__n">06</span><h2>Risks</h2></div>
+      <div class="stack">
+        <div class="finding"><div class="finding__n num">1</div><div><p><strong>0702's 78 items have no owner and no plan.</strong> Not carried into 08-01, not formally closed, not triaged. Every day without a decision, &ldquo;31 days old&rdquo; becomes &ldquo;32.&rdquo;</p></div></div>
+        <div class="finding"><div class="finding__n num">2</div><div><p><strong><code>beevia-admin</code> is 5 days stale</strong>, past the point the weekend explains it. Worth a direct question today.</p></div></div>
+        <div class="finding"><div class="finding__n num">3</div><div><p><strong>08-01 launches with the same missing scaffolding 0702 had all along</strong>: no estimation points, no epics. Unfixed before the sprint gets going, this report will repeat the identical caveat on 28 Aug.</p></div></div>
+        <div class="finding"><div class="finding__n num">4</div><div><p><strong>The admin dashboard workstream is still invisible to the board.</strong> Promise has no board presence in either sprint.</p></div></div>
+        <div class="finding"><div class="finding__n num">5</div><div><p><strong>The PRD gap is static</strong>, unchanged since 05 Aug.</p></div></div>
+        <div class="finding"><div class="finding__n num">6</div><div><p><strong>A new, unattributed identity (<code>Fortune Okwu</code>) now has write access to sprint planning and bulk status changes.</strong> Likely a PM/scrum-master account &mdash; worth confirming explicitly rather than inferring.</p></div></div>
+      </div>
+    </section>
+
+    <section class="sec" id="s7">
+      <div class="sec__h"><span class="sec__n">07</span><h2>Previous recommendations &mdash; where they stand</h2></div>
+      <p>From the 10 Aug edition.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col" class="r">#</th><th scope="col">Recommendation</th><th scope="col">Status</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" class="r">1</th><td>Decide what happens to the sprint boundary</td><td class="hi">Half-resolved. 08-01 was opened &mdash; but as a fresh sheet, not a resolution for 0702's contents.</td></tr>
+            <tr><th scope="row" class="r">2</th><td>Check in on Promise specifically</td><td class="hi">Not done, and now overdue. Still 5 days silent, past the weekend excuse.</td></tr>
+            <tr><th scope="row" class="r">3</th><td>Mark the 14+-day items that are actually finished</td><td class="hi">Not done. Same items (now 41, was 36), all older.</td></tr>
+            <tr><th scope="row" class="r">4</th><td>Have someone accept one item</td><td class="hi">Not done. REVIEW/QA &rarr; Done remains 0 across 0702's entire history.</td></tr>
+            <tr><th scope="row" class="r">5</th><td>Add S/M/L sizing and put remaining items on an epic</td><td class="hi">Not done on 0702. 08-01 launched with the identical gap &mdash; 0/50 estimated, 0/50 epic'd.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>One of five touched (sprint boundary), none resolved outright.</p>
+    </section>
+
+    <section class="sec" id="s8">
+      <div class="sec__h"><span class="sec__n">08</span><h2>What I would do today</h2></div>
+      <div class="stack">
+        <div class="finding"><div class="finding__n num">1</div><div><p><strong>Decide 0702's fate explicitly</strong>: cancel it, formally close it, or triage its 78 items into 08-01. &ldquo;Leave it and let it age&rdquo; is the option currently winning by default, and it's the worst one.</p></div></div>
+        <div class="finding"><div class="finding__n num">2</div><div><p><strong>Ask Promise directly.</strong> Five days with no commit and no board presence, two of them ordinary business days. Past &ldquo;probably the weekend.&rdquo;</p></div></div>
+        <div class="finding"><div class="finding__n num">3</div><div><p><strong>Add estimation points to 08-01 now, on day 2, before habit sets in.</strong> 0702 never got them; fixing it at the start of a sprint is one conversation, fixing it on day 15 is a retrofit nobody does.</p></div></div>
+        <div class="finding"><div class="finding__n num">4</div><div><p><strong>Have someone accept one item from 0702</strong>, even symbolically. Zero acceptances across 112 entries into review is still this report's most important unanswered question.</p></div></div>
+        <div class="finding"><div class="finding__n num">5</div><div><p><strong>Confirm who <code>Fortune Okwu</code> is</strong> and whether that identity's role belongs in this report's roster going forward, rather than inferring it from activity pattern alone.</p></div></div>
+      </div>
+    </section>
+
+    <section class="sec" id="method">
+      <div class="sec__h"><span class="sec__n">&mdash;</span><h2>Appendix &mdash; method</h2></div>
+
+      <p><strong>Pipeline.</strong> <code>beevia-refresh</code> skill: sprint export &rarr; repo sync &rarr; drift audit &rarr; spec updates (none needed, clean 105/29) &rarr; this report. The default export (<code>ZOHO_SPRINT_FILTER</code>) still pointed at <code>0702</code>, which had already ended &mdash; that's how 08-01's existence was discovered mid-run, via a nonmatching <code>--sprint</code> filter that listed all sprints in Zoho. <strong><code>ZOHO_SPRINT_FILTER</code> has been updated from <code>0702</code> to <code>08-01</code></strong> in <code>.env</code> so tomorrow's default export targets the active sprint.</p>
+
+      <h3>Sources</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Stream</th><th scope="col">Artifact</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Board (0702)</th><td><code>beevia-sprint-board-2026-08-11.csv</code> &mdash; 120 rows, 89 leaves</td></tr>
+            <tr><th scope="row">Board (08-01)</th><td><code>beevia-sprint-board-2026-08-11-08-01.csv</code> &mdash; 50 rows</td></tr>
+            <tr><th scope="row">Sprint list</th><td>Queried directly against Zoho's <code>sprints/</code> endpoint with all four status types &mdash; returned exactly three sprints: <code>0701</code>, <code>0702</code>, <code>08-01</code>.</td></tr>
+            <tr><th scope="row">Code</th><td>All five repos, confirmed at <code>origin/main</code>; two new commits since 10 Aug (<code>beevia-api</code> &times;2, <code>beevia-mobile</code> &times;1)</td></tr>
+            <tr><th scope="row">Specs</th><td><code>openapi.yaml</code> (105), <code>openapi.proposed.yaml</code> (52), <code>openapi.admin.yaml</code> (29), <code>openapi.admin.proposed.yaml</code> (23) &mdash; all validated, no drift</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p><strong>Leaf counting.</strong> &ldquo;Leaf&rdquo; means an item no other item names as its Parent Id &mdash; not simply &ldquo;has a Parent Id itself.&rdquo; This edition's numbers use the corrected definition throughout (89 leaves / 31 parents on 0702), matching the audit's own totals.</p>
+
+      <p><strong>Queue age and throughput still come from audit trails, never <code>Last Modified</code></strong> &mdash; unchanged guidance from every prior edition.</p>
+
+      <p><strong>08-01's item-overlap check</strong> was a direct set comparison of Item Ids between the two CSVs &mdash; not an inference from status or epic. Zero overlap is exact, not approximate.</p>
+
+      <h3 id="mvp-method">MVP readiness &mdash; how the &asymp;46% is computed</h3>
+      <p><strong>Unchanged from 10 Aug.</strong> Eleven capabilities from PRD &sect;1.2/&sect;11 with <strong>frozen weights</strong>, each scored 0&ndash;1 from build evidence read from the code and screens, never from commit messages. Proposed-only areas score 0. Target date 2026-09-01 is provisional, set by the owner on 2026-08-07.</p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col" class="r">#</th><th scope="col">Capability</th><th scope="col" class="r">Weight</th><th scope="col" class="r">Score</th><th scope="col">Evidence</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" class="r">1</th><td>E2EE messaging</td><td class="r">15</td><td class="r">0.9</td><td>22 conversation/message/key/attachment paths + uploads live; 12+ chat screens with crypto, socket and attachment layers in the client</td></tr>
+            <tr><th scope="row" class="r">2</th><td>Voice &amp; video calling</td><td class="r">8</td><td class="r">0.8</td><td>4 call endpoints live; <code>audio_call_screen</code> and <code>video_call_screen</code> present</td></tr>
+            <tr><th scope="row" class="r">3</th><td>Message translation</td><td class="r">7</td><td class="r">0.7</td><td><code>POST /translate</code> live and <code>translate_chat_screen</code> in the client; batch + language list still proposed. 08-01 adds translation-provider work to the board &mdash; not yet built.</td></tr>
+            <tr><th scope="row" class="r">4</th><td>Local KYC tier (BVN)</td><td class="r">8</td><td class="r">0.9</td><td>13 KYC/upgrade endpoints + provider webhook live; full client onboarding flow &mdash; BVN, facial verification, wallet setup</td></tr>
+            <tr><th scope="row" class="r">5</th><td>International KYC tier</td><td class="r">6</td><td class="r hi">0.0</td><td>proposed only</td></tr>
+            <tr><th scope="row" class="r">6</th><td>Multi-currency wallets</td><td class="r">12</td><td class="r">0.45</td><td>API view, transactions, withdraw live &mdash; NGN only, <code>activeNgn()</code> hard-coded; client has wallet <strong>onboarding</strong> screens but no wallet home, balance or transactions screen</td></tr>
+            <tr><th scope="row" class="r">7</th><td>Send / request / receive</td><td class="r">12</td><td class="r">0.45</td><td>full API write path live (send, request, accept, decline, pay, cancel); client &ldquo;Send money&rdquo; / &ldquo;Request money&rdquo; buttons wired to a <strong>local placeholder &mdash; zero calls to the payments API in the client</strong></td></tr>
+            <tr><th scope="row" class="r">8</th><td>Cross-currency FX</td><td class="r">12</td><td class="r hi">0.0</td><td>proposed only; the PRD's headline differentiator</td></tr>
+            <tr><th scope="row" class="r">9</th><td>Virtual cards</td><td class="r">10</td><td class="r hi">0.0</td><td>proposed only</td></tr>
+            <tr><th scope="row" class="r">10</th><td>Consent management</td><td class="r">4</td><td class="r hi">0.0</td><td>no endpoint or record anywhere</td></tr>
+            <tr><th scope="row" class="r">11</th><td>Admin oversight</td><td class="r">6</td><td class="r">0.45</td><td>29/52 admin ops; dashboard Modules 1 &amp; 3 landed in <code>src/features</code></td></tr>
+            <tr><th scope="row" class="r hi"></th><td class="hi">Weighted total</td><td class="r hi">100</td><td class="r hi"></td><td class="hi">&asymp;46%</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>What this report cannot tell you</h3>
+      <div class="note">
+        <p><strong>Whether 0702 being left behind was deliberate triage or just how planning worked this time.</strong> Nothing in either export records intent.</p>
+        <p><strong>Who <code>Fortune Okwu</code> is</strong> beyond &ldquo;the identity that created and moved these items&rdquo; &mdash; inferred as project-manager/scrum-master, not confirmed.</p>
+        <p><strong>Whether Promise's 5-day gap reflects a blocker or a different cadence</strong> &mdash; the board still can't see this workstream at all.</p>
+        <p><strong>Velocity or scope-fit for 08-01</strong> &mdash; zero estimation points, same gap as 0702 had.</p>
+        <p><strong>Whether a built screen or endpoint functions correctly</strong> &mdash; testing remains explicitly out of scope, per the owner.</p>
+        <p style="margin-bottom:0"><strong>Why 112 items entered review on 0702 and none were ever accepted.</strong> Still the most important open question this report cannot answer, and now moot for 0702 specifically unless someone revives it.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="foot">
+  <span class="barcode barcode--lg" aria-hidden="true"></span>
+  <span>Beevia project status &middot; 2026-08-11 &middot; 0702 (closed) + 08-01 (new)</span>
+  <span><a href="index.html">All frames</a></span>
+</footer>
+
+<script src="ui.js"></script>
+</body>
+</html>

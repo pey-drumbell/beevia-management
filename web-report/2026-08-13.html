@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beevia — Project Status — 13 Aug 2026</title>
+<meta name="description" content="08-01 completed its first two items — both design, both in three hours — while the code side went a second day with no commits and beevia-admin reached a full week silent.">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!--
+  DIRECTION CONTRACT · seed 6c4a0ed0 (carried forward unchanged)
+  THESIS: A status report whose subject is the disagreement between its sources.
+  STORY: The board moves and the repos do not. First completions arrive in three
+  hours and bypass review entirely — the mirror image of 0702, where nothing
+  ever left review. Two extremes in two sprints, no settled middle.
+-->
+
+<div class="topbar">
+    <div class="topbar__mark">
+      <span class="barcode" aria-hidden="true"></span>
+      <span class="topbar__wordmark">Beevia</span>
+    </div>
+    <nav class="topbar__nav label" aria-label="Report">
+      <a href="index.html">Archive</a>
+      <a href="#overview">Overview</a>
+      <a href="#s6"><span>What to do</span></a>
+      <a href="#method">Method</a>
+    </nav>
+</div>
+
+<header class="masthead">
+  <div class="field">
+    <div class="field__rail field__rail--l">
+      <dl>
+        <dt>08-01 Done</dt>
+        <dd>1 of 43 · first</dd>
+        <dt>08-01 In progress</dt>
+        <dd>4 · 9%</dd>
+        <dt>Items</dt>
+        <dd>67 · +8</dd>
+        <dt>Commits since 12 Aug</dt>
+        <dd>0</dd>
+      </dl>
+    </div>
+
+    <div class="field__stage">
+      <div class="field__title">
+        <h1>Project<br>Status</h1>
+      </div>
+      <div class="field__meta num">
+        <span>2026-08-13</span>
+        <span>Sprint 08-01</span>
+        <span>10&ndash;28 Aug &middot; day 4 of 18</span>
+        <span>Board moves, repos don't</span>
+      </div>
+    </div>
+
+    <div class="field__rail field__rail--r">
+      <dl>
+        <dt>API consumer</dt>
+        <dd>105 &nbsp;+0</dd>
+        <dt>API admin</dt>
+        <dd>29 &nbsp;+0</dd>
+        <dt>Spec drift</dt>
+        <dd>None</dd>
+        <dt>Estimated</dt>
+        <dd>0 / 67</dd>
+      </dl>
+    </div>
+  </div>
+</header>
+
+<section class="mvp" aria-label="MVP readiness estimate">
+  <div class="mvp__head">
+    <span class="label">MVP readiness &mdash; estimate</span>
+    <span class="mvp__pct num">&asymp;46%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 19 days out</span>
+  </div>
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 46 percent built, unchanged since 11 Aug. Communication capabilities largely built end to end; the money surface is thin on the client, and international KYC, cross-currency FX, virtual cards and consent management are not started.">
+    <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.9"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.8"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:7" title="Message translation — 0.7"><i style="width:70%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.9"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
+    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.45"><i style="width:45%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.45"><i style="width:45%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
+    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0"></span>
+    <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
+    <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.45"><i style="width:45%"></i></span>
+  </div>
+  <p class="mvp__read"><strong>Unchanged since 11 Aug</strong> &mdash; the sprint's first two completions are <em>design</em> deliverables, and the rubric scores built and wired capability, never design sign-off or board status. No repo gained a commit this cycle, so there is no new build evidence to score. Segment width = weight &middot; fill = build evidence. <a href="#mvp-method">Method and capability table</a>.</p>
+</section>
+
+<div class="shell">
+  <nav class="contents label" aria-label="Contents">
+    Contents
+    <ol>
+      <li><a href="#overview"><span>00</span> Quick overview</a></li>
+      <li><a href="#s1"><span>01</span> Sprint 08-01 &middot; first completions</a></li>
+      <li><a href="#s2"><span>02</span> What shipped</a></li>
+      <li><a href="#s3"><span>03</span> Product-vs-PRD gap</a></li>
+      <li><a href="#s4"><span>04</span> Risks</a></li>
+      <li><a href="#s5"><span>05</span> Previous recommendations</a></li>
+      <li><a href="#s6"><span>06</span> What I would do today</a></li>
+      <li><a href="#method"><span>&mdash;</span> Method</a></li>
+    </ol>
+  </nav>
+
+  <main class="doc">
+
+    <section class="sec" id="overview">
+      <div class="invert" style="margin-bottom:var(--s-6)">
+        <p class="lede">08-01 completed its first two items &mdash; both design, both inside three hours &mdash; while the code side went a second straight day with no commits and <code>beevia-admin</code> reached a full week silent.</p>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">08-01 movement, 12 &rarr; 13 Aug</caption>
+          <thead>
+            <tr><th scope="col">Measure</th><th scope="col" class="r">12 Aug</th><th scope="col" class="r">13 Aug</th><th scope="col" class="r">&Delta;</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Items (rows / leaves)</th><td class="r">59 / 39</td><td class="r hi">67 / 43</td><td class="r hi">+8 / +4</td></tr>
+            <tr><th scope="row">To do (leaves)</th><td class="r">35</td><td class="r">38</td><td class="r">+3</td></tr>
+            <tr><th scope="row">In progress (leaves)</th><td class="r">4</td><td class="r">4</td><td class="r">0 &mdash; 2 out, 2 in</td></tr>
+            <tr><th scope="row">Done (leaves)</th><td class="r">0</td><td class="r hi">1</td><td class="r hi">+1 &mdash; first of the sprint</td></tr>
+            <tr><th scope="row">In review / QA</th><td class="r">0</td><td class="r">0</td><td class="r">0</td></tr>
+            <tr><th scope="row">API surface (consumer)</th><td class="r">105</td><td class="r">105</td><td class="r">0</td></tr>
+            <tr><th scope="row">Commits, any repo</th><td class="r">0</td><td class="r">0</td><td class="r">0</td></tr>
+            <tr><th scope="row">Estimation points set</th><td class="r">0 / 59</td><td class="r hi">0 / 67</td><td class="r">still zero</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">Team at a glance</caption>
+          <thead>
+            <tr>
+              <th scope="col">Person</th><th scope="col">Owns</th>
+              <th scope="col" class="r">WIP</th><th scope="col">Leaf items</th>
+              <th scope="col" class="r">Cycle time</th><th scope="col" class="r">Commits, 7d</th><th scope="col">Flag</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Philip Chidera</th><td>design</td><td class="r">0</td><td>13 To do + 1 Done</td><td class="r hi">~3h</td><td class="r">&mdash;</td><td>First and only completions in 08-01</td></tr>
+            <tr><th scope="row">David Samuel</th><td>mobile</td><td class="r hi">3</td><td>7 To do + 3 In progress</td><td class="r">n/a</td><td class="r hi">0</td><td>3 items open; <strong>no mobile commit in 7 days</strong></td></tr>
+            <tr><th scope="row">Ayomikun Araoye</th><td>backend + admin API</td><td class="r">1</td><td>18 To do + 1 In progress</td><td class="r">n/a</td><td class="r hi">0</td><td>Backend silent 3 days; carries <strong>19 of 43 leaves</strong></td></tr>
+            <tr><th scope="row">Promise Udo</th><td>admin dashboard</td><td class="r">&mdash;</td><td class="hi">now on the board &mdash; 1 parent Story, co-assigned</td><td class="r">n/a</td><td class="r hi">0</td><td><code>beevia-admin</code> now <strong>7 days</strong> silent</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><em>Submission-to-review rate stays 0 for everyone: nothing in 08-01 has entered REVIEW/QA, including the two items that completed. The single cycle-time figure is one person, one item pair, design work &mdash; not a team baseline.</em></p>
+
+      <div class="note">
+        <span class="label">The question for standup</span>
+        <p style="margin-bottom:0">David has three items open on the send-money and wallet screens and no commit in <code>beevia-mobile</code> for seven days &mdash; is that work in progress locally, blocked, or waiting on the Wallet Summary Endpoint that is also unstarted?</p>
+      </div>
+
+      <h3>The three things worth knowing</h3>
+
+      <div class="stack">
+        <div class="finding">
+          <div class="finding__n num">1</div>
+          <div>
+            <p><strong>The sprint has its first completions, and they arrived in about three hours.</strong> Philip moved &ldquo;External Bank Transfer &mdash; Screens&rdquo; (BVA-I190) and its child &ldquo;External Transfer Flow&rdquo; (BVA-I191) to <code>In progress</code> at 13:03 on 12 Aug and marked both Done at 16:00 the same day. Both went <strong>In progress &rarr; Done directly, without passing through REVIEW/QA</strong>. That is the opposite failure mode to 0702, where 78 items entered review and none ever left. Neither pattern is verification; worth deciding deliberately which one the team wants.</p>
+          </div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">2</div>
+          <div>
+            <p><strong>Board activity and code activity have now diverged for two days running.</strong> Five items are in flight and two are complete, while all five repos are unchanged &mdash; zero commits since 11 Aug, and that last one was the owner's own test-pipeline commit, not feature work. <code>beevia-admin</code> hit <strong>7 days stale</strong> today, the threshold the 12 Aug edition said was two days away.</p>
+          </div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">3</div>
+          <div>
+            <p><strong>Promise Udo appears on the board for the first time.</strong> BVA-I220 &ldquo;Wallet Balance &amp; Transaction History&rdquo; is co-assigned to Promise and Ayomikun. Four editions have recommended asking Promise directly; the presence is new, but it is one parent Story rather than assigned delivery work, and <code>beevia-admin</code> has not gained a commit.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="invert">
+        <span class="label" style="display:block;margin-bottom:var(--s-3)">If you read nothing else</span>
+        <p style="margin-bottom:0;font-variation-settings:'wdth' 75,'wght' 500;max-width:64ch">The board is finally moving, the repos are not, and the gap between the two is the thing to watch this week.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s1">
+      <div class="sec__h"><span class="sec__n">01</span><h2>Sprint 08-01 &mdash; first completions</h2></div>
+
+      <h3>1.1 Status, day 4</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Status</th><th scope="col" class="r">Leaves</th><th scope="col" class="r">Share</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">To do</th><td class="r">38</td><td class="r">88%</td></tr>
+            <tr><th scope="row">In progress</th><td class="r">4</td><td class="r">9%</td></tr>
+            <tr><th scope="row">Done</th><td class="r hi">1</td><td class="r hi">2%</td></tr>
+            <tr><th scope="row" class="hi">Total</th><td class="r hi">43</td><td class="r"></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>(67 rows total: 24 parent Stories grouping 43 leaf Tasks. Counting all rows regardless of nesting gives 60 / 5 / 2 &mdash; the leaf figures above are the ones to use.)</p>
+
+      <h3>1.2 What moved, with timings</h3>
+      <p>All from the activity sidecar, never <code>Last Modified</code>.</p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Item</th><th scope="col">Who</th><th scope="col">Transition</th><th scope="col">When (UTC)</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">BVA-I190 External Bank Transfer &mdash; Screens</th><td>Philip Chidera</td><td>To do &rarr; In progress</td><td>12 Aug 13:03</td></tr>
+            <tr><th scope="row">BVA-I190</th><td>Philip Chidera</td><td class="hi">In progress &rarr; Done</td><td>12 Aug 16:00</td></tr>
+            <tr><th scope="row">BVA-I191 External Transfer Flow</th><td>Philip Chidera</td><td>To do &rarr; In progress</td><td>12 Aug 13:03</td></tr>
+            <tr><th scope="row">BVA-I191</th><td>Philip Chidera</td><td class="hi">In progress &rarr; Done</td><td>12 Aug 16:00</td></tr>
+            <tr><th scope="row">BVA-I198 Card Preview UI</th><td>David Samuel</td><td>To do &rarr; In progress</td><td>13 Aug 11:13</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Measured cycle time for the completed pair: <strong>2h 57m</strong>, each. One data point, one person, design work &mdash; not a team velocity figure and not extrapolatable.</p>
+
+      <h3>1.3 Still in progress</h3>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Item</th><th scope="col">Assignee</th><th scope="col">Since</th><th scope="col" class="r">Age</th><th scope="col">Capability</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">BVA-I170 Wire Real Response into Wallet Screen</th><td>David Samuel</td><td>12 Aug 12:18</td><td class="r">1d</td><td>#6 wallets</td></tr>
+            <tr><th scope="row">BVA-I184 Wallets Tab (Chat + Banking Users)</th><td>Philip, David, Ayomikun</td><td>12 Aug 12:14</td><td class="r">1d</td><td>#6 wallets</td></tr>
+            <tr><th scope="row">BVA-I185 Wallet Summary Endpoint</th><td>Ayomikun Araoye</td><td>12 Aug 12:14</td><td class="r">1d</td><td>#6 wallets</td></tr>
+            <tr><th scope="row">BVA-I189 Send Money (P2P) Screens</th><td>David Samuel</td><td>12 Aug 12:15</td><td class="r">1d</td><td>#7 send/receive</td></tr>
+            <tr><th scope="row">BVA-I198 Card Preview UI</th><td>David Samuel</td><td>13 Aug 11:13</td><td class="r">&lt;1d</td><td>#9 virtual cards</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Nothing is yet older than the one observed cycle time by a margin that means anything. Ask again on 15 Aug.</p>
+
+      <h3>1.4 What arrived</h3>
+      <p>8 new items (12 Aug 19:09 &rarr; 13 Aug 07:27), all created by <code>Fortune Okwu</code>, all wallet/admin-operations themed:</p>
+      <ul>
+        <li>BVA-I220/I221 &mdash; Wallet Balance &amp; Transaction History &rarr; Wallet Summary &amp; Transaction History Endpoint</li>
+        <li>BVA-I222/I223 &mdash; Pending Transfer Investigation Tooling &rarr; Transfer Status Lookup &amp; Overdue-Pending Query</li>
+        <li>BVA-I224/I225 &mdash; Anchor Reconciliation View &rarr; Reconciliation Logic</li>
+        <li>BVA-I226/I227 &mdash; Dashboard Home, Recent Activity Feed &rarr; Unified Activity Feed Endpoint</li>
+      </ul>
+      <p>Seven of the eight are assigned to Ayomikun, who now carries <strong>19 of the 43 leaves (44%)</strong> while the admin dashboard's nominal owner has none.</p>
+
+      <h3>1.5 Epics now populate &mdash; and this corrects a standing hedge</h3>
+      <div class="note">
+        <p><strong>Correction to prior editions.</strong> Reports since 05 Aug recorded blank Epic columns and hedged that the cause was either a missing <code>ZohoSprints.epic.READ</code> scope on the refresh token or genuinely un-triaged items, saying the two could not be distinguished. <strong>They now can.</strong> At 13 Aug 05:52 <code>Fortune Okwu</code> set the epic on BVA-I220 (<code>None &rarr; Admin</code>), and eight items now carry <code>Epic = Admin</code> in the export. The field maps and exports correctly.</p>
+        <p style="margin-bottom:0">The remaining 59 items are therefore <strong>genuinely un-triaged</strong>, not a tooling artifact. The export script still prints a <code>FIELD_MAP gap</code> warning for Epic, but that warning samples only the first 50 items and the eight tagged ones sort after them &mdash; a sampling artifact, not a broken mapping. Treat blank epics as real from here on.</p>
+      </div>
+
+      <h3>1.6 What is still missing</h3>
+      <div class="note">
+        <p><strong>Estimation points: 0 of 67.</strong> Every item carries a literal <code>0</code>. Recommended on day 2, again on day 3, again here on day 4. Velocity, burndown and scope-fit remain underivable for this sprint.</p>
+        <p><strong>Tags: 0 of 67.</strong></p>
+        <p style="margin-bottom:0"><strong>Epics: 8 of 67</strong> &mdash; first non-zero reading, all on the newest admin items.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s2">
+      <div class="sec__h"><span class="sec__n">02</span><h2>What shipped this cycle</h2></div>
+      <div class="invert">
+        <p style="margin-bottom:0;max-width:64ch"><strong>No product code.</strong> Zero commits in all five repos since 11 Aug &mdash; confirmed by a fresh sync (all five already at <code>origin/main</code>) and <code>git log --since=2026-08-12</code> empty everywhere. The drift audit is clean (105 consumer / 29 admin operations) because there is nothing new to have drifted, and the four OpenAPI specs needed no edits this cycle.</p>
+      </div>
+
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">Repo staleness, as of 13 Aug</caption>
+          <thead><tr><th scope="col">Repo</th><th scope="col">Last commit</th><th scope="col" class="r">Days</th><th scope="col">Last human author</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>beevia-mobile</code></th><td>11 Aug</td><td class="r">2</td><td>owner (test pipeline); David last committed <strong>6 Aug</strong></td></tr>
+            <tr><th scope="row"><code>beevia-api</code></th><td>10 Aug</td><td class="r">3</td><td>Ayomikun (as <code>Phoenixdadhev</code>)</td></tr>
+            <tr><th scope="row"><code>beevia-admin</code></th><td>6 Aug</td><td class="r hi">7</td><td>Promise Udo</td></tr>
+            <tr><th scope="row"><code>beevia-admin-api</code></th><td>6 Aug</td><td class="r hi">7</td><td>Ayomikun (as <code>Phoenixdadhev</code>)</td></tr>
+            <tr><th scope="row"><code>beevia-db-schema</code></th><td>6 Aug</td><td class="r hi">7</td><td>Ayomikun + release bot</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Three of five repos have now been silent for a full week.</p>
+      <p><em>Management-repo work, for completeness, not product delivery:</em> draft per-repo engineering and testing rules were written today to <code>agent-rules/</code> in this repo &mdash; staged for review, not applied to any service repo, and not scored by the MVP rubric.</p>
+    </section>
+
+    <section class="sec" id="s3">
+      <div class="sec__h"><span class="sec__n">03</span><h2>Product-vs-PRD gap</h2></div>
+      <p>Unchanged. Active work now exists against capabilities #6, #7 and #9, but nothing has shipped, so the table is identical to every prior edition:</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">PRD capability</th><th scope="col">State</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Cross-currency conversion</th><td><strong>Not built.</strong> <code>PaymentService</code> still hard-codes NGN via <code>activeNgn()</code>.</td></tr>
+            <tr><th scope="row">Virtual cards</th><td><strong>Not built.</strong> No module, table or provider capability. BVA-I198 (Card Preview UI) is the first board item against it.</td></tr>
+            <tr><th scope="row">Two KYC tiers</th><td><strong>Local only.</strong> No international path for USD/GBP/EUR.</td></tr>
+            <tr><th scope="row">Consent management</th><td><strong>Not built.</strong> Required for the Phase 4 compliance gate.</td></tr>
+            <tr><th scope="row">Payments read path</th><td><strong>Missing.</strong> No <code>GET /payments</code>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Detail: <code>api-rfc.md</code> &sect;4&ndash;&sect;5, <code>openapi.proposed.yaml</code>.</p>
+    </section>
+
+    <section class="sec" id="s4">
+      <div class="sec__h"><span class="sec__n">04</span><h2>Risks</h2></div>
+      <div class="stack">
+        <div class="finding"><div class="finding__n num">1</div><div><p><strong>Board movement without code movement, two days running.</strong> Five items in flight, two complete, zero commits anywhere. Either work is happening locally and unpushed, or the board is ahead of the build.</p></div></div>
+        <div class="finding"><div class="finding__n num">2</div><div><p><strong><code>beevia-admin</code> has been silent for a full week</strong> (last commit 6 Aug). Flagged as approaching on 12 Aug; it has now arrived.</p></div></div>
+        <div class="finding"><div class="finding__n num">3</div><div><p><strong>Ayomikun carries 44% of the sprint's leaves</strong> (19 of 43) and picked up 7 of the 8 new items, while the admin dashboard's owner carries none. A load-distribution risk, not a performance observation.</p></div></div>
+        <div class="finding"><div class="finding__n num">4</div><div><p><strong>The first two completions bypassed REVIEW/QA entirely.</strong> Nothing in 08-01 has been reviewed by anyone. Given 0702 ended with 78 items stuck in review, the team has now demonstrated both extremes in two sprints without settling on a working middle.</p></div></div>
+        <div class="finding"><div class="finding__n num">5</div><div><p><strong>Estimation points remain at zero on day 4 of 18.</strong> The cheap window has effectively closed; the sprint will end without a velocity baseline again.</p></div></div>
+        <div class="finding"><div class="finding__n num">6</div><div><p><strong><code>Fortune Okwu</code>'s role is still unconfirmed</strong> after three editions. This identity created all 67 items, moved them into the sprint, assigned every owner, and now sets epics &mdash; the single most active identity on the board, and nobody in this pipeline has verified who it is.</p></div></div>
+      </div>
+    </section>
+
+    <section class="sec" id="s5">
+      <div class="sec__h"><span class="sec__n">05</span><h2>Previous recommendations &mdash; where they stand</h2></div>
+      <p>From the 12 Aug edition.</p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col" class="r">#</th><th scope="col">Recommendation</th><th scope="col">Status</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" class="r">1</th><td>Capitalize on 08-01's momentum; check in on David and Philip</td><td>Partly. Philip closed two items in three hours. David added a third open item but has not committed to <code>beevia-mobile</code> in 7 days &mdash; the check-in is still worth having, now with a sharper question.</td></tr>
+            <tr><th scope="row" class="r">2</th><td>Add estimation points now</td><td class="hi">Not done. Day 4, still 0/67.</td></tr>
+            <tr><th scope="row" class="r">3</th><td>Confirm who <code>Fortune Okwu</code> is</td><td class="hi">Not done. The identity added 8 more items and began setting epics.</td></tr>
+            <tr><th scope="row" class="r">4</th><td>Ask Promise directly</td><td>Movement, not resolution. Promise now appears on the board (BVA-I220, co-assigned parent Story) &mdash; first presence in any edition. But <code>beevia-admin</code> reached 7 days silent, so the underlying question is unanswered.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>One partly done, one moved sideways, two not done.</p>
+    </section>
+
+    <section class="sec" id="s6">
+      <div class="sec__h"><span class="sec__n">06</span><h2>What I would do today</h2></div>
+      <div class="stack">
+        <div class="finding"><div class="finding__n num">1</div><div><p><strong>Ask David the specific question</strong>, not a general one: three items open on wallet and send-money screens, no <code>beevia-mobile</code> commit in seven days. Local work, blocked on BVA-I185 (Wallet Summary Endpoint, also unstarted), or something else?</p></div></div>
+        <div class="finding"><div class="finding__n num">2</div><div><p><strong>Decide what &ldquo;Done&rdquo; means in 08-01, this week.</strong> Two items went In progress &rarr; Done in three hours with no review step. 0702 went to the opposite extreme. Pick one convention and apply it before more items complete under an undecided rule.</p></div></div>
+        <div class="finding"><div class="finding__n num">3</div><div><p><strong>Rebalance or acknowledge Ayomikun's load.</strong> 19 of 43 leaves, plus 7 of the 8 newest items, plus the admin API. If the admin dashboard work is genuinely Promise's, the new admin-epic items should say so.</p></div></div>
+        <div class="finding"><div class="finding__n num">4</div><div><p><strong>Confirm <code>Fortune Okwu</code>.</strong> Fourth edition asking. This identity now controls item creation, sprint assignment, ownership and epics across the whole board.</p></div></div>
+        <div class="finding"><div class="finding__n num">5</div><div><p><strong>Estimation points, or drop the pretence.</strong> Either size the remaining 38 To do items this week, or state explicitly that this sprint will not be measured, so the next report stops flagging it.</p></div></div>
+      </div>
+    </section>
+
+    <section class="sec" id="method">
+      <div class="sec__h"><span class="sec__n">&mdash;</span><h2>Appendix &mdash; method</h2></div>
+
+      <p><strong>Pipeline.</strong> <code>beevia-refresh</code>: sprint export (67 items, <code>--modified --activity</code>) &rarr; repo sync (all five already at <code>origin/main</code>, no changes) &rarr; drift audit (clean; no spec edits required) &rarr; this report.</p>
+
+      <p><strong>Flow measurement.</strong> All transitions, timings and cycle times come from the activity sidecar's <code>actiontime</code>, never the <code>Last Modified</code> column &mdash; bulk board operations rewrite that column without producing audit entries, which produced one materially wrong report on 05 Aug.</p>
+
+      <p><strong>Corrections to prior editions.</strong> &sect;1.5 resolves the standing &ldquo;blank epics may be an OAuth scope gap&rdquo; hedge: the field exports correctly, so blanks are real. Prior editions' statement that Promise Udo is &ldquo;absent entirely&rdquo; from the board is no longer true as of BVA-I220.</p>
+
+      <h3>Sources</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Stream</th><th scope="col">Artifact</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Board</th><td><code>beevia-sprint-board-2026-08-13.csv</code> &mdash; 67 rows, 43 leaves; <code>beevia-activity-2026-08-13.json</code> &mdash; 67 audit trails</td></tr>
+            <tr><th scope="row">Code</th><td>All five repos, confirmed at <code>origin/main</code>; zero commits since 11 Aug</td></tr>
+            <tr><th scope="row">Specs</th><td><code>openapi.yaml</code> (105), <code>openapi.proposed.yaml</code> (52), <code>openapi.admin.yaml</code> (29), <code>openapi.admin.proposed.yaml</code> (23) &mdash; all validated, no drift</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="mvp-method">MVP readiness &mdash; how the &asymp;46% is computed</h3>
+      <p><strong>Unchanged from 11 Aug.</strong> Eleven capabilities from PRD &sect;1.2/&sect;11 with <strong>frozen weights</strong>, each scored 0&ndash;1 from build evidence read from the code and screens, never from commit messages or board status. Proposed-only areas score 0. Target date 2026-09-01 is provisional, set by the owner on 2026-08-07.</p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col" class="r">#</th><th scope="col">Capability</th><th scope="col" class="r">Weight</th><th scope="col" class="r">Score</th><th scope="col">Evidence</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" class="r">1</th><td>E2EE messaging</td><td class="r">15</td><td class="r">0.9</td><td>22 conversation/message/key/attachment paths + uploads live; 12+ chat screens with crypto, socket and attachment layers in the client</td></tr>
+            <tr><th scope="row" class="r">2</th><td>Voice &amp; video calling</td><td class="r">8</td><td class="r">0.8</td><td>4 call endpoints live; <code>audio_call_screen</code> and <code>video_call_screen</code> present</td></tr>
+            <tr><th scope="row" class="r">3</th><td>Message translation</td><td class="r">7</td><td class="r">0.7</td><td><code>POST /translate</code> live and <code>translate_chat_screen</code> in the client; batch + language list still proposed</td></tr>
+            <tr><th scope="row" class="r">4</th><td>Local KYC tier (BVN)</td><td class="r">8</td><td class="r">0.9</td><td>13 KYC/upgrade endpoints + provider webhook live; full client onboarding flow &mdash; BVN, facial verification, wallet setup</td></tr>
+            <tr><th scope="row" class="r">5</th><td>International KYC tier</td><td class="r">6</td><td class="r hi">0.0</td><td>proposed only</td></tr>
+            <tr><th scope="row" class="r">6</th><td>Multi-currency wallets</td><td class="r">12</td><td class="r">0.45</td><td>API view, transactions, withdraw live &mdash; NGN only, <code>activeNgn()</code> hard-coded; client has wallet <strong>onboarding</strong> screens but no wallet home, balance or transactions screen. Three items now In progress against it &mdash; unshipped.</td></tr>
+            <tr><th scope="row" class="r">7</th><td>Send / request / receive</td><td class="r">12</td><td class="r">0.45</td><td>full API write path live (send, request, accept, decline, pay, cancel); client &ldquo;Send money&rdquo; / &ldquo;Request money&rdquo; buttons wired to a <strong>local placeholder &mdash; zero calls to the payments API in the client</strong></td></tr>
+            <tr><th scope="row" class="r">8</th><td>Cross-currency FX</td><td class="r">12</td><td class="r hi">0.0</td><td>proposed only; the PRD's headline differentiator</td></tr>
+            <tr><th scope="row" class="r">9</th><td>Virtual cards</td><td class="r">10</td><td class="r hi">0.0</td><td>proposed only; BVA-I198 is the first board item against it</td></tr>
+            <tr><th scope="row" class="r">10</th><td>Consent management</td><td class="r">4</td><td class="r hi">0.0</td><td>no endpoint or record anywhere</td></tr>
+            <tr><th scope="row" class="r">11</th><td>Admin oversight</td><td class="r">6</td><td class="r">0.45</td><td>29/52 admin ops; dashboard Modules 1 &amp; 3 landed in <code>src/features</code></td></tr>
+            <tr><th scope="row" class="r hi"></th><td class="hi">Weighted total</td><td class="r hi">100</td><td class="r hi"></td><td class="hi">&asymp;46%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Scores measure <strong>build, not acceptance</strong>. A proposed-only area scores 0. No score moves without named evidence &mdash; a shipped endpoint, a landed module, a wired screen. Design deliverables, board status and items sitting in review do not move it, which is why this edition's two completions leave the number flat.</p>
+
+      <h3>Team performance &mdash; what these figures do not measure</h3>
+      <div class="note">
+        <p style="margin-bottom:0">With zero estimation points there is no workload normalisation: Ayomikun's 19 leaves and David's 10 are not comparable, and neither count reflects difficulty. Commit counts reward small commits; cycle time rewards small items. One cycle-time observation from one person on design work is not a team baseline. Where items sit unmoved because a dependency is unstarted, that is a sequencing finding, not a personal one.</p>
+      </div>
+
+      <h3>What this report cannot tell you</h3>
+      <div class="note">
+        <p><strong>Whether the five in-flight items will ship this sprint.</strong></p>
+        <p><strong>Whether work is happening locally and unpushed</strong> &mdash; the benign reading of two days of board movement with no commits. The data cannot distinguish it from the other reading.</p>
+        <p><strong>Who <code>Fortune Okwu</code> is</strong> &mdash; four editions running.</p>
+        <p><strong>Velocity or scope-fit for 08-01</strong> &mdash; still zero estimation points on all 67 items.</p>
+        <p style="margin-bottom:0"><strong>Whether any built screen or endpoint functions correctly</strong> &mdash; testing remains explicitly out of scope, per the owner. Draft testing rules were written to <code>agent-rules/</code> today but are staged for review, not applied.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="foot">
+  <span class="barcode barcode--lg" aria-hidden="true"></span>
+  <span>Beevia project status &middot; 2026-08-13 &middot; Sprint 08-01, day 4</span>
+  <span><a href="index.html">All frames</a></span>
+</footer>
+
+<script src="ui.js"></script>
+</body>
+</html>
