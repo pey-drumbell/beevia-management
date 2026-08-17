@@ -1,0 +1,542 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Beevia — Project Status — 14 Aug 2026</title><meta name="description" content="Two money-flow leaves are blocked, the Wallet Summary Endpoint reached REVIEW/QA, and no product repo gained a commit."><meta name="color-scheme" content="dark"><link rel="stylesheet" href="styles.css"></head><body>
+<div class="topbar"><div class="topbar__mark"><span class="barcode" aria-hidden="true"></span><span class="topbar__wordmark">Beevia</span></div><nav class="topbar__nav label" aria-label="Report"><a href="index.html">Archive</a><a href="#quick-overview">Overview</a><a href="#6-what-i-would-do-today">What to do</a><a href="#appendix-method-and-readiness-rubric">Method</a></nav></div>
+<header class="masthead"><div class="field"><div class="field__rail field__rail--l"><dl><dt>Done</dt><dd>1 / 43</dd><dt>In progress</dt><dd>4 / 43</dd><dt>Blocked</dt><dd>2 / 43</dd><dt>Review / QA</dt><dd>1 / 43</dd></dl></div><div class="field__stage"><div class="field__title"><h1>Project<br>Status</h1></div><div class="field__meta num"><span>2026-08-14</span><span>Sprint 08-01</span><span>10–28 Aug · day 5 of 18</span><span>Dependencies are visible</span></div></div><div class="field__rail field__rail--r"><dl><dt>API consumer</dt><dd>105 +0</dd><dt>API admin</dt><dd>29 +0</dd><dt>Spec drift</dt><dd>None</dd><dt>Estimated</dt><dd>0 / 67</dd></dl></div></div></header>
+<section class="mvp" aria-label="MVP readiness estimate"><div class="mvp__head"><span class="label">MVP readiness — estimate</span><span class="mvp__pct num">≈46%</span><span class="mvp__meta num">target 2026-09-01 · provisional · 18 days out</span></div><div class="mvp__bar" role="img" aria-label="Weighted capability estimate: approximately 46 percent, unchanged because no product code landed."><span class="mvp__seg" style="flex:15"><i style="width:90%"></i></span><span class="mvp__seg" style="flex:8"><i style="width:80%"></i></span><span class="mvp__seg" style="flex:7"><i style="width:70%"></i></span><span class="mvp__seg" style="flex:8"><i style="width:90%"></i></span><span class="mvp__seg" style="flex:6"></span><span class="mvp__seg" style="flex:12"><i style="width:45%"></i></span><span class="mvp__seg" style="flex:12"><i style="width:45%"></i></span><span class="mvp__seg" style="flex:12"></span><span class="mvp__seg" style="flex:10"></span><span class="mvp__seg" style="flex:4"></span><span class="mvp__seg" style="flex:6"><i style="width:45%"></i></span></div><p class="mvp__read"><strong>Unchanged.</strong> Board transitions are not shipped-code evidence; all five product repositories remain unchanged.</p></section>
+<div class="shell"><nav class="contents label" aria-label="Contents">Contents<ol><li><a href="#quick-overview"><span>00</span> Quick overview</a></li><li><a href="#1-sprint-08-01-dependencies-are-visible"><span>01</span> Sprint</a></li><li><a href="#2-what-shipped-this-cycle"><span>02</span> What shipped</a></li><li><a href="#3-product-vs-prd-gap"><span>03</span> PRD gap</a></li><li><a href="#4-risks"><span>04</span> Risks</a></li><li><a href="#6-what-i-would-do-today"><span>06</span> What to do</a></li></ol></nav><main class="doc"><h1 id="beevia-project-status">Beevia — Project Status</h1>
+<p><strong>As of 2026-08-14</strong> · Sprint <strong>08-01</strong> (10 Aug → 28 Aug, day 5 of 18, 14 days left)
+Sources: <code>sprint-board-exports/beevia-sprint-board-2026-08-14.csv</code> + <code>beevia-activity-2026-08-14.json</code> (67 items), cross-checked against all five repos re-synced to <code>origin/main</code>.</p>
+<p>Scope: current sprint only, per the 12 Aug decision. The previous sprint remains historical context and is not included in current-sprint counts.</p>
+<hr />
+<h2 id="quick-overview">Quick overview</h2>
+<blockquote>
+<p><strong>The sprint surfaced its first delivery dependencies: two leaf items are BLOCKED and the Wallet Summary Endpoint reached REVIEW/QA, but nothing has left review and no product repo has gained a commit.</strong></p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th></th>
+<th style="text-align: right;">13 Aug</th>
+<th style="text-align: right;">14 Aug</th>
+<th style="text-align: right;">Δ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Items (rows / leaves)</td>
+<td style="text-align: right;">67 / 43</td>
+<td style="text-align: right;">67 / 43</td>
+<td style="text-align: right;">0 / 0</td>
+</tr>
+<tr>
+<td>To do (leaves)</td>
+<td style="text-align: right;">38</td>
+<td style="text-align: right;">35</td>
+<td style="text-align: right;">-3</td>
+</tr>
+<tr>
+<td>In progress (leaves)</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td><strong>Blocked (leaves)</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td style="text-align: right;"><strong>2</strong></td>
+<td style="text-align: right;"><strong>+2</strong></td>
+</tr>
+<tr>
+<td>In review / QA (leaves)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">+1</td>
+</tr>
+<tr>
+<td>Done (leaves)</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>API surface (consumer / admin)</td>
+<td style="text-align: right;">105 / 29</td>
+<td style="text-align: right;">105 / 29</td>
+<td style="text-align: right;">0 / 0</td>
+</tr>
+<tr>
+<td>Commits, any product repo</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Estimation points set</td>
+<td style="text-align: right;">0/67</td>
+<td style="text-align: right;"><strong>0/67</strong></td>
+<td style="text-align: right;">still zero</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Team, at a glance:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Person</th>
+<th>Owns</th>
+<th>Current leaf state</th>
+<th style="text-align: right;">Commits, 7d</th>
+<th>Flag</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Philip Chidera</td>
+<td>design</td>
+<td>12 To do, 1 In progress, 1 Done</td>
+<td style="text-align: right;">—</td>
+<td>First sprint completion remains design work</td>
+</tr>
+<tr>
+<td>David Samuel</td>
+<td>mobile</td>
+<td>7 To do, 2 In progress, 1 Blocked</td>
+<td style="text-align: right;">0</td>
+<td>Wallet response integration is blocked; mobile repo unchanged since 11 Aug owner pipeline commit and David's last commit was 6 Aug</td>
+</tr>
+<tr>
+<td>Ayomikun Araoye</td>
+<td>backend + admin API</td>
+<td>16 To do, 1 In progress, 1 Review/QA, 1 Blocked</td>
+<td style="text-align: right;">0</td>
+<td>Carries 19 of 43 leaves and both backend delivery gates</td>
+</tr>
+<tr>
+<td>Promise Udo</td>
+<td>admin dashboard</td>
+<td>one co-assigned parent Story, no owned leaf</td>
+<td style="text-align: right;">0</td>
+<td><code>beevia-admin</code> has been silent since 6 Aug</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The question for standup:</strong> what specifically blocks BVA-I170 and BVA-I188, who owns clearing each dependency, and by when? The board records the state but no reason visible in this report.</p>
+<p><strong>The three things worth knowing:</strong></p>
+<ol>
+<li><strong>Two delivery paths are now explicitly blocked.</strong> David moved BVA-I170 “Wire Real Response into Wallet Screen” from In progress to BLOCKED at 16:06 UTC on 13 Aug. BVA-I188 “P2P Transfer” moved into progress at 15:38 UTC on 13 Aug and David marked it BLOCKED at 13:09 UTC on 14 Aug. These are the first blocked leaves in 08-01.</li>
+<li><strong>The Wallet Summary Endpoint reached REVIEW/QA, but by an unusual route.</strong> BVA-I185 was marked Done by Philip at 15:39 UTC on 13 Aug, then reopened by David into REVIEW/QA at 12:19 UTC on 14 Aug. The current snapshot correctly counts it in review, not Done. This is progress toward a verification step, but the audit raises a real problem: nothing has yet left REVIEW/QA between daily snapshots.</li>
+<li><strong>The board moved while the code evidence did not.</strong> BVA-I207 and BVA-I209 entered In progress, but all five product repositories remain unchanged. That does not prove work is absent—local branches and unpushed work are invisible—but it means no new build evidence can be credited.</li>
+</ol>
+<p><strong>If you read nothing else:</strong> 08-01 now has visible dependency pressure. Clear the two blocked money-flow leaves and define who can accept BVA-I185 before starting more work.</p>
+<h3 id="mvp-readiness-46-estimate-unchanged">MVP readiness — ≈46% (estimate, unchanged)</h3>
+<p><strong>Target 2026-09-01 (provisional) · 18 days out.</strong> No score moved. Board transitions are not shipped-code evidence, and all five product repos are unchanged. The current server-side <code>POST /translate</code> remains part of the prior score; the proposed privacy-preserving on-device translation direction has not yet landed and is not scored.</p>
+<hr />
+<h2 id="1-sprint-08-01-dependencies-are-visible">1. Sprint 08-01 — dependencies are visible</h2>
+<h3 id="11-status-day-5">1.1 Status, day 5</h3>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th style="text-align: right;">Leaves</th>
+<th style="text-align: right;">Share</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>To do</td>
+<td style="text-align: right;">35</td>
+<td style="text-align: right;">81%</td>
+</tr>
+<tr>
+<td>In progress</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">9%</td>
+</tr>
+<tr>
+<td>Blocked</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">5%</td>
+</tr>
+<tr>
+<td>Review / QA</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2%</td>
+</tr>
+<tr>
+<td>Done</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2%</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td style="text-align: right;"><strong>43</strong></td>
+<td style="text-align: right;"></td>
+</tr>
+</tbody>
+</table>
+<p>There are 67 rows in total: 24 parent Stories grouping 43 leaf Tasks. Leaf counts are used throughout. The parent Stories BVA-I184, BVA-I187 and BVA-I206 inherit child-state context but are not counted as delivery units.</p>
+<h3 id="12-what-moved-since-13-aug">1.2 What moved since 13 Aug</h3>
+<p>All transition times come from the activity sidecar, never <code>Last Modified</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Current owner</th>
+<th>Transition</th>
+<th>When (UTC)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BVA-I170 Wire Real Response into Wallet Screen</td>
+<td>David Samuel</td>
+<td>In progress → <strong>BLOCKED</strong></td>
+<td>13 Aug 16:06</td>
+</tr>
+<tr>
+<td>BVA-I185 Wallet Summary Endpoint</td>
+<td>Ayomikun Araoye</td>
+<td>In progress → Done</td>
+<td>13 Aug 15:39</td>
+</tr>
+<tr>
+<td>BVA-I185 Wallet Summary Endpoint</td>
+<td>Ayomikun Araoye</td>
+<td>Done → <strong>REVIEW/QA</strong></td>
+<td>14 Aug 12:19</td>
+</tr>
+<tr>
+<td>BVA-I188 P2P Transfer</td>
+<td>Ayomikun Araoye</td>
+<td>To do → In progress</td>
+<td>13 Aug 15:38</td>
+</tr>
+<tr>
+<td>BVA-I188 P2P Transfer</td>
+<td>Ayomikun Araoye</td>
+<td>In progress → <strong>BLOCKED</strong></td>
+<td>14 Aug 13:09</td>
+</tr>
+<tr>
+<td>BVA-I207 Card Funding Processor Integration</td>
+<td>Ayomikun Araoye</td>
+<td>To do → In progress</td>
+<td>13 Aug 15:56</td>
+</tr>
+<tr>
+<td>BVA-I209 Redesign Card Entry Screen</td>
+<td>Philip Chidera</td>
+<td>To do → In progress</td>
+<td>13 Aug 15:56</td>
+</tr>
+</tbody>
+</table>
+<p>The activity actors and item owners are not always the same. The table reports current ownership separately from who clicked the transition so it does not mistake board administration for delivery ownership.</p>
+<h3 id="13-current-delivery-queue">1.3 Current delivery queue</h3>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Item</th>
+<th>Owner</th>
+<th>Why it matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BLOCKED</td>
+<td>BVA-I170 Wire Real Response into Wallet Screen</td>
+<td>David</td>
+<td>Client wallet integration</td>
+</tr>
+<tr>
+<td>BLOCKED</td>
+<td>BVA-I188 P2P Transfer</td>
+<td>Ayomikun</td>
+<td>Core send-money backend path</td>
+</tr>
+<tr>
+<td>REVIEW/QA</td>
+<td>BVA-I185 Wallet Summary Endpoint</td>
+<td>Ayomikun</td>
+<td>Dependency for wallet client work</td>
+</tr>
+<tr>
+<td>In progress</td>
+<td>BVA-I189 Send Money (P2P) Screens</td>
+<td>David</td>
+<td>Core send-money client flow</td>
+</tr>
+<tr>
+<td>In progress</td>
+<td>BVA-I198 Card Preview UI</td>
+<td>David</td>
+<td>Virtual-card presentation only</td>
+</tr>
+<tr>
+<td>In progress</td>
+<td>BVA-I207 Card Funding Processor Integration</td>
+<td>Ayomikun</td>
+<td>Card-funding backend/provider path</td>
+</tr>
+<tr>
+<td>In progress</td>
+<td>BVA-I209 Redesign Card Entry Screen</td>
+<td>Philip</td>
+<td>Card-funding client/design path</td>
+</tr>
+</tbody>
+</table>
+<p>The board does not provide a usable blocked-reason field in the exported evidence. The report therefore does not invent causes.</p>
+<h3 id="14-what-is-still-missing">1.4 What is still missing</h3>
+<ul>
+<li><strong>Estimation points: 0 of 67.</strong> Velocity, burndown and scope-fit remain underivable.</li>
+<li><strong>Review throughput: zero left REVIEW/QA.</strong> One item entered; no item was accepted or rejected out of the queue between snapshots.</li>
+<li><strong>Blocked reasons and owners for resolution:</strong> not present in the evidence available to this report.</li>
+<li><strong>Epics:</strong> only 8 rows carry an epic; 39 of 43 leaves remain without one.</li>
+</ul>
+<hr />
+<h2 id="2-what-shipped-this-cycle">2. What shipped this cycle</h2>
+<p><strong>No product code.</strong> All five repositories were re-synced and were already at <code>origin/main</code>. There are no commits since the prior report. The deterministic drift audit found:</p>
+<ul>
+<li><code>beevia-api</code>: 105 code routes = 105 implemented-spec operations; 52 proposed.</li>
+<li><code>beevia-admin-api</code>: 29 code routes = 29 implemented-spec operations; 23 proposed.</li>
+<li>All four OpenAPI files have no broken references, duplicate or missing operation IDs, unused components, implemented/proposed overlap, or schema drift.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Repo</th>
+<th>Last commit</th>
+<th style="text-align: right;">Staleness on 14 Aug</th>
+<th>Last commit evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>beevia-mobile</code></td>
+<td>11 Aug</td>
+<td style="text-align: right;">3 days</td>
+<td>owner test/pipeline change; David last committed 6 Aug</td>
+</tr>
+<tr>
+<td><code>beevia-api</code></td>
+<td>10 Aug</td>
+<td style="text-align: right;">4 days</td>
+<td>owner pipeline change; Ayomikun last feature commit predates it</td>
+</tr>
+<tr>
+<td><code>beevia-admin</code></td>
+<td>6 Aug</td>
+<td style="text-align: right;">8 days</td>
+<td>Promise Udo</td>
+</tr>
+<tr>
+<td><code>beevia-admin-api</code></td>
+<td>6 Aug</td>
+<td style="text-align: right;">8 days</td>
+<td>Ayomikun (<code>Phoenixdadhev</code>)</td>
+</tr>
+<tr>
+<td><code>beevia-db-schema</code></td>
+<td>6 Aug</td>
+<td style="text-align: right;">8 days</td>
+<td>release bot; underlying human change same release cycle</td>
+</tr>
+</tbody>
+</table>
+<p>This measures visible <code>main</code>, not local work. It should be read as “nothing reviewable has landed,” not as a personal performance verdict.</p>
+<hr />
+<h2 id="3-product-vs-prd-gap">3. Product-vs-PRD gap</h2>
+<p>Unchanged because no product code landed:</p>
+<table>
+<thead>
+<tr>
+<th>PRD capability</th>
+<th>State</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cross-currency conversion</td>
+<td><strong>Not built.</strong> <code>PaymentService</code> still hard-codes NGN via <code>activeNgn()</code>.</td>
+</tr>
+<tr>
+<td>Virtual cards</td>
+<td><strong>Not built.</strong> UI/design work is active, but no provider-backed module or table has shipped.</td>
+</tr>
+<tr>
+<td>International KYC tier</td>
+<td><strong>Not built.</strong> Local Nigerian path only.</td>
+</tr>
+<tr>
+<td>Consent management</td>
+<td><strong>Not built.</strong></td>
+</tr>
+<tr>
+<td>Payments read path</td>
+<td><strong>Incomplete.</strong> The new Wallet Summary Endpoint is in review, but the implemented API spec remains unchanged.</td>
+</tr>
+<tr>
+<td>Privacy-preserving message translation</td>
+<td><strong>Not built.</strong> Existing translation is server-side; on-device ML Kit architecture is still a decision/proposal.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-risks">4. Risks</h2>
+<ol>
+<li><strong>Two core money-flow leaves are blocked without reportable reasons.</strong> This is now the most immediate sprint risk.</li>
+<li><strong>Review has an entry but no exit.</strong> BVA-I185 is the first 08-01 leaf in REVIEW/QA; no item has left review between daily snapshots.</li>
+<li><strong>Board/code divergence continues.</strong> Seven leaf transitions occurred, but no product commit landed.</li>
+<li><strong>Ayomikun carries 19 of 43 leaves</strong>, including the reviewed endpoint and one blocked transfer item. This is a dependency concentration risk, not a performance conclusion.</li>
+<li><strong>Three repositories have been silent for eight days</strong>, including the admin dashboard and admin API.</li>
+<li><strong>Estimation remains 0/67</strong>, so the team cannot derive velocity or defend scope-fit numerically.</li>
+<li><strong>Translation privacy direction conflicts with the current architecture.</strong> The present server-side endpoint should not be treated as the final E2EE-compatible solution.</li>
+</ol>
+<hr />
+<h2 id="5-previous-recommendations-where-they-stand">5. Previous recommendations — where they stand</h2>
+<table>
+<thead>
+<tr>
+<th>Recommendation from 13 Aug</th>
+<th>Status on 14 Aug</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ask David the specific wallet/send-money question</td>
+<td><strong>More urgent.</strong> Two related leaves are now explicitly BLOCKED.</td>
+</tr>
+<tr>
+<td>Decide what Done means</td>
+<td><strong>Partial movement.</strong> BVA-I185 was reopened from Done into REVIEW/QA, showing a verification state can be used; acceptance ownership remains unproven.</td>
+</tr>
+<tr>
+<td>Rebalance or acknowledge Ayomikun's load</td>
+<td><strong>Not resolved.</strong> Still 19 of 43 leaves, now including one blocked and one in review.</td>
+</tr>
+<tr>
+<td>Confirm <code>Fortune Okwu</code></td>
+<td><strong>Not resolved by available evidence.</strong></td>
+</tr>
+<tr>
+<td>Estimate the sprint or explicitly stop treating it as measurable</td>
+<td><strong>Not done.</strong> Still 0/67.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="6-what-i-would-do-today">6. What I would do today</h2>
+<ol>
+<li><strong>Add a reason, owner and unblock date to BVA-I170 and BVA-I188.</strong> Do this before opening more payment work.</li>
+<li><strong>Assign an accept/reject owner for BVA-I185</strong> and define the evidence required to leave REVIEW/QA.</li>
+<li><strong>Ask for reviewable branches or small pull requests</strong> for BVA-I170, BVA-I185, BVA-I188, BVA-I207 and BVA-I209. The board is now ahead of visible code.</li>
+<li><strong>Confirm the message-translation architecture decision:</strong> on-device for E2EE content, no silent cloud fallback, and deprecate the server-side translation path once the mobile replacement is proven.</li>
+<li><strong>Choose whether 08-01 will be estimated.</strong> If not, remove velocity/burndown language from sprint expectations rather than carrying an unusable 0/67 field.</li>
+</ol>
+<hr />
+<h2 id="appendix-method-and-readiness-rubric">Appendix — method and readiness rubric</h2>
+<p><strong>Pipeline.</strong> <code>beevia-refresh</code>: Zoho export with modified-date recovery and activity trails → sanctioned fast-forward-only sync of five product repos → deterministic API/spec audit → evidence-based report.</p>
+<p><strong>Sources.</strong> Board: <code>beevia-sprint-board-2026-08-14.csv</code> and <code>beevia-activity-2026-08-14.json</code>. Code: all five repositories at <code>origin/main</code>. Specs: 105 consumer implemented, 52 consumer proposed, 29 admin implemented, 23 admin proposed; validation clean.</p>
+<p><strong>Flow measurement.</strong> Status transitions and timings come from the activity sidecar. The audit snapshot delta is authoritative for daily start/end counts; intermediate transitions such as BVA-I185 entering Done and then being reopened are disclosed separately.</p>
+<h3 id="mvp-readiness-46">MVP readiness — ≈46%</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Capability</th>
+<th style="text-align: right;">Weight</th>
+<th style="text-align: right;">Score</th>
+<th>Evidence state</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>E2EE messaging</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">0.9</td>
+<td>Core conversation/message/key/attachment paths and client crypto/socket layers exist</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Voice &amp; video calling</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">0.8</td>
+<td>API and mobile call surfaces exist</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Message translation</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">0.7</td>
+<td>Server endpoint and client screen exist; privacy-preserving on-device replacement not built</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Local KYC tier</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">0.9</td>
+<td>Nigerian BVN/provider path and client onboarding exist</td>
+</tr>
+<tr>
+<td>5</td>
+<td>International KYC tier</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0.0</td>
+<td>Proposed only</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Multi-currency wallets</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.45</td>
+<td>NGN path exists; broader currencies and complete client integration do not</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Send / request / receive</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.45</td>
+<td>API write path exists; mobile wiring remains incomplete</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Cross-currency FX</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.0</td>
+<td>Proposed only</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Virtual cards</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">0.0</td>
+<td>Board/design work only; no shipped provider-backed capability</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Consent management</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0.0</td>
+<td>No implementation evidence</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Admin oversight</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0.45</td>
+<td>29 implemented admin operations and partial dashboard modules</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>Weighted total</strong></td>
+<td style="text-align: right;"><strong>100</strong></td>
+<td style="text-align: right;"></td>
+<td><strong>≈46%</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Scores measure build evidence, not item status, commit-message claims, or design completion.</p>
+<p><strong>What this report cannot tell you:</strong> the reasons for blocked states, whether unpushed local work exists, whether the reviewed endpoint passes tests, who <code>Fortune Okwu</code> is, or whether the remaining sprint scope fits in 14 days without estimates.</p></main></div>
+<footer class="foot"><span class="barcode barcode--lg" aria-hidden="true"></span><span>Beevia project status · 2026-08-14 · Sprint 08-01, day 5</span><span><a href="index.html">All frames</a></span></footer><script src="ui.js"></script></body></html>

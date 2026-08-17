@@ -2,11 +2,11 @@
 
 # Deploy claude_designs folder to staging server
 
-SOURCE_DIR="/home/pey/gitrepos/beevia-management/web-report"
+SOURCE_DIR="/home/godin/beevia/beevia-management/web-report"
 REMOTE_USER="peytec5"
 REMOTE_HOST="192.145.239.41"
 REMOTE_PORT="2222"
-SSH_KEY="~/.ssh/id_rsa_inmotion_pey"
+SSH_KEY="/home/godin/.ssh/id_rsa_inmotion_pey"
 REMOTE_PATH="/home/peytec5/beevia-management.peytechnologies.com"
 
 echo "Deploying ${SOURCE_DIR} to staging server..."
