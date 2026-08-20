@@ -1,0 +1,6071 @@
+{
+ "BVA-I158": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Logo Design & Brand Asset Set",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T07:37:20.628Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Logo Design & Brand Asset Set"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.306Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Philip Chidera",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T14:45:22.308Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Philip Chidera"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I161": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Dark Mode Design - Onboarding & Banking Screens",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T09:11:18.248Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Dark Mode Design - Onboarding & Banking Screens"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.308Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Philip Chidera",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T14:45:44.065Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Philip Chidera"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I159": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Dark Mode Design - Core Navigation & Home Screens",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T09:06:41.278Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Dark Mode Design - Core Navigation & Home Screens"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Core Screens Dark Mode",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T09:09:07.951Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Core Screens Dark Mode",
+      "url": "#itemdetails/P7/I160"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.350Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Philip Chidera",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T14:46:03.940Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Philip Chidera"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000088089",
+   "display": "Updated the status from To do to In progress",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-17T00:14:06.509Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "In progress"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "Philip Chidera"
+  }
+ ],
+ "BVA-I160": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Core Screens Dark Mode",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T09:09:07.951Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Core Screens Dark Mode"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.350Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Philip Chidera",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T14:46:22.953Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Philip Chidera"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000088089",
+   "display": "Updated the status from To do to In progress",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-17T00:14:06.512Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "In progress"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "Philip Chidera"
+  }
+ ],
+ "BVA-I162": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Translation Service Integration",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T09:28:27.145Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Translation Service Integration"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Translation Provider Integration",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T09:43:20.468Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Translation Provider Integration",
+      "url": "#itemdetails/P7/I163"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.351Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 4,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated description from Asthe backend, integrate a third-party translation provider somessage-translation capability exists and is ready to connect to a mobile UI ina future sprint.Acceptance Criteria\u25cf Integrate a translation provider supportingEnglish, French, Portuguese, and Mandarin (the confirmed 4 languages)\u25cf Build as an internal, independently-testablecapability\u25cf Unit/integration tests against sample text to Asthe backend, integrate a third-party translation provider somessage-translation capability exists and is ready to connect to a mobile UI ina future sprint.Acceptance Criteria\u25cf Integrate a translation provider supportingEnglish, French, Portuguese, and Mandarin (the confirmed 4 languages)\u25cf Build to be independently tested without FE integration\u25cf Unit/integration tests against sample text",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T14:57:31.794Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Asthe backend, integrate a third-party translation provider somessage-translation capability exists and is ready to connect to a mobile UI ina future sprint.Acceptance Criteria\u25cf Integrate a translation provider supportingEnglish, French, Portuguese, and Mandarin (the confirmed 4 languages)\u25cf Build as an internal, independently-testablecapability\u25cf Unit/integration tests against sample text"
+     },
+     "100": "to",
+     "101": {
+      "title": "Asthe backend, integrate a third-party translation provider somessage-translation capability exists and is ready to connect to a mobile UI ina future sprint.Acceptance Criteria\u25cf Integrate a translation provider supportingEnglish, French, Portuguese, and Mandarin (the confirmed 4 languages)\u25cf Build to be independently tested without FE integration\u25cf Unit/integration tests against sample text"
+     }
+    },
+    "action": "Updated description"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T14:57:48.010Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 4,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated description from Asthe backend, integrate a third-party translation provider somessage-translation capability exists and is ready to connect to a mobile UI ina future sprint.Acceptance Criteria\u25cf Integrate a translation provider supportingEnglish, French, Portuguese, and Mandarin (the confirmed 4 languages)\u25cf Build to be independently tested without FE integration\u25cf Unit/integration tests against sample text to Asthe backend, integrate a third-party translation provider and apply it to realmessages in active conversationsAcceptance Criteria\u25cf Integrate a translation provider supportingEnglish, French, Portuguese, and Mandarin (the confirmed 4 languages)\u25cf Apply translation live to real messages withinconversations where translation is active (app-wide default or per-conversationoverride), \u25cf Unit/integration tests against sample text,plus real end-to-end testing",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T16:41:40.886Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Asthe backend, integrate a third-party translation provider somessage-translation capability exists and is ready to connect to a mobile UI ina future sprint.Acceptance Criteria\u25cf Integrate a translation provider supportingEnglish, French, Portuguese, and Mandarin (the confirmed 4 languages)\u25cf Build to be independently tested without FE integration\u25cf Unit/integration tests against sample text"
+     },
+     "100": "to",
+     "101": {
+      "title": "Asthe backend, integrate a third-party translation provider and apply it to realmessages in active conversationsAcceptance Criteria\u25cf Integrate a translation provider supportingEnglish, French, Portuguese, and Mandarin (the confirmed 4 languages)\u25cf Apply translation live to real messages withinconversations where translation is active (app-wide default or per-conversationoverride), \u25cf Unit/integration tests against sample text,plus real end-to-end testing"
+     }
+    },
+    "action": "Updated description"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I163": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Translation Provider Integration",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T09:43:20.468Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Translation Provider Integration"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.352Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T14:57:54.505Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I164": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Language Preference Storage (App-Wide & Per-Conversation)",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T09:50:28.933Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Language Preference Storage (App-Wide & Per-Conversation)"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Preference Storage & Precedence Logic",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T09:50:59.382Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Preference Storage & Precedence Logic",
+      "url": "#itemdetails/P7/I165"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.353Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T14:58:37.939Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I165": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Preference Storage & Precedence Logic",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T09:50:59.382Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Preference Storage & Precedence Logic"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.353Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T14:58:50.048Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I166": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Translate-Message Endpoint ",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T11:41:05.299Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Translate-Message Endpoint "
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Translate Endpoint",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T11:42:59.977Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Translate Endpoint",
+      "url": "#itemdetails/P7/I167"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.354Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T14:59:07.523Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 4,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated description from Asthe backend, expose a documented endpoint that returns translated text for amessage, so mobile can plug into it cleanlyAcceptance Criteria\u25cf A documented endpoint that returns translatedtext for given message content and target language to Asthe backend, expose a documented endpoint that returns translated text for amessage.Acceptance Criteria\u25cf A documented endpoint that returns translatedtext for given message content and target language",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T18:28:09.562Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Asthe backend, expose a documented endpoint that returns translated text for amessage, so mobile can plug into it cleanlyAcceptance Criteria\u25cf A documented endpoint that returns translatedtext for given message content and target language"
+     },
+     "100": "to",
+     "101": {
+      "title": "Asthe backend, expose a documented endpoint that returns translated text for amessage.Acceptance Criteria\u25cf A documented endpoint that returns translatedtext for given message content and target language"
+     }
+    },
+    "action": "Updated description"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I167": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Translate Endpoint",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T11:42:59.977Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Translate Endpoint"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.354Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T14:59:13.950Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 4,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated description from Build and document the translate-on-demandendpoint for mobile integration to Build and document the translate-on-demandendpoint for mobile integration.",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T18:28:34.456Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Build and document the translate-on-demandendpoint for mobile integration"
+     },
+     "100": "to",
+     "101": {
+      "title": "Build and document the translate-on-demandendpoint for mobile integration."
+     }
+    },
+    "action": "Updated description"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 4,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated description from Build and document the translate-on-demandendpoint for mobile integration. to \u200bBuild and document the translate endpoint.",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T18:28:53.274Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Build and document the translate-on-demandendpoint for mobile integration."
+     },
+     "100": "to",
+     "101": {
+      "title": "\u200bBuild and document the translate endpoint."
+     }
+    },
+    "action": "Updated description"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I168": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Anchor Customer & Virtual Account Creation Integration",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T11:46:56.629Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Anchor Customer & Virtual Account Creation Integration"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Anchor Integration",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T11:47:21.146Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Anchor Integration",
+      "url": "#itemdetails/P7/I169"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Wire Real Response into Wallet Screen",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T11:47:51.080Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Wire Real Response into Wallet Screen",
+      "url": "#itemdetails/P7/I170"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Correct Bank Name Display",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T11:48:06.548Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Correct Bank Name Display",
+      "url": "#itemdetails/P7/I171"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.356Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I169": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Anchor Integration",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T11:47:21.146Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Anchor Integration"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.356Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T14:59:40.037Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I170": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Wire Real Response into Wallet Screen",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T11:47:51.080Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Wire Real Response into Wallet Screen"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.356Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to David Samuel",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T14:59:48.415Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "David Samuel"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000089339",
+   "display": "Updated the status from To do to In progress",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-12T12:18:04.781Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "In progress"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "David Samuel"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000089339",
+   "display": "Updated the status from In progress to BLOCKED",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-13T16:06:27.755Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "In progress"
+     },
+     "100": "to",
+     "101": {
+      "title": "BLOCKED"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "David Samuel"
+  }
+ ],
+ "BVA-I171": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Correct Bank Name Display",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T11:48:06.548Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Correct Bank Name Display"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.356Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Philip Chidera",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T14:59:58.161Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Philip Chidera"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I172": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Add Money - Bank Transfer",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T11:50:25.471Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Add Money - Bank Transfer"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Incoming Transfer Webhook Handling",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T11:50:56.195Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Incoming Transfer Webhook Handling",
+      "url": "#itemdetails/P7/I173"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Add Money (Bank Transfer) Screens",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T11:51:36.601Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Add Money (Bank Transfer) Screens",
+      "url": "#itemdetails/P7/I174"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Missing Confirmation States",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T11:51:57.573Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Missing Confirmation States",
+      "url": "#itemdetails/P7/I175"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.357Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye, Philip Chidera, David Samuel",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:01:37.265Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye, Philip Chidera, David Samuel"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I173": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Incoming Transfer Webhook Handling",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T11:50:56.195Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Incoming Transfer Webhook Handling"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.357Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:01:48.471Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I174": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Add Money (Bank Transfer) Screens",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T11:51:36.601Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Add Money (Bank Transfer) Screens"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.357Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to David Samuel",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:02:19.073Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "David Samuel"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I175": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Missing Confirmation States",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T11:51:57.573Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Missing Confirmation States"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.357Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Philip Chidera",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:02:27.508Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Philip Chidera"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I176": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item In-Chat Send Money (Free-Will Send)",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T11:57:37.767Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "In-Chat Send Money (Free-Will Send)"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added In-Chat Send Money (Free-Will)",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T11:58:40.306Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "In-Chat Send Money (Free-Will)",
+      "url": "#itemdetails/P7/I177"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added \u2014 Send Flow (Amount \u2192 Narration \u2192 PIN/Biometric Confirm)",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:08:49.930Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "\u2014 Send Flow (Amount \u2192 Narration \u2192 PIN/Biometric Confirm)",
+      "url": "#itemdetails/P7/I178"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Add Narration Field",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:09:20.640Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Add Narration Field",
+      "url": "#itemdetails/P7/I179"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.358Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye, Philip Chidera, David Samuel",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:03:55.780Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye, Philip Chidera, David Samuel"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I177": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item In-Chat Send Money (Free-Will)",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T11:58:40.306Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "In-Chat Send Money (Free-Will)"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.359Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye, Philip Chidera, David Samuel",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:03:06.226Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye, Philip Chidera, David Samuel"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Owner removed Philip Chidera, David Samuel",
+   "action": 4,
+   "addedvia": null,
+   "actiontime": "2026-08-11T15:04:03.335Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Philip Chidera, David Samuel"
+     }
+    },
+    "action": "Owner removed"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I178": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item \u2014 Send Flow (Amount \u2192 Narration \u2192 PIN/Biometric Confirm)",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:08:49.930Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "\u2014 Send Flow (Amount \u2192 Narration \u2192 PIN/Biometric Confirm)"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 1,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the title from \u2014 Send Flow (Amount \u2192 Narration \u2192 PIN/Biometric Confirm) to Send Flow (Amount -> Narration -> PIN/Biometric Confirm)",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:09:49.477Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {102}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "\u2014 Send Flow (Amount \u2192 Narration \u2192 PIN/Biometric Confirm)"
+     },
+     "100": "to",
+     "102": {
+      "title": "Send Flow (Amount -> Narration -> PIN/Biometric Confirm)",
+      "url": "#itemdetails/P7/I178"
+     }
+    },
+    "action": "Updated the title"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.359Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to David Samuel",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:04:25.179Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "David Samuel"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I179": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Add Narration Field",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:09:20.640Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Add Narration Field"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.359Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Philip Chidera",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:04:42.424Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Philip Chidera"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I180": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item In-Chat Request Money",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:14:12.332Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "In-Chat Request Money"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added In-Chat Request Money & Fulfillment Logic",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:15:28.238Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "In-Chat Request Money & Fulfillment Logic",
+      "url": "#itemdetails/P7/I181"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added In-Chat Request Flow & Cards",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:15:52.658Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "In-Chat Request Flow & Cards",
+      "url": "#itemdetails/P7/I182"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added New Card States & Narration Field",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:17:00.623Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "New Card States & Narration Field",
+      "url": "#itemdetails/P7/I183"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.360Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye, Philip Chidera, David Samuel",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:05:20.323Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye, Philip Chidera, David Samuel"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I181": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item In-Chat Request Money & Fulfillment Logic",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:15:28.238Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "In-Chat Request Money & Fulfillment Logic"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.360Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:05:42.946Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I182": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item In-Chat Request Flow & Cards",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:15:52.658Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "In-Chat Request Flow & Cards"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.360Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to David Samuel",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:06:05.209Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "David Samuel"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I183": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item New Card States & Narration Field",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:17:00.623Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "New Card States & Narration Field"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.360Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Philip Chidera",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:06:30.598Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Philip Chidera"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I184": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Wallets Tab (Chat + Banking Users)",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:19:16.172Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Wallets Tab (Chat + Banking Users)"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Wallet Summary Endpoint",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:19:44.330Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Wallet Summary Endpoint",
+      "url": "#itemdetails/P7/I185"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Wallets Tab Screen & Conditional Nav",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:20:09.202Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Wallets Tab Screen & Conditional Nav",
+      "url": "#itemdetails/P7/I186"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.361Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye, Philip Chidera, David Samuel",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:09:12.635Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye, Philip Chidera, David Samuel"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000089339",
+   "display": "Updated the status from To do to In progress",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-12T12:14:37.373Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "In progress"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "David Samuel"
+  },
+  {
+   "activity": 12,
+   "extusername": "",
+   "actionby": "187554000000088089",
+   "display": "Item Completed from In progress to Done",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-13T15:39:40.957Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "In progress"
+     },
+     "100": "to",
+     "101": {
+      "title": "Done"
+     }
+    },
+    "action": "Item Completed"
+   },
+   "actionByName": "Philip Chidera"
+  },
+  {
+   "activity": 14,
+   "extusername": "",
+   "actionby": "187554000000089339",
+   "display": "Item Reopened from Done to REVIEW/QA",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-14T12:19:54.136Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Done"
+     },
+     "100": "to",
+     "101": {
+      "title": "REVIEW/QA"
+     }
+    },
+    "action": "Item Reopened"
+   },
+   "actionByName": "David Samuel"
+  }
+ ],
+ "BVA-I185": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Wallet Summary Endpoint",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:19:44.330Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Wallet Summary Endpoint"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.361Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:09:43.432Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000089339",
+   "display": "Updated the status from To do to In progress",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-12T12:14:37.376Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "In progress"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "David Samuel"
+  },
+  {
+   "activity": 12,
+   "extusername": "",
+   "actionby": "187554000000088089",
+   "display": "Item Completed from In progress to Done",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-13T15:39:40.959Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "In progress"
+     },
+     "100": "to",
+     "101": {
+      "title": "Done"
+     }
+    },
+    "action": "Item Completed"
+   },
+   "actionByName": "Philip Chidera"
+  },
+  {
+   "activity": 14,
+   "extusername": "",
+   "actionby": "187554000000089339",
+   "display": "Item Reopened from Done to REVIEW/QA",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-14T12:19:54.139Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Done"
+     },
+     "100": "to",
+     "101": {
+      "title": "REVIEW/QA"
+     }
+    },
+    "action": "Item Reopened"
+   },
+   "actionByName": "David Samuel"
+  }
+ ],
+ "BVA-I187": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Send Money to Another Beevia User (P2P)",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:28:42.985Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Send Money to Another Beevia User (P2P)"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added P2P Transfer",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:29:10.085Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "P2P Transfer",
+      "url": "#itemdetails/P7/I188"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Send Money (P2P) Screens",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:29:35.886Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Send Money (P2P) Screens",
+      "url": "#itemdetails/P7/I189"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.363Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye, Philip Chidera, David Samuel",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:10:59.309Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye, Philip Chidera, David Samuel"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000088089",
+   "display": "Updated the status from To do to In progress",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-13T15:38:57.773Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "In progress"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "Philip Chidera"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000089339",
+   "display": "Updated the status from In progress to BLOCKED",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-14T13:09:53.069Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "In progress"
+     },
+     "100": "to",
+     "101": {
+      "title": "BLOCKED"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "David Samuel"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000089339",
+   "display": "Updated the status from BLOCKED to To do",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-17T12:59:30.803Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "BLOCKED"
+     },
+     "100": "to",
+     "101": {
+      "title": "To do"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "David Samuel"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000089339",
+   "display": "Updated the status from To do to In progress",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-17T13:00:09.465Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "In progress"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "David Samuel"
+  }
+ ],
+ "BVA-I188": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item P2P Transfer",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:29:10.085Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "P2P Transfer"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.363Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:11:11.522Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000088089",
+   "display": "Updated the status from To do to In progress",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-13T15:38:57.777Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "In progress"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "Philip Chidera"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000089339",
+   "display": "Updated the status from In progress to BLOCKED",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-14T13:09:53.070Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "In progress"
+     },
+     "100": "to",
+     "101": {
+      "title": "BLOCKED"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "David Samuel"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000089339",
+   "display": "Updated the status from BLOCKED to To do",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-17T12:59:30.806Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "BLOCKED"
+     },
+     "100": "to",
+     "101": {
+      "title": "To do"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "David Samuel"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000089339",
+   "display": "Updated the status from To do to In progress",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-17T13:00:09.469Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "In progress"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "David Samuel"
+  }
+ ],
+ "BVA-I189": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Send Money (P2P) Screens",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:29:35.886Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Send Money (P2P) Screens"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.363Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to David Samuel",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:11:29.428Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "David Samuel"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000089339",
+   "display": "Updated the status from To do to In progress",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-12T12:15:41.610Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "In progress"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "David Samuel"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000089339",
+   "display": "Updated the status from In progress to BLOCKED",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-14T13:09:53.066Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "In progress"
+     },
+     "100": "to",
+     "101": {
+      "title": "BLOCKED"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "David Samuel"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000089339",
+   "display": "Updated the status from BLOCKED to In progress",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-14T13:21:56.892Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "BLOCKED"
+     },
+     "100": "to",
+     "101": {
+      "title": "In progress"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "David Samuel"
+  }
+ ],
+ "BVA-I190": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item External Bank Transfer - Screens",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:31:30.585Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "External Bank Transfer - Screens"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added External Transfer Flow",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:32:15.121Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "External Transfer Flow",
+      "url": "#itemdetails/P7/I191"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.364Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Philip Chidera",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:12:08.670Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Philip Chidera"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000088089",
+   "display": "Updated the status from To do to In progress",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-12T13:03:11.185Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "In progress"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "Philip Chidera"
+  },
+  {
+   "activity": 12,
+   "extusername": "",
+   "actionby": "187554000000088089",
+   "display": "Item Completed from In progress to Done",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-12T16:00:26.414Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "In progress"
+     },
+     "100": "to",
+     "101": {
+      "title": "Done"
+     }
+    },
+    "action": "Item Completed"
+   },
+   "actionByName": "Philip Chidera"
+  }
+ ],
+ "BVA-I191": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item External Transfer Flow",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:32:15.121Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "External Transfer Flow"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.364Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Philip Chidera",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:12:20.081Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Philip Chidera"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000088089",
+   "display": "Updated the status from To do to In progress",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-12T13:03:11.188Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "In progress"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "Philip Chidera"
+  },
+  {
+   "activity": 12,
+   "extusername": "",
+   "actionby": "187554000000088089",
+   "display": "Item Completed from In progress to Done",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-12T16:00:26.417Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "In progress"
+     },
+     "100": "to",
+     "101": {
+      "title": "Done"
+     }
+    },
+    "action": "Item Completed"
+   },
+   "actionByName": "Philip Chidera"
+  }
+ ],
+ "BVA-I192": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item External Bank Transfer - Build",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:33:36.178Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "External Bank Transfer - Build"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Anchor Payout/Transfer-Out Integration",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:34:04.754Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Anchor Payout/Transfer-Out Integration",
+      "url": "#itemdetails/P7/I193"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added External Transfer Screens",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:37:27.515Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "External Transfer Screens",
+      "url": "#itemdetails/P7/I194"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Virtual Card Issuance (Anchor)",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:39:00.711Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Virtual Card Issuance (Anchor)",
+      "url": "#itemdetails/P7/I195"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.365Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye, David Samuel",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:12:37.603Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye, David Samuel"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I194": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item External Transfer Screens",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:37:27.515Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "External Transfer Screens"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.365Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to David Samuel",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:13:10.620Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "David Samuel"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000089339",
+   "display": "Updated the status from To do to In progress",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-17T13:57:03.835Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "In progress"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "David Samuel"
+  }
+ ],
+ "BVA-I193": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Anchor Payout/Transfer-Out Integration",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:34:04.754Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Anchor Payout/Transfer-Out Integration"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.365Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:13:27.180Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I196": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Virtual Card Issuance (Anchor)",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:40:12.527Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Virtual Card Issuance (Anchor)"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Card Issuance Integration",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:40:38.597Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Card Issuance Integration",
+      "url": "#itemdetails/P7/I197"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Card Preview UI",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:40:51.812Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Card Preview UI",
+      "url": "#itemdetails/P7/I198"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.367Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye, David Samuel",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:14:50.221Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye, David Samuel"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I197": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Card Issuance Integration",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:40:38.597Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Card Issuance Integration"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.367Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:15:00.574Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I198": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Card Preview UI",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:40:51.811Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Card Preview UI"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.367Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to David Samuel",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:15:09.114Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "David Samuel"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000089339",
+   "display": "Updated the status from To do to In progress",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-13T11:13:31.496Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "In progress"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "David Samuel"
+  }
+ ],
+ "BVA-I199": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Wallet Transaction History",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:42:02.896Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Wallet Transaction History"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Transaction History Endpoint",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:42:25.408Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Transaction History Endpoint",
+      "url": "#itemdetails/P7/I200"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Transaction History Screen",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:42:44.291Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Transaction History Screen",
+      "url": "#itemdetails/P7/I201"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.368Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye, David Samuel",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:16:42.551Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye, David Samuel"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I200": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Transaction History Endpoint",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:42:25.408Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Transaction History Endpoint"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.368Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:16:49.468Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I201": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Transaction History Screen",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:42:44.291Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Transaction History Screen"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.368Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to David Samuel",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:16:57.777Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "David Samuel"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I202": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Pending Transfer Accept/Decline & Auto-Refund System",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:44:16.161Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Pending Transfer Accept/Decline & Auto-Refund System"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Hold/Escrow, Auto-Refund Job & Notifications",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:45:08.326Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Hold/Escrow, Auto-Refund Job & Notifications",
+      "url": "#itemdetails/P7/I203"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Pending Transfer Card States",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T14:14:42.957Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Pending Transfer Card States",
+      "url": "#itemdetails/P7/I204"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Pending/Awaiting-Response Card Design",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T14:15:38.245Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Pending/Awaiting-Response Card Design",
+      "url": "#itemdetails/P7/I205"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.369Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye, Philip Chidera, David Samuel",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:17:23.440Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye, Philip Chidera, David Samuel"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I203": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Hold/Escrow, Auto-Refund Job & Notifications",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T12:45:08.326Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Hold/Escrow, Auto-Refund Job & Notifications"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.370Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:17:29.563Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I204": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Pending Transfer Card States",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T14:14:42.957Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Pending Transfer Card States"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.370Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to David Samuel",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:17:39.922Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "David Samuel"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I205": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Pending/Awaiting-Response Card Design",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T14:15:38.245Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Pending/Awaiting-Response Card Design"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.370Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Philip Chidera",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:17:51.490Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Philip Chidera"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I206": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Add Money - Debit Card Funding",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T14:22:18.214Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Add Money - Debit Card Funding"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Card Funding Processor Integration",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T14:22:43.811Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Card Funding Processor Integration",
+      "url": "#itemdetails/P7/I207"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Secure Card Entry UI",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T14:23:01.898Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Secure Card Entry UI",
+      "url": "#itemdetails/P7/I208"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Redesign Card Entry Screen",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T14:23:29.862Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Redesign Card Entry Screen",
+      "url": "#itemdetails/P7/I209"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.371Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye, Philip Chidera, David Samuel",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:18:15.407Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye, Philip Chidera, David Samuel"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000088089",
+   "display": "Updated the status from To do to In progress",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-13T15:56:39.369Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "In progress"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "Philip Chidera"
+  }
+ ],
+ "BVA-I207": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Card Funding Processor Integration",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T14:22:43.811Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Card Funding Processor Integration"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.371Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:18:24.030Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000088089",
+   "display": "Updated the status from To do to In progress",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-13T15:56:39.374Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "In progress"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "Philip Chidera"
+  }
+ ],
+ "BVA-I208": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Secure Card Entry UI",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T14:23:01.898Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Secure Card Entry UI"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.371Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 4,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated description from Rebuild card entry using the processor'scertified SDK component once selected. to Build card entry using the processor'scertified SDK component for funding anchor wallet",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:19:13.614Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Rebuild card entry using the processor'scertified SDK component once selected."
+     },
+     "100": "to",
+     "101": {
+      "title": "Build card entry using the processor'scertified SDK component for funding anchor wallet"
+     }
+    },
+    "action": "Updated description"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to David Samuel",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:19:18.902Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "David Samuel"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000088089",
+   "display": "Updated the status from To do to In progress",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-13T15:56:39.375Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "In progress"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "Philip Chidera"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the status from In progress to To do",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-13T16:12:49.119Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "In progress"
+     },
+     "100": "to",
+     "101": {
+      "title": "To do"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I209": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Redesign Card Entry Screen",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T14:23:29.862Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Redesign Card Entry Screen"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 08-01",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-11T14:31:07.371Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "08-01",
+      "url": "#sprintdetails/P7/SP4"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Philip Chidera",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T15:19:31.165Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Philip Chidera"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000088089",
+   "display": "Updated the status from To do to In progress",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-08-13T15:56:39.372Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "In progress"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "Philip Chidera"
+  }
+ ],
+ "BVA-I210": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Onboarding \u2014 Language Selection Screen",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T18:11:33.425Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Onboarding \u2014 Language Selection Screen"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Language Selection Screen",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T18:11:56.668Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Language Selection Screen",
+      "url": "#itemdetails/P7/I211"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Build & Wire Screen",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T18:13:18.526Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Build & Wire Screen",
+      "url": "#itemdetails/P7/I212"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I211": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Language Selection Screen",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T18:11:56.668Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Language Selection Screen"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I213": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item App-Wide Language Setting (Settings)",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T18:33:17.569Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "App-Wide Language Setting (Settings)"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Settings Language Screen",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T18:34:14.916Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Settings Language Screen",
+      "url": "#itemdetails/P7/I214"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I214": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Settings Language Screen",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T18:34:14.916Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Settings Language Screen"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I215": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Per-Conversation Translate Option",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T18:35:44.264Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Per-Conversation Translate Option"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Translate Action & Picker",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T18:36:17.417Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Translate Action & Picker",
+      "url": "#itemdetails/P7/I216"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I216": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Translate Action & Picker",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T18:36:17.417Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Translate Action & Picker"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I217": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Per-Message Auto-Translation & \"View Original\" Toggle",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T18:37:39.904Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Per-Message Auto-Translation & \"View Original\" Toggle"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Live Auto-Translation in Conversations",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T18:38:31.113Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Live Auto-Translation in Conversations",
+      "url": "#itemdetails/P7/I218"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Translated Bubble & View-Original Toggle",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T18:39:07.020Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Translated Bubble & View-Original Toggle",
+      "url": "#itemdetails/P7/I219"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I218": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Live Auto-Translation in Conversations",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T18:38:31.113Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Live Auto-Translation in Conversations"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I219": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Translated Bubble & View-Original Toggle",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-11T18:39:07.020Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Translated Bubble & View-Original Toggle"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I220": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Wallet Balance & Transaction History ",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-12T18:09:16.628Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Wallet Balance & Transaction History "
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Wallet Summary & Transaction History Endpoint",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-12T18:10:31.326Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Wallet Summary & Transaction History Endpoint",
+      "url": "#itemdetails/P7/I221"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 64,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the epic from None to Admin",
+   "action": 2,
+   "addedvia": null,
+   "actiontime": "2026-08-13T05:52:38.299Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "None"
+     },
+     "100": "to",
+     "101": {
+      "title": "Admin"
+     }
+    },
+    "action": "Updated the epic"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I221": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Wallet Summary & Transaction History Endpoint",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-12T18:10:31.326Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Wallet Summary & Transaction History Endpoint"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 64,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the epic from None to Admin",
+   "action": 2,
+   "addedvia": null,
+   "actiontime": "2026-08-13T05:52:38.328Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "None"
+     },
+     "100": "to",
+     "101": {
+      "title": "Admin"
+     }
+    },
+    "action": "Updated the epic"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I222": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Pending Transfer Investigation Tooling",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-12T18:12:57.755Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Pending Transfer Investigation Tooling"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Transfer Status Lookup & Overdue-Pending Query",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-12T18:14:51.479Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Transfer Status Lookup & Overdue-Pending Query",
+      "url": "#itemdetails/P7/I223"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 64,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the epic from None to Admin",
+   "action": 2,
+   "addedvia": null,
+   "actiontime": "2026-08-13T05:53:37.629Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "None"
+     },
+     "100": "to",
+     "101": {
+      "title": "Admin"
+     }
+    },
+    "action": "Updated the epic"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I223": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Transfer Status Lookup & Overdue-Pending Query",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-12T18:14:51.479Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Transfer Status Lookup & Overdue-Pending Query"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 64,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the epic from None to Admin",
+   "action": 2,
+   "addedvia": null,
+   "actiontime": "2026-08-13T05:53:37.658Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "None"
+     },
+     "100": "to",
+     "101": {
+      "title": "Admin"
+     }
+    },
+    "action": "Updated the epic"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I224": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item  Anchor Reconciliation View",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-12T18:16:26.637Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": " Anchor Reconciliation View"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Reconciliation Logic",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-12T18:16:51.310Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Reconciliation Logic",
+      "url": "#itemdetails/P7/I225"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 64,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the epic from None to Admin",
+   "action": 2,
+   "addedvia": null,
+   "actiontime": "2026-08-13T05:54:38.316Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "None"
+     },
+     "100": "to",
+     "101": {
+      "title": "Admin"
+     }
+    },
+    "action": "Updated the epic"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I225": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Reconciliation Logic",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-12T18:16:51.310Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Reconciliation Logic"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 64,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the epic from None to Admin",
+   "action": 2,
+   "addedvia": null,
+   "actiontime": "2026-08-13T05:54:38.345Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "None"
+     },
+     "100": "to",
+     "101": {
+      "title": "Admin"
+     }
+    },
+    "action": "Updated the epic"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I226": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Dashboard Home - Recent Activity Feed",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-13T06:26:35.075Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Dashboard Home - Recent Activity Feed"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Unified Activity Feed Endpoint",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-13T06:27:24.505Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Unified Activity Feed Endpoint",
+      "url": "#itemdetails/P7/I227"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I227": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Unified Activity Feed Endpoint",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-08-13T06:27:24.505Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Unified Activity Feed Endpoint"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ]
+}

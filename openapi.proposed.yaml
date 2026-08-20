@@ -917,12 +917,25 @@ paths:
       operationId: listPayments
       summary: 'List my payments'
       description: |
-        There is currently **no way to read a payment back**. `POST /payments/send`
-        and `/request` return a payment object once, and the only other handles
-        are the `{id}` action routes — so a client that loses the response, cold
-        starts, or reinstalls cannot rediscover its pending sends and requests.
-        The escrow countdown the PRD requires ("a visible countdown shows how
-        long I have to respond") cannot be rendered after a restart.
+        There is currently **no way to read a payment back**. `POST /payments/send`,
+        `/payments/transfer` and `/payments/request` return a payment object once,
+        and the only other handles are the `{id}` action routes — so a client that
+        loses the response, cold starts, or reinstalls cannot rediscover its
+        pending sends and requests. The escrow countdown the PRD requires
+        ("a visible countdown shows how long I have to respond") cannot be
+        rendered after a restart.
+
+        The direct-transfer path shipped on 2026-08-17 raised the cost of this
+        gap. `POST /payments/transfer` settles immediately and is idempotent on
+        `idempotencyKey`, so a client that loses the response can only confirm
+        the money moved by replaying the same key — correctness now depends on
+        the client having persisted a key it may never see again.
+
+        Note that a direct transfer is recorded as `type: send` with
+        `status: completed`, so this endpoint cannot distinguish an escrow send
+        from a direct transfer by `type` alone; callers must read `status` (and
+        `completed_at`). A dedicated `transfer` type would be a cleaner contract
+        and is worth deciding before this ships.
 
         Paginated with the standard `page`/`limit` and `meta`, filterable by
         `status`, `type` and `direction`.

@@ -1421,6 +1421,78 @@ paths:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
+  /payments/transfer:
+    post:
+      tags: [Payments]
+      operationId: transferMoney
+      summary: Transfer money directly
+      description: |
+        Moves money to another Beevia banking user immediately — no escrow and no
+        accept step, unlike `POST /payments/send`. The debit and credit post in
+        one balanced SERIALIZABLE ledger transaction, so the payment lands as
+        `completed` and the recipient is pushed a `transferred` event.
+
+        Targets the recipient by **user id**, not phone — resolve one first via
+        `GET /payments/recipients` or `GET /payments/recent-recipients`.
+
+        **Idempotent on `idempotencyKey`**, which is stored as the payment's
+        `reference`: replaying the same key from the same sender returns the
+        recorded payment without moving money again.
+
+        NGN → NGN only; the currency is resolved server-side via `activeNgn()`.
+        Requires a step-up token.
+      security:
+        - accessToken: []
+          stepUpToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TransferRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/PaymentOk' }
+        '400':
+          description: '`insufficient_funds` / `recipient_not_found` / `cannot_pay_self` / `recipient_no_wallet` / validation error.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /payments/recipients:
+    get:
+      tags: [Payments]
+      operationId: searchRecipients
+      summary: Search send recipients
+      description: |
+        Recipient picker for the Send Money flow: matches by name, username or
+        phone, then keeps only **banking-enabled** users (`path` is
+        `chat_banking`) — people who can actually receive money. Up to 20 rows.
+
+        Returns the lean chat profile and **never a phone number**, because a
+        direct transfer targets the recipient's user id.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string, minLength: 1, example: ada }
+          description: An empty or whitespace-only term returns an empty list rather than an error.
+      responses:
+        '200': { $ref: '#/components/responses/PublicProfileListOk' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /payments/recent-recipients:
+    get:
+      tags: [Payments]
+      operationId: listRecentRecipients
+      summary: Recent recipients
+      description: |
+        The distinct people the caller has most recently sent money to, newest
+        first, filtered to those who can still receive (banking-enabled). Up to
+        15 rows, drawn from the caller's last 60 `send` payments.
+      responses:
+        '200': { $ref: '#/components/responses/PublicProfileListOk' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
   /payments/request:
     post:
       tags: [Payments]
@@ -3527,6 +3599,35 @@ components:
           type: string
           description: Storage key. Pass this to `DELETE /upload`.
           example: public/image/3f2a1b7c-9d4e-4a52-b8c1-0e6f7a8b9c01.png
+
+    TransferRequest:
+      type: object
+      description: |
+        Direct (non-escrow) transfer. Unlike `SendMoneyRequest` this targets a
+        resolved user id rather than a phone, and carries a client-generated
+        idempotency key. No source-wallet field — the service resolves the
+        sender's NGN wallet unconditionally.
+      required: [recipientUserId, amount, idempotencyKey]
+      properties:
+        recipientUserId:
+          type: string
+          format: uuid
+          description: From `GET /payments/recipients` or `GET /payments/recent-recipients`.
+          example: 2f1c9d4e-3b7a-4f2e-9c1d-8a6b5e4f3d2c
+        amount: { $ref: '#/components/schemas/Money' }
+        note: { type: string, maxLength: 280, example: 'Lunch 🍜' }
+        conversationId:
+          type: string
+          format: uuid
+          description: Drop a payment card into this conversation.
+          example: 14e34baa-6be5-4319-99b7-d10bfe4c4259
+        idempotencyKey:
+          type: string
+          format: uuid
+          description: |
+            Client-generated. Stored as the payment's `reference`; a replay with
+            the same key returns the original payment without moving money.
+          example: 9b2e1f6a-0c8d-4a5b-be11-2d3c4e5f6a7b
 
     TranslateRequest:
       type: object

@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beevia — Project Status — 19 Aug 2026</title>
+<meta name="description" content="Nothing flagged yesterday changed: branch unmerged, wrong URL still wrong, review queue still nine, zero of six recommendations actioned. Work-in-progress rose again.">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!--
+  DIRECTION CONTRACT · seed 6c4a0ed0 (carried forward unchanged)
+  THESIS: A status report whose subject is the disagreement between its sources.
+  STORY: A stall, dated precisely. Nothing moved, so the edition earns its keep
+  by being exact about what "nothing" means — and by correcting how every prior
+  edition has used the word "today".
+-->
+
+<div class="topbar">
+    <div class="topbar__mark">
+      <span class="barcode" aria-hidden="true"></span>
+      <span class="topbar__wordmark">Beevia</span>
+    </div>
+    <nav class="topbar__nav label" aria-label="Report">
+      <a href="index.html">Archive</a>
+      <a href="#overview">Overview</a>
+      <a href="#s6"><span>What to do</span></a>
+      <a href="#method">Method</a>
+    </nav>
+</div>
+
+<header class="masthead">
+  <div class="field">
+    <div class="field__rail field__rail--l">
+      <dl>
+        <dt>In progress</dt>
+        <dd>8 · was 6</dd>
+        <dt>Review / QA</dt>
+        <dd>9 · 0 ever drained</dd>
+        <dt>Done</dt>
+        <dd>1 · since 12 Aug</dd>
+        <dt>Recommendations actioned</dt>
+        <dd>0 of 6</dd>
+      </dl>
+    </div>
+
+    <div class="field__stage">
+      <div class="field__title">
+        <h1>Project<br>Status</h1>
+      </div>
+      <div class="field__meta num">
+        <span>2026-08-19</span>
+        <span>Sprint 08-01</span>
+        <span>10&ndash;28 Aug &middot; day 10 of 18</span>
+        <span>A stall, dated precisely</span>
+      </div>
+    </div>
+
+    <div class="field__rail field__rail--r">
+      <dl>
+        <dt>API consumer</dt>
+        <dd>108 &nbsp;+0</dd>
+        <dt>Merged to main</dt>
+        <dd>0 commits</dd>
+        <dt>Unmerged</dt>
+        <dd>5 commits · 2d</dd>
+        <dt>Estimated</dt>
+        <dd>0 / 67</dd>
+      </dl>
+    </div>
+  </div>
+</header>
+
+<section class="mvp" aria-label="MVP readiness estimate">
+  <div class="mvp__head">
+    <span class="label">MVP readiness &mdash; estimate</span>
+    <span class="mvp__pct num">&asymp;46%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 13 days out</span>
+  </div>
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 46 percent built. Unchanged — nothing merged to main for a second edition. Communication capabilities largely built end to end; international KYC, cross-currency FX, virtual cards and consent management are not started.">
+    <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.9"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.8"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:7" title="Message translation — 0.7 (stack blocked)"><i style="width:70%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.9"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
+    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.45"><i style="width:45%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.50"><i style="width:50%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
+    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0"></span>
+    <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
+    <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.45"><i style="width:45%"></i></span>
+  </div>
+  <p class="mvp__read"><strong>Unchanged &mdash; nothing merged to <code>main</code> for a second edition.</strong> Capability #7 holds at 0.50: the client wiring still sits unmerged on <code>origin/BVA-I189</code> and still carries the wrong transactions URL, so it remains a leading indicator rather than a score. Segment width = weight &middot; fill = build evidence. <a href="#mvp-method">Method and capability table</a>.</p>
+</section>
+
+<div class="shell">
+  <nav class="contents label" aria-label="Contents">
+    Contents
+    <ol>
+      <li><a href="#overview"><span>00</span> Quick overview</a></li>
+      <li><a href="#s1"><span>01</span> A stall, precisely dated</a></li>
+      <li><a href="#s2"><span>02</span> What shipped</a></li>
+      <li><a href="#s3"><span>03</span> Risks</a></li>
+      <li><a href="#s4"><span>04</span> How these reports say &ldquo;today&rdquo;</a></li>
+      <li><a href="#s5"><span>05</span> Previous recommendations</a></li>
+      <li><a href="#s6"><span>06</span> What I would do today</a></li>
+      <li><a href="#method"><span>&mdash;</span> Method</a></li>
+    </ol>
+  </nav>
+
+  <main class="doc">
+
+    <section class="sec" id="overview">
+      <div class="invert" style="margin-bottom:var(--s-6)">
+        <p class="lede">Nothing that was flagged yesterday has changed: the branch is unmerged, the wrong URL is still wrong, the review queue is still nine, and none of the six recommendations was actioned. Meanwhile work-in-progress rose again, from 6 leaves to 8.</p>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">08-01 movement, 18 &rarr; 19 Aug</caption>
+          <thead>
+            <tr><th scope="col">Measure</th><th scope="col" class="r">18 Aug</th><th scope="col" class="r">19 Aug</th><th scope="col" class="r">&Delta;</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">To do (leaves)</th><td class="r">24</td><td class="r">22</td><td class="r">&minus;2</td></tr>
+            <tr><th scope="row">In progress (leaves)</th><td class="r">6</td><td class="r hi">8</td><td class="r hi">+2</td></tr>
+            <tr><th scope="row">Blocked (leaves)</th><td class="r">3</td><td class="r">3</td><td class="r">0</td></tr>
+            <tr><th scope="row">Review / QA (leaves)</th><td class="r">9</td><td class="r">9</td><td class="r hi">0 &mdash; nothing in, nothing out</td></tr>
+            <tr><th scope="row">Done (leaves)</th><td class="r">1</td><td class="r">1</td><td class="r hi">0 &mdash; still one, on day 10</td></tr>
+            <tr><th scope="row">API surface (consumer)</th><td class="r">108</td><td class="r">108</td><td class="r">0</td></tr>
+            <tr><th scope="row">Commits merged to <code>main</code></th><td class="r">0</td><td class="r">0</td><td class="r">0</td></tr>
+            <tr><th scope="row"><code>origin/BVA-I189</code> commits ahead</th><td class="r">5</td><td class="r">5</td><td class="r">0 &mdash; unchanged since 17 Aug 14:58</td></tr>
+            <tr><th scope="row">Estimation points set</th><td class="r">0 / 67</td><td class="r">0 / 67</td><td class="r">still zero</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">Team at a glance</caption>
+          <thead>
+            <tr><th scope="col">Person</th><th scope="col">Owns</th><th scope="col">Current leaf state</th><th scope="col" class="r">Board actions in window</th><th scope="col" class="r">Commits</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">David Samuel</th><td>mobile</td><td>4 To do, <strong>3 In progress</strong>, 2 Review/QA, 1 Blocked</td><td class="r">5</td><td class="r">0</td></tr>
+            <tr><th scope="row">Philip Chidera</th><td>design</td><td>10 To do, 3 In progress, 1 Done</td><td class="r">0</td><td class="r">&mdash;</td></tr>
+            <tr><th scope="row">Ayomikun Araoye</th><td>backend + admin API</td><td>8 To do, 2 In progress, <strong>7 Review/QA</strong>, 2 Blocked</td><td class="r hi">0</td><td class="r hi">0</td></tr>
+            <tr><th scope="row">Promise Udo</th><td>admin dashboard</td><td>one co-assigned parent Story</td><td class="r">0</td><td class="r">0 &middot; repo <strong>13 days</strong> silent, no branches</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <span class="label">The question for standup</span>
+        <p style="margin-bottom:0">The same one as yesterday, unanswered &mdash; <code>origin/BVA-I189</code> still calls <code>GET /payments/transactions</code>, which still does not exist. Five commits of mobile work have now sat unmerged for two days behind a one-line fix, while three more items were started on top of them.</p>
+      </div>
+
+      <h3>The three things worth knowing</h3>
+
+      <div class="stack">
+        <div class="finding">
+          <div class="finding__n num">1</div>
+          <div>
+            <p><strong>Zero of yesterday's six recommendations moved.</strong> One working day has passed inside the reporting window, so this is not a verdict on the team &mdash; but the specific, cheap one (fix a URL, merge a branch) is also the one that would have moved the MVP number, and it did not happen.</p>
+          </div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">2</div>
+          <div>
+            <p><strong>WIP is climbing while completion stays flat.</strong> In progress went 4 &rarr; 6 &rarr; 8 leaves over three editions. Done has been <strong>1</strong> since 12 Aug. Nine items have been in REVIEW/QA since 17 Aug and not one has ever left, across the whole sprint. This is the shape 0702 ended in, now with 9 days left rather than 18.</p>
+          </div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">3</div>
+          <div>
+            <p><strong>The backend workstream has gone quiet.</strong> Ayomikun has taken no board action and made no commit since the 17 Aug 16:06 bulk move &mdash; while holding 7 of the 9 review items, both blocked translation leaves, and BVA-I185. Nothing is being verified because the person who filed most of it for review has not returned to it.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="invert">
+        <span class="label" style="display:block;margin-bottom:var(--s-3)">If you read nothing else</span>
+        <p style="margin-bottom:0;font-variation-settings:'wdth' 75,'wght' 500;max-width:64ch">The sprint is accumulating started work and completing none of it, and the cheapest available unblock &mdash; one line, one merge &mdash; has been open for two days.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s1">
+      <div class="sec__h"><span class="sec__n">01</span><h2>Sprint 08-01 &mdash; a stall, precisely dated</h2></div>
+
+      <h3>1.1 Status, day 10</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Status</th><th scope="col" class="r">Leaves</th><th scope="col" class="r">Share</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">To do</th><td class="r">22</td><td class="r">51%</td></tr>
+            <tr><th scope="row">In progress</th><td class="r hi">8</td><td class="r hi">19%</td></tr>
+            <tr><th scope="row">Review / QA</th><td class="r">9</td><td class="r">21%</td></tr>
+            <tr><th scope="row">Blocked</th><td class="r">3</td><td class="r">7%</td></tr>
+            <tr><th scope="row">Done</th><td class="r">1</td><td class="r">2%</td></tr>
+            <tr><th scope="row" class="hi">Total</th><td class="r hi">43</td><td class="r"></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>1.2 Everything that happened in the window</h3>
+      <p>The reporting window is <strong>18 Aug 09:14 &rarr; 19 Aug 09:16</strong> (see &sect;4 on why). It contains five board actions, all by David, all on 18 Aug afternoon:</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">When (UTC)</th><th scope="col">Item</th><th scope="col">Transition</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">18 Aug 15:15</th><td>BVA-I172 Add Money — Bank Transfer <em>(parent)</em></td><td>To do &rarr; In progress</td></tr>
+            <tr><th scope="row">18 Aug 15:15</th><td>BVA-I175 Missing Confirmation States</td><td>To do &rarr; In progress</td></tr>
+            <tr><th scope="row">18 Aug 15:15</th><td>BVA-I174 Add Money (Bank Transfer) Screens</td><td>In progress &rarr; BLOCKED &rarr; In progress <em>(same minute)</em></td></tr>
+            <tr><th scope="row">18 Aug 15:58</th><td>BVA-I178 Send Flow (Amount &rarr; Narration &rarr; PIN/Biometric Confirm)</td><td>To do &rarr; In progress</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>No commits in any repo. No branch moved. No item entered or left REVIEW/QA. <strong>No board action carries a 19 Aug timestamp</strong> &mdash; but the snapshot was taken at 09:16 this morning, so that is a statement about a two-hour-old day, not an idle one.</p>
+
+      <h3>1.3 What did not change, itemised</h3>
+      <p>Each of these was reported yesterday with a specific ask. All are byte-for-byte unchanged:</p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Thing</th><th scope="col">State yesterday</th><th scope="col">State today</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>origin/BVA-I189</code></th><td>5 commits ahead, tip 17 Aug 14:58</td><td class="hi"><strong>identical</strong></td></tr>
+            <tr><th scope="row"><code>walletTransactionsUrl</code></th><td><code>/payments/transactions</code> (does not exist)</td><td class="hi"><strong>identical</strong></td></tr>
+            <tr><th scope="row">BVA-I185 Wallet Summary Endpoint</th><td>In REVIEW/QA 4d, no code on any pushed branch</td><td class="hi"><strong>In review 5d</strong>, still no code</td></tr>
+            <tr><th scope="row">BVA-I170</th><td>BLOCKED 5d</td><td class="hi"><strong>BLOCKED 6d</strong></td></tr>
+            <tr><th scope="row">Review queue</th><td>9 leaves, 0 ever drained</td><td class="hi"><strong>9 leaves, 0 ever drained</strong></td></tr>
+            <tr><th scope="row">Translation stack</th><td>4 items BLOCKED, &ldquo;v2&rdquo; comment, no decision</td><td><strong>identical</strong></td></tr>
+            <tr><th scope="row"><code>beevia-admin</code></th><td>12d silent, no branches</td><td><strong>13d silent, no branches</strong></td></tr>
+            <tr><th scope="row">Estimation points</th><td>0/67</td><td>0/67</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>1.4 Review queue ages</h3>
+      <p>Median 2 days, but the distribution matters more than the median:</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Entered</th><th scope="col">Items</th><th scope="col" class="r">Age</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">14 Aug 12:19</th><td>BVA-I184, <strong>BVA-I185</strong></td><td class="r hi">5d</td></tr>
+            <tr><th scope="row">17 Aug 16:04&ndash;16:07</th><td>BVA-I164, I165, I169, I173, I189, I198, I203, I220, I221, I222, I223</td><td class="r">2d</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Eleven of the thirteen rows entered in a single three-minute bulk operation on 17 Aug, so the queue's &ldquo;median age&rdquo; is really the age of that one action. It will keep reading as young while nothing leaves.</p>
+    </section>
+
+    <section class="sec" id="s2">
+      <div class="sec__h"><span class="sec__n">02</span><h2>What shipped this cycle</h2></div>
+      <div class="invert">
+        <p style="margin-bottom:0;max-width:64ch"><strong>Nothing.</strong> Zero commits to <code>main</code> across all five repos for the second consecutive edition. The audit is clean &mdash; 108 consumer / 29 admin operations, no drift, all four specs valid &mdash; and needed no edits.</p>
+      </div>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Repo</th><th scope="col">Last commit to <code>main</code></th><th scope="col" class="r">Days</th><th scope="col">Unmerged branch work</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>beevia-api</code></th><td>17 Aug</td><td class="r">2</td><td>none outstanding</td></tr>
+            <tr><th scope="row"><code>beevia-db-schema</code></th><td>17 Aug</td><td class="r">2</td><td>none outstanding</td></tr>
+            <tr><th scope="row"><code>beevia-mobile</code></th><td>11 Aug</td><td class="r">8</td><td class="hi"><strong><code>BVA-I189</code> +5, <code>BVA-I184</code> +3, <code>BVA-I107</code> +2</strong></td></tr>
+            <tr><th scope="row"><code>beevia-admin-api</code></th><td>6 Aug</td><td class="r hi">13</td><td>none</td></tr>
+            <tr><th scope="row"><code>beevia-admin</code></th><td>6 Aug</td><td class="r hi">13</td><td class="hi"><strong>no branches exist</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="sec" id="s3">
+      <div class="sec__h"><span class="sec__n">03</span><h2>Risks</h2></div>
+      <div class="stack">
+        <div class="finding"><div class="finding__n num">1</div><div><p><strong>WIP is rising while throughput is zero.</strong> 8 leaves in progress, 9 in review, 1 done on day 10 of 18. Every additional start makes the end-of-sprint reconciliation larger.</p></div></div>
+        <div class="finding"><div class="finding__n num">2</div><div><p><strong>The review queue has never drained</strong>, and 11 of its 13 rows arrived in one three-minute bulk action whose contents did not match sprint code (established 18 Aug).</p></div></div>
+        <div class="finding"><div class="finding__n num">3</div><div><p><strong>A one-line fix has blocked a five-commit merge for two days</strong>, and three further items were started on top of the unmerged work &mdash; the integration surface grows while the integration bug stays open.</p></div></div>
+        <div class="finding"><div class="finding__n num">4</div><div><p><strong>The backend workstream is quiet at the worst moment</strong>: no action from Ayomikun for two days while holding 7 review items, 2 blocked translation leaves, and the BVA-I185 dependency that has blocked David for six days.</p></div></div>
+        <div class="finding"><div class="finding__n num">5</div><div><p><strong>Nine days remain</strong> with 22 items still in To do, no estimates, and no velocity baseline to judge scope-fit against.</p></div></div>
+        <div class="finding"><div class="finding__n num">6</div><div><p><strong><code>beevia-admin</code> at 13 days</strong> with no commits, no branches, no owned board items &mdash; fifth consecutive edition raising it.</p></div></div>
+        <div class="finding"><div class="finding__n num">7</div><div><p><strong>Translation remains blocked by comment rather than decision.</strong></p></div></div>
+      </div>
+    </section>
+
+    <section class="sec" id="s4">
+      <div class="sec__h"><span class="sec__n">04</span><h2>A correction to how these reports say &ldquo;today&rdquo;</h2></div>
+      <p>Worth stating plainly, because previous editions have been loose about it.</p>
+      <div class="note">
+        <p><strong>The board snapshot is taken at ~09:15 each morning</strong> (17 Aug 09:12, 18 Aug 09:14, 19 Aug 09:16). So a report's &ldquo;since yesterday&rdquo; window runs 09:15 &rarr; 09:15 and mostly contains the <em>previous</em> day's afternoon. Yesterday's five board actions all landed between 15:15 and 15:58 &mdash; hours after the 18 Aug snapshot &mdash; which is why they appear in today's edition and not yesterday's.</p>
+        <p><strong>&ldquo;No activity today&rdquo; is never a fair claim in these reports</strong>, because &ldquo;today&rdquo; is roughly two hours old when the data is pulled. Where this edition says a thing did not change, it means across the full 24-hour window, not that the team has been idle this morning.</p>
+        <p style="margin-bottom:0"><strong>Board data and git data have different cut-offs.</strong> The board is current to ~09:15; the repos are re-synced at report time, so commits are current to the minute. That mismatch has been present in every edition and has not affected a conclusion so far, but it would if a report ever compared same-morning board state against same-morning commits.</p>
+      </div>
+      <p>Earlier editions phrased zero-commit days as &ldquo;nothing happened today&rdquo;. Read those as &ldquo;nothing in the 24 hours ending that morning&rdquo;.</p>
+    </section>
+
+    <section class="sec" id="s5">
+      <div class="sec__h"><span class="sec__n">05</span><h2>Previous recommendations &mdash; where they stand</h2></div>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Recommendation from 18 Aug</th><th scope="col">Status on 19 Aug</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Fix one line and merge <code>BVA-I189</code></th><td class="hi">Not done. Branch and URL both byte-identical.</td></tr>
+            <tr><th scope="row">Decide who may move an item into REVIEW/QA</th><td class="hi">Not done. No comments added to any moved item.</td></tr>
+            <tr><th scope="row">Split the review queue into &ldquo;shipped, needs verifying&rdquo; vs &ldquo;not built yet&rdquo;</th><td class="hi">Not done. Queue unchanged at 9.</td></tr>
+            <tr><th scope="row">Get a straight answer on BVA-I185</th><td class="hi">Not done. Now 5 days in review, still nothing on <code>origin</code>.</td></tr>
+            <tr><th scope="row">Record the translation decision</th><td class="hi">Not done. Four items still BLOCKED.</td></tr>
+            <tr><th scope="row">Ask about <code>beevia-admin</code></th><td class="hi">Not done. Now 13 days.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Zero of six.</strong> One working day has elapsed inside the window, so this reads as &ldquo;not yet&rdquo; rather than &ldquo;refused&rdquo; &mdash; but it is the second consecutive edition in which the same cheap unblock went unactioned.</p>
+    </section>
+
+    <section class="sec" id="s6">
+      <div class="sec__h"><span class="sec__n">06</span><h2>What I would do today</h2></div>
+      <p>Deliberately shorter than yesterday's list. Yesterday's six went zero-for-six; adding more would not help.</p>
+      <div class="stack">
+        <div class="finding"><div class="finding__n num">1</div><div><p><strong>Merge <code>BVA-I189</code> today.</strong> Change <code>/payments/transactions</code> &rarr; <code>/wallets/transactions</code>, open the PR, merge it. Two days open, one line, and it is the only pending action that would move the MVP number.</p></div></div>
+        <div class="finding"><div class="finding__n num">2</div><div><p><strong>Stop starting, start finishing.</strong> 8 in progress, 9 in review, 1 done, 9 days left. Pick the three items closest to done and drive those to completion before anything else is opened.</p></div></div>
+        <div class="finding"><div class="finding__n num">3</div><div><p><strong>Get one item out of REVIEW/QA &mdash; any item.</strong> The queue has never drained once this sprint. Proving the state can be exited matters more right now than which item goes first.</p></div></div>
+        <div class="finding"><div class="finding__n num">4</div><div><p><strong>Check in with Ayomikun.</strong> Two days without a board action or commit, while holding 7 review items and the dependency blocking David for six days. Worth asking directly rather than inferring.</p></div></div>
+      </div>
+    </section>
+
+    <section class="sec" id="method">
+      <div class="sec__h"><span class="sec__n">&mdash;</span><h2>Appendix &mdash; method and readiness rubric</h2></div>
+
+      <p><strong>Pipeline.</strong> <code>beevia-refresh</code>: Zoho export (67 items, <code>--modified --activity</code>) &rarr; fast-forward-only sync of five product repos (all already current) &rarr; deterministic API/spec audit (clean, no drift, no spec edits) &rarr; this report.</p>
+
+      <p><strong>Branch checks.</strong> As on 18 Aug, evidence extends past <code>origin/main</code> to every pushed branch. <code>origin/BVA-I189</code> was re-read directly today (<code>git show origin/BVA-I189:lib/core/constants/api_url.dart</code>) to confirm the URL is unchanged rather than assumed.</p>
+
+      <p><strong>Flow measurement.</strong> All transitions and timings from the activity sidecar's <code>actiontime</code>, never <code>Last Modified</code>. See &sect;4 for the snapshot-timing caveat that governs how &ldquo;today&rdquo; should be read.</p>
+
+      <h3>Sources</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Stream</th><th scope="col">Artifact</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Board</th><td><code>beevia-sprint-board-2026-08-19.csv</code> &mdash; 67 rows, 43 leaves, snapshot 09:16; <code>beevia-activity-2026-08-19.json</code></td></tr>
+            <tr><th scope="row">Code</th><td>Five repos at <code>origin/main</code>, zero commits since 17 Aug; all pushed branches re-checked</td></tr>
+            <tr><th scope="row">Specs</th><td><code>openapi.yaml</code> (108), <code>openapi.proposed.yaml</code> (52), <code>openapi.admin.yaml</code> (29), <code>openapi.admin.proposed.yaml</code> (23) &mdash; validated, no drift</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="mvp-method">MVP readiness &mdash; how the &asymp;46% is computed</h3>
+      <p>Eleven capabilities from PRD &sect;1.2/&sect;11 with <strong>frozen weights</strong>, each scored 0&ndash;1 from build evidence. Target date 2026-09-01 is provisional, set by the owner on 2026-08-07.</p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col" class="r">#</th><th scope="col">Capability</th><th scope="col" class="r">Weight</th><th scope="col" class="r">Score</th><th scope="col">Evidence</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" class="r">1</th><td>E2EE messaging</td><td class="r">15</td><td class="r">0.9</td><td>Conversation/message/key/attachment paths live; client crypto, socket and attachment layers present</td></tr>
+            <tr><th scope="row" class="r">2</th><td>Voice &amp; video calling</td><td class="r">8</td><td class="r">0.8</td><td>4 call endpoints live; call screens present</td></tr>
+            <tr><th scope="row" class="r">3</th><td>Message translation</td><td class="r">7</td><td class="r">0.7</td><td><code>POST /translate</code> live; provider integration and per-message endpoint BLOCKED, &ldquo;v2&rdquo; comment still unrecorded as a decision</td></tr>
+            <tr><th scope="row" class="r">4</th><td>Local KYC tier (BVN)</td><td class="r">8</td><td class="r">0.9</td><td>KYC/upgrade endpoints + provider webhook live; full client onboarding; BVN cache 17 Aug</td></tr>
+            <tr><th scope="row" class="r">5</th><td>International KYC tier</td><td class="r">6</td><td class="r hi">0.0</td><td>proposed only</td></tr>
+            <tr><th scope="row" class="r">6</th><td>Multi-currency wallets</td><td class="r">12</td><td class="r">0.45</td><td>NGN only; wallets controller unchanged since 22 July on every branch; no wallet summary anywhere</td></tr>
+            <tr><th scope="row" class="r">7</th><td>Send / request / receive</td><td class="r">12</td><td class="r">0.50</td><td>API write path near-complete. Client wiring still unmerged on <code>origin/BVA-I189</code> and still carries the wrong transactions URL &mdash; second edition as a leading indicator</td></tr>
+            <tr><th scope="row" class="r">8</th><td>Cross-currency FX</td><td class="r">12</td><td class="r hi">0.0</td><td>proposed only</td></tr>
+            <tr><th scope="row" class="r">9</th><td>Virtual cards</td><td class="r">10</td><td class="r hi">0.0</td><td>proposed only; BVA-I198 in review with no branch behind it</td></tr>
+            <tr><th scope="row" class="r">10</th><td>Consent management</td><td class="r">4</td><td class="r hi">0.0</td><td>no endpoint or record anywhere</td></tr>
+            <tr><th scope="row" class="r">11</th><td>Admin oversight</td><td class="r">6</td><td class="r">0.45</td><td>29/52 admin ops; both admin repos 13 days silent, no branches</td></tr>
+            <tr><th scope="row" class="r hi"></th><td class="hi">Weighted total</td><td class="r hi">100</td><td class="r hi">46.1</td><td class="hi">&asymp;46%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Weights are frozen. Scores measure <strong>merged, reachable build evidence</strong> &mdash; never board status, items in review, unmerged branches, or design completion.</p>
+
+      <h3>Team performance &mdash; what these figures do not measure</h3>
+      <div class="note">
+        <p style="margin-bottom:0">&ldquo;Board actions in window&rdquo; reads 0 for Philip and Ayomikun and 5 for David, and that ranks nothing: a day spent designing or reviewing produces no transitions. With 0/67 estimation points there is still no workload normalisation. The rising WIP is a system observation &mdash; no one person chose it &mdash; and the flat completion count is a process outcome, not an effort measurement.</p>
+      </div>
+
+      <h3>What this report cannot tell you</h3>
+      <div class="note">
+        <p><strong>Whether a pull request exists for <code>BVA-I189</code>.</strong> The <code>gh</code> CLI cannot resolve this org from here, so PR state is outside what this pipeline can see &mdash; only branches and merges are observable.</p>
+        <p><strong>Whether BVA-I185's endpoint exists as unpushed local work.</strong></p>
+        <p><strong>What anyone did on 19 Aug after 09:16.</strong></p>
+        <p><strong>Whether translation is formally descoped.</strong></p>
+        <p style="margin-bottom:0"><strong>Velocity or scope-fit</strong> for the remaining 9 days &mdash; still 0/67 estimated.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="foot">
+  <span class="barcode barcode--lg" aria-hidden="true"></span>
+  <span>Beevia project status &middot; 2026-08-19 &middot; Sprint 08-01, day 10</span>
+  <span><a href="index.html">All frames</a></span>
+</footer>
+
+<script src="ui.js"></script>
+</body>
+</html>

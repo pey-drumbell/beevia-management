@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beevia — Project Status — 18 Aug 2026</title>
+<meta name="description" content="The review queue went from 1 to 9 leaves — but not one corresponds to code merged this sprint, and two people spent two days disagreeing about which items belong there.">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!--
+  DIRECTION CONTRACT · seed 6c4a0ed0 (carried forward unchanged)
+  THESIS: A status report whose subject is the disagreement between its sources.
+  STORY: Today the disagreement is literal — one contributor moves 24 items into
+  review, another moves 11 back out, and the code agrees with neither. The
+  evidence net widens from main to every pushed branch, which both closes
+  yesterday's open question and finds the work that main was hiding.
+-->
+
+<div class="topbar">
+    <div class="topbar__mark">
+      <span class="barcode" aria-hidden="true"></span>
+      <span class="topbar__wordmark">Beevia</span>
+    </div>
+    <nav class="topbar__nav label" aria-label="Report">
+      <a href="index.html">Archive</a>
+      <a href="#overview">Overview</a>
+      <a href="#s6"><span>What to do</span></a>
+      <a href="#method">Method</a>
+    </nav>
+</div>
+
+<header class="masthead">
+  <div class="field">
+    <div class="field__rail field__rail--l">
+      <dl>
+        <dt>Review / QA</dt>
+        <dd>9 · was 1</dd>
+        <dt>Traceable to sprint code</dt>
+        <dd>0 of 9</dd>
+        <dt>Merged to main</dt>
+        <dd>0 commits</dd>
+        <dt>Unmerged branch work</dt>
+        <dd>5 commits</dd>
+      </dl>
+    </div>
+
+    <div class="field__stage">
+      <div class="field__title">
+        <h1>Project<br>Status</h1>
+      </div>
+      <div class="field__meta num">
+        <span>2026-08-18</span>
+        <span>Sprint 08-01</span>
+        <span>10&ndash;28 Aug &middot; day 9 of 18</span>
+        <span>The queue that isn't</span>
+      </div>
+    </div>
+
+    <div class="field__rail field__rail--r">
+      <dl>
+        <dt>API consumer</dt>
+        <dd>108 &nbsp;+0</dd>
+        <dt>Spec drift</dt>
+        <dd>None</dd>
+        <dt>Blocked</dt>
+        <dd>3 &middot; was 1</dd>
+        <dt>Estimated</dt>
+        <dd>0 / 67</dd>
+      </dl>
+    </div>
+  </div>
+</header>
+
+<section class="mvp" aria-label="MVP readiness estimate">
+  <div class="mvp__head">
+    <span class="label">MVP readiness &mdash; estimate</span>
+    <span class="mvp__pct num">&asymp;46%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 14 days out</span>
+  </div>
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 46 percent built. Unchanged this cycle — nothing merged to main. Communication capabilities largely built end to end; international KYC, cross-currency FX, virtual cards and consent management are not started.">
+    <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.9"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.8"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:7" title="Message translation — 0.7 (stack now blocked)"><i style="width:70%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.9"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
+    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.45"><i style="width:45%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.50"><i style="width:50%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
+    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0"></span>
+    <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
+    <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.45"><i style="width:45%"></i></span>
+  </div>
+  <p class="mvp__read"><strong>Unchanged &mdash; nothing merged to <code>main</code> today.</strong> The rubric scores merged, reachable capability, not branches or board status. Capability #7 holds at 0.50: the client wiring now demonstrably exists but sits unmerged on <code>origin/BVA-I189</code>, so it is a leading indicator rather than a score. Fix its one wrong URL and merge it, and #7 moves next edition. Segment width = weight &middot; fill = build evidence. <a href="#mvp-method">Method and capability table</a>.</p>
+</section>
+
+<div class="shell">
+  <nav class="contents label" aria-label="Contents">
+    Contents
+    <ol>
+      <li><a href="#overview"><span>00</span> Quick overview</a></li>
+      <li><a href="#s1"><span>01</span> The board moved, the code did not</a></li>
+      <li><a href="#s2"><span>02</span> What shipped &middot; and the bug</a></li>
+      <li><a href="#s3"><span>03</span> Product-vs-PRD gap</a></li>
+      <li><a href="#s4"><span>04</span> Risks</a></li>
+      <li><a href="#s5"><span>05</span> Previous recommendations</a></li>
+      <li><a href="#s6"><span>06</span> What I would do today</a></li>
+      <li><a href="#method"><span>&mdash;</span> Method</a></li>
+    </ol>
+  </nav>
+
+  <main class="doc">
+
+    <section class="sec" id="overview">
+      <div class="invert" style="margin-bottom:var(--s-6)">
+        <p class="lede">The review queue went from 1 to 9 leaves &mdash; but not one of those nine corresponds to code merged during this sprint, and two people spent yesterday and today disagreeing about which items belong there at all.</p>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">08-01 movement, 17 &rarr; 18 Aug</caption>
+          <thead>
+            <tr><th scope="col">Measure</th><th scope="col" class="r">17 Aug</th><th scope="col" class="r">18 Aug</th><th scope="col" class="r">&Delta;</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">To do (leaves)</th><td class="r">33</td><td class="r">24</td><td class="r">&minus;9</td></tr>
+            <tr><th scope="row">In progress (leaves)</th><td class="r">7</td><td class="r">6</td><td class="r">&minus;1</td></tr>
+            <tr><th scope="row">Blocked (leaves)</th><td class="r">1</td><td class="r hi">3</td><td class="r hi">+2</td></tr>
+            <tr><th scope="row">Review / QA (leaves)</th><td class="r">1</td><td class="r hi">9</td><td class="r hi">+8</td></tr>
+            <tr><th scope="row">Done (leaves)</th><td class="r">1</td><td class="r">1</td><td class="r">0</td></tr>
+            <tr><th scope="row">Left review</th><td class="r">0</td><td class="r hi">0</td><td class="r">still never drained</td></tr>
+            <tr><th scope="row">API surface (consumer)</th><td class="r">108</td><td class="r">108</td><td class="r">0</td></tr>
+            <tr><th scope="row">Commits merged to <code>main</code></th><td class="r">11</td><td class="r hi">0</td><td class="r">&minus;11</td></tr>
+            <tr><th scope="row">Estimation points set</th><td class="r">0 / 67</td><td class="r">0 / 67</td><td class="r">still zero</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">Team at a glance</caption>
+          <thead>
+            <tr><th scope="col">Person</th><th scope="col">Owns</th><th scope="col">Current leaf state</th><th scope="col" class="r">Commits to <code>main</code></th><th scope="col">Flag</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Ayomikun Araoye</th><td>backend + admin API</td><td>8 To do, 2 In progress, <strong>7 Review/QA</strong>, 2 Blocked</td><td class="r">0</td><td>Bulk-moved ~24 items in 3 minutes on 17 Aug; now holds 7 of the 9 review leaves</td></tr>
+            <tr><th scope="row">David Samuel</th><td>mobile</td><td>5 To do, 2 In progress, 2 Review/QA, 1 Blocked</td><td class="r">0</td><td><strong>5 unmerged commits on <code>origin/BVA-I189</code></strong> &mdash; the first client payments wiring. Reverted 11 review moves today</td></tr>
+            <tr><th scope="row">Philip Chidera</th><td>design</td><td>11 To do, 2 In progress, 1 Done</td><td class="r">&mdash;</td><td>Dark-mode items started then returned to To do</td></tr>
+            <tr><th scope="row">Promise Udo</th><td>admin dashboard</td><td>one co-assigned parent Story</td><td class="r">0</td><td><code>beevia-admin</code> <strong>12 days</strong> silent, and <strong>has no branches</strong> &mdash; only <code>main</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <span class="label">The question for standup</span>
+        <p style="margin-bottom:0"><code>origin/BVA-I189</code> calls <code>GET /payments/transactions</code>. That endpoint does not exist &mdash; not in the implemented spec, not in the proposed one, not in the code. Wallet transactions live at <code>GET /wallets/transactions</code>. This will 404 the moment the branch runs against a real backend.</p>
+      </div>
+
+      <h3>The three things worth knowing</h3>
+
+      <div class="stack">
+        <div class="finding">
+          <div class="finding__n num">1</div>
+          <div>
+            <p><strong>The review queue is not evidence of finished work.</strong> At 16:04&ndash;16:07 on 17 Aug &mdash; minutes after yesterday's export was taken &mdash; Ayomikun moved roughly 24 items in three minutes: 20 into REVIEW/QA and 4 into BLOCKED. Checked one by one against the code (&sect;1.3), <strong>none of the nine leaves now in review corresponds to anything merged during 08-01.</strong> Four have no implementation anywhere, three match code that shipped in June or early August, and two are mobile items whose work sits unmerged on a branch.</p>
+          </div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">2</div>
+          <div>
+            <p><strong>Two people are disagreeing about the board in public.</strong> Today at 13:48&ndash;13:49 David moved 11 of those items straight back to To do &mdash; the whole in-chat send/request money group and the wallet transaction history group. Neither the move nor the reversion carries a comment. Worth resolving as a definition question, not left as a silent edit war.</p>
+          </div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">3</div>
+          <div>
+            <p><strong>The client work exists &mdash; it is just not merged, and it has a wrong URL.</strong> <code>origin/BVA-I189</code> (David, 5 commits, tip 17 Aug) carries p2p screens, wallet implementation and recent-transaction work, and contains the <strong>first <code>/payments</code> references anywhere in the client</strong>. One of the two is correct (<code>/payments/recent-recipients</code>, shipped yesterday). The other points at an endpoint that does not exist.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="invert">
+        <span class="label" style="display:block;margin-bottom:var(--s-3)">If you read nothing else</span>
+        <p style="margin-bottom:0;font-variation-settings:'wdth' 75,'wght' 500;max-width:64ch">The work is more real than the board suggests, and the board is more finished-looking than the work. Merge the mobile branch after fixing one URL, and decide who is allowed to declare something ready for review.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s1">
+      <div class="sec__h"><span class="sec__n">01</span><h2>Sprint 08-01 &mdash; the board moved, the code did not</h2></div>
+
+      <h3>1.1 Status, day 9</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Status</th><th scope="col" class="r">Leaves</th><th scope="col" class="r">Share</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">To do</th><td class="r">24</td><td class="r">56%</td></tr>
+            <tr><th scope="row">In progress</th><td class="r">6</td><td class="r">14%</td></tr>
+            <tr><th scope="row">Review / QA</th><td class="r hi">9</td><td class="r hi">21%</td></tr>
+            <tr><th scope="row">Blocked</th><td class="r">3</td><td class="r">7%</td></tr>
+            <tr><th scope="row">Done</th><td class="r">1</td><td class="r">2%</td></tr>
+            <tr><th scope="row" class="hi">Total</th><td class="r hi">43</td><td class="r"></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>67 rows: 24 parent Stories grouping 43 leaf Tasks. Counting rows rather than leaves gives 13 in review; the leaf figure of 9 is the one to use.</p>
+
+      <h3>1.2 What actually happened, from the activity trail</h3>
+      <p>The snapshot delta says &ldquo;+8 into review, 0 out&rdquo;. The audit trail shows considerably more churn than that, and the difference matters.</p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">When (UTC)</th><th scope="col">Who</th><th scope="col">What</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">17 Aug 16:04&ndash;16:06</th><td>Ayomikun Araoye</td><td>~24 items moved in <strong>three minutes</strong>: 20 To do &rarr; REVIEW/QA, 4 To do &rarr; BLOCKED (the translation stack)</td></tr>
+            <tr><th scope="row">17 Aug 16:06</th><td>Ayomikun Araoye</td><td>Comment on BVA-I218: <em>&ldquo;we moved this to version 2 we cannot have this currently&rdquo;</em></td></tr>
+            <tr><th scope="row">17 Aug 16:07</th><td><code>Fortune Okwu</code></td><td>BVA-I189 and BVA-I198 moved In progress &rarr; REVIEW/QA &mdash; both David's mobile items</td></tr>
+            <tr><th scope="row">18 Aug 13:38</th><td>David Samuel</td><td>BVA-I174 Add Money (Bank Transfer) Screens &rarr; In progress</td></tr>
+            <tr><th scope="row">18 Aug 13:48&ndash;13:49</th><td>David Samuel</td><td><strong>11 items moved REVIEW/QA &rarr; To do</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The 11 David reverted: BVA-I176/I177/I178/I179 (In-Chat Send Money), BVA-I180/I181/I182/I183 (In-Chat Request Money), BVA-I199/I200/I201 (Wallet Transaction History).</p>
+      <p>A three-minute, 24-item transition is a bulk triage, not twenty completions. Reporting it as throughput would repeat the <code>Last Modified</code> error this pipeline made on 05 Aug &mdash; the timestamps are what distinguish the two, which is why they are quoted here.</p>
+
+      <h3>1.3 The nine leaves now in review</h3>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Item</th><th scope="col">Owner</th><th scope="col">Moved by</th><th scope="col">Code evidence</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">BVA-I165 Preference Storage &amp; Precedence Logic</th><td>Ayomikun</td><td>Ayomikun, bulk</td><td class="hi"><strong>None.</strong> <code>/users/me/translation</code> is in <code>openapi.proposed.yaml</code> only</td></tr>
+            <tr><th scope="row">BVA-I169 Anchor Integration</th><td>Ayomikun</td><td>Ayomikun, bulk</td><td>Code exists &mdash; <code>POST /webhooks/anchor</code>, last changed <strong>28 June</strong></td></tr>
+            <tr><th scope="row">BVA-I173 Incoming Transfer Webhook Handling</th><td>Ayomikun</td><td>Ayomikun, bulk</td><td>Same controller, same <strong>28 June</strong> commit</td></tr>
+            <tr><th scope="row">BVA-I185 Wallet Summary Endpoint</th><td>Ayomikun</td><td>(14 Aug)</td><td class="hi"><strong>None on any pushed branch</strong> &mdash; see &sect;1.4</td></tr>
+            <tr><th scope="row">BVA-I189 Send Money (P2P) Screens</th><td>David</td><td><code>Fortune Okwu</code></td><td>Unmerged: <code>origin/BVA-I189</code>, 5 commits, tip 17 Aug</td></tr>
+            <tr><th scope="row">BVA-I198 Card Preview UI</th><td>David</td><td><code>Fortune Okwu</code></td><td class="hi"><strong>No branch exists</strong> for it in <code>beevia-mobile</code></td></tr>
+            <tr><th scope="row">BVA-I203 Hold/Escrow, Auto-Refund Job &amp; Notifications</th><td>Ayomikun</td><td>Ayomikun, bulk</td><td>Code exists &mdash; <code>escrow.service.ts</code> + expiry processor, predates <strong>2 Aug</strong></td></tr>
+            <tr><th scope="row">BVA-I221 Wallet Summary &amp; Transaction History Endpoint</th><td>Ayomikun</td><td>Ayomikun, bulk</td><td>Transaction history exists (<code>/wallets/transactions</code>); <strong>the summary half does not</strong></td></tr>
+            <tr><th scope="row">BVA-I223 Transfer Status Lookup &amp; Overdue-Pending Query</th><td>Ayomikun</td><td>Ayomikun, bulk</td><td class="hi"><strong>None.</strong> No such route in code or in either spec</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Not one of the nine maps to code merged during sprint 08-01.</strong> Three map to work that shipped weeks before it started. That is not an accusation of anything: items can legitimately be marked for review because the work was done earlier and is only now being verified. But it does mean queue depth cannot be read as sprint progress, and someone should say which of the two it is.</p>
+
+      <h3>1.4 BVA-I185: yesterday's open question, now closed</h3>
+      <div class="note">
+        <p>Yesterday's edition said the wallet-summary endpoint was not on <code>main</code> and explicitly noted the search &ldquo;says nothing about unmerged branches.&rdquo; That gap is now closed. Across <strong>every pushed branch</strong> of <code>beevia-api</code> (<code>main</code>, <code>feat/payments-direct-transfer</code>, <code>feat/bvn-lookup-cache</code>, <code>fix/upgrade-path-flip-after-provision</code>, <code>feat-super-admin-panel</code>, <code>victor</code>, dependabot):</p>
+        <p><code>src/wallets/wallets.controller.ts</code> is <strong>byte-identical to <code>main</code> on all of them</strong> &mdash; seven routes, unchanged since 22 July. No branch contains a wallet-summary route.</p>
+        <p style="margin-bottom:0">So the endpoint is not on <code>origin</code> at all. The only remaining benign explanation is work that has never been pushed. BVA-I185 has now been in REVIEW/QA for <strong>4 days</strong>, and BVA-I170 has been BLOCKED on it for <strong>5</strong>.</p>
+      </div>
+
+      <h3>1.5 The translation stack is blocked and may be out of scope</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Item</th><th scope="col">Status</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">BVA-I162 Translation Service Integration <em>(parent)</em></th><td>BLOCKED</td></tr>
+            <tr><th scope="row">BVA-I163 Translation Provider Integration</th><td>BLOCKED</td></tr>
+            <tr><th scope="row">BVA-I166 Translate-Message Endpoint <em>(parent)</em></th><td>BLOCKED</td></tr>
+            <tr><th scope="row">BVA-I167 Translate Endpoint</th><td>BLOCKED</td></tr>
+            <tr><th scope="row">BVA-I218 Live Auto-Translation in Conversations</th><td>To do, commented <em>&ldquo;moved to version 2&rdquo;</em></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>All four blocks were set in the same 16:04 bulk operation. <code>POST /translate</code> remains live and unchanged; what is blocked is the provider integration and the per-message endpoint behind it. Combined with the v2 comment, this reads as translation being deferred &mdash; but no decision is recorded anywhere this report can cite, so it is reported as a signal, not a fact.</p>
+
+      <h3>1.6 What is still missing</h3>
+      <div class="note">
+        <p><strong>Estimation points: 0 of 67</strong>, day 9 of 18. Recommended on days 2, 3, 4, 5 and 8.</p>
+        <p><strong>Epics: 8 of 67. Tags: 0 of 67.</strong> <strong>Blocked reasons:</strong> still none on any of the three blocked leaves.</p>
+        <p style="margin-bottom:0"><strong>No comment</strong> on either the bulk review move or the 11-item reversion.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s2">
+      <div class="sec__h"><span class="sec__n">02</span><h2>What shipped &mdash; and the integration bug</h2></div>
+      <div class="invert">
+        <p style="margin-bottom:0;max-width:64ch"><strong>Nothing merged.</strong> Zero commits to <code>main</code> in any of the five repos since yesterday's 11. The audit is clean at 108 consumer / 29 admin operations with no drift, and the four specs needed no edits &mdash; yesterday's three payment endpoints are already documented.</p>
+      </div>
+
+      <p><strong>But unmerged work exists, and this is the first edition able to quantify it:</strong></p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Repo</th><th scope="col">Branch</th><th scope="col" class="r">Commits ahead</th><th scope="col">Tip</th><th scope="col">Contents</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>beevia-mobile</code></th><td><code>origin/BVA-I189</code></td><td class="r hi">5</td><td>17 Aug</td><td>p2p screens, wallet implementation, recent wallet transactions, notifications</td></tr>
+            <tr><th scope="row"><code>beevia-mobile</code></th><td><code>origin/BVA-I184</code></td><td class="r">3</td><td>13 Aug</td><td>wallet implementation</td></tr>
+            <tr><th scope="row"><code>beevia-mobile</code></th><td><code>origin/BVA-I107</code></td><td class="r">2</td><td>11 Aug</td><td>fixes</td></tr>
+            <tr><th scope="row"><code>beevia-api</code></th><td>&mdash;</td><td class="r">&mdash;</td><td>&mdash;</td><td>all feature branches already merged; nothing outstanding</td></tr>
+            <tr><th scope="row"><code>beevia-admin</code></th><td class="hi"><strong>none</strong></td><td class="r">&mdash;</td><td>&mdash;</td><td class="hi"><strong>only <code>main</code> exists</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Repo staleness on 18 Aug: <code>beevia-api</code> 1d &middot; <code>beevia-db-schema</code> 1d &middot; <code>beevia-mobile</code> 7d on <code>main</code> (but 1d on <code>BVA-I189</code>) &middot; <code>beevia-admin-api</code> <strong>12d</strong> &middot; <code>beevia-admin</code> <strong>12d</strong>.</p>
+      <p>That <code>beevia-admin</code> has no branches at all is worth stating plainly: for the mobile workstream, &ldquo;silent <code>main</code>&rdquo; turned out to hide real branch activity. For the admin dashboard, there is nothing pushed anywhere to hide behind.</p>
+
+      <h3>2.1 The integration bug</h3>
+      <p><code>origin/BVA-I189</code> declares two payment URLs and calls both from <code>lib/features/wallet/services/wallet_service.dart</code>:</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Constant</th><th scope="col">URL</th><th scope="col">Status</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>recentWalletRecipientsUrl</code></th><td><code>/payments/recent-recipients</code></td><td>Correct &mdash; shipped 17 Aug</td></tr>
+            <tr><th scope="row"><code>walletTransactionsUrl</code></th><td><code>/payments/transactions</code></td><td class="hi"><strong>Does not exist</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>There is no <code>GET /payments/transactions</code> in the code, in <code>openapi.yaml</code>, or in <code>openapi.proposed.yaml</code>. Wallet transactions are served by <code>GET /wallets/transactions</code> and <code>GET /wallets/{walletId}/transactions</code>. The call is live in <code>wallet_service.dart</code>, not a leftover constant, so it will 404 against a real backend.</p>
+      <p>This is a one-line fix, and it is exactly the class of error a merged branch and a running CI would have surfaced days ago.</p>
+    </section>
+
+    <section class="sec" id="s3">
+      <div class="sec__h"><span class="sec__n">03</span><h2>Product-vs-PRD gap</h2></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">PRD capability</th><th scope="col">State</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Cross-currency conversion</th><td><strong>Not built.</strong> <code>PaymentService</code> resolves NGN unconditionally, including in the new <code>transfer()</code> path.</td></tr>
+            <tr><th scope="row">Virtual cards</th><td><strong>Not built.</strong> BVA-I198 is in review with no branch behind it.</td></tr>
+            <tr><th scope="row">International KYC tier</th><td><strong>Not built.</strong> Local Nigerian path only.</td></tr>
+            <tr><th scope="row">Consent management</th><td><strong>Not built.</strong></td></tr>
+            <tr><th scope="row">Payments read path</th><td><strong>Still missing.</strong> No <code>GET /payments</code>. The client branch's attempt to read transactions from <code>/payments/transactions</code> is a direct symptom of this gap.</td></tr>
+            <tr><th scope="row">Send-money client wiring</th><td><strong>Exists, unmerged.</strong> First <code>/payments</code> calls in the client, on <code>origin/BVA-I189</code>.</td></tr>
+            <tr><th scope="row">Message translation</th><td><strong>Live but blocked, possibly descoped</strong> &mdash; see &sect;1.5.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="sec" id="s4">
+      <div class="sec__h"><span class="sec__n">04</span><h2>Risks</h2></div>
+      <div class="stack">
+        <div class="finding"><div class="finding__n num">1</div><div><p><strong>Review-queue depth no longer means what it appears to mean.</strong> Nine leaves in review, zero traceable to sprint code, and the queue has never once drained across seven editions.</p></div></div>
+        <div class="finding"><div class="finding__n num">2</div><div><p><strong>Two contributors are silently contradicting each other on the board.</strong> 24 items moved in, 11 moved back out a day later, no comment on either action.</p></div></div>
+        <div class="finding"><div class="finding__n num">3</div><div><p><strong><code>origin/BVA-I189</code> will fail on a nonexistent endpoint</strong> the moment it is exercised, and it is the branch carrying the flagship capability.</p></div></div>
+        <div class="finding"><div class="finding__n num">4</div><div><p><strong>Unmerged work is accumulating.</strong> Five commits and 11 days of mobile work sit on a branch while <code>main</code> looks idle. Long-lived branches are how integration bugs like &sect;2.1 survive.</p></div></div>
+        <div class="finding"><div class="finding__n num">5</div><div><p><strong>BVA-I185 is 4 days in review with no code on any pushed branch</strong>, and blocks BVA-I170 at 5 days.</p></div></div>
+        <div class="finding"><div class="finding__n num">6</div><div><p><strong>The admin dashboard has no code and now demonstrably no branches</strong> &mdash; 12 days silent, and the workstream still has no owned leaf.</p></div></div>
+        <div class="finding"><div class="finding__n num">7</div><div><p><strong>Translation may have been descoped by comment rather than by decision</strong> (&sect;1.5).</p></div></div>
+        <div class="finding"><div class="finding__n num">8</div><div><p><strong>Estimation remains 0/67</strong> on day 9; scope-fit for the last 10 days cannot be defended numerically.</p></div></div>
+      </div>
+    </section>
+
+    <section class="sec" id="s5">
+      <div class="sec__h"><span class="sec__n">05</span><h2>Previous recommendations &mdash; where they stand</h2></div>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Recommendation from 17 Aug</th><th scope="col">Status on 18 Aug</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Locate BVA-I185 &mdash; unmerged branch, or item ahead of the work?</th><td class="hi">Answered, negatively. Not on any pushed branch of <code>beevia-api</code> (&sect;1.4). Still in review.</td></tr>
+            <tr><th scope="row">Repeat the small-branch &rarr; PR &rarr; merge pattern</th><td class="hi">Not repeated. Zero merges today, after 11 commits yesterday.</td></tr>
+            <tr><th scope="row">Point the mobile work at the API that now exists</th><td>Underway, unmerged. <code>origin/BVA-I189</code> has the first <code>/payments</code> calls &mdash; one correct, one pointing at a nonexistent route (&sect;2.1).</td></tr>
+            <tr><th scope="row">Name an accept/reject owner for REVIEW/QA and cap WIP</th><td class="hi">Not done, and it got worse. The queue went 1 &rarr; 9 with no named owner, then 11 items were reverted by a second person.</td></tr>
+            <tr><th scope="row">Ask about the two admin repos</th><td>No change. 12 days silent; confirmed today that <code>beevia-admin</code> has no branches either.</td></tr>
+            <tr><th scope="row">Estimate or stop measuring</th><td class="hi">Not done. Still 0/67.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>One answered, four open, one that moved backwards.</p>
+    </section>
+
+    <section class="sec" id="s6">
+      <div class="sec__h"><span class="sec__n">06</span><h2>What I would do today</h2></div>
+      <div class="stack">
+        <div class="finding"><div class="finding__n num">1</div><div><p><strong>Fix one line and merge <code>BVA-I189</code>.</strong> Change <code>/payments/transactions</code> to <code>/wallets/transactions</code>, open the PR, merge. That single action converts 11 days of invisible work into build evidence and would move the MVP number next edition.</p></div></div>
+        <div class="finding"><div class="finding__n num">2</div><div><p><strong>Decide who may move an item into REVIEW/QA, and say it out loud.</strong> Yesterday one person moved 24 items in; today another moved 11 back. Both are acting reasonably under different definitions. The cost is not the disagreement, it is that it is happening silently.</p></div></div>
+        <div class="finding"><div class="finding__n num">3</div><div><p><strong>Split the review queue into &ldquo;already shipped, needs verifying&rdquo; and &ldquo;not built yet.&rdquo;</strong> &sect;1.3 does this for the current nine; the board should carry the distinction itself, otherwise queue depth is unreadable.</p></div></div>
+        <div class="finding"><div class="finding__n num">4</div><div><p><strong>Get a straight answer on BVA-I185.</strong> Four days in review, nothing on <code>origin</code>, and it has blocked David for five days. If it is unpushed local work, push it; if it was moved prematurely, move it back.</p></div></div>
+        <div class="finding"><div class="finding__n num">5</div><div><p><strong>Record the translation decision.</strong> If live auto-translation is v2, put it in the sprint scope rather than in a comment on one item, and say whether capability #3 stays in the MVP rubric.</p></div></div>
+        <div class="finding"><div class="finding__n num">6</div><div><p><strong>Ask about <code>beevia-admin</code> directly.</strong> Twelve days, no commits, no branches, no owned board items. Fourth consecutive edition raising it.</p></div></div>
+      </div>
+    </section>
+
+    <section class="sec" id="method">
+      <div class="sec__h"><span class="sec__n">&mdash;</span><h2>Appendix &mdash; method and readiness rubric</h2></div>
+
+      <p><strong>Pipeline.</strong> <code>beevia-refresh</code>: Zoho export (67 items, <code>--modified --activity</code>) &rarr; fast-forward-only sync of five product repos (already current) &rarr; deterministic API/spec audit (<strong>clean, no drift, no spec edits needed</strong>) &rarr; this report.</p>
+
+      <p><strong>Extended evidence this edition.</strong> Because the central question was whether review items correspond to real work, the usual <code>origin/main</code> check was widened to <strong>every pushed branch</strong> on <code>beevia-api</code>, <code>beevia-mobile</code> and <code>beevia-admin</code>, using <code>git diff</code> against <code>main</code> per branch and <code>git show &lt;branch&gt;:&lt;path&gt;</code> to read files directly. That is how &sect;1.4 closes yesterday's caveat and how &sect;2.1 was found.</p>
+
+      <p><strong>Flow measurement.</strong> Every transition, actor and timestamp comes from the activity sidecar's <code>actiontime</code>. The three-minute window in &sect;1.2 is what identifies the bulk operation; a snapshot diff alone would have reported it as eight items of progress.</p>
+
+      <p><strong>A limit of the audit line.</strong> The audit reports &ldquo;0 left REVIEW/QA&rdquo; between snapshots. That is true of the endpoints but hides the churn: 20 items entered and 11 left between the two exports. Both facts are reported above rather than only the tidier one.</p>
+
+      <h3>Sources</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Stream</th><th scope="col">Artifact</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Board</th><td><code>beevia-sprint-board-2026-08-18.csv</code> &mdash; 67 rows, 43 leaves; <code>beevia-activity-2026-08-18.json</code></td></tr>
+            <tr><th scope="row">Code</th><td>Five repos at <code>origin/main</code>, zero commits since 17 Aug; plus all pushed branches</td></tr>
+            <tr><th scope="row">Specs</th><td><code>openapi.yaml</code> (108), <code>openapi.proposed.yaml</code> (52), <code>openapi.admin.yaml</code> (29), <code>openapi.admin.proposed.yaml</code> (23) &mdash; validated, no drift</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="mvp-method">MVP readiness &mdash; how the &asymp;46% is computed</h3>
+      <p>Eleven capabilities from PRD &sect;1.2/&sect;11 with <strong>frozen weights</strong>, each scored 0&ndash;1 from build evidence. Target date 2026-09-01 is provisional, set by the owner on 2026-08-07.</p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col" class="r">#</th><th scope="col">Capability</th><th scope="col" class="r">Weight</th><th scope="col" class="r">Score</th><th scope="col">Evidence</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" class="r">1</th><td>E2EE messaging</td><td class="r">15</td><td class="r">0.9</td><td>Conversation/message/key/attachment paths live; client crypto, socket and attachment layers present</td></tr>
+            <tr><th scope="row" class="r">2</th><td>Voice &amp; video calling</td><td class="r">8</td><td class="r">0.8</td><td>4 call endpoints live; call screens present</td></tr>
+            <tr><th scope="row" class="r">3</th><td>Message translation</td><td class="r">7</td><td class="r">0.7</td><td><code>POST /translate</code> live; batch + language list proposed. <strong>Provider integration and per-message endpoint now BLOCKED; live auto-translation commented &ldquo;v2&rdquo;</strong> &mdash; unscored pending an explicit decision</td></tr>
+            <tr><th scope="row" class="r">4</th><td>Local KYC tier (BVN)</td><td class="r">8</td><td class="r">0.9</td><td>KYC/upgrade endpoints + provider webhook live; full client onboarding; BVN cache added 17 Aug</td></tr>
+            <tr><th scope="row" class="r">5</th><td>International KYC tier</td><td class="r">6</td><td class="r hi">0.0</td><td>proposed only</td></tr>
+            <tr><th scope="row" class="r">6</th><td>Multi-currency wallets</td><td class="r">12</td><td class="r">0.45</td><td>NGN only; wallets controller unchanged since 22 July <em>on every branch</em>; no wallet summary anywhere</td></tr>
+            <tr><th scope="row" class="r">7</th><td>Send / request / receive</td><td class="r">12</td><td class="r">0.50</td><td>API write path near-complete after 17 Aug. Client wiring now <strong>exists but is unmerged</strong> (<code>origin/BVA-I189</code>) and contains a wrong URL &mdash; leading indicator, not yet a score</td></tr>
+            <tr><th scope="row" class="r">8</th><td>Cross-currency FX</td><td class="r">12</td><td class="r hi">0.0</td><td>proposed only</td></tr>
+            <tr><th scope="row" class="r">9</th><td>Virtual cards</td><td class="r">10</td><td class="r hi">0.0</td><td>proposed only; BVA-I198 in review with no branch behind it</td></tr>
+            <tr><th scope="row" class="r">10</th><td>Consent management</td><td class="r">4</td><td class="r hi">0.0</td><td>no endpoint or record anywhere</td></tr>
+            <tr><th scope="row" class="r">11</th><td>Admin oversight</td><td class="r">6</td><td class="r">0.45</td><td>29/52 admin ops; both admin repos 12 days silent, no branches</td></tr>
+            <tr><th scope="row" class="r hi"></th><td class="hi">Weighted total</td><td class="r hi">100</td><td class="r hi">46.1</td><td class="hi">&asymp;46%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Weights are frozen so the number stays comparable. Scores measure <strong>merged, reachable build evidence</strong> &mdash; never board status, items in review, unmerged branches, or design completion. Branch work is reported in the narrative and scored only when it lands.</p>
+
+      <h3>Team performance &mdash; what these figures do not measure</h3>
+      <div class="note">
+        <p style="margin-bottom:0">With 0/67 estimation points there is no workload normalisation. &ldquo;Commits to <code>main</code>&rdquo; reads as zero for David today, and that is precisely the metric this edition proves misleading: five commits exist on his branch. The bulk board operation is a process observation about definitions, not about anyone's effort or output, and both contributors' readings of &ldquo;ready for review&rdquo; are defensible.</p>
+      </div>
+
+      <h3>What this report cannot tell you</h3>
+      <div class="note">
+        <p><strong>Whether BVA-I185's endpoint exists as unpushed local work.</strong> Every pushed branch has been checked; local clones cannot be.</p>
+        <p><strong>Why the 11 items were reverted</strong> &mdash; no comment was left.</p>
+        <p><strong>Whether translation is formally descoped</strong>, or one person's view recorded in a comment.</p>
+        <p><strong>Whether the mobile branch works beyond the URL defect</strong> &mdash; no tests were run, and testing remains out of scope for scoring.</p>
+        <p style="margin-bottom:0"><strong>Velocity or scope-fit</strong> for the remaining 10 days &mdash; still 0/67 estimated.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="foot">
+  <span class="barcode barcode--lg" aria-hidden="true"></span>
+  <span>Beevia project status &middot; 2026-08-18 &middot; Sprint 08-01, day 9</span>
+  <span><a href="index.html">All frames</a></span>
+</footer>
+
+<script src="ui.js"></script>
+</body>
+</html>

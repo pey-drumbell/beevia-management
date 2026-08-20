@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beevia — Project Status — 17 Aug 2026</title>
+<meta name="description" content="Code shipped for the first time in a week — 11 commits, three PRs, the direct-transfer API — and the blocked P2P item cleared hours later. But the item in REVIEW/QA has no deliverable on main.">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!--
+  DIRECTION CONTRACT · seed 6c4a0ed0 (carried forward unchanged)
+  THESIS: A status report whose subject is the disagreement between its sources.
+  STORY: Delivery restarts and immediately clears a blocker — the pattern that
+  works. Against it, an item sits in a verification state whose deliverable
+  cannot be found on main. The board and the code disagree in both directions
+  at once, and this edition names which side the evidence is on.
+-->
+
+<div class="topbar">
+    <div class="topbar__mark">
+      <span class="barcode" aria-hidden="true"></span>
+      <span class="topbar__wordmark">Beevia</span>
+    </div>
+    <nav class="topbar__nav label" aria-label="Report">
+      <a href="index.html">Archive</a>
+      <a href="#overview">Overview</a>
+      <a href="#s7"><span>What to do</span></a>
+      <a href="#method">Method</a>
+    </nav>
+</div>
+
+<header class="masthead">
+  <div class="field">
+    <div class="field__rail field__rail--l">
+      <dl>
+        <dt>Commits shipped</dt>
+        <dd>11 · 3 PRs</dd>
+        <dt>API consumer</dt>
+        <dd>108 · +3</dd>
+        <dt>In progress</dt>
+        <dd>7 of 43 · 16%</dd>
+        <dt>Left review</dt>
+        <dd>0</dd>
+      </dl>
+    </div>
+
+    <div class="field__stage">
+      <div class="field__title">
+        <h1>Project<br>Status</h1>
+      </div>
+      <div class="field__meta num">
+        <span>2026-08-17</span>
+        <span>Sprint 08-01</span>
+        <span>10&ndash;28 Aug &middot; day 8 of 18</span>
+        <span>Delivery restarts</span>
+      </div>
+    </div>
+
+    <div class="field__rail field__rail--r">
+      <dl>
+        <dt>Spec drift</dt>
+        <dd>Found &middot; resolved</dd>
+        <dt>Blocked</dt>
+        <dd>1 &middot; was 2</dd>
+        <dt>Review / QA</dt>
+        <dd>1 &middot; age 3d</dd>
+        <dt>Estimated</dt>
+        <dd>0 / 67</dd>
+      </dl>
+    </div>
+  </div>
+</header>
+
+<section class="mvp" aria-label="MVP readiness estimate">
+  <div class="mvp__head">
+    <span class="label">MVP readiness &mdash; estimate</span>
+    <span class="mvp__pct num">&asymp;46%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 15 days out</span>
+  </div>
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 46 percent built. Send, request and receive gained a fifth of a point this cycle on three shipped payment endpoints. Communication capabilities largely built end to end; international KYC, cross-currency FX, virtual cards and consent management are not started.">
+    <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.9"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.8"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:7" title="Message translation — 0.7"><i style="width:70%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.9"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
+    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.45"><i style="width:45%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.50 (up from 0.45)"><i style="width:50%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
+    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0"></span>
+    <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
+    <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.45"><i style="width:45%"></i></span>
+  </div>
+  <p class="mvp__read"><strong>Capability #7 moves 0.45 &rarr; 0.50</strong> on named evidence &mdash; <code>POST /payments/transfer</code> plus the recipient picker shipped, so the send-money API is near-complete. The headline holds at &asymp;46% (45.5 &rarr; 46.1 weighted) because the client has <strong>zero <code>/payments</code> calls</strong>: a capability the user cannot reach does not score as built. Segment width = weight &middot; fill = build evidence. <a href="#mvp-method">Method and capability table</a>.</p>
+</section>
+
+<div class="shell">
+  <nav class="contents label" aria-label="Contents">
+    Contents
+    <ol>
+      <li><a href="#overview"><span>00</span> Quick overview</a></li>
+      <li><a href="#s1"><span>01</span> Sprint 08-01 &middot; delivery restarts</a></li>
+      <li><a href="#s2"><span>02</span> What shipped</a></li>
+      <li><a href="#s3"><span>03</span> Product-vs-PRD gap</a></li>
+      <li><a href="#s4"><span>04</span> Risks</a></li>
+      <li><a href="#s5"><span>05</span> Spec updates made</a></li>
+      <li><a href="#s6"><span>06</span> Previous recommendations</a></li>
+      <li><a href="#s7"><span>07</span> What I would do today</a></li>
+      <li><a href="#method"><span>&mdash;</span> Method</a></li>
+    </ol>
+  </nav>
+
+  <main class="doc">
+
+    <section class="sec" id="overview">
+      <div class="invert" style="margin-bottom:var(--s-6)">
+        <p class="lede">Code shipped for the first time in a week &mdash; 11 commits, three merged PRs, and the direct-transfer API the send-money flow needed &mdash; and the blocked P2P item cleared hours later. But the item sitting in REVIEW/QA has no deliverable on <code>main</code> to review.</p>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">08-01 movement, 14 &rarr; 17 Aug</caption>
+          <thead>
+            <tr><th scope="col">Measure</th><th scope="col" class="r">14 Aug</th><th scope="col" class="r">17 Aug</th><th scope="col" class="r">&Delta;</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Items (rows / leaves)</th><td class="r">67 / 43</td><td class="r">67 / 43</td><td class="r">0 / 0</td></tr>
+            <tr><th scope="row">To do (leaves)</th><td class="r">35</td><td class="r">33</td><td class="r">&minus;2</td></tr>
+            <tr><th scope="row">In progress (leaves)</th><td class="r">4</td><td class="r hi">7</td><td class="r hi">+3</td></tr>
+            <tr><th scope="row">Blocked (leaves)</th><td class="r">2</td><td class="r hi">1</td><td class="r hi">&minus;1</td></tr>
+            <tr><th scope="row">Review / QA (leaves)</th><td class="r">1</td><td class="r">1</td><td class="r hi">0 &mdash; nothing left</td></tr>
+            <tr><th scope="row">Done (leaves)</th><td class="r">1</td><td class="r">1</td><td class="r">0</td></tr>
+            <tr><th scope="row">API surface (consumer)</th><td class="r">105</td><td class="r hi">108</td><td class="r hi">+3</td></tr>
+            <tr><th scope="row">Commits, product repos</th><td class="r">0</td><td class="r hi">11</td><td class="r hi">+11</td></tr>
+            <tr><th scope="row">Estimation points set</th><td class="r">0 / 67</td><td class="r">0 / 67</td><td class="r">still zero</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">Team at a glance</caption>
+          <thead>
+            <tr>
+              <th scope="col">Person</th><th scope="col">Owns</th>
+              <th scope="col">Current leaf state</th>
+              <th scope="col" class="r">Commits since 14 Aug</th><th scope="col">Flag</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Ayomikun Araoye</th><td>backend + admin API</td><td>16 To do, 2 In progress, 1 Review/QA</td><td class="r hi">11</td><td>Shipped the whole cycle's code in one day, via 3 reviewed PRs</td></tr>
+            <tr><th scope="row">David Samuel</th><td>mobile</td><td>6 To do, 3 In progress, <strong>1 Blocked</strong></td><td class="r">0</td><td>BVA-I170 blocked 4 days; <code>beevia-mobile</code> untouched since his 6 Aug commit</td></tr>
+            <tr><th scope="row">Philip Chidera</th><td>design</td><td>11 To do, 2 In progress, 1 Done</td><td class="r">&mdash;</td><td>Picked up both dark-mode items after midnight on 17 Aug</td></tr>
+            <tr><th scope="row">Promise Udo</th><td>admin dashboard</td><td>one co-assigned parent Story, no owned leaf</td><td class="r">0</td><td><code>beevia-admin</code> now <strong>11 days</strong> silent</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <span class="label">The question for standup</span>
+        <p style="margin-bottom:0">BVA-I185 &ldquo;Wallet Summary Endpoint&rdquo; has been in REVIEW/QA since 14 Aug, but <strong>no wallet-summary route exists anywhere in <code>beevia-api</code></strong> &mdash; the wallets controller has not changed since 22 July. What is being reviewed, and is the work on an unmerged branch? This is very likely the same dependency still blocking David's BVA-I170.</p>
+      </div>
+
+      <h3>The three things worth knowing</h3>
+
+      <div class="stack">
+        <div class="finding">
+          <div class="finding__n num">1</div>
+          <div>
+            <p><strong>The board/code divergence broke, decisively, in the right direction.</strong> Ayomikun landed 11 commits across <code>beevia-api</code> and <code>beevia-db-schema</code> today, all through merged PRs (#20, #21, #22): the direct-transfer payments surface, a BVN-lookup cache to shield the YouVerify rate limit, and a fix flipping accounts to banking at provisioning rather than at the email step. First product code since 10 Aug &mdash; and it answers the 14 Aug recommendation to ask for reviewable PRs. That one worked.</p>
+          </div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">2</div>
+          <div>
+            <p><strong>The shipped API unblocked the board within hours.</strong> <code>POST /payments/transfer</code> merged at 06:34 UTC; BVA-I188 &ldquo;P2P Transfer&rdquo; came off BLOCKED at 12:59 and into In progress at 13:00. The sequence is consistent with the missing backend having been the actual blocker &mdash; the answer the 14 Aug edition asked for and could not get.</p>
+          </div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">3</div>
+          <div>
+            <p><strong>One item is in a verification state with nothing to verify.</strong> BVA-I185 was marked Done on 13 Aug, reopened into REVIEW/QA on 14 Aug, and has sat there three days. The wallets controller still exposes the same seven routes it had on 22 July, and this cycle's +3 API growth is entirely payments. Either the endpoint is on an unmerged branch or the item's state is ahead of its work &mdash; and until it resolves, BVA-I170 has no endpoint to wire.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="invert">
+        <span class="label" style="display:block;margin-bottom:var(--s-3)">If you read nothing else</span>
+        <p style="margin-bottom:0;font-variation-settings:'wdth' 75,'wght' 500;max-width:64ch">Delivery restarted and immediately cleared a blocker &mdash; that is the model to repeat. The remaining drag is a review queue of one that has never drained and whose contents cannot be located on <code>main</code>.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s1">
+      <div class="sec__h"><span class="sec__n">01</span><h2>Sprint 08-01 &mdash; delivery restarts, review does not</h2></div>
+
+      <h3>1.1 Status, day 8</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Status</th><th scope="col" class="r">Leaves</th><th scope="col" class="r">Share</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">To do</th><td class="r">33</td><td class="r">77%</td></tr>
+            <tr><th scope="row">In progress</th><td class="r hi">7</td><td class="r hi">16%</td></tr>
+            <tr><th scope="row">Blocked</th><td class="r">1</td><td class="r">2%</td></tr>
+            <tr><th scope="row">Review / QA</th><td class="r">1</td><td class="r">2%</td></tr>
+            <tr><th scope="row">Done</th><td class="r">1</td><td class="r">2%</td></tr>
+            <tr><th scope="row" class="hi">Total</th><td class="r hi">43</td><td class="r"></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>67 rows: 24 parent Stories grouping 43 leaf Tasks. Leaf counts used throughout.</p>
+
+      <h3>1.2 What moved since 14 Aug</h3>
+      <p>All timings from the activity sidecar, never <code>Last Modified</code>. The actor who clicked a transition is not always the item's owner; both are shown.</p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Item</th><th scope="col">Owner</th><th scope="col">Transition</th><th scope="col">Actor</th><th scope="col">When (UTC)</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">BVA-I159 Dark Mode Design &mdash; Core Nav &amp; Home</th><td>Philip</td><td>To do &rarr; In progress</td><td>Philip</td><td>17 Aug 00:14</td></tr>
+            <tr><th scope="row">BVA-I160 Core Screens Dark Mode</th><td>Philip</td><td>To do &rarr; In progress</td><td>Philip</td><td>17 Aug 00:14</td></tr>
+            <tr><th scope="row">BVA-I187 Send Money to Another Beevia User <em>(parent)</em></th><td>Philip, David, Ayomikun</td><td>BLOCKED &rarr; To do &rarr; In progress</td><td>David</td><td>17 Aug 12:59 &rarr; 13:00</td></tr>
+            <tr><th scope="row">BVA-I188 P2P Transfer</th><td>Ayomikun</td><td class="hi">BLOCKED &rarr; To do &rarr; In progress</td><td>David</td><td>17 Aug 12:59 &rarr; 13:00</td></tr>
+            <tr><th scope="row">BVA-I194 External Transfer Screens</th><td>David</td><td>To do &rarr; In progress</td><td>David</td><td>17 Aug 13:57</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>No items were added or removed. WIP rose from 4 to 7 leaves.</p>
+
+      <h3>1.3 The blocked item and the review item are probably the same dependency</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">State</th><th scope="col">Item</th><th scope="col">Owner</th><th scope="col">Since</th><th scope="col" class="r">Age</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">BLOCKED</th><td>BVA-I170 Wire Real Response into Wallet Screen</td><td>David</td><td>13 Aug 16:06</td><td class="r hi">4d</td></tr>
+            <tr><th scope="row">REVIEW/QA</th><td>BVA-I185 Wallet Summary Endpoint</td><td>Ayomikun</td><td>14 Aug 12:19</td><td class="r hi">3d</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>BVA-I170 is the client-side wiring of a wallet response; BVA-I185 is the endpoint that would supply it. The board records no reason field, so the link is <strong>inference</strong> &mdash; but it is the reading the evidence supports, and it is testable at standup with one question.</p>
+      <div class="note">
+        <span class="label">What the code says about BVA-I185</span>
+        <p><code>beevia-api/src/wallets/wallets.controller.ts</code> was <strong>last modified 22 July</strong> and exposes seven routes: <code>GET /wallets</code>, <code>POST /wallets</code>, <code>GET /wallets/payin-details</code>, <code>GET /wallets/beneficiaries</code>, <code>GET /wallets/transactions</code>, <code>GET /wallets/{walletId}/transactions</code>, <code>POST /wallets/withdraw</code>.</p>
+        <p>A repo-wide search for a wallet-summary route or handler returns nothing. This cycle's +3 operations are all under <code>/payments</code>.</p>
+        <p style="margin-bottom:0">So the deliverable is not on <code>main</code>. The benign explanation is an unmerged branch; the report cannot distinguish that from an item whose state is ahead of its work.</p>
+      </div>
+
+      <h3>1.4 Review still has an entry and no exit</h3>
+      <p>The audit flags it for the second consecutive edition: <strong>nothing has left REVIEW/QA between snapshots.</strong> Queue depth is 1, median age 3 days. One item is not a crisis, but 0702 ended with 78 items in this state, so the pattern is worth stopping early rather than late. No accept/reject owner has been named &mdash; the 14 Aug recommendation on this is unresolved.</p>
+
+      <h3>1.5 What is still missing</h3>
+      <div class="note">
+        <p><strong>Estimation points: 0 of 67</strong>, day 8 of 18. Recommended on days 2, 3, 4 and 5. The sprint will end without a velocity baseline.</p>
+        <p><strong>Epics: 8 of 67</strong> (all <code>Admin</code>), unchanged since 13 Aug. <strong>Tags: 0 of 67.</strong></p>
+        <p style="margin-bottom:0"><strong>Blocked-reason field:</strong> still absent from the exported evidence.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s2">
+      <div class="sec__h"><span class="sec__n">02</span><h2>What shipped this cycle</h2></div>
+      <div class="invert">
+        <p style="margin-bottom:0;max-width:64ch"><strong>11 commits, all on 17 Aug</strong>, all in <code>beevia-api</code> and <code>beevia-db-schema</code>, all authored by Ayomikun (as <code>Phoenixdadhev</code>, merged under <code>Ayomikun Araoye</code>). <code>beevia-db-schema</code> released v0.0.16 and v0.0.17.</p>
+      </div>
+
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">PR</th><th scope="col">What</th><th scope="col">Repos</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">#21</th><td><code>feat(payments)</code>: direct transfer + recipient search/recent for the Send Money flow</td><td><code>beevia-api</code></td></tr>
+            <tr><th scope="row">#22</th><td><code>feat(kyc)</code>: cache BVN lookups to shield the YouVerify rate limit, backed by a new <code>bvn_lookups</code> table + <code>BvnLookupDal</code></td><td><code>beevia-api</code>, <code>beevia-db-schema</code></td></tr>
+            <tr><th scope="row">#20</th><td><code>fix(upgrade)</code>: flag the account as banking at provisioning, not at the email step</td><td><code>beevia-api</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>API surface: 105 &rarr; 108 consumer operations</h3>
+      <p>The audit found all three undocumented; they are now specified in <code>openapi.yaml</code> (see &sect;5).</p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Route</th><th scope="col">Contract</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>POST /payments/transfer</code></th><td>Direct, non-escrow move to another banking user. Targets a <strong>user id</strong>, not a phone. Idempotent on <code>idempotencyKey</code> (stored as the payment's <code>reference</code>). One balanced SERIALIZABLE ledger transaction; lands <code>completed</code>. Step-up required. NGN&rarr;NGN only.</td></tr>
+            <tr><th scope="row"><code>GET /payments/recipients</code></th><td>Recipient picker search, banking-enabled users only, &le;20 rows, <strong>never returns a phone</strong>.</td></tr>
+            <tr><th scope="row"><code>GET /payments/recent-recipients</code></th><td>Distinct recent send counterparties, newest first, &le;15 rows, drawn from the last 60 sends.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Repo staleness on 17 Aug</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Repo</th><th scope="col">Last commit</th><th scope="col" class="r">Days</th><th scope="col">Note</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>beevia-api</code></th><td>17 Aug</td><td class="r hi">0</td><td>Ayomikun, 3 PRs</td></tr>
+            <tr><th scope="row"><code>beevia-db-schema</code></th><td>17 Aug</td><td class="r hi">0</td><td>Ayomikun + release bot</td></tr>
+            <tr><th scope="row"><code>beevia-mobile</code></th><td>11 Aug</td><td class="r">6</td><td>owner's test/pipeline commit; David's last was 6 Aug</td></tr>
+            <tr><th scope="row"><code>beevia-admin-api</code></th><td>6 Aug</td><td class="r hi">11</td><td></td></tr>
+            <tr><th scope="row"><code>beevia-admin</code></th><td>6 Aug</td><td class="r hi">11</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The two admin repos have now been silent for eleven days. This measures visible <code>main</code>, not local work.</p>
+    </section>
+
+    <section class="sec" id="s3">
+      <div class="sec__h"><span class="sec__n">03</span><h2>Product-vs-PRD gap</h2></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">PRD capability</th><th scope="col">State</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Cross-currency conversion</th><td><strong>Not built.</strong> <code>PaymentService</code> still resolves NGN unconditionally via <code>activeNgn()</code> &mdash; including in the new <code>transfer()</code> path.</td></tr>
+            <tr><th scope="row">Virtual cards</th><td><strong>Not built.</strong> Board/design work active (BVA-I198, I207, I209); no provider-backed module or table shipped.</td></tr>
+            <tr><th scope="row">International KYC tier</th><td><strong>Not built.</strong> Local Nigerian path only, now with a BVN-lookup cache.</td></tr>
+            <tr><th scope="row">Consent management</th><td><strong>Not built.</strong></td></tr>
+            <tr><th scope="row">Payments read path</th><td><strong>Still missing, and now more load-bearing.</strong> No <code>GET /payments</code>. The new transfer settles immediately and recovers only by replaying the idempotency key, so a client that loses the response cannot confirm the money moved. Recorded in <code>api-rfc.md</code> &sect;4.4.</td></tr>
+            <tr><th scope="row">Send-money client wiring</th><td><strong>Not built.</strong> The API is nearly complete; <code>beevia-mobile/lib</code> has zero <code>/payments</code> references.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="sec" id="s4">
+      <div class="sec__h"><span class="sec__n">04</span><h2>Risks</h2></div>
+      <div class="stack">
+        <div class="finding"><div class="finding__n num">1</div><div><p><strong>BVA-I185 sits in REVIEW/QA with no locatable deliverable on <code>main</code></strong>, and it plausibly gates BVA-I170. Highest-value question of the day.</p></div></div>
+        <div class="finding"><div class="finding__n num">2</div><div><p><strong>The review queue has still never drained</strong> &mdash; second consecutive edition with zero exits and no named accept/reject owner.</p></div></div>
+        <div class="finding"><div class="finding__n num">3</div><div><p><strong>The client is now the binding constraint on the flagship capability.</strong> The send-money API is essentially done; the mobile side has not been touched since 6 Aug by its owner. Capability #7 cannot progress further from the backend.</p></div></div>
+        <div class="finding"><div class="finding__n num">4</div><div><p><strong>Both admin repos are eleven days silent</strong>, and the admin-dashboard workstream still has no owned leaf on the board.</p></div></div>
+        <div class="finding"><div class="finding__n num">5</div><div><p><strong>Delivery is concentrated in one person.</strong> All 11 commits came from Ayomikun, who also holds 19 of 43 leaves, the review item, and both backend gates. A bus-factor and sequencing risk, not a performance observation.</p></div></div>
+        <div class="finding"><div class="finding__n num">6</div><div><p><strong>Estimation remains 0/67</strong> on day 8; scope-fit for the remaining 11 days cannot be defended numerically.</p></div></div>
+        <div class="finding"><div class="finding__n num">7</div><div><p><strong>WIP rose from 4 to 7 leaves while throughput stayed at zero completions.</strong> Starting more work while nothing finishes is how 0702's queue formed.</p></div></div>
+      </div>
+    </section>
+
+    <section class="sec" id="s5">
+      <div class="sec__h"><span class="sec__n">05</span><h2>Spec and document updates made this cycle</h2></div>
+      <p>The audit found drift and it has been resolved in this repo. <strong>No service-repo files were touched.</strong></p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">File</th><th scope="col">Change</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>openapi.yaml</code></th><td>Added <code>POST /payments/transfer</code> with a new <code>TransferRequest</code> schema, plus <code>GET /payments/recipients</code> and <code>GET /payments/recent-recipients</code> &mdash; both reusing the existing <code>PublicProfileListOk</code> response, since <code>PublicProfile</code> already matches the code's <code>ChatUserProfile</code> projection exactly. Implemented count 105 &rarr; <strong>108</strong>. No <code>x-beevia-*</code> markers; the file stays client-generation safe.</td></tr>
+            <tr><th scope="row"><code>openapi.proposed.yaml</code></th><td>Unchanged. None of the three routes had been proposed, so nothing needed moving; still 52 operations.</td></tr>
+            <tr><th scope="row"><code>api-rfc.md</code></th><td>&sect;3 Payments row 6 &rarr; <strong>9</strong> with the three additions named, total 105 &rarr; <strong>108</strong>; &sect;6.7 inventory extended; &sect;4.4 extended to record that immediate-settlement transfer makes the missing read path <em>more</em> load-bearing, not less.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Post-update audit: <code>code=108 spec=108</code> for <code>beevia-api</code>, <code>29/29</code> for <code>beevia-admin-api</code>, all four specs valid, <strong>no drift</strong>.</p>
+    </section>
+
+    <section class="sec" id="s6">
+      <div class="sec__h"><span class="sec__n">06</span><h2>Previous recommendations &mdash; where they stand</h2></div>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Recommendation from 14 Aug</th><th scope="col">Status on 17 Aug</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Add a reason, owner and unblock date to BVA-I170 and BVA-I188</th><td>Half done by delivery, not by process. BVA-I188 cleared hours after the transfer endpoint merged. BVA-I170 is still blocked at 4 days, and no reason field was added to either.</td></tr>
+            <tr><th scope="row">Assign an accept/reject owner for BVA-I185 and define exit evidence</th><td class="hi">Not done. Three days in review, zero exits, and the deliverable is not on <code>main</code>.</td></tr>
+            <tr><th scope="row">Ask for reviewable branches or small PRs</th><td class="hi">Done, and it worked. Three PRs merged, 11 commits, the API surface moved for the first time since 07 Aug. Repeat this.</td></tr>
+            <tr><th scope="row">Confirm the message-translation architecture decision</th><td>No evidence either way. <code>POST /translate</code> unchanged; no board or code movement on the on-device direction.</td></tr>
+            <tr><th scope="row">Choose whether 08-01 will be estimated</th><td class="hi">Not done. Still 0/67 on day 8.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>One landed and produced the cycle's only delivery; one was overtaken by events; three are open.</p>
+    </section>
+
+    <section class="sec" id="s7">
+      <div class="sec__h"><span class="sec__n">07</span><h2>What I would do today</h2></div>
+      <div class="stack">
+        <div class="finding"><div class="finding__n num">1</div><div><p><strong>Locate BVA-I185.</strong> One question: is the wallet-summary endpoint on an unmerged branch, or has the item been moved ahead of the work? Either answer unblocks David's BVA-I170; not answering keeps a 4-day block alive.</p></div></div>
+        <div class="finding"><div class="finding__n num">2</div><div><p><strong>Repeat this morning's pattern.</strong> Small branch &rarr; PR &rarr; merge produced the entire week's visible delivery in one day and cleared a blocker. Ask for the same shape for the wallet summary and the mobile work.</p></div></div>
+        <div class="finding"><div class="finding__n num">3</div><div><p><strong>Point the mobile work at the API that now exists.</strong> <code>/payments/recipients</code>, <code>/payments/recent-recipients</code> and <code>/payments/transfer</code> are live and are exactly what the Send Money screens need. The client has zero <code>/payments</code> calls &mdash; that is now the only thing between the API and a demonstrable capability.</p></div></div>
+        <div class="finding"><div class="finding__n num">4</div><div><p><strong>Name one person who can accept out of REVIEW/QA</strong>, and cap WIP until something exits. Seven items in progress against zero completions is the shape 0702 ended in.</p></div></div>
+        <div class="finding"><div class="finding__n num">5</div><div><p><strong>Ask about the two admin repos</strong> &mdash; eleven days silent, and the dashboard still has no owned leaf on the board.</p></div></div>
+        <div class="finding"><div class="finding__n num">6</div><div><p><strong>Estimate or stop measuring.</strong> Day 8 of 18. Either size the 33 remaining To do items or drop velocity language from the sprint.</p></div></div>
+      </div>
+    </section>
+
+    <section class="sec" id="method">
+      <div class="sec__h"><span class="sec__n">&mdash;</span><h2>Appendix &mdash; method and readiness rubric</h2></div>
+
+      <p><strong>Pipeline.</strong> <code>beevia-refresh</code>: Zoho export (67 items, <code>--modified --activity</code>) &rarr; sanctioned fast-forward-only sync of five product repos (<strong>11 commits pulled</strong>) &rarr; deterministic API/spec audit (<strong>drift found: 3 routes</strong>) &rarr; spec + RFC updates (&sect;5) &rarr; re-audit clean &rarr; this report.</p>
+
+      <p><strong>Flow measurement.</strong> Transitions and timings come from the activity sidecar's <code>actiontime</code>, never <code>Last Modified</code>, which bulk board operations rewrite without producing audit entries.</p>
+
+      <p><strong>Claims about absent code</strong> (no wallet-summary route; zero <code>/payments</code> references in the client) are search results over the synced working trees at <code>origin/main</code>, stated with file and date so they can be falsified directly. They say nothing about unmerged branches.</p>
+
+      <h3>Sources</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Stream</th><th scope="col">Artifact</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Board</th><td><code>beevia-sprint-board-2026-08-17.csv</code> &mdash; 67 rows, 43 leaves; <code>beevia-activity-2026-08-17.json</code></td></tr>
+            <tr><th scope="row">Code</th><td>All five repos at <code>origin/main</code>; 11 commits since 14 Aug</td></tr>
+            <tr><th scope="row">Specs</th><td><code>openapi.yaml</code> (108), <code>openapi.proposed.yaml</code> (52), <code>openapi.admin.yaml</code> (29), <code>openapi.admin.proposed.yaml</code> (23) &mdash; all validated, no drift</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="mvp-method">MVP readiness &mdash; how the &asymp;46% is computed</h3>
+      <p>Eleven capabilities from PRD &sect;1.2/&sect;11 with <strong>frozen weights</strong>, each scored 0&ndash;1 from build evidence. Weights are frozen so the number stays comparable across editions. Target date 2026-09-01 is provisional, set by the owner on 2026-08-07.</p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col" class="r">#</th><th scope="col">Capability</th><th scope="col" class="r">Weight</th><th scope="col" class="r">Score</th><th scope="col">Evidence</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" class="r">1</th><td>E2EE messaging</td><td class="r">15</td><td class="r">0.9</td><td>Conversation/message/key/attachment paths live; client crypto, socket and attachment layers present</td></tr>
+            <tr><th scope="row" class="r">2</th><td>Voice &amp; video calling</td><td class="r">8</td><td class="r">0.8</td><td>4 call endpoints live; <code>audio_call_screen</code> / <code>video_call_screen</code> present</td></tr>
+            <tr><th scope="row" class="r">3</th><td>Message translation</td><td class="r">7</td><td class="r">0.7</td><td><code>POST /translate</code> live and <code>translate_chat_screen</code> present; batch + language list proposed; on-device privacy direction undecided</td></tr>
+            <tr><th scope="row" class="r">4</th><td>Local KYC tier (BVN)</td><td class="r">8</td><td class="r">0.9</td><td>KYC/upgrade endpoints + provider webhook live; full client onboarding. <strong>This cycle:</strong> BVN-lookup cache + provisioning fix &mdash; hardening, not new capability, so unchanged</td></tr>
+            <tr><th scope="row" class="r">5</th><td>International KYC tier</td><td class="r">6</td><td class="r hi">0.0</td><td>proposed only</td></tr>
+            <tr><th scope="row" class="r">6</th><td>Multi-currency wallets</td><td class="r">12</td><td class="r">0.45</td><td>NGN only, <code>activeNgn()</code> hard-coded; wallets controller unchanged since 22 July; no wallet home/balance screen in the client</td></tr>
+            <tr><th scope="row" class="r">7</th><td>Send / request / receive</td><td class="r">12</td><td class="r hi">0.50 &uarr;</td><td><strong>Moved this cycle.</strong> API write path now near-complete: escrow send, direct <code>POST /payments/transfer</code> (idempotent), plus the recipient picker. Held well below 1.0 because the client has <strong>zero <code>/payments</code> calls</strong></td></tr>
+            <tr><th scope="row" class="r">8</th><td>Cross-currency FX</td><td class="r">12</td><td class="r hi">0.0</td><td>proposed only; the PRD's headline differentiator</td></tr>
+            <tr><th scope="row" class="r">9</th><td>Virtual cards</td><td class="r">10</td><td class="r hi">0.0</td><td>proposed only; three board items active, no code</td></tr>
+            <tr><th scope="row" class="r">10</th><td>Consent management</td><td class="r">4</td><td class="r hi">0.0</td><td>no endpoint or record anywhere</td></tr>
+            <tr><th scope="row" class="r">11</th><td>Admin oversight</td><td class="r">6</td><td class="r">0.45</td><td>29/52 admin ops; dashboard Modules 1 &amp; 3 landed; both admin repos 11 days silent</td></tr>
+            <tr><th scope="row" class="r hi"></th><td class="hi">Weighted total</td><td class="r hi">100</td><td class="r hi">46.1</td><td class="hi">&asymp;46%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Scores measure <strong>build evidence</strong> &mdash; a shipped endpoint, a landed module, a wired screen &mdash; never board status, design completion, commit-message claims, or items in review. A proposed-only area scores 0.</p>
+
+      <h3>Team performance &mdash; what these figures do not measure</h3>
+      <div class="note">
+        <p style="margin-bottom:0">With 0/67 estimation points there is no workload normalisation: Ayomikun's 19 leaves and David's 10 are not comparable and neither reflects difficulty. Commit counts reward small commits &mdash; today's 11 include merge commits and a package bump. One person shipping the whole cycle is a sequencing and bus-factor fact, not a statement about anyone else's effort; where an item cannot proceed because a dependency is unmerged, that is a process finding.</p>
+      </div>
+
+      <h3>What this report cannot tell you</h3>
+      <div class="note">
+        <p><strong>Whether BVA-I185's endpoint exists on an unmerged branch.</strong> The search only covers <code>origin/main</code>.</p>
+        <p><strong>Why BVA-I170 is blocked</strong> &mdash; the board carries no reason field; &sect;1.3's link is inference.</p>
+        <p><strong>Whether unpushed local work exists</strong> in <code>beevia-mobile</code>, <code>beevia-admin</code> or <code>beevia-admin-api</code>.</p>
+        <p><strong>Whether the three new payment endpoints function correctly</strong> or are covered by tests &mdash; testing remains out of scope for scoring, per the owner. Draft testing rules are staged in <code>agent-rules/</code>, unapplied.</p>
+        <p><strong>Who <code>Fortune Okwu</code> is</strong> &mdash; unresolved since 11 Aug, though the identity took no action this cycle.</p>
+        <p style="margin-bottom:0"><strong>Velocity or scope-fit</strong> for the remaining 11 days &mdash; still 0/67 estimated.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="foot">
+  <span class="barcode barcode--lg" aria-hidden="true"></span>
+  <span>Beevia project status &middot; 2026-08-17 &middot; Sprint 08-01, day 8</span>
+  <span><a href="index.html">All frames</a></span>
+</footer>
+
+<script src="ui.js"></script>
+</body>
+</html>

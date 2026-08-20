@@ -160,7 +160,7 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | Currencies | 1 | 0 | Complete |
 | Wallets | 7 | 8 | No bank list, account resolution, single-wallet read, or payout status |
 | FX | **0** | 3 | Does not exist |
-| Payments | 6 | 4 | No read path at all |
+| Payments | **9** | 4 | **+3:** direct `POST /payments/transfer` (non-escrow, idempotent) and the recipient picker (`GET /payments/recipients`, `GET /payments/recent-recipients`). Still no read path — no `GET /payments` |
 | Cards | **0** | 8 | Does not exist |
 | Chat (REST) | 19 | 0 | +2 clear, delete. Message deletion now shipped |
 | Calls | 5 | 0 | Complete |
@@ -170,7 +170,7 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | Notifications | 5 | 0 | Complete |
 | Support | **0** | 4 | Does not exist. Includes `POST /payments/{id}/dispute`, listed under §7.2 but tagged Support |
 | Webhooks | 3 | 1 | Card issuer callback missing |
-| **Total** | **105** | **49** | +3 live-endpoint modifications = 52 operations in the proposed file |
+| **Total** | **108** | **49** | +3 live-endpoint modifications = 52 operations in the proposed file |
 
 ---
 
@@ -221,7 +221,9 @@ Proposed: `GET /kyc/status` (per-tier state and unlocked currencies), `GET /kyc/
 
 ### 4.4 Payments have no read path
 
-`POST /payments/send` and `POST /payments/request` return a payment object exactly once. After that, the only handles on it are the `{id}` action routes. There is no `GET /payments` and no `GET /payments/{id}`.
+`POST /payments/send`, `POST /payments/transfer` and `POST /payments/request` return a payment object exactly once. After that, the only handles on it are the `{id}` action routes. There is no `GET /payments` and no `GET /payments/{id}`.
+
+The August direct-transfer work made this worse rather than better: `POST /payments/transfer` settles immediately and is idempotent on `idempotencyKey`, but with no read path a client that loses the response cannot confirm whether the transfer landed — its only recovery is to replay the same key and rely on the idempotent return. That works, but it means correctness now depends on the client having persisted a key it may never see again.
 
 The consequences are concrete:
 
@@ -409,6 +411,9 @@ Parallel ladder for `chat_only` users adopting banking. See §5.1 for why this s
 | | Method | Path | Auth | Status |
 |---|---|---|---|---|
 | | POST | `/payments/send` | 🔐 | 🟡 NGN-only; no source wallet, no preview |
+| | POST | `/payments/transfer` | 🔐 | 🟡 **New.** Direct, non-escrow, idempotent on `idempotencyKey`; NGN-only, targets a user id |
+| | GET | `/payments/recipients` | 🔑 | ✅ **New.** Banking-only search, 20 rows, no phone returned |
+| | GET | `/payments/recent-recipients` | 🔑 | ✅ **New.** Distinct recent sends, 15 rows |
 | | POST | `/payments/{id}/accept` | 🔑 | ✅ |
 | | POST | `/payments/{id}/decline` | 🔑 | ✅ |
 | | POST | `/payments/request` | 🔑 | 🟡 NGN-only; no currency selection |
