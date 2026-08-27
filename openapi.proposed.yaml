@@ -1315,6 +1315,44 @@ paths:
                       meta: { $ref: '#/components/schemas/PaginationMeta' }
         '404': { $ref: '#/components/responses/NotFound' }
 
+  /contacts/sync/status:
+    get:
+      tags: [Contacts]
+      operationId: getContactSyncStatus
+      summary: 'Contact sync progress'
+      description: |
+        `POST /contacts/sync` accepts up to 25,000 entries but resolves only the
+        first 500 inline; the remainder is queued to a background worker
+        (`contacts-sync`) and surfaces via `GET /contacts` whenever it finishes.
+        **There is currently no way for a client to know when that has happened.**
+
+        A user who uploads a large address book therefore sees a partial contact
+        list with no completion signal, and the only available strategy is to
+        poll `GET /contacts` and guess. This is a gap created by the 2026-08-24
+        large-address-book change, not a pre-existing one.
+
+        Returns the state of the caller's most recent sync: how many entries were
+        accepted, how many are still queued, and when it completed.
+      externalDocs:
+        description: "PRD §8.1 Messaging — contact discovery"
+        url: ./Beevia_PRD.md
+      responses:
+        '200':
+          description: Current or most recent sync state.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/ContactSyncStatus' }
+        '404':
+          description: The caller has never run a sync.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
   /conversations/{id}/translation:
     parameters:
       - $ref: '#/components/parameters/ConversationId'
@@ -1952,6 +1990,29 @@ components:
           description: Features disabled while this consent is revoked.
           items: { type: string, example: biometric_step_up }
         updated_at: { type: string, format: date-time }
+
+    ContactSyncStatus:
+      type: object
+      description: State of the caller's most recent `POST /contacts/sync`.
+      properties:
+        state:
+          type: string
+          enum: [processing, completed, failed]
+          description: '`completed` once the queued overflow has been fully processed.'
+        submitted:
+          type: integer
+          description: Entries accepted after de-duplication.
+          example: 3200
+        resolved_inline:
+          type: integer
+          description: Resolved synchronously in the sync response (currently capped at 500).
+          example: 500
+        pending:
+          type: integer
+          description: Still queued for the background worker. `0` when `state` is `completed`.
+          example: 0
+        started_at: { type: string, format: date-time }
+        completed_at: { type: [string, 'null'], format: date-time }
 
     CreateBeneficiaryRequest:
       type: object

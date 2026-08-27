@@ -154,7 +154,7 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | KYC | 6 | 3 | Local tier only. `POST /kyc/entrust/webhook` is counted under Webhooks |
 | **Upgrade** | **6** | 0 | **New.** Parallel KYC ladder for chat_only → chat_banking |
 | Users | 14 | 7 | +2 contact-change. No consent, limits, deletion-status or export surface |
-| Contacts | 2 | 0 | Complete |
+| Contacts | 2 | **1** | **No longer complete.** `POST /contacts/sync` now accepts 25,000 entries but resolves only the first 500 inline, queueing the rest with **no completion signal** — proposed `GET /contacts/sync/status` |
 | Devices & Keys | 6 | 0 | Complete |
 | Invites | 3 | 0 | Complete (no dispatch, by design) |
 | Currencies | 1 | 0 | Complete |
@@ -170,7 +170,7 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | Notifications | 5 | 0 | Complete |
 | Support | **0** | 4 | Does not exist. Includes `POST /payments/{id}/dispute`, listed under §7.2 but tagged Support |
 | Webhooks | 3 | 1 | Card issuer callback missing |
-| **Total** | **108** | **49** | +3 live-endpoint modifications = 52 operations in the proposed file |
+| **Total** | **108** | **50** | +3 live-endpoint modifications = 53 operations in the proposed file |
 
 ---
 

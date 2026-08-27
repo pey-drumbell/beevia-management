@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beevia — Project Status — 25 Aug 2026</title>
+<meta name="description" content="The step-up fix is written, correct, and sitting on an unmerged branch. The review queue grew to 14 — a third of the sprint — and has never released a single item in sixteen days.">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!--
+  DIRECTION CONTRACT · seed 6c4a0ed0 (carried forward unchanged)
+  THESIS: A status report whose subject is the disagreement between its sources.
+  STORY: The fix exists and cannot be used. The queue meant to verify work has
+  verified nothing in sixteen days, and yesterday the board marked an item ready
+  for review 23 minutes before the code that fixes it was written.
+-->
+
+<div class="topbar">
+    <div class="topbar__mark">
+      <span class="barcode" aria-hidden="true"></span>
+      <span class="topbar__wordmark">Beevia</span>
+    </div>
+    <nav class="topbar__nav label" aria-label="Report">
+      <a href="index.html">Archive</a>
+      <a href="#overview">Overview</a>
+      <a href="#s5"><span>What to do</span></a>
+      <a href="#method">Method</a>
+    </nav>
+</div>
+
+<header class="masthead">
+  <div class="field">
+    <div class="field__rail field__rail--l">
+      <dl>
+        <dt>Sprint ends</dt>
+        <dd>28 Aug · 3 days</dd>
+        <dt>Step-up fix</dt>
+        <dd>written · unmerged</dd>
+        <dt>Review / QA</dt>
+        <dd>14 · 33% of sprint</dd>
+        <dt>Review exits</dt>
+        <dd>0 · 16 days</dd>
+      </dl>
+    </div>
+
+    <div class="field__stage">
+      <div class="field__title">
+        <h1>Project<br>Status</h1>
+      </div>
+      <div class="field__meta num">
+        <span>2026-08-25</span>
+        <span>Sprint 08-01</span>
+        <span>10&ndash;28 Aug &middot; day 16 of 18</span>
+        <span>Done, and unmerged</span>
+      </div>
+    </div>
+
+    <div class="field__rail field__rail--r">
+      <dl>
+        <dt>API consumer</dt>
+        <dd>108 &nbsp;+0</dd>
+        <dt>Merged to main</dt>
+        <dd>0 commits</dd>
+        <dt>Done</dt>
+        <dd>2 of 43</dd>
+        <dt>Estimated</dt>
+        <dd>0 / 67</dd>
+      </dl>
+    </div>
+  </div>
+</header>
+
+<section class="mvp" aria-label="MVP readiness estimate">
+  <div class="mvp__head">
+    <span class="label">MVP readiness &mdash; estimate</span>
+    <span class="mvp__pct num">&asymp;50%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 7 days out</span>
+  </div>
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 50 percent built, unchanged. Nothing merged this cycle. International KYC, cross-currency FX, virtual cards and consent management are not started.">
+    <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.9"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.8"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:7" title="Message translation — 0.7 (stack blocked)"><i style="width:70%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.9"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
+    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.65"><i style="width:65%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.65 (fix written but unmerged; main still 401s)"><i style="width:65%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
+    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0"></span>
+    <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
+    <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.45"><i style="width:45%"></i></span>
+  </div>
+  <p class="mvp__read"><strong>Unchanged &mdash; nothing merged to any <code>main</code>.</strong> Send/request/receive holds at 0.65: the fix that would lift it is written and verified correct, but sits on <code>origin/BVA-I187</code>, so no user can reach it and the rubric cannot count it. Merge that branch and #7 moves next edition. Segment width = weight &middot; fill = build evidence, <em>not</em> correctness. <a href="#mvp-method">Method and capability table</a>.</p>
+</section>
+
+<div class="shell">
+  <nav class="contents label" aria-label="Contents">
+    Contents
+    <ol>
+      <li><a href="#overview"><span>00</span> Quick overview</a></li>
+      <li><a href="#s1"><span>01</span> Three days out</a></li>
+      <li><a href="#s2"><span>02</span> What shipped</a></li>
+      <li><a href="#s3"><span>03</span> Risks</a></li>
+      <li><a href="#s4"><span>04</span> Previous recommendations</a></li>
+      <li><a href="#s5"><span>05</span> What I would do today</a></li>
+      <li><a href="#method"><span>&mdash;</span> Method</a></li>
+    </ol>
+  </nav>
+
+  <main class="doc">
+
+    <section class="sec" id="overview">
+      <div class="invert" style="margin-bottom:var(--s-6)">
+        <p class="lede">The step-up fix is written, correct, and sitting on an unmerged branch. Meanwhile the review queue grew to 14 &mdash; a third of the sprint &mdash; and has still never released a single item in sixteen days.</p>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">08-01 movement, 24 &rarr; 25 Aug</caption>
+          <thead>
+            <tr><th scope="col">Measure</th><th scope="col" class="r">24 Aug</th><th scope="col" class="r">25 Aug</th><th scope="col" class="r">&Delta;</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">To do (leaves)</th><td class="r">18</td><td class="r">17</td><td class="r">&minus;1</td></tr>
+            <tr><th scope="row">In progress (leaves)</th><td class="r">10</td><td class="r">8</td><td class="r">&minus;2</td></tr>
+            <tr><th scope="row">Blocked (leaves)</th><td class="r">3</td><td class="r">2</td><td class="r">&minus;1</td></tr>
+            <tr><th scope="row">Review / QA (leaves)</th><td class="r">10</td><td class="r hi">14</td><td class="r hi">+4 &mdash; 33% of the sprint</td></tr>
+            <tr><th scope="row">Done (leaves)</th><td class="r">2</td><td class="r">2</td><td class="r hi">0 &mdash; unchanged</td></tr>
+            <tr><th scope="row">Review exits, all sprint</th><td class="r">0</td><td class="r hi">0</td><td class="r">16 days</td></tr>
+            <tr><th scope="row">API surface (consumer)</th><td class="r">108</td><td class="r">108</td><td class="r">0</td></tr>
+            <tr><th scope="row">Commits merged to any <code>main</code></th><td class="r">6</td><td class="r hi">0</td><td class="r">&mdash;</td></tr>
+            <tr><th scope="row">Client step-up token</th><td class="r">absent</td><td class="r hi">absent on <code>main</code>, done on a branch</td><td class="r">unmerged</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">Team at a glance</caption>
+          <thead><tr><th scope="col">Person</th><th scope="col">Owns</th><th scope="col">Current leaf state</th><th scope="col">Flag</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Ayomikun Araoye</th><td>backend + admin API</td><td>6 To do, 2 In progress, <strong>9 Review/QA</strong>, 2 Blocked</td><td>Holds 9 of the 14 review items; no commits this window</td></tr>
+            <tr><th scope="row">David Samuel</th><td>mobile</td><td>2 To do, 3 In progress, <strong>5 Review/QA</strong></td><td><strong>Wrote the step-up fix</strong> (24 Aug 16:31 UTC) &mdash; unmerged on <code>origin/BVA-I187</code></td></tr>
+            <tr><th scope="row">Philip Chidera</th><td>design</td><td>9 To do, 3 In progress, 2 Done</td><td>Both of the sprint's completions remain his</td></tr>
+            <tr><th scope="row">Promise Udo</th><td>admin dashboard</td><td>one co-assigned parent Story</td><td><code>beevia-admin</code> <strong>19 days</strong> silent, still no branches</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <span class="label">The question for standup</span>
+        <p style="margin-bottom:0">The send-money fix is finished and correct on <code>origin/BVA-I187</code>. Merging it is the difference between 08-01 delivering its headline capability and not. Three days left &mdash; what is stopping the merge?</p>
+      </div>
+
+      <h3>The three things worth knowing</h3>
+
+      <div class="stack">
+        <div class="finding">
+          <div class="finding__n num">1</div>
+          <div>
+            <p><strong>The step-up gap is solved &mdash; on a branch nobody has merged.</strong> David's <code>p2p money transfers</code> commit (24 Aug 16:31 UTC) does exactly the three things recommended on Friday: adds <code>stepUpUrl = "/auth/step-up"</code>, holds the returned token in <code>WalletProvider</code>, and sends <code>Options(headers: {'X-Step-Up-Token': stepUpToken})</code> on the transfer. It even reads the response defensively, matching what the API actually returns, and the mock routes were updated to validate the header. It is <strong>not on <code>main</code></strong>, so it does not score and no user can reach it.</p>
+          </div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">2</div>
+          <div>
+            <p><strong>The review queue is now a third of the sprint and has never released anything.</strong> Fourteen of 43 leaves, median age 8 days, zero exits in sixteen days. Ayomikun holds 9, David 5. Four more items were pushed in yesterday at 16:08&ndash;16:12 UTC by <code>Fortune Okwu</code> &mdash; six transitions in four minutes, the same bulk pattern as 17 Aug.</p>
+          </div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">3</div>
+          <div>
+            <p><strong>The board moved ahead of the code again, by 23 minutes.</strong> BVA-I188 &ldquo;P2P Transfer&rdquo; went BLOCKED &rarr; REVIEW/QA at 16:08 UTC. The commit that actually fixes it landed at <strong>16:31 UTC</strong> &mdash; after the item was already marked ready for review. BVA-I200 &ldquo;Transaction History Endpoint&rdquo; also entered review, while the API route count stayed at 108; no new backend endpoint shipped.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="invert">
+        <span class="label" style="display:block;margin-bottom:var(--s-3)">If you read nothing else</span>
+        <p style="margin-bottom:0;font-variation-settings:'wdth' 75,'wght' 500;max-width:64ch">The fix for the sprint's headline capability is written and sitting unmerged, and the queue meant to verify work has not verified anything in sixteen days. Three days remain to act on either.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s1">
+      <div class="sec__h"><span class="sec__n">01</span><h2>Sprint 08-01 &mdash; three days out</h2></div>
+
+      <h3>1.1 Status, day 16</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Status</th><th scope="col" class="r">Leaves</th><th scope="col" class="r">Share</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">To do</th><td class="r">17</td><td class="r">40%</td></tr>
+            <tr><th scope="row">In progress</th><td class="r">8</td><td class="r">19%</td></tr>
+            <tr><th scope="row" class="hi">Review / QA</th><td class="r hi">14</td><td class="r hi">33%</td></tr>
+            <tr><th scope="row">Blocked</th><td class="r">2</td><td class="r">5%</td></tr>
+            <tr><th scope="row">Done</th><td class="r">2</td><td class="r">5%</td></tr>
+            <tr><th scope="row" class="hi">Total</th><td class="r hi">43</td><td class="r"></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>41 of 43 leaves are still not Done, unchanged from yesterday. What changed is where they sit: four moved from In progress/BLOCKED into a queue that has never had an exit.</p>
+
+      <h3>1.2 Everything in the window</h3>
+      <p>Window: <strong>24 Aug 14:55 UTC &rarr; 25 Aug 15:24 UTC</strong> (15:55 &rarr; 16:24 WAT). Seven board actions, zero merges to any <code>main</code>, one commit on a branch.</p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">When (UTC)</th><th scope="col">Who</th><th scope="col">What</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">24 Aug 15:32</th><td>David Samuel</td><td>BVA-I208 Secure Card Entry UI &rarr; In progress</td></tr>
+            <tr><th scope="row">24 Aug 16:08</th><td><code>Fortune Okwu</code></td><td>BVA-I187, BVA-I188 BLOCKED &rarr; <strong>REVIEW/QA</strong></td></tr>
+            <tr><th scope="row">24 Aug 16:08</th><td><code>Fortune Okwu</code></td><td>BVA-I199, BVA-I200, BVA-I201 In progress &rarr; <strong>REVIEW/QA</strong></td></tr>
+            <tr><th scope="row">24 Aug 16:12</th><td><code>Fortune Okwu</code></td><td>BVA-I178 Send Flow In progress &rarr; <strong>REVIEW/QA</strong></td></tr>
+            <tr><th scope="row"><strong>24 Aug 16:31</strong></th><td><strong>Davidtariq96</strong></td><td><strong><code>p2p money transfers</code> &mdash; the step-up fix, committed to <code>origin/BVA-I187</code></strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Six of the seven board transitions were made by <code>Fortune Okwu</code> inside four minutes &mdash; an identity whose role has never been confirmed across ten editions, and which has now performed two bulk review-queue operations (17 Aug, 24 Aug).</p>
+
+      <h3>1.3 The step-up fix, verified on the branch</h3>
+      <p>Read directly from <code>origin/BVA-I187</code>, not from the commit message:</p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Requirement (from Friday)</th><th scope="col">State on the branch</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Call <code>/auth/step-up</code>, not <code>/auth/pin/verify</code></th><td>✅ <code>const stepUpUrl = "/auth/step-up";</code></td></tr>
+            <tr><th scope="row">Retain the returned token</th><td>✅ <code>_stepUpToken</code> held in <code>WalletProvider</code>; cleared on failure</td></tr>
+            <tr><th scope="row">Send <code>X-Step-Up-Token</code> on the transfer</th><td>✅ <code>options: Options(headers: {'X-Step-Up-Token': stepUpToken})</code></td></tr>
+            <tr><th scope="row">Guard the call when no token is held</th><td>✅ bails if <code>stepUpToken == null || isEmpty</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        <p>Two details worth crediting, because both are the class of thing that has bitten this project before:</p>
+        <p><strong>The response field is read defensively</strong> &mdash; <code>data['step_up_token'] ?? data['stepUpToken']</code>. The API returns <code>{ stepUpToken }</code> in code, which the response interceptor snake-cases to <code>step_up_token</code> over the wire, matching the spec. Either spelling works, so this cannot fail the way the <code>/payments/transactions</code> URL did.</p>
+        <p style="margin-bottom:0"><strong>The mock backend was updated too</strong> &mdash; <code>lib/mock/http/routes/wallet_routes.dart</code> now reads <code>options.headers['X-Step-Up-Token']</code>, so the mock enforces the same contract as the real guard.</p>
+      </div>
+      <p><strong>But <code>main</code> is unchanged.</strong> <code>verifyPinUrl = "/auth/pin/verify"</code> is still what ships, there are still zero step-up references in <code>main</code>'s <code>lib/</code>, and <code>POST /payments/transfer</code> still returns 401 for every real user. Per the rubric, branch work does not score.</p>
+      <p><em>Scope note:</em> <code>origin/BVA-I187</code> reads as 9 commits ahead because PR #27 was squash-merged on 21 Aug, so the pre-squash commits still count as divergent. Only <strong>one</strong> commit is genuinely new since that merge &mdash; the 24 Aug step-up work. The branch is also 1 commit behind <code>main</code> and will want a rebase first.</p>
+
+      <h3>1.4 The review queue, day 16</h3>
+      <p><strong>Fourteen leaves. Zero exits in sixteen days. Median age 8 days.</strong> Ayomikun holds 9; David 5. Full queue: BVA-I165, I169, I170, I173, I178, I185, I188, I189, I198, I200, I201, I203, I221, I223.</p>
+      <div class="note">
+        <p><strong>BVA-I185 &ldquo;Wallet Summary Endpoint&rdquo;</strong> is now <strong>11 days</strong> in review, and <code>wallets.controller.ts</code> remains unchanged since 22 July. PR #27 routed around it; it is very likely obsolete.</p>
+        <p style="margin-bottom:0"><strong>BVA-I200 &ldquo;Transaction History Endpoint&rdquo;</strong> entered review yesterday while the consumer API stayed at 108 routes. Wallet transactions are served by the pre-existing <code>GET /wallets/transactions</code>, so either the item is satisfied by code that shipped long ago, or its deliverable does not exist &mdash; the same ambiguity the 18 Aug edition documented for nine other items, still unresolved.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s2">
+      <div class="sec__h"><span class="sec__n">02</span><h2>What shipped this cycle</h2></div>
+      <div class="invert">
+        <p style="margin-bottom:0;max-width:64ch"><strong>Nothing merged to any <code>main</code>.</strong> All five repos were already current on sync. The only new code this window is one commit on an unmerged branch &mdash; the step-up fix.</p>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Repo</th><th scope="col">Last commit to <code>main</code></th><th scope="col" class="r">Days</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>beevia-api</code></th><td>21 Aug</td><td class="r">4</td></tr>
+            <tr><th scope="row"><code>beevia-mobile</code></th><td>21 Aug</td><td class="r">4</td></tr>
+            <tr><th scope="row"><code>beevia-db-schema</code></th><td>17 Aug</td><td class="r">8</td></tr>
+            <tr><th scope="row"><code>beevia-admin-api</code></th><td>6 Aug</td><td class="r hi">19</td></tr>
+            <tr><th scope="row"><code>beevia-admin</code></th><td>6 Aug</td><td class="r hi">19</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Unmerged branch work across the estate</h3>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Repo</th><th scope="col">Branch</th><th scope="col" class="r">Ahead</th><th scope="col">Tip</th><th scope="col">Contents</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>beevia-mobile</code></th><td class="hi"><strong><code>BVA-I187</code></strong></td><td class="r hi">9 (1 new)</td><td>24 Aug</td><td class="hi"><strong>The step-up fix</strong></td></tr>
+            <tr><th scope="row"><code>beevia-mobile</code></th><td><code>Mock-data</code></td><td class="r">7</td><td>24 Aug</td><td>Owner's mock-backend work</td></tr>
+            <tr><th scope="row"><code>beevia-mobile</code></th><td><code>Deps-updates-2026-08-20</code></td><td class="r">4</td><td>21 Aug</td><td>Dependency bumps</td></tr>
+            <tr><th scope="row"><code>beevia-api</code></th><td><code>victor</code></td><td class="r">1</td><td>20 Jul</td><td>Stale</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Specs: no change required.</strong> Audit clean at 108 consumer / 29 admin, no drift &mdash; unsurprising, since nothing merged that could have moved a contract. Yesterday's contacts and proposed-endpoint edits stand.</p>
+      <p><em>Sync note:</em> <code>beevia-mobile</code> was on the <code>Mock-data</code> branch locally for the third consecutive run and was switched to <code>main</code>. If someone is working there routinely, the sync will keep moving them off it &mdash; worth knowing.</p>
+    </section>
+
+    <section class="sec" id="s3">
+      <div class="sec__h"><span class="sec__n">03</span><h2>Risks</h2></div>
+      <div class="stack">
+        <div class="finding"><div class="finding__n num">1</div><div><p><strong>The sprint ends in three days with 2 of 43 leaves Done</strong> and no recorded decision on what carries to 08-02.</p></div></div>
+        <div class="finding"><div class="finding__n num">2</div><div><p><strong>A finished, verified fix for the headline capability is sitting unmerged</strong> with three days left (&sect;1.3).</p></div></div>
+        <div class="finding"><div class="finding__n num">3</div><div><p><strong>The review queue is now 33% of the sprint and has never released an item.</strong> Fourteen items with no exit path in sixteen days will function as backlog once the sprint closes, whatever the column is called.</p></div></div>
+        <div class="finding"><div class="finding__n num">4</div><div><p><strong>The board continues to run ahead of the code</strong> &mdash; yesterday by 23 minutes on BVA-I188, and BVA-I200 entered review with no new endpoint.</p></div></div>
+        <div class="finding"><div class="finding__n num">5</div><div><p><strong><code>Fortune Okwu</code> performed a second bulk review-queue operation</strong> (six transitions in four minutes) and the identity is still unconfirmed after ten editions.</p></div></div>
+        <div class="finding"><div class="finding__n num">6</div><div><p><strong>Both admin repos at 19 days</strong>, no commits, no branches, no owned leaves &mdash; ninth consecutive edition.</p></div></div>
+        <div class="finding"><div class="finding__n num">7</div><div><p><strong>Estimation still 0/67</strong>, so Friday's carry-over conversation has no size data.</p></div></div>
+      </div>
+    </section>
+
+    <section class="sec" id="s4">
+      <div class="sec__h"><span class="sec__n">04</span><h2>Previous recommendations &mdash; where they stand</h2></div>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Recommendation from 24 Aug</th><th scope="col">Status on 25 Aug</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Fix the step-up gap this morning</th><td class="hi"><strong>Done in code, not in <code>main</code>.</strong> Written 24 Aug 16:31 UTC on <code>origin/BVA-I187</code>; unmerged.</td></tr>
+            <tr><th scope="row">Hold a scope conversation today</th><td>No evidence either way. No board or commit signal; may have happened off-record.</td></tr>
+            <tr><th scope="row">Empty the review queue, or admit it is a backlog</th><td class="hi">Went the other way. 10 &rarr; 14, still zero exits.</td></tr>
+            <tr><th scope="row">Close BVA-I185 if PR #27 made it obsolete</th><td class="hi">Not done. Now 11 days in review.</td></tr>
+            <tr><th scope="row">Point the new tracing at the money path</th><td>No evidence either way &mdash; <code>beevia-api</code> received no commits during this window.</td></tr>
+            <tr><th scope="row"><code>beevia-admin</code>, eighteen days</th><td class="hi">Not done. Now 19.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>One done-but-unmerged, one went backwards, four open.</p>
+    </section>
+
+    <section class="sec" id="s5">
+      <div class="sec__h"><span class="sec__n">05</span><h2>What I would do today</h2></div>
+      <div class="stack">
+        <div class="finding"><div class="finding__n num">1</div><div><p><strong>Merge <code>BVA-I187</code>.</strong> Rebase it onto <code>main</code> (it is 1 behind), run the pipeline, merge. The fix is written and verified correct &mdash; the only thing between it and a working send-money flow is a merge, and there are three days left.</p></div></div>
+        <div class="finding"><div class="finding__n num">2</div><div><p><strong>Then run one real transfer</strong> and record the result. It would be the first money moved through the app and the only unambiguous evidence this sprint could produce.</p></div></div>
+        <div class="finding"><div class="finding__n num">3</div><div><p><strong>Triage the 14 review items into three piles today</strong>: accepted, rejected-with-a-reason, and &ldquo;was never actually built&rdquo;. &sect;1.4 gives two concrete candidates for the third pile. Carrying 14 unexamined items into 08-02 guarantees the next sprint starts with the same problem.</p></div></div>
+        <div class="finding"><div class="finding__n num">4</div><div><p><strong>Confirm who <code>Fortune Okwu</code> is.</strong> Two bulk operations on the review queue, ten editions unconfirmed. This identity is shaping the sprint's recorded state more than anyone else.</p></div></div>
+        <div class="finding"><div class="finding__n num">5</div><div><p><strong><code>beevia-admin</code>, nineteen days.</strong> Ninth edition.</p></div></div>
+      </div>
+    </section>
+
+    <section class="sec" id="method">
+      <div class="sec__h"><span class="sec__n">&mdash;</span><h2>Appendix &mdash; method and readiness rubric</h2></div>
+
+      <p><strong>Pipeline.</strong> <code>beevia-refresh</code>: Zoho export (67 items, <code>--modified --activity</code>, cut-off 15:24 UTC) &rarr; fast-forward-only sync (all five already current; <code>beevia-mobile</code> switched from <code>Mock-data</code> to <code>main</code>) &rarr; deterministic API/spec audit (clean, no drift, no spec edits) &rarr; this report.</p>
+
+      <p><strong>Branch verification.</strong> Because <code>main</code> did not move, the substantive check was of unmerged work: <code>git rev-list --count origin/main..&lt;branch&gt;</code> across every pushed branch in all five repos, then <code>git show &lt;branch&gt;:&lt;path&gt;</code> and <code>git grep &lt;branch&gt;</code> to read the step-up implementation directly. The &sect;1.3 table is quoted from <code>api_url.dart</code>, <code>wallet_provider.dart</code>, <code>wallet_service.dart</code> and <code>mock/http/routes/wallet_routes.dart</code> on <code>origin/BVA-I187</code>. The API-side field name was confirmed from <code>auth.service.ts</code> (<code>{ stepUpToken }</code>) plus the snake-casing interceptor, and against the documented <code>step_up_token</code> in <code>openapi.yaml</code>.</p>
+
+      <p><strong>Window.</strong> 24 Aug 14:55 UTC &rarr; 25 Aug 15:24 UTC. Per the 20 Aug correction, CSV header times are the exporting machine's local MDT; <code>actiontime</code> values are UTC. WAT (UTC+1) is inferred for the team, not stated in the data.</p>
+
+      <h3>Sources</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Stream</th><th scope="col">Artifact</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Board</th><td><code>beevia-sprint-board-2026-08-25.csv</code> &mdash; 67 rows, 43 leaves; <code>beevia-activity-2026-08-25.json</code></td></tr>
+            <tr><th scope="row">Code</th><td>Five repos at <code>origin/main</code>, no merges; all pushed branches enumerated</td></tr>
+            <tr><th scope="row">Specs</th><td><code>openapi.yaml</code> (108), <code>openapi.proposed.yaml</code> (53), <code>openapi.admin.yaml</code> (29), <code>openapi.admin.proposed.yaml</code> (23) &mdash; validated, no drift</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="mvp-method">MVP readiness &mdash; how the &asymp;50% is computed</h3>
+      <p>Eleven capabilities from PRD &sect;1.2/&sect;11 with <strong>frozen weights</strong>, each scored 0&ndash;1 from build evidence. Target date 2026-09-01 is provisional, set by the owner on 2026-08-07.</p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col" class="r">#</th><th scope="col">Capability</th><th scope="col" class="r">Weight</th><th scope="col" class="r">Score</th><th scope="col">Evidence</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" class="r">1</th><td>E2EE messaging</td><td class="r">15</td><td class="r">0.9</td><td>Conversation/message/key/attachment paths live; client crypto, socket and attachment layers present; contact discovery scales to 25,000</td></tr>
+            <tr><th scope="row" class="r">2</th><td>Voice &amp; video calling</td><td class="r">8</td><td class="r">0.8</td><td>4 call endpoints live; call screens present</td></tr>
+            <tr><th scope="row" class="r">3</th><td>Message translation</td><td class="r">7</td><td class="r">0.7</td><td><code>POST /translate</code> live; provider integration and per-message endpoint BLOCKED; &ldquo;v2&rdquo; comment still unrecorded as a decision</td></tr>
+            <tr><th scope="row" class="r">4</th><td>Local KYC tier (BVN)</td><td class="r">8</td><td class="r">0.9</td><td>KYC/upgrade endpoints + provider webhook live; full client onboarding; face verification fixed 20 Aug</td></tr>
+            <tr><th scope="row" class="r">5</th><td>International KYC tier</td><td class="r">6</td><td class="r hi">0.0</td><td>proposed only</td></tr>
+            <tr><th scope="row" class="r">6</th><td>Multi-currency wallets</td><td class="r">12</td><td class="r">0.65</td><td><code>GET /wallets</code> drives the balance, <code>/wallets/transactions</code> correct and called, transaction-history screen. Ceiling: server NGN-only, no wallet-summary route</td></tr>
+            <tr><th scope="row" class="r">7</th><td>Send / request / receive</td><td class="r">12</td><td class="r">0.65</td><td>Send wired end to end with a spec-correct body. Ceiling: <strong>step-up token still absent from <code>main</code>, so it 401s</strong> &mdash; the fix exists on <code>origin/BVA-I187</code>, unmerged (&sect;1.3); request/receive have no client flow</td></tr>
+            <tr><th scope="row" class="r">8</th><td>Cross-currency FX</td><td class="r">12</td><td class="r hi">0.0</td><td>proposed only</td></tr>
+            <tr><th scope="row" class="r">9</th><td>Virtual cards</td><td class="r">10</td><td class="r hi">0.0</td><td>proposed only; BVA-I198 in review with no code; BVA-I208 now in progress</td></tr>
+            <tr><th scope="row" class="r">10</th><td>Consent management</td><td class="r">4</td><td class="r hi">0.0</td><td>no endpoint or record anywhere</td></tr>
+            <tr><th scope="row" class="r">11</th><td>Admin oversight</td><td class="r">6</td><td class="r">0.45</td><td>29/52 admin ops; both admin repos 19 days silent, no branches</td></tr>
+            <tr><th scope="row" class="r hi"></th><td class="hi">Weighted total</td><td class="r hi">100</td><td class="r hi">50.3</td><td class="hi">&asymp;50%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Weights frozen. Scores measure <strong>merged, reachable build evidence</strong> &mdash; never board status, items in review, or unmerged branches.</p>
+
+      <h3>Team performance &mdash; what these figures do not measure</h3>
+      <div class="note">
+        <p style="margin-bottom:0">David wrote the fix and holds 5 review items; Ayomikun holds 9 and shipped nothing this window, having shipped all six commits in the last one. Neither is a productivity statement: work lands in bursts, and review items sitting against someone's name represent verification they are expected to perform, which is a different thing from their own outstanding work. <code>Fortune Okwu</code>'s six transitions are board administration, which the standing guidance says never to read as delivery. With 0/67 estimation points nothing here is normalised.</p>
+      </div>
+
+      <h3>What this report cannot tell you</h3>
+      <div class="note">
+        <p><strong>Why <code>BVA-I187</code> has not been merged</strong> &mdash; no PR state is visible to this pipeline (the <code>gh</code> CLI cannot resolve this org).</p>
+        <p><strong>Whether the step-up fix works against the real API</strong>; it is verified as correct by reading, not by running.</p>
+        <p><strong>Why BVA-I188 was marked ready for review 23 minutes before its fix was committed.</strong></p>
+        <p><strong>Whether any of the 14 review items has an owner who intends to accept or reject it.</strong></p>
+        <p style="margin-bottom:0"><strong>Velocity or scope-fit</strong> for the last 3 days &mdash; still 0/67 estimated.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="foot">
+  <span class="barcode barcode--lg" aria-hidden="true"></span>
+  <span>Beevia project status &middot; 2026-08-25 &middot; Sprint 08-01, day 16</span>
+  <span><a href="index.html">All frames</a></span>
+</footer>
+
+<script src="ui.js"></script>
+</body>
+</html>

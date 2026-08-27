@@ -465,7 +465,10 @@ paths:
       tags: [Upgrade]
       operationId: getUpgradeStatus
       summary: Upgrade status
-      description: Derived `chat_only` → `chat_banking` progress, so a partially-upgraded user can resume where they stopped.
+      description: |
+        Derived `chat_only` → `chat_banking` progress, so a partially-upgraded
+        user can resume where they stopped. Read `wallet_provisioned` — not
+        `path` — to decide whether the upgrade actually finished.
       responses:
         '200':
           description: Current upgrade progress.
@@ -486,9 +489,15 @@ paths:
       summary: Start upgrade + send email code
       description: |
         Entry point for the upgrade. Sets the user's email and sends a
-        verification code. Rejects with `onboarding_incomplete` if base
-        onboarding never finished, or `already_upgraded` if the user is already
-        on the banking path.
+        verification code.
+
+        **This does not flag the account as banking.** `path` flips to
+        `chat_banking` only when the NGN wallet is provisioned, at the end of the
+        ladder — so an abandoned upgrade never leaves an account looking upgraded
+        with no wallet behind it.
+
+        Rejects with `onboarding_incomplete` if base onboarding never finished, or
+        `already_upgraded` if the user **already has an NGN wallet**.
       requestBody:
         required: true
         content:
@@ -1025,9 +1034,19 @@ paths:
       operationId: syncContacts
       summary: Sync address book
       description: |
-        Upload up to 500 E.164 phones (with optional device labels); returns the
-        entries already registered on Beevia. Malformed numbers are skipped
-        server-side rather than rejecting the batch.
+        Upload up to **25,000** E.164 phones (with optional device labels).
+        Malformed numbers are skipped server-side rather than rejecting the batch.
+
+        **The response may be partial.** After de-duplication, only the first
+        **500** entries are resolved synchronously and returned here; anything
+        beyond that is queued to a background worker and appears via
+        `GET /contacts` once it finishes. A client that uploads a large address
+        book must therefore treat this response as a first page, not the complete
+        match set, and re-read `GET /contacts` shortly afterwards.
+
+        There is no completion signal for the queued remainder — see
+        `openapi.proposed.yaml` for the sync-status operation that would provide
+        one.
       requestBody:
         required: true
         content:
@@ -3479,17 +3498,41 @@ components:
 
     UpgradeStatus:
       type: object
-      description: Derived progress through the chat_only → chat_banking ladder.
+      description: |
+        Derived progress through the chat_only → chat_banking ladder. Every field
+        is computed per request from the user row and wallet state; none is stored.
       properties:
-        eligible: { type: boolean, description: False when base onboarding is incomplete or the user is already on the banking path. }
-        in_progress: { type: boolean }
+        path:
+          type: string
+          enum: [chat_only, chat_banking]
+          description: |
+            The account's current path. Flips to `chat_banking` only when the NGN
+            wallet is provisioned — **not** when the upgrade is started — so a
+            user mid-upgrade still reads `chat_only`.
+        eligible:
+          type: boolean
+          description: |
+            `true` when base onboarding is `completed` and no NGN wallet exists
+            yet. False once the wallet is provisioned, or if onboarding never
+            finished.
+        started:
+          type: boolean
+          description: Whether the entry step is done — derived from an email being on file, not from `path`.
         email_verified: { type: boolean }
         bvn_verified: { type: boolean }
-        profile_submitted: { type: boolean }
+        profile_complete:
+          type: boolean
+          description: Derived from the address being on file.
+        wallet_provisioned:
+          type: boolean
+          description: Whether the NGN wallet exists. This is the real "is banking" signal.
         next_step:
-          type: [string, 'null']
-          enum: [email, email_verify, bvn, bvn_verify, profile, null]
-          description: The endpoint the client should resume at.
+          type: string
+          enum: [email, email_verify, bvn, profile, provisioning, done, not_eligible]
+          description: |
+            The action the client should take next. `provisioning` means every
+            step is done and the wallet is being created; `done` means the wallet
+            exists; `not_eligible` means base onboarding is incomplete. Never null.
 
     UpgradeProfileRequest:
       type: object
@@ -3562,7 +3605,11 @@ components:
         entries:
           type: array
           minItems: 1
-          maxItems: 500
+          maxItems: 25000
+          description: |
+            Hard ceiling of 25,000 per request (a DoS bound — roughly 8 MB of
+            JSON at that size). Only the first 500 after de-duplication are
+            resolved in the response; see `POST /contacts/sync`.
           items:
             type: object
             required: [phone]

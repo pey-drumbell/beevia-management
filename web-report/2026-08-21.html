@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beevia — Project Status — 21 Aug 2026</title>
+<meta name="description" content="Send money is wired end to end for the first time — and will still 401, because the transfer requires a step-up token the client never obtains.">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!--
+  DIRECTION CONTRACT · seed 6c4a0ed0 (carried forward unchanged)
+  THESIS: A status report whose subject is the disagreement between its sources.
+  STORY: Revised edition. A merge lands two minutes before the snapshot and
+  flips the headline — the flagship flow is wired at last. The board still says
+  BLOCKED, and the code still says 401. Three sources, three answers, again.
+-->
+
+<div class="topbar">
+    <div class="topbar__mark">
+      <span class="barcode" aria-hidden="true"></span>
+      <span class="topbar__wordmark">Beevia</span>
+    </div>
+    <nav class="topbar__nav label" aria-label="Report">
+      <a href="index.html">Archive</a>
+      <a href="#overview">Overview</a>
+      <a href="#s6"><span>What to do</span></a>
+      <a href="#method">Method</a>
+    </nav>
+</div>
+
+<header class="masthead">
+  <div class="field">
+    <div class="field__rail field__rail--l">
+      <dl>
+        <dt>Transfer wired</dt>
+        <dd>Yes · PR #27</dd>
+        <dt>Will it work</dt>
+        <dd>No · 401</dd>
+        <dt>Client endpoints real</dt>
+        <dd>4 of 4</dd>
+        <dt>Review exits</dt>
+        <dd>0 · 12 days</dd>
+      </dl>
+    </div>
+
+    <div class="field__stage">
+      <div class="field__title">
+        <h1>Project<br>Status</h1>
+      </div>
+      <div class="field__meta num">
+        <span>2026-08-21</span>
+        <span>Sprint 08-01</span>
+        <span>10&ndash;28 Aug &middot; day 12 of 18</span>
+        <span>Wired, one header short</span>
+      </div>
+    </div>
+
+    <div class="field__rail field__rail--r">
+      <dl>
+        <dt>API consumer</dt>
+        <dd>108 &nbsp;+0</dd>
+        <dt>Merged today</dt>
+        <dd>4 commits</dd>
+        <dt>Blocked</dt>
+        <dd>3 · board stale</dd>
+        <dt>Done</dt>
+        <dd>1 · day 12</dd>
+      </dl>
+    </div>
+  </div>
+</header>
+
+<section class="mvp" aria-label="MVP readiness estimate">
+  <div class="mvp__head">
+    <span class="label">MVP readiness &mdash; estimate</span>
+    <span class="mvp__pct num">&asymp;50%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 11 days out</span>
+  </div>
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 50 percent built, up from 47. Multi-currency wallets and send-request-receive both moved on one merge. International KYC, cross-currency FX, virtual cards and consent management are not started.">
+    <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.9"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.8"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:7" title="Message translation — 0.7 (stack blocked)"><i style="width:70%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.9 (face verification fixed after 7 weeks broken)"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
+    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.65 (up from 0.50)"><i style="width:65%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.65 (up from 0.55)"><i style="width:65%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
+    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0"></span>
+    <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
+    <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.45"><i style="width:45%"></i></span>
+  </div>
+  <p class="mvp__read"><strong>&asymp;47% &rarr; &asymp;50% &mdash; the largest single-day move since the rubric began</strong>, and entirely attributable to one merge. Wallets 0.50 &rarr; 0.65 (real balance from <code>GET /wallets</code>, transactions URL fixed); send/request/receive 0.55 &rarr; 0.65 (transfer wired with a spec-correct body). Held at 0.65 because the step-up step of the designed auth flow is <em>absent</em>, so every transfer 401s. Segment width = weight &middot; fill = build evidence, <em>not</em> correctness. <a href="#mvp-method">Method and capability table</a>.</p>
+</section>
+
+<div class="shell">
+  <nav class="contents label" aria-label="Contents">
+    Contents
+    <ol>
+      <li><a href="#overview"><span>00</span> Quick overview</a></li>
+      <li><a href="#s1"><span>01</span> Wired, and one header short</a></li>
+      <li><a href="#s2"><span>02</span> What shipped</a></li>
+      <li><a href="#s3"><span>03</span> Risks</a></li>
+      <li><a href="#s4"><span>04</span> Two defects, one lesson</a></li>
+      <li><a href="#s5"><span>05</span> Previous recommendations</a></li>
+      <li><a href="#s6"><span>06</span> What I would do today</a></li>
+      <li><a href="#method"><span>&mdash;</span> Method</a></li>
+    </ol>
+  </nav>
+
+  <main class="doc">
+
+    <section class="sec" id="overview">
+      <div class="note" style="margin-bottom:var(--s-6)">
+        <span class="label">Revised edition</span>
+        <p style="margin-bottom:0">This replaces the version issued earlier today. <code>beevia-mobile</code> PR #27 merged at 14:10 UTC, two minutes before the refreshed board snapshot, and it changes the headline: the send-money flow is now wired end to end. The MVP estimate moves 47% &rarr; 50%. Sections 02, 04 and the rubric are substantially rewritten.</p>
+      </div>
+
+      <div class="invert" style="margin-bottom:var(--s-6)">
+        <p class="lede">Send money is wired end to end for the first time &mdash; the client now calls <code>POST /payments/transfer</code> with a correct request body, the wallet reads real balances, and yesterday's wrong URL is fixed. It will still fail: the transfer requires a step-up token the client never obtains.</p>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">08-01 movement, 20 &rarr; 21 Aug</caption>
+          <thead>
+            <tr><th scope="col">Measure</th><th scope="col" class="r">20 Aug</th><th scope="col" class="r">21 Aug</th><th scope="col" class="r">&Delta;</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">To do (leaves)</th><td class="r">19</td><td class="r">19</td><td class="r">0</td></tr>
+            <tr><th scope="row">In progress (leaves)</th><td class="r">11</td><td class="r">10</td><td class="r">&minus;1</td></tr>
+            <tr><th scope="row">Blocked (leaves)</th><td class="r">2</td><td class="r hi">3</td><td class="r hi">+1 &mdash; P2P Transfer, again</td></tr>
+            <tr><th scope="row">Review / QA (leaves)</th><td class="r">10</td><td class="r">10</td><td class="r hi">0 &mdash; zero exits, 12 days running</td></tr>
+            <tr><th scope="row">Done (leaves)</th><td class="r">1</td><td class="r">1</td><td class="r hi">0 &mdash; still one, on day 12</td></tr>
+            <tr><th scope="row">API surface (consumer)</th><td class="r">108</td><td class="r">108</td><td class="r">0</td></tr>
+            <tr><th scope="row">Commits merged</th><td class="r">2 (mobile)</td><td class="r hi">4 (api + mobile)</td><td class="r">KYC fix + <strong>PR #27</strong></td></tr>
+            <tr><th scope="row">Client <code>/payments/transfer</code> calls</th><td class="r">0</td><td class="r hi">1</td><td class="r hi">wired at last</td></tr>
+            <tr><th scope="row">Client endpoints called (real)</th><td class="r">1 of 2</td><td class="r hi">4 of 4</td><td class="r">URL bug fixed</td></tr>
+            <tr><th scope="row">Estimation points set</th><td class="r">0 / 67</td><td class="r">0 / 67</td><td class="r">still zero</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">Team at a glance</caption>
+          <thead><tr><th scope="col">Person</th><th scope="col">Owns</th><th scope="col">Current leaf state</th><th scope="col">Flag</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">David Samuel</th><td>mobile</td><td>3 To do, 4 In progress, 3 Review/QA</td><td><strong>Merged PR #27</strong> &mdash; the send-money wiring</td></tr>
+            <tr><th scope="row">Ayomikun Araoye</th><td>backend + admin API</td><td>6 To do, 3 In progress, <strong>7 Review/QA</strong>, <strong>3 Blocked</strong></td><td>Shipped the KYC selfie fix; all three blocked leaves are his</td></tr>
+            <tr><th scope="row">Philip Chidera</th><td>design</td><td>10 To do, 3 In progress, 1 Done</td><td>Unchanged</td></tr>
+            <tr><th scope="row">Promise Udo</th><td>admin dashboard</td><td>one co-assigned parent Story</td><td><code>beevia-admin</code> <strong>15 days</strong> silent, still no branches</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <span class="label">The question for standup</span>
+        <p style="margin-bottom:0"><code>POST /payments/transfer</code> is guarded by <code>StepUpGuard</code>, which requires an <code>X-Step-Up-Token</code> header minted by <code>POST /auth/step-up</code>. The client calls <code>POST /auth/pin/verify</code> instead &mdash; which the spec says explicitly <strong>does not mint a step-up token</strong> &mdash; and sends no such header anywhere in <code>lib/</code>. Every transfer will return <strong>401</strong>. Who is fixing that, today?</p>
+      </div>
+
+      <h3>The three things worth knowing</h3>
+
+      <div class="stack">
+        <div class="finding">
+          <div class="finding__n num">1</div>
+          <div>
+            <p><strong>The send-money flow is genuinely wired.</strong> PR #27 (<code>Bva i187</code>, David, 14:10 UTC) added <code>WalletService.transferMoney()</code> posting to <code>/payments/transfer</code> with <code>recipientUserId</code>, <code>amount</code>, <code>note</code> and <code>idempotencyKey</code> &mdash; matching the API contract exactly &mdash; plus loading and error state through <code>WalletProvider</code>, surfaced in the send screen. <code>_reviewPayment()</code> no longer ends in <code>Navigator.pop(true)</code>; it awaits the transfer and reports failure. Four days after the endpoint shipped, something calls it.</p>
+          </div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">2</div>
+          <div>
+            <p><strong>The wallet is now real, and yesterday's bug is fixed.</strong> <code>walletTransactionsUrl</code> changed from the nonexistent <code>/payments/transactions</code> to <code>/wallets/transactions</code>. A new <code>GET /wallets</code> call feeds the balance &mdash; <code>wallet?.numericBalance ?? widget.balance</code>, with the default dropped from <code>100000</code> to <code>0</code>. A <code>transaction_history</code> screen was added. Every client endpoint now points at a route that exists.</p>
+          </div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">3</div>
+          <div>
+            <p><strong>It will not work yet, for one specific reason.</strong> The step-up gap above is a missing step of the designed auth flow (ADR-0003), not a typo. The fix is small &mdash; call <code>/auth/step-up</code>, keep the returned token, attach <code>X-Step-Up-Token</code> on the transfer &mdash; but until it lands, the flow is complete on paper and 401 in practice.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="invert">
+        <span class="label" style="display:block;margin-bottom:var(--s-3)">If you read nothing else</span>
+        <p style="margin-bottom:0;font-variation-settings:'wdth' 75,'wght' 500;max-width:64ch">The sprint's headline capability went from inert to wired in one merge. One missing header stands between it and working.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s1">
+      <div class="sec__h"><span class="sec__n">01</span><h2>Sprint 08-01 &mdash; wired, and one header short</h2></div>
+
+      <h3>1.1 Status, day 12</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Status</th><th scope="col" class="r">Leaves</th><th scope="col" class="r">Share</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">To do</th><td class="r">19</td><td class="r">44%</td></tr>
+            <tr><th scope="row">In progress</th><td class="r">10</td><td class="r">23%</td></tr>
+            <tr><th scope="row">Review / QA</th><td class="r">10</td><td class="r">23%</td></tr>
+            <tr><th scope="row">Blocked</th><td class="r hi">3</td><td class="r hi">7%</td></tr>
+            <tr><th scope="row">Done</th><td class="r">1</td><td class="r">2%</td></tr>
+            <tr><th scope="row" class="hi">Total</th><td class="r hi">43</td><td class="r"></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>1.2 Everything in the window</h3>
+      <p>Window: <strong>20 Aug 15:28 UTC &rarr; 21 Aug 14:12 UTC</strong> (16:28 &rarr; 15:12 WAT). The board was re-exported after the merge; its cut-off is 14:12 UTC, two minutes after PR #27 landed.</p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">When (UTC)</th><th scope="col">Who</th><th scope="col">What</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">20 Aug 15:43</th><td>David Samuel</td><td>BVA-I187 <em>(parent)</em> and BVA-I188 In progress &rarr; <strong>BLOCKED</strong></td></tr>
+            <tr><th scope="row">20 Aug 16:09</th><td>Ayomikun (<code>Phoenixdadhev</code>)</td><td><code>fix(kyc): send the selfie as a URI&hellip;</code></td></tr>
+            <tr><th scope="row">20 Aug 16:12</th><td>Ayomikun Araoye</td><td><code>beevia-api</code> PR #23 merged</td></tr>
+            <tr><th scope="row"><strong>21 Aug 14:10</strong></th><td><strong>David Samuel</strong></td><td><strong><code>beevia-mobile</code> PR #27 <code>Bva i187</code> merged</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        <p style="margin-bottom:0"><strong>The board has not caught up with the code.</strong> BVA-I187 &ldquo;Send Money to Another Beevia User (P2P)&rdquo; is the item PR #27 is named for, and at the 14:12 UTC snapshot both it and BVA-I188 still read <strong>BLOCKED</strong> &mdash; set 22 hours earlier. Either the block is stale, or it refers to something the merge does not resolve. Nobody can tell from the board, because neither transition carries a comment.</p>
+      </div>
+
+      <h3>1.3 What PR #27 changed</h3>
+      <p>Twelve files under <code>lib/</code>, read from <code>origin/main</code>:</p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Area</th><th scope="col">Change</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>core/constants/api_url.dart</code></th><td><code>walletTransactionsUrl</code> <strong><code>/payments/transactions</code> &rarr; <code>/wallets/transactions</code></strong> (yesterday's 404 fixed); added <code>walletsUrl</code>, <code>walletTransferUrl</code>, <code>verifyPinUrl</code></td></tr>
+            <tr><th scope="row"><code>wallet/services/wallet_service.dart</code></th><td>Added <code>fetchWallets()</code>, <code>verifyPin()</code>, and <strong><code>transferMoney()</code></strong></td></tr>
+            <tr><th scope="row"><code>wallet/screens/wallet_screen.dart</code></th><td>Balance now <code>wallet?.numericBalance ?? widget.balance</code>; hardcoded default <strong><code>100000</code> &rarr; <code>0</code></strong></td></tr>
+            <tr><th scope="row"><code>wallet/screens/send_money_screen_p2p.dart</code></th><td><code>_reviewPayment()</code> awaits <code>walletProvider.transferMoney(...)</code>, handles <code>paymentError</code>, drives a <code>transferring</code> loading state</td></tr>
+            <tr><th scope="row"><code>wallet/screens/transaction_history.dart</code></th><td>New screen</td></tr>
+            <tr><th scope="row"><code>wallet/models/wallet_account.dart</code></th><td>New model</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The transfer request body sends <code>recipientUserId</code>, <code>amount</code> (as a string), <code>note</code> and <code>idempotencyKey</code> &mdash; matching <code>TransferRequest</code> in <code>openapi.yaml</code>: three required fields present, <code>note</code> optional, <code>conversationId</code> correctly omitted.</p>
+
+      <h3>1.4 The step-up gap, precisely</h3>
+      <p>This is the one thing standing between the merged flow and a working one.</p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Layer</th><th scope="col">State</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">API</th><td><code>POST /payments/transfer</code> carries <code>@UseGuards(StepUpGuard)</code>; the guard reads <code>x-step-up-token</code> and throws <code>UnauthorizedException</code> when it is absent</td></tr>
+            <tr><th scope="row">Spec</th><td><code>POST /auth/step-up</code> &mdash; <em>&ldquo;Verifies the PIN and mints a short-lived step-up token (default 5m). Send it as <code>X-Step-Up-Token</code> on financial and destructive actions (ADR-0003).&rdquo;</em></td></tr>
+            <tr><th scope="row">Spec</th><td><code>POST /auth/pin/verify</code> &mdash; <em>&ldquo;Confirms the PIN (app unlock / new-device owner confirmation). <strong>Does not mint a step-up token.</strong>&rdquo;</em></td></tr>
+            <tr><th scope="row">Client</th><td class="hi">Calls <code>/auth/pin/verify</code>. <strong>Zero</strong> occurrences of <code>x-step</code>, <code>stepUp</code> or <code>step_up</code> anywhere in <code>lib/</code></td></tr>
+            <tr><th scope="row">Client</th><td class="hi">The Dio interceptor sets only <code>authorization: Bearer &hellip;</code>; <code>transferMoney()</code> passes no per-call headers</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>So the client verifies the PIN against the endpoint that explicitly does not produce a step-up token, and never sends the header the guard requires. <strong>Every transfer returns 401.</strong></p>
+      <p>The fix is three changes: point PIN verification at <code>/auth/step-up</code>, retain the returned token, and attach it as <code>X-Step-Up-Token</code> on the transfer call. Note the token's default TTL is 5 minutes, so it should be minted at the confirm step, not at app unlock.</p>
+
+      <h3>1.5 The review queue, day 12</h3>
+      <p>Ten leaves, <strong>zero exits in twelve days</strong>, median age 4 days. Ayomikun holds 7. BVA-I185 &ldquo;Wallet Summary Endpoint&rdquo; is 7 days in review and <code>wallets.controller.ts</code> is still unchanged since 22 July. Note PR #27 works around this: the client reads <code>GET /wallets</code> and <code>/wallets/transactions</code> rather than waiting for a summary route. That may make BVA-I185 unnecessary; someone should decide rather than leave it ageing in a queue.</p>
+    </section>
+
+    <section class="sec" id="s2">
+      <div class="sec__h"><span class="sec__n">02</span><h2>What shipped this cycle</h2></div>
+      <div class="invert">
+        <p style="margin-bottom:0;max-width:64ch"><strong>Four commits across two repos.</strong> <code>beevia-mobile</code> PR #27 (David, 14:10 UTC) &mdash; the send-money wiring. <code>beevia-api</code> PR #23 (Ayomikun, 20 Aug 16:12 UTC) &mdash; the KYC selfie fix, repairing a defect that had blocked face verification since <strong>29 June</strong>.</p>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Repo</th><th scope="col">Last commit to <code>main</code></th><th scope="col" class="r">Days</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>beevia-mobile</code></th><td><strong>21 Aug</strong></td><td class="r hi">0</td></tr>
+            <tr><th scope="row"><code>beevia-api</code></th><td>20 Aug</td><td class="r">1</td></tr>
+            <tr><th scope="row"><code>beevia-db-schema</code></th><td>17 Aug</td><td class="r">4</td></tr>
+            <tr><th scope="row"><code>beevia-admin-api</code></th><td>6 Aug</td><td class="r hi">15</td></tr>
+            <tr><th scope="row"><code>beevia-admin</code></th><td>6 Aug</td><td class="r hi">15</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        <p style="margin-bottom:0"><strong><code>beevia-mobile</code> was skipped by the sync &mdash; dirty working tree</strong> (<code>analysis_options.yaml</code>, <code>pubspec.lock</code>), so the local clone sits <strong>1 commit behind</strong> <code>origin/main</code>. Every client claim in this report is read directly from <code>origin/main</code> via <code>git show</code> / <code>git grep</code>, not from the working tree, so none of it is stale. The local edits are untouched; commit or stash them and the next sync will fast-forward.</p>
+      </div>
+      <p><strong>Specs:</strong> audit clean at 108 consumer / 29 admin, no drift, no edits needed. PR #27 consumes existing endpoints; PR #23 changed no routes.</p>
+    </section>
+
+    <section class="sec" id="s3">
+      <div class="sec__h"><span class="sec__n">03</span><h2>Risks</h2></div>
+      <div class="stack">
+        <div class="finding"><div class="finding__n num">1</div><div><p><strong>The wired transfer will 401 on every attempt</strong> (&sect;1.4) until the step-up token is obtained and sent.</p></div></div>
+        <div class="finding"><div class="finding__n num">2</div><div><p><strong>The board contradicts the code.</strong> BVA-I187 is BLOCKED while the PR named for it is merged, and no comment explains either state.</p></div></div>
+        <div class="finding"><div class="finding__n num">3</div><div><p><strong>Blocked items still carry no reasons</strong> &mdash; BVA-I188 has four transitions in eight days, none annotated.</p></div></div>
+        <div class="finding"><div class="finding__n num">4</div><div><p><strong>Twelve days, zero review exits.</strong> The oldest item (BVA-I185, 7d) may now be obsolete, and nobody has said so.</p></div></div>
+        <div class="finding"><div class="finding__n num">5</div><div><p><strong>A load-bearing integration was broken for seven weeks without detection</strong> (&sect;4) &mdash; and the step-up gap is the same class of defect, caught here only by reading the code against the spec.</p></div></div>
+        <div class="finding"><div class="finding__n num">6</div><div><p><strong>Both admin repos at 15 days</strong>, no commits, no branches, no owned leaves &mdash; seventh consecutive edition.</p></div></div>
+        <div class="finding"><div class="finding__n num">7</div><div><p><strong>Estimation still 0/67</strong> with 7 days left.</p></div></div>
+      </div>
+    </section>
+
+    <section class="sec" id="s4">
+      <div class="sec__h"><span class="sec__n">04</span><h2>Two defects, one lesson</h2></div>
+      <p>Today surfaced two integration failures at opposite ends of their lifecycle, and they make the same point.</p>
+      <p><strong>The KYC selfie bug</strong> ran for seven weeks. Capability #4 has been scored <strong>0.9 in every edition since 05 Aug</strong> on evidence reading &ldquo;BVN, facial verification&rdquo; &mdash; while facial verification could not run at all, rejected with a 400 before the face-match step. The rubric behaved as designed: it scores <em>implementation of the design</em>, and every edition has carried the caveat that it &ldquo;cannot tell you whether a built screen or endpoint functions correctly&rdquo;, because testing is out of scope for scoring per the owner. #4 <strong>stays 0.9</strong> &mdash; the fix restores intended behaviour rather than adding capability.</p>
+      <p><strong>The step-up gap</strong> is the same shape, caught on day zero instead of week seven &mdash; and only because this report reads the client against the spec. Nothing in CI would have caught either.</p>
+      <div class="note">
+        <p><strong>The MVP percentage measures built surface, not working product.</strong> Today's +3 points are real wiring, and the flow still returns 401. Both statements are true at once, which is exactly the gap the number carries.</p>
+        <p style="margin-bottom:0"><strong>This is the strongest argument yet for the testing rules staged in <code>agent-rules/</code>.</strong> One integration test on the YouVerify payload, and one asserting <code>POST /payments/transfer</code> rejects a request without <code>X-Step-Up-Token</code>, would have caught both. Those rules remain drafted and unapplied.</p>
+      </div>
+      <p>If the readiness number should mean &ldquo;works&rdquo; rather than &ldquo;exists&rdquo;, the rubric needs a correctness input &mdash; a methodology decision for the owner, not one this report should make alone.</p>
+    </section>
+
+    <section class="sec" id="s5">
+      <div class="sec__h"><span class="sec__n">05</span><h2>Previous recommendations &mdash; where they stand</h2></div>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Recommendation from 20 Aug</th><th scope="col">Status on 21 Aug</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Decide the <code>/payments/transactions</code> question</th><td class="hi"><strong>Done.</strong> PR #27 pointed it at <code>/wallets/transactions</code> &mdash; the existing route. The client-was-wrong reading was correct.</td></tr>
+            <tr><th scope="row">Wire the send button to <code>POST /payments/transfer</code></th><td class="hi"><strong>Done.</strong> <code>transferMoney()</code> posts the correct body. Blocked in practice by the step-up gap (&sect;1.4).</td></tr>
+            <tr><th scope="row">Do not accept BVA-I170 as-is</th><td>Overtaken. The hardcoded balance it covered is gone &mdash; the screen now reads <code>GET /wallets</code>. The item can probably be re-reviewed against the new code.</td></tr>
+            <tr><th scope="row">Cap WIP before opening anything else</th><td>Partly. WIP 11 &rarr; 10, by blocking two items rather than finishing any.</td></tr>
+            <tr><th scope="row"><code>beevia-admin</code>, fourteen days</th><td class="hi">Not done. Now 15.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Two done, one overtaken by events, two open &mdash; much the best day on this table since the sprint began.</p>
+    </section>
+
+    <section class="sec" id="s6">
+      <div class="sec__h"><span class="sec__n">06</span><h2>What I would do today</h2></div>
+      <div class="stack">
+        <div class="finding"><div class="finding__n num">1</div><div><p><strong>Fix the step-up gap</strong> (&sect;1.4). Call <code>/auth/step-up</code> at the confirm sheet, hold the 5-minute token, send <code>X-Step-Up-Token</code> on the transfer. Everything else in the flow is already correct.</p></div></div>
+        <div class="finding"><div class="finding__n num">2</div><div><p><strong>Then test one real transfer end to end</strong> and say so publicly. It would be the first money moved through the app, and it settles what six editions of board status could not.</p></div></div>
+        <div class="finding"><div class="finding__n num">3</div><div><p><strong>Update the board to match the code.</strong> BVA-I187 is merged and still BLOCKED; BVA-I188 has four unannotated transitions. Either unblock them or write down what is blocking.</p></div></div>
+        <div class="finding"><div class="finding__n num">4</div><div><p><strong>Decide whether BVA-I185 is still needed.</strong> PR #27 routed around the wallet-summary endpoint. If it is obsolete, close it &mdash; that also clears the queue's oldest item.</p></div></div>
+        <div class="finding"><div class="finding__n num">5</div><div><p><strong><code>beevia-admin</code>, fifteen days.</strong> Seventh edition.</p></div></div>
+      </div>
+    </section>
+
+    <section class="sec" id="method">
+      <div class="sec__h"><span class="sec__n">&mdash;</span><h2>Appendix &mdash; method and readiness rubric</h2></div>
+
+      <p><strong>Pipeline.</strong> <code>beevia-refresh</code>, run twice today: the second pass followed the user's merge. Zoho export (67 items, <code>--modified --activity</code>, cut-off 14:12 UTC) &rarr; fast-forward-only sync (<strong><code>beevia-mobile</code> skipped, dirty working tree; local clone is 1 commit behind <code>origin/main</code></strong>) &rarr; deterministic API/spec audit (clean, no drift, no spec edits) &rarr; this report.</p>
+
+      <p><strong>Evidence for client claims.</strong> All read from <code>origin/main</code>, not the working tree, precisely because the local clone is behind: <code>git show origin/main:&lt;path&gt;</code> for <code>api_url.dart</code>, <code>wallet_service.dart</code>, <code>send_money_screen_p2p.dart</code>, <code>network_service.dart</code>; <code>git grep origin/main</code> for <code>walletTransferUrl</code> and for <code>x-step</code>/<code>stepUp</code>/<code>step_up</code>; <code>git diff --name-only HEAD origin/main -- lib/</code> for the PR #27 file list. The step-up finding cross-references <code>src/auth/step-up.guard.ts</code> and the <code>/auth/step-up</code> and <code>/auth/pin/verify</code> descriptions in <code>openapi.yaml</code>.</p>
+
+      <p><strong>Window.</strong> 20 Aug 15:28 UTC &rarr; 21 Aug 14:12 UTC. Per the 20 Aug correction, CSV header times are the exporting machine's local MDT; <code>actiontime</code> values are UTC. WAT (UTC+1) is inferred for the team, not stated in the data.</p>
+
+      <h3>Sources</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Stream</th><th scope="col">Artifact</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Board</th><td><code>beevia-sprint-board-2026-08-21.csv</code> &mdash; 67 rows, 43 leaves, cut-off 14:12 UTC; <code>beevia-activity-2026-08-21.json</code></td></tr>
+            <tr><th scope="row">Code</th><td>Five repos; <code>beevia-api</code> +2, <code>beevia-mobile</code> +1 on <code>origin/main</code></td></tr>
+            <tr><th scope="row">Specs</th><td><code>openapi.yaml</code> (108), <code>openapi.proposed.yaml</code> (52), <code>openapi.admin.yaml</code> (29), <code>openapi.admin.proposed.yaml</code> (23) &mdash; validated, no drift</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="mvp-method">MVP readiness &mdash; how the &asymp;50% is computed</h3>
+      <p>Eleven capabilities from PRD &sect;1.2/&sect;11 with <strong>frozen weights</strong>, each scored 0&ndash;1 from build evidence. Target date 2026-09-01 is provisional, set by the owner on 2026-08-07.</p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col" class="r">#</th><th scope="col">Capability</th><th scope="col" class="r">Weight</th><th scope="col" class="r">Score</th><th scope="col">Evidence</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" class="r">1</th><td>E2EE messaging</td><td class="r">15</td><td class="r">0.9</td><td>Conversation/message/key/attachment paths live; client crypto, socket and attachment layers present</td></tr>
+            <tr><th scope="row" class="r">2</th><td>Voice &amp; video calling</td><td class="r">8</td><td class="r">0.8</td><td>4 call endpoints live; call screens present</td></tr>
+            <tr><th scope="row" class="r">3</th><td>Message translation</td><td class="r">7</td><td class="r">0.7</td><td><code>POST /translate</code> live; provider integration and per-message endpoint BLOCKED; &ldquo;v2&rdquo; comment still unrecorded as a decision</td></tr>
+            <tr><th scope="row" class="r">4</th><td>Local KYC tier (BVN)</td><td class="r">8</td><td class="r">0.9</td><td>KYC/upgrade endpoints + provider webhook live; full client onboarding. <strong>Face verification was non-functional 29 Jun &rarr; 20 Aug (&sect;4); fixed by PR #23.</strong> Score unchanged &mdash; the rubric measures built surface, not correctness</td></tr>
+            <tr><th scope="row" class="r">5</th><td>International KYC tier</td><td class="r">6</td><td class="r hi">0.0</td><td>proposed only</td></tr>
+            <tr><th scope="row" class="r">6</th><td>Multi-currency wallets</td><td class="r">12</td><td class="r hi">0.65 &uarr;</td><td><strong>Moved.</strong> <code>GET /wallets</code> drives the balance (hardcoded default gone), <code>/wallets/transactions</code> corrected and called, transaction-history screen added. Ceiling: server NGN-only via <code>activeNgn()</code>, no wallet-summary route, no currency selection</td></tr>
+            <tr><th scope="row" class="r">7</th><td>Send / request / receive</td><td class="r">12</td><td class="r hi">0.65 &uarr;</td><td><strong>Moved.</strong> Send wired end to end: <code>transferMoney()</code> posts a spec-correct body to <code>POST /payments/transfer</code> with loading/error state. Ceiling: <strong>step-up token absent, so it 401s</strong> (&sect;1.4) &mdash; a missing step of the designed flow, not a bug; request/receive have no client flow</td></tr>
+            <tr><th scope="row" class="r">8</th><td>Cross-currency FX</td><td class="r">12</td><td class="r hi">0.0</td><td>proposed only</td></tr>
+            <tr><th scope="row" class="r">9</th><td>Virtual cards</td><td class="r">10</td><td class="r hi">0.0</td><td>proposed only; BVA-I198 in review with no code</td></tr>
+            <tr><th scope="row" class="r">10</th><td>Consent management</td><td class="r">4</td><td class="r hi">0.0</td><td>no endpoint or record anywhere</td></tr>
+            <tr><th scope="row" class="r">11</th><td>Admin oversight</td><td class="r">6</td><td class="r">0.45</td><td>29/52 admin ops; both admin repos 15 days silent, no branches</td></tr>
+            <tr><th scope="row" class="r hi"></th><td class="hi">Weighted total</td><td class="r hi">100</td><td class="r hi">50.3</td><td class="hi">&asymp;50%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Weights frozen. Scores measure <strong>merged, reachable build evidence</strong> &mdash; see &sect;4 for what that deliberately excludes.</p>
+
+      <h3>Team performance &mdash; what these figures do not measure</h3>
+      <div class="note">
+        <p style="margin-bottom:0">David merged PR #27 and appears as the actor on four BVA-I188 transitions; the first is delivery, the second records who clicked, not who is responsible for a blockage. Ayomikun holding all three blocked leaves reflects that the backend owns the contested work &mdash; and he shipped the KYC fix. With 0/67 estimation points there is still no workload normalisation.</p>
+      </div>
+
+      <h3>What this report cannot tell you</h3>
+      <div class="note">
+        <p><strong>Whether the transfer works</strong> &mdash; the step-up gap says it will 401, but that is read from code, not observed. No build or test was run.</p>
+        <p><strong>Why BVA-I188 is blocked</strong>, or whether PR #27 resolves it &mdash; no reason field, no comment, twice.</p>
+        <p><strong>Whether the KYC fix works against live YouVerify</strong>; the commit says it was verified, no test covers it.</p>
+        <p><strong>What was done on 21 Aug after 14:12 UTC.</strong></p>
+        <p style="margin-bottom:0"><strong>Velocity or scope-fit</strong> for the remaining 7 days &mdash; still 0/67 estimated.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="foot">
+  <span class="barcode barcode--lg" aria-hidden="true"></span>
+  <span>Beevia project status &middot; 2026-08-21 &middot; Sprint 08-01, day 12 &middot; revised</span>
+  <span><a href="index.html">All frames</a></span>
+</footer>
+
+<script src="ui.js"></script>
+</body>
+</html>

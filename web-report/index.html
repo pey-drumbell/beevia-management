@@ -34,7 +34,7 @@
       <span class="topbar__wordmark">Beevia</span>
     </div>
     <nav class="topbar__nav label" aria-label="Report">
-      <a href="2026-08-19.html">Latest frame</a>
+      <a href="2026-08-26.html">Latest frame</a>
     </nav>
 </div>
 
@@ -43,9 +43,9 @@
     <div class="field__rail field__rail--l">
       <dl>
         <dt>Frames held</dt>
-        <dd>11</dd>
+        <dd>16</dd>
         <dt>Latest</dt>
-        <dd>2026-08-19 · 08-01 day 10</dd>
+        <dd>2026-08-26 · 08-01 day 17</dd>
       </dl>
     </div>
 
@@ -55,7 +55,7 @@
       </div>
       <div class="field__meta num">
         <span>Beevia project status</span>
-        <span>2026-08-05 &rarr; 2026-08-19</span>
+        <span>2026-08-05 &rarr; 2026-08-26</span>
         <span>Newest first</span>
       </div>
     </div>
@@ -74,26 +74,111 @@
 <section class="mvp" aria-label="MVP readiness estimate">
   <div class="mvp__head">
     <span class="label">MVP readiness &mdash; estimate</span>
-    <span class="mvp__pct num">&asymp;46%</span>
-    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 13 days out</span>
+    <span class="mvp__pct num">&asymp;50%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 6 days out</span>
   </div>
-  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 46 percent built. Unchanged — nothing merged to main for a second edition. Communication capabilities largely built end to end; international KYC, cross-currency FX, virtual cards and consent management are not started.">
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 50 percent built, unchanged, even though the board's Done count tripled. International KYC, cross-currency FX, virtual cards and consent management are not started.">
     <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.9"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.8"><i style="width:80%"></i></span>
-    <span class="mvp__seg" style="flex:7" title="Message translation — 0.7 (stack blocked)"><i style="width:70%"></i></span>
+    <span class="mvp__seg" style="flex:7" title="Message translation — 0.7 (6 items marked Done, no code)"><i style="width:70%"></i></span>
     <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.9"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
-    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.45"><i style="width:45%"></i></span>
-    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.50"><i style="width:50%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.65"><i style="width:65%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.65 (fix written but unmerged; main still 401s)"><i style="width:65%"></i></span>
     <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
-    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0"></span>
+    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0 (card_topups is funding groundwork, unconsumed)"></span>
     <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
     <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.45"><i style="width:45%"></i></span>
   </div>
-  <p class="mvp__read"><strong>Unchanged &mdash; nothing merged to <code>main</code> for a second edition.</strong> Capability #7 holds at 0.50: the client wiring still sits unmerged on <code>origin/BVA-I189</code> and still carries the wrong transactions URL, so it remains a leading indicator rather than a score. Segment width = weight &middot; fill = build evidence. <a href="#mvp-method">Method and capability table</a>.</p>
+  <p class="mvp__read"><strong>Unchanged &mdash; while the board's Done count tripled.</strong> The only merged code this cycle is a database table no service imports. Translation holds at 0.7 despite six of its items being marked complete, because the implemented surface is still the single <code>POST /translate</code> route that has existed since 10 July. The rubric follows the code, and this is the edition where that policy earns its keep. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 26 Aug 2026 &mdash; <a href="2026-08-26.html#mvp-method">method and capability table</a>.</p>
 </section>
 
 <main class="frames">
+
+  <a class="frame" href="2026-08-26.html">
+    <span class="frame__idx num">16</span>
+    <span>
+      <span class="frame__date">26 Aug 2026</span>
+      <span class="frame__sum">Done jumps 2 &rarr; 8. Nine items were marked complete in a single minute at 07:09 UTC &mdash; including a translation stack deferred to &ldquo;version 2&rdquo; nine days earlier &mdash; while <code>beevia-api</code> sat untouched since 21 Aug and its translate module since 10 July. The MVP number does not move.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:8"></i><u style="flex:35"></u></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>08-01 · day 17 of 18</span></div>
+      <div><span>MVP est</span><span>≈50%</span></div>
+      <div><span>Done</span><span>8 / 43</span></div>
+      <div><span>Code behind</span><span>none</span></div>
+      <div><span>Review / QA</span><span>13</span></div>
+      <div><span>Step-up fix</span><span>unmerged · d4</span></div>
+    </span>
+  </a>
+
+  <a class="frame" href="2026-08-25.html">
+    <span class="frame__idx num">15</span>
+    <span>
+      <span class="frame__date">25 Aug 2026</span>
+      <span class="frame__sum">The step-up fix is written, correct, and sitting on an unmerged branch &mdash; verified line by line. Meanwhile the review queue grew to 14, a third of the sprint, and has never released a single item in sixteen days. The board marked one item ready 23 minutes before its fix was committed.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:2"></i><u style="flex:41"></u></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>08-01 · day 16 of 18</span></div>
+      <div><span>MVP est</span><span>≈50%</span></div>
+      <div><span>Review / QA</span><span>14 · 0 drained</span></div>
+      <div><span>Done</span><span>2 / 43</span></div>
+      <div><span>Merged</span><span>0 commits</span></div>
+      <div><span>Step-up fix</span><span>unmerged</span></div>
+    </span>
+  </a>
+
+  <a class="frame" href="2026-08-24.html">
+    <span class="frame__idx num">14</span>
+    <span>
+      <span class="frame__date">24 Aug 2026</span>
+      <span class="frame__sum">Four days from the sprint end: 2 of 43 leaves Done, 10 in a queue that has never released anything. Six commits landed Friday &mdash; logging, tracing, contacts at scale &mdash; but not the one-line step-up fix, so send money still 401s. A shipped contract changed again without a route changing.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:2"></i><u style="flex:41"></u></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>08-01 · day 15 of 18</span></div>
+      <div><span>MVP est</span><span>≈50%</span></div>
+      <div><span>Done</span><span>2 / 43</span></div>
+      <div><span>Review / QA</span><span>10 · 0 drained</span></div>
+      <div><span>Merged</span><span>6 commits</span></div>
+      <div><span>Send money</span><span>still 401</span></div>
+    </span>
+  </a>
+
+  <a class="frame" href="2026-08-21.html">
+    <span class="frame__idx num">13</span>
+    <span>
+      <span class="frame__date">21 Aug 2026</span>
+      <span class="frame__sum">Send money is wired end to end at last &mdash; PR #27 posts a spec-correct body to <code>/payments/transfer</code>, the wallet reads real balances, the wrong URL is fixed. It will still 401: the transfer needs a step-up token the client never obtains. Also: a KYC bug that stopped face verification since 29 June.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:1"></i><u style="flex:42"></u></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>08-01 · day 12 of 18</span></div>
+      <div><span>MVP est</span><span>≈50% ↑</span></div>
+      <div><span>Transfer wired</span><span>Yes · 401s</span></div>
+      <div><span>Review / QA</span><span>10 · 0 drained</span></div>
+      <div><span>Done</span><span>1 / 43</span></div>
+      <div><span>Merged</span><span>4 commits</span></div>
+    </span>
+  </a>
+
+  <a class="frame" href="2026-08-20.html">
+    <span class="frame__idx num">12</span>
+    <span>
+      <span class="frame__date">20 Aug 2026</span>
+      <span class="frame__sum">The mobile work merged overnight &mdash; wallet and send-money screens on <code>main</code> at last. It shipped with the wrong URL still in it, the send button still not calling the API, and the balance hardcoded to &#8358;100,000. First MVP movement: 46% &rarr; 47%.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:1"></i><u style="flex:42"></u></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>08-01 · day 11 of 18</span></div>
+      <div><span>MVP est</span><span>≈47% ↑</span></div>
+      <div><span>Mobile merges</span><span>2 · PR #25</span></div>
+      <div><span>In progress</span><span>11 / 43</span></div>
+      <div><span>Review / QA</span><span>10 · 0 drained</span></div>
+      <div><span>Done</span><span>1 / 43</span></div>
+    </span>
+  </a>
 
   <a class="frame" href="2026-08-19.html">
     <span class="frame__idx num">11</span>
