@@ -216,10 +216,53 @@ failure by an empty result, not a status code. Any item that still fails is
 listed by name in a warning — never silently blank. A full run takes ~2 minutes;
 `--no-descriptions` skips the whole pass when only board state is needed.
 
+## Exporting a second project — `--project` / `--label` / `--allow-empty`
+
+The workspace holds **two** projects. `--probe` lists both:
+
+| Project | Id | Sprints |
+|---|---|---|
+| Beevia | `187554000000089145` | the main board (`ZOHO_PROJECT_ID`) |
+| **Beevia Admin Dashboard** | `187554000000127002` | **none yet** as of 2026-08-28 |
+
+```bash
+python3 $S --project "${ZOHO_ADMIN_PROJECT_ID:-187554000000127002}" \
+          --label admin --allow-empty \
+          --out sprint-board-exports/admin \
+          --modified --activity
+```
+
+Three flags, and each exists for a reason worth knowing:
+
+- **`--project`** overrides `ZOHO_PROJECT_ID` for one run. Everything else
+  (team, credentials, field map) is shared.
+- **`--label admin`** writes `beevia-admin-sprint-board-<date>.csv` and
+  `beevia-admin-activity-<date>.json`.
+- **`--out sprint-board-exports/admin`** is **not optional**, and the label alone
+  will not save you: **`beevia-audit` globs `sprint-board-exports/*.csv`
+  non-recursively and treats every match as a snapshot of the same board.** Drop
+  a second project's CSV in that folder and the audit will diff two unrelated
+  boards against each other and report nonsense movement. The glob does not
+  descend, so a subdirectory is the isolation.
+- **`--allow-empty`** turns two normally-fatal cases into **exit 3** with a
+  notice: the project has no sprints at all, or none matching the sprint filter.
+  Both are the expected state of a newly created project. Without the flag they
+  stay hard failures, because for the main project an empty sprint list means
+  something is broken.
+
+Exit codes: `0` wrote a board · `1` real failure · `2` zero items matched ·
+**`3` nothing to export (only under `--allow-empty`)**.
+
+The admin project's sprints will have their own names, so the main
+`ZOHO_SPRINT_FILTER` will not match once it *does* have sprints. Pass `--sprint`
+explicitly at that point, or the run keeps skipping with exit 3.
+
 ## Other API facts
 
 - **`ZOHO_TEAM_ID` is the workspace id.** UI says "workspace", the API path says
   `team/{id}/`. Verified: `910540998`.
+- **Project ids are not secret** and are safe to hardcode in a command. Only the
+  OAuth values in `.env` are credentials.
 - Auth header is `Zoho-oauthtoken {token}`, not `Bearer`.
 - Refresh tokens are per data centre; a `.com` token fails against `.eu`. Wrong
   `ZOHO_DC` is the usual cause of "invalid refresh token".
@@ -261,6 +304,11 @@ dump before accepting it.
 
 **Zero items (exit 2)** — usually `ZOHO_SPRINT_FILTER` not matching. The error
 lists the sprint names actually available.
+
+**Nothing to export (exit 3)** — only under `--allow-empty`, and only for a
+project with no sprints or no filter match. Expected for Beevia Admin Dashboard
+until its board is set up; a *hard* failure here on the main project means
+something really is wrong.
 
 ## Guardrails
 

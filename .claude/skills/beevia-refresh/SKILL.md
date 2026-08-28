@@ -13,7 +13,11 @@ E=.claude/skills/beevia-sprint-export/scripts/zoho_export.py
 S=.claude/skills/beevia-refresh/scripts/sync_repos.py
 A=.claude/skills/beevia-audit/scripts/audit.py
 
-python3 $E --modified --activity   # 1. board  (~4 min)
+python3 $E --modified --activity   # 1a. main board  (~4 min)
+python3 $E --project "${ZOHO_ADMIN_PROJECT_ID:-187554000000127002}" \
+           --label admin --allow-empty \
+           --out sprint-board-exports/admin \
+           --modified --activity    # 1b. admin board (exit 3 = not set up yet)
 python3 $S                         # 2. code
 python3 $A                         # 3. drift
                                    # 4. update specs   (judgement — see below)
@@ -147,13 +151,18 @@ instruction from the project owner, not a per-report judgement call.
 | **David Samuel** | Mobile front end | `beevia-mobile` | 47 items |
 | **Philip Chidera** | UI/UX design | — | 14 items |
 
-### One workstream is invisible to the board
+### One workstream is invisible to the *main* board
 
-- **Promise has no board presence at all** — zero assigned items, zero audit
-  actions, name absent from both the CSV and the activity sidecar. The admin
-  dashboard is nevertheless being built. Until tasks are assigned to Promise,
-  report the responsibility and judge the work from commits in `beevia-admin` /
+- **Promise has effectively no presence on the Beevia board** — no owned leaf,
+  and only a single co-assigned parent Story since 13 Aug. The admin dashboard is
+  nevertheless a real workstream. Until tasks exist for it, report the
+  responsibility and judge the work from commits in `beevia-admin` /
   `beevia-admin-api`, which step 2's sync report lists.
+- **A dedicated project now exists for it** (step 1b) but has no sprint yet. When
+  it does, that board — not the Beevia board — becomes the source for Promise's
+  row, and this caveat can finally be retired. Check step 1b's output before
+  repeating the "invisible workstream" framing: once the admin board carries
+  items, saying the work is invisible would be the stale claim.
 
 Consequences for the report:
 
@@ -185,11 +194,57 @@ attributing commits needs care. Observed over 90 days:
 and unlikely to be wrong, but treat them as provisional: if a report attributes
 commits by person, say which identity it counted.
 
-## Step 1 — board
+## Step 1 — boards (there are two)
 
 Delegates to the **`beevia-sprint-export`** skill. Read that skill's SKILL.md
 before touching its script or interpreting its output; it documents several
 non-obvious API traps.
+
+### 1a — the main board (project *Beevia*)
+
+The unchanged daily export. Writes `sprint-board-exports/beevia-sprint-board-<date>.csv`
+plus the activity sidecar.
+
+### 1b — the admin board (project *Beevia Admin Dashboard*)
+
+Added 2026-08-28, at the project owner's direction, to close the reporting blind
+spot this pipeline has flagged in **eleven consecutive editions**: the admin
+dashboard workstream has no presence on the main board, so Promise Udo has never
+had a row anyone could read, and `beevia-admin` silence could only be inferred
+from commits.
+
+**It is empty today.** The project exists (id `187554000000127002`, project no. 8)
+with **no sprints and no start/end dates**, so `--allow-empty` returns **exit 3**
+and writes nothing. That is the expected state until the board is set up — do not
+treat it as a failure, and do not remove the step because it produced no file.
+
+Two things that will bite when it *is* populated:
+
+- **Its sprints will have their own names.** The main `ZOHO_SPRINT_FILTER`
+  (`08-01`) will not match, so the step keeps skipping with exit 3 until you pass
+  `--sprint <name>`. A silent exit 3 after the board is live means exactly this.
+- **Its exports must stay in `sprint-board-exports/admin/`.** `beevia-audit`
+  globs `sprint-board-exports/*.csv` non-recursively and treats every match as a
+  snapshot of one board. A second project's CSV in the main folder makes the
+  audit diff two unrelated boards and report invented movement. The subdirectory
+  is the isolation; the `admin` label alone is not.
+
+**Reporting it (approach 1, chosen by the owner over separate reports):** one
+report, with the admin board as its own section — not merged into the main
+counts. Keep them separate everywhere:
+
+- **Never add the two boards' totals.** Different projects, different sprints,
+  different cadence. A combined "43 + n leaves" number would be meaningless.
+- The MVP rubric is **unaffected**. It scores merged code against the PRD, and
+  capability #11 (Admin oversight) already reads `beevia-admin` /
+  `beevia-admin-api` directly. A new board changes what is *visible*, not what
+  is *built*.
+- Until the board has items, say so in one line rather than dropping the section
+  — "the admin project exists but has no sprint yet" is itself the status, and
+  it is the answer to a question this report has asked eleven times.
+- Once it has items, Promise Udo gets a real row in the team table, sourced from
+  that board. Until then the standing rule holds: report the responsibility and
+  judge the work from commits.
 
 Always pass `--modified --activity`:
 
@@ -316,7 +371,10 @@ Match the existing structure (`project-status-2026-08-05.md` is the reference):
 3. Numbered detail sections: sprint breakdown (including movement since the last
    export), what shipped, PRD gap, risks, what to do this week — with the
    previous edition's recommendations resolved.
-4. `## Appendix — method`, including anything the data cannot support.
+4. **`## Admin dashboard board`** — the project from step 1b, as its own section
+   with its own status table and movement. One line while it is empty; a full
+   section once it has items. Never folded into the main sprint's counts (§1b).
+5. `## Appendix — method`, including anything the data cannot support.
 
 Ground every number in the export or the audit JSON. Where the data cannot
 answer a question, say so in the report rather than estimating — the 2026-08-05

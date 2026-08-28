@@ -38,7 +38,7 @@ Measured against the PRD, three MVP capabilities are **still absent from the cod
 
 | PRD capability | State |
 |---|---|
-| Virtual cards (§1.2, §8.2, §10.3, Phase 4) | **No code at all** — no module, controller, table, or provider capability |
+| Virtual cards (§1.2, §8.2, §10.3, Phase 4) | **Shipped 2026-08-27** — 13 operations under `/cards`, backed by `cards` + `card_transfers` tables and an Anchor issuance path. See §4.2 |
 | Cross-currency conversion (§1.2, §5.2, §9 Flows 5–6) | **No code at all** — `PaymentService` hard-codes NGN via an `activeNgn()` helper |
 | Two verification tiers (§1.2, §1.4) | **Local tier only** — BVN/Nigeria; no international path for USD/GBP/EUR |
 | Consent management (§10.4) | **Listed as MVP, no endpoint or record** |
@@ -158,10 +158,11 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | Devices & Keys | 6 | 0 | Complete |
 | Invites | 3 | 0 | Complete (no dispatch, by design) |
 | Currencies | 1 | 0 | Complete |
-| Wallets | 7 | 8 | No bank list, account resolution, single-wallet read, or payout status |
+| Wallets | **13** | 5 | **+6:** bank list, account resolution, beneficiary rename/remove, and payout listing/status. Bank-transfer payouts are now observable end to end |
+| **Top-ups** | **3** | 0 | **New.** Card funding of the NGN wallet via Paystack: initialize, list, status |
 | FX | **0** | 3 | Does not exist |
-| Payments | **9** | 4 | **+3:** direct `POST /payments/transfer` (non-escrow, idempotent) and the recipient picker (`GET /payments/recipients`, `GET /payments/recent-recipients`). Still no read path — no `GET /payments` |
-| Cards | **0** | 8 | Does not exist |
+| Payments | **9** | 4 | Direct transfer + recipient picker shipped 17 Aug. Still no read path — no `GET /payments`. (Plus the 3 live-endpoint modifications counted below.) |
+| Cards | **13** | 0 | **New, and larger than proposed.** Issue, list, get, rename, reveal, reveal-PIN, freeze, unfreeze, terminate, fund, withdraw, transfers, transactions. Each card carries its **own 4-digit PIN**, a model the proposal did not anticipate |
 | Chat (REST) | 19 | 0 | +2 clear, delete. Message deletion now shipped |
 | Calls | 5 | 0 | Complete |
 | Attachments | 2 | 1 | No single-attachment download presign |
@@ -169,8 +170,8 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | Translate | 1 | 5 | Stateless only; no preference storage |
 | Notifications | 5 | 0 | Complete |
 | Support | **0** | 4 | Does not exist. Includes `POST /payments/{id}/dispute`, listed under §7.2 but tagged Support |
-| Webhooks | 3 | 1 | Card issuer callback missing |
-| **Total** | **108** | **50** | +3 live-endpoint modifications = 53 operations in the proposed file |
+| Webhooks | **4** | 1 | **+1:** `POST /webhooks/paystack` for card top-ups. Card issuer callback still missing |
+| **Total** | **131** | **39** | +3 live-endpoint modifications = 42 operations in the proposed file |
 
 ---
 
@@ -200,16 +201,28 @@ Meanwhile the PRD treats multi-currency as *the* differentiator — "Multi-Curre
 
 Proposed: `GET /fx/rates`, `POST /fx/quotes`, `GET /fx/quotes/{id}`, plus `sourceWalletId`/`quoteId` on send, `currencyCode` on request, and a body on `POST /payments/{id}/pay`. The quote object is what makes "the rate the user saw is the rate the ledger applied" auditable rather than merely intended.
 
-### 4.2 Virtual cards do not exist
+### 4.2 Virtual cards — shipped 2026-08-27, on a different security model
 
-`grep -ri card src/` returns the `payment_card` *message type* and nothing else. No module, no controller, no `cards` table, no `card_issuance` provider capability, no issuer webhook.
+This gap is closed. Thirteen operations shipped under `/cards`, backed by `cards` and `card_transfers` tables and an Anchor issuance path: issue, list, get, rename, reveal, reveal-PIN, freeze, unfreeze, terminate, fund, withdraw, transfer history and spend history.
 
-The PRD places cards in the key modules list (§1.2), gives them a user story (§8.2), a full flow (§9 Flow 7), a detailed feature spec (§10.3), and makes them the headline of roadmap Phase 4. The spec is specific: masked by default, reveal behind biometric/PIN with automatic re-mask after a fixed window, freeze/unfreeze at any time, issuer legal name and compliance disclosure shown in-app, and a clear status message with retry when the issuer is unavailable.
+**The shipped design differs from what this RFC proposed, and the difference is the interesting part.** The proposal assumed cards would be gated by the account step-up token, like every other money-adjacent action. The implementation gives **each card its own 4-digit PIN**, set at issuance:
 
-Proposed: eight operations under `/cards` plus `POST /webhooks/cards`. Two deliberate asymmetries in the design:
+| Action | Proposed gate | Shipped gate |
+|---|---|---|
+| Issue a card | step-up | step-up (unchanged) |
+| Reveal PAN/CVV | step-up | **the card's PIN** |
+| Unfreeze | step-up | **the card's PIN** |
+| Terminate | step-up | **the card's PIN**, and refused while the card holds a balance |
+| Fund / withdraw | not proposed | **the card's PIN** |
+| Recover a forgotten card PIN | not proposed | step-up — the account PIN recovers the card PIN |
+| Freeze | no gate | no gate (unchanged) |
 
-- **Freeze is not step-up gated; unfreeze is.** A user reacting to a suspected compromise should never be slowed by a PIN prompt. Restoring spending ability is the direction that warrants friction.
-- **`POST /cards/{id}/reveal` returns `reveal_ttl_seconds`**, so the re-mask window the PRD requires is server-specified rather than invented per client.
+Both designs keep freeze ungated, for the reason the proposal gave: a user reacting to a suspected compromise should never be slowed by a prompt. The per-card PIN is a stronger model than proposed — compromise of the account step-up alone does not expose a card's PAN — at the cost of one more secret for the user to remember, which is what `POST /cards/{cardId}/reveal-pin` exists to handle.
+
+Two proposal details did **not** ship and remain open:
+
+- **`reveal_ttl_seconds` is absent.** The PRD requires automatic re-masking after a fixed window; the shipped `CardSecrets` response carries no TTL, so each client must invent that window itself.
+- **No issuer webhook.** `POST /webhooks/cards` is still proposed; card state changes are read by polling the partner rather than pushed.
 
 ### 4.3 Only one verification tier exists
 

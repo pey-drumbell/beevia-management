@@ -34,7 +34,7 @@
       <span class="topbar__wordmark">Beevia</span>
     </div>
     <nav class="topbar__nav label" aria-label="Report">
-      <a href="2026-08-26.html">Latest frame</a>
+      <a href="2026-08-28.html">Latest frame</a>
     </nav>
 </div>
 
@@ -43,9 +43,9 @@
     <div class="field__rail field__rail--l">
       <dl>
         <dt>Frames held</dt>
-        <dd>16</dd>
+        <dd>18</dd>
         <dt>Latest</dt>
-        <dd>2026-08-26 · 08-01 day 17</dd>
+        <dd>2026-08-28 · 08-01 closed</dd>
       </dl>
     </div>
 
@@ -55,7 +55,7 @@
       </div>
       <div class="field__meta num">
         <span>Beevia project status</span>
-        <span>2026-08-05 &rarr; 2026-08-26</span>
+        <span>2026-08-05 &rarr; 2026-08-28</span>
         <span>Newest first</span>
       </div>
     </div>
@@ -74,26 +74,60 @@
 <section class="mvp" aria-label="MVP readiness estimate">
   <div class="mvp__head">
     <span class="label">MVP readiness &mdash; estimate</span>
-    <span class="mvp__pct num">&asymp;50%</span>
-    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 6 days out</span>
+    <span class="mvp__pct num">&asymp;58%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 4 days out</span>
   </div>
-  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 50 percent built, unchanged, even though the board's Done count tripled. International KYC, cross-currency FX, virtual cards and consent management are not started.">
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 58 percent built, unchanged today. Over the sprint it moved from 46 to 58 percent. International KYC, cross-currency FX and consent management are not started.">
     <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.9"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.8"><i style="width:80%"></i></span>
-    <span class="mvp__seg" style="flex:7" title="Message translation — 0.7 (6 items marked Done, no code)"><i style="width:70%"></i></span>
+    <span class="mvp__seg" style="flex:7" title="Message translation — 0.7"><i style="width:70%"></i></span>
     <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.9"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
-    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.65"><i style="width:65%"></i></span>
-    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.65 (fix written but unmerged; main still 401s)"><i style="width:65%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.75"><i style="width:75%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.80"><i style="width:80%"></i></span>
     <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
-    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0 (card_topups is funding groundwork, unconsumed)"></span>
+    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0.45"><i style="width:45%"></i></span>
     <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
     <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.45"><i style="width:45%"></i></span>
   </div>
-  <p class="mvp__read"><strong>Unchanged &mdash; while the board's Done count tripled.</strong> The only merged code this cycle is a database table no service imports. Translation holds at 0.7 despite six of its items being marked complete, because the implemented surface is still the single <code>POST /translate</code> route that has existed since 10 July. The rubric follows the code, and this is the edition where that policy earns its keep. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 26 Aug 2026 &mdash; <a href="2026-08-26.html#mvp-method">method and capability table</a>.</p>
+  <p class="mvp__read"><strong>Unchanged today &mdash; but the sprint moved it 46% &rarr; 58%</strong>, driven entirely by merged code while the board's Done count moved 0 &rarr; 10. Those two lines describe the same eighteen days. Today's single commit adds <code>path</code> to the contact profile so the client can gate sends on a <code>chat_banking</code> peer. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 28 Aug 2026 &mdash; <a href="2026-08-28.html#mvp-method">method and capability table</a>.</p>
 </section>
 
 <main class="frames">
+
+  <a class="frame" href="2026-08-28.html">
+    <span class="frame__idx num">18</span>
+    <span>
+      <span class="frame__date">28 Aug 2026</span>
+      <span class="frame__sum">Sprint 08-01 closes: 10 of 43 leaves Done, 27 in a review queue that released nothing in 19 days. The API grew 105 &rarr; 131 over the sprint while the board completed 10 items &mdash; the same eighteen days, described two ways. A second board joins the pipeline, empty.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:10"></i><u style="flex:33"></u></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>08-01 · closed</span></div>
+      <div><span>MVP est</span><span>≈58%</span></div>
+      <div><span>Done</span><span>10 / 43</span></div>
+      <div><span>Review / QA</span><span>27 · 0 drained</span></div>
+      <div><span>API over sprint</span><span>105 → 131</span></div>
+      <div><span>Admin board</span><span>no sprint</span></div>
+    </span>
+  </a>
+
+  <a class="frame" href="2026-08-27.html">
+    <span class="frame__idx num">17</span>
+    <span>
+      <span class="frame__date">27 Aug 2026</span>
+      <span class="frame__sum">The biggest delivery day of the project: 21 commits, 23 new API operations, virtual cards from zero to thirteen &mdash; and the step-up fix merged, so money can finally move through the app. The sprint still closes tomorrow with 27 of 43 leaves unverified.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:9"></i><u style="flex:34"></u></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>08-01 · day 18 of 18</span></div>
+      <div><span>MVP est</span><span>≈58% ↑</span></div>
+      <div><span>API</span><span>131 (+23)</span></div>
+      <div><span>Send money</span><span>reachable</span></div>
+      <div><span>Review / QA</span><span>27 · 0 drained</span></div>
+      <div><span>Done</span><span>9 / 43</span></div>
+    </span>
+  </a>
 
   <a class="frame" href="2026-08-26.html">
     <span class="frame__idx num">16</span>

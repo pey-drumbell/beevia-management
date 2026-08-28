@@ -590,94 +590,6 @@ paths:
         '400': { $ref: '#/components/responses/BadRequest' }
         '409': { $ref: '#/components/responses/Conflict' }
 
-  /wallets/beneficiaries/{beneficiaryId}:
-    parameters:
-      - name: beneficiaryId
-        in: path
-        required: true
-        schema: { type: string, format: uuid }
-    delete:
-      tags: [Wallets]
-      operationId: deleteBeneficiary
-      summary: 'Remove a saved beneficiary'
-      description: Unlinks the beneficiary from the caller. The underlying resolved-account record is retained for audit.
-      externalDocs:
-        description: "PRD §9 Flow 5 (Send Money)"
-        url: ./Beevia_PRD.md
-      responses:
-        '200': { $ref: '#/components/responses/RemovedOk' }
-        '404': { $ref: '#/components/responses/NotFound' }
-
-  /wallets/banks:
-    get:
-      tags: [Wallets]
-      operationId: listBanks
-      summary: 'List destination banks'
-      description: |
-        `POST /wallets/withdraw` requires a `bankCode`, but nothing in the API
-        tells the client what codes exist — the mobile client would have to
-        hard-code or hand-maintain the NIP bank list, which drifts. Returns the
-        partner's current bank directory for the given currency, suitable for
-        the withdrawal picker.
-      externalDocs:
-        description: "PRD §9 Flow 5 (Send Money), §8.2 Multi-Currency Wallets"
-        url: ./Beevia_PRD.md
-      parameters:
-        - name: currency
-          in: query
-          required: false
-          schema: { type: string, pattern: '^[A-Za-z]{3}$', default: NGN }
-      responses:
-        '200':
-          description: Bank directory.
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessEnvelope'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items: { $ref: '#/components/schemas/Bank' }
-
-  /wallets/resolve-account:
-    post:
-      tags: [Wallets]
-      operationId: resolveAccount
-      summary: 'Resolve a bank account name'
-      description: |
-        Returns the account holder's name for a bank code + account number, so
-        the user can confirm *who* they are paying before confirming a
-        withdrawal. `account_resolution` is already a declared capability in the
-        `provider_capability` enum and the resolver can route it, but no
-        endpoint exposes it — today the account name only comes back **after**
-        the money has already been debited.
-      externalDocs:
-        description: "PRD §3.3 Increased risk of fraud and payment mistakes, §5.2 Multi-Currency by Design"
-        url: ./Beevia_PRD.md
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/ResolveAccountRequest' }
-      responses:
-        '200':
-          description: Resolved account.
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessEnvelope'
-                  - type: object
-                    properties:
-                      data: { $ref: '#/components/schemas/ResolvedAccount' }
-        '400':
-          description: Could not resolve (`account_not_found`).
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
-
   /wallets/limits:
     get:
       tags: [Wallets]
@@ -1107,214 +1019,6 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 
-  /cards:
-    get:
-      tags: [Cards]
-      operationId: listCards
-      summary: 'List my virtual cards'
-      description: |
-        **Virtual cards are an MVP feature in the PRD and do not exist anywhere in
-        the codebase** — no module, no controller, no table, no provider
-        capability. They appear in the key modules list, in the user stories, in
-        the detailed feature requirements, and as the headline of roadmap
-        Phase 4. This block specifies the surface in the style the rest of the
-        API already uses.
-
-        Card data is never stored by Beevia beyond the masked descriptor below;
-        PAN, CVV and expiry come from the issuer on demand via
-        `POST /cards/{cardId}/reveal`.
-      externalDocs:
-        description: "PRD §1.2, §8.2, §10.3 Virtual Card Issuance, §11 Phase 4"
-        url: ./Beevia_PRD.md
-      responses:
-        '200':
-          description: The caller's cards, masked.
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessEnvelope'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items: { $ref: '#/components/schemas/Card' }
-    post:
-      tags: [Cards]
-      operationId: issueCard
-      summary: 'Issue a virtual card'
-      description: |
-        Issues a virtual card linked to a specific wallet, once the minimum
-        verification tier is met (`kyc_tier_required` otherwise). Requires a
-        step-up token, consistent with every other money-adjacent action.
-
-        Issuance is expected to be asynchronous behind the existing BullMQ
-        pattern, so the card may return `status: "provisioning"` and settle to
-        `active` via the issuer webhook. If the issuer is unavailable, return
-        `provider_unavailable` with a retry affordance rather than a hard failure.
-      externalDocs:
-        description: "PRD §10.3 Virtual Card Issuance, §9 Flow 7"
-        url: ./Beevia_PRD.md
-      security:
-        - accessToken: []
-          stepUpToken: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/IssueCardRequest' }
-      responses:
-        '201':
-          description: Card issued or provisioning.
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessEnvelope'
-                  - type: object
-                    properties:
-                      data: { $ref: '#/components/schemas/Card' }
-        '400':
-          description: '`kyc_tier_required` / `wallet_not_yours` / validation error.'
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
-        '503':
-          description: Issuer unavailable (`provider_unavailable`) — show a status message and retry option.
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
-
-  /cards/{cardId}:
-    parameters:
-      - $ref: '#/components/parameters/CardId'
-    get:
-      tags: [Cards]
-      operationId: getCard
-      summary: 'Get a card'
-      description: Masked card descriptor plus issuer legal name and the compliance disclosure the PRD requires to be shown in-app.
-      externalDocs:
-        description: "PRD §10.3 Virtual Card Issuance"
-        url: ./Beevia_PRD.md
-      responses:
-        '200': { $ref: '#/components/responses/CardOk' }
-        '404': { $ref: '#/components/responses/NotFound' }
-    delete:
-      tags: [Cards]
-      operationId: terminateCard
-      summary: 'Terminate a card'
-      description: Permanently closes the card. Irreversible, so step-up is required. Prefer freeze for a temporary block.
-      externalDocs:
-        description: "PRD §10.3 Virtual Card Issuance"
-        url: ./Beevia_PRD.md
-      security:
-        - accessToken: []
-          stepUpToken: []
-      responses:
-        '200': { $ref: '#/components/responses/CardOk' }
-        '404': { $ref: '#/components/responses/NotFound' }
-
-  /cards/{cardId}/reveal:
-    parameters:
-      - $ref: '#/components/parameters/CardId'
-    post:
-      tags: [Cards]
-      operationId: revealCard
-      summary: 'Reveal full card details'
-      description: |
-        Returns PAN, CVV and expiry for a bounded display window. The PRD
-        requires that revealing full details need biometric or PIN confirmation
-        and that the client automatically re-masks after a short fixed window —
-        `reveal_ttl_seconds` carries that window so the client does not invent it.
-
-        Step-up required. Fetched from the issuer per call and never persisted;
-        the route should be excluded from request/response body logging.
-      externalDocs:
-        description: "PRD §8.2 \"Card number masked by default\", §10.3"
-        url: ./Beevia_PRD.md
-      security:
-        - accessToken: []
-          stepUpToken: []
-      responses:
-        '200':
-          description: Full card details, for immediate display only.
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessEnvelope'
-                  - type: object
-                    properties:
-                      data: { $ref: '#/components/schemas/CardSecrets' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
-
-  /cards/{cardId}/freeze:
-    parameters:
-      - $ref: '#/components/parameters/CardId'
-    post:
-      tags: [Cards]
-      operationId: freezeCard
-      summary: 'Freeze a card'
-      description: |
-        Blocks authorizations immediately. Idempotent. Deliberately **not**
-        step-up gated — freezing is the safe direction, and a user reacting to a
-        suspected compromise should never be slowed by a PIN prompt.
-      externalDocs:
-        description: "PRD §8.2 \"Freeze and unfreeze the card at any time\""
-        url: ./Beevia_PRD.md
-      responses:
-        '200': { $ref: '#/components/responses/CardOk' }
-        '404': { $ref: '#/components/responses/NotFound' }
-
-  /cards/{cardId}/unfreeze:
-    parameters:
-      - $ref: '#/components/parameters/CardId'
-    post:
-      tags: [Cards]
-      operationId: unfreezeCard
-      summary: 'Unfreeze a card'
-      description: Re-enables authorizations. Step-up required — this is the direction that restores spending ability.
-      externalDocs:
-        description: "PRD §8.2 \"Freeze and unfreeze the card at any time\""
-        url: ./Beevia_PRD.md
-      security:
-        - accessToken: []
-          stepUpToken: []
-      responses:
-        '200': { $ref: '#/components/responses/CardOk' }
-        '404': { $ref: '#/components/responses/NotFound' }
-
-  /cards/{cardId}/transactions:
-    parameters:
-      - $ref: '#/components/parameters/CardId'
-    get:
-      tags: [Cards]
-      operationId: listCardTransactions
-      summary: 'Card transaction history'
-      description: Paginated authorizations and settlements for the card, using the same `page`/`limit`/`meta` convention as wallet history.
-      externalDocs:
-        description: "PRD §10.3 \"view card transaction history\""
-        url: ./Beevia_PRD.md
-      parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/Limit'
-      responses:
-        '200':
-          description: Paginated card transactions.
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessEnvelope'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items: { $ref: '#/components/schemas/CardTransaction' }
-                      meta: { $ref: '#/components/schemas/PaginationMeta' }
-        '404': { $ref: '#/components/responses/NotFound' }
-
   /contacts/sync/status:
     get:
       tags: [Contacts]
@@ -1724,11 +1428,6 @@ paths:
 components:
 
   parameters:
-    CardId:
-      name: cardId
-      in: path
-      required: true
-      schema: { type: string, format: uuid }
     ConversationId:
       name: id
       in: path
@@ -1767,16 +1466,6 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 
-    CardOk:
-      description: A masked card descriptor.
-      content:
-        application/json:
-          schema:
-            allOf:
-              - $ref: '#/components/schemas/SuccessEnvelope'
-              - type: object
-                properties:
-                  data: { $ref: '#/components/schemas/Card' }
     Conflict:
       description: 'State conflict or uniqueness violation (`unique_constraint_violation`, `nonzero_balance`, …).'
       content:
@@ -1830,20 +1519,6 @@ components:
                 properties:
                   data: { $ref: '#/components/schemas/Payment' }
 
-    RemovedOk:
-      description: Removed.
-      content:
-        application/json:
-          schema:
-            allOf:
-              - $ref: '#/components/schemas/SuccessEnvelope'
-              - type: object
-                properties:
-                  data:
-                    type: object
-                    properties:
-                      removed: { type: boolean, example: true }
-
     RevokedOk:
       description: Revoked.
       content:
@@ -1885,12 +1560,6 @@ components:
 
   schemas:
 
-    Bank:
-      type: object
-      properties:
-        code: { type: string, example: '000013' }
-        name: { type: string, example: Guaranty Trust Bank }
-
     BatchTranslation:
       type: object
       properties:
@@ -1931,50 +1600,6 @@ components:
     # ---------------------------------------------------------------------
     # Cards  (proposed)
     # ---------------------------------------------------------------------
-
-    Card:
-      type: object
-      description: 'Masked descriptor. Full details only via the reveal route.'
-      properties:
-        id: { type: string, format: uuid }
-        wallet_id: { type: string, format: uuid }
-        currency: { $ref: '#/components/schemas/CurrencyCode' }
-        brand: { type: string, example: visa }
-        last4: { type: string, example: '4242' }
-        expiry_month: { type: integer, example: 11 }
-        expiry_year: { type: integer, example: 2029 }
-        status: { type: string, enum: [provisioning, active, frozen, terminated] }
-        issuer_legal_name:
-          type: string
-          description: Required to be displayed in-app alongside the compliance disclosure.
-          example: Example Issuing Bank Plc
-        compliance_disclosure: { type: string }
-        created_at: { type: string, format: date-time }
-
-    CardSecrets:
-      type: object
-      description: 'Never persisted; display for `reveal_ttl_seconds` then re-mask.'
-      properties:
-        pan: { type: string, example: '4242424242424242' }
-        cvv: { type: string, example: '123' }
-        expiry_month: { type: integer }
-        expiry_year: { type: integer }
-        cardholder_name: { type: string }
-        reveal_ttl_seconds: { type: integer, example: 30 }
-
-    CardTransaction:
-      type: object
-      properties:
-        id: { type: string, format: uuid }
-        card_id: { type: string, format: uuid }
-        merchant: { type: string, example: Spotify }
-        amount: { $ref: '#/components/schemas/Money' }
-        currency: { $ref: '#/components/schemas/CurrencyCode' }
-        billing_amount: { $ref: '#/components/schemas/Money' }
-        billing_currency: { $ref: '#/components/schemas/CurrencyCode' }
-        status: { type: string, enum: [authorized, settled, declined, reversed] }
-        decline_reason: { type: [string, 'null'] }
-        created_at: { type: string, format: date-time }
 
     # ---------------------------------------------------------------------
     # Privacy / compliance  (proposed)
@@ -2198,13 +1823,6 @@ components:
           properties:
             url: { type: string, format: uri }
 
-    IssueCardRequest:
-      type: object
-      required: [walletId]
-      properties:
-        walletId: { type: string, format: uuid }
-        label: { type: string, maxLength: 64, example: Subscriptions }
-
     KycRequirements:
       type: object
       properties:
@@ -2377,7 +1995,10 @@ components:
 
     PublicProfile:
       type: object
-      description: The chat-facing projection of another user.
+      description: |
+        The chat-facing projection of another user, returned by the list and
+        search endpoints. The single-user routes return `ContactProfile`, which
+        extends this.
       properties:
         id: { type: string, format: uuid }
         username: { type: [string, 'null'], example: ada_lovelace }
@@ -2406,21 +2027,6 @@ components:
             The currency to receive — deliberately independent of whichever
             wallet the payer settles from. Defaults to the requester's default
             wallet currency.
-
-    ResolveAccountRequest:
-      type: object
-      required: [bankCode, accountNumber]
-      properties:
-        bankCode: { type: string, minLength: 3, maxLength: 10 }
-        accountNumber: { type: string, pattern: '^\d{10}$' }
-
-    ResolvedAccount:
-      type: object
-      properties:
-        account_number: { type: string }
-        account_name: { type: string }
-        bank_code: { type: string }
-        bank_name: { type: string }
 
     SendMoneyRequest:
       type: object

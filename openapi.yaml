@@ -1011,9 +1011,13 @@ paths:
     get:
       tags: [Users]
       operationId: getUserByUsername
-      summary: Get a public profile by @handle
+      summary: Get a contact profile by @handle
+      description: |
+        Backs the contact-profile screen. Returns the richer `ContactProfile`,
+        not the lean chat profile — see `GET /users/{id}` for the phone
+        visibility rule, which applies here too.
       responses:
-        '200': { $ref: '#/components/responses/PublicProfileOk' }
+        '200': { $ref: '#/components/responses/ContactProfileOk' }
         '404': { $ref: '#/components/responses/NotFound' }
 
   /users/{id}:
@@ -1022,10 +1026,24 @@ paths:
     get:
       tags: [Users]
       operationId: getUserById
-      summary: Get a public profile by id
-      description: Declared last in the controller so the static `/users/*` routes take precedence.
+      summary: Get a contact profile by id
+      description: |
+        Backs the contact-profile screen. On top of the chat profile it returns
+        `path`, `joined_at`, `phone`, and what the caller and this user share:
+        `conversation_id`, `media_count` (undeleted image/audio/file messages)
+        and `payment_count` (payments in either direction, any status).
+
+        **`phone` is relationship-scoped** — non-null only when the two already
+        have a 1:1 conversation, or when you are viewing yourself. Any
+        authenticated caller can pass an arbitrary id or handle here, so
+        returning it unconditionally would make this a number-harvesting
+        endpoint. With no shared conversation there is nothing shared to count
+        either, so both counts are `0` and `conversation_id` is `null`.
+
+        Declared last in the controller so the static `/users/*` routes take
+        precedence.
       responses:
-        '200': { $ref: '#/components/responses/PublicProfileOk' }
+        '200': { $ref: '#/components/responses/ContactProfileOk' }
         '404': { $ref: '#/components/responses/NotFound' }
 
   /contacts/sync:
@@ -1338,6 +1356,69 @@ paths:
                           - type: array
                             items: { $ref: '#/components/schemas/PayinDetails' }
 
+  /wallets/banks:
+    get:
+      tags: [Wallets]
+      operationId: listBanks
+      summary: List banks
+      description: |
+        Banks a transfer can be addressed to, for the bank picker. Optional
+        `?search=` filters by name or code. Cached server-side (the list is
+        near-static), so this is cheap to call.
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema: { type: string, example: gtb }
+          description: Filters by bank name or code.
+      responses:
+        '200':
+          description: Banks available as transfer destinations.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Bank' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /wallets/resolve-account:
+    post:
+      tags: [Wallets]
+      operationId: resolveAccount
+      summary: Resolve a bank account
+      description: |
+        Returns the account holder's name for a bank + account number — the
+        "Verifying…" step before entering an amount. Checks Beevia's own
+        counterparty cache first and only asks the bank when it is a miss, so a
+        repeat destination resolves instantly.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ResolveAccountRequest' }
+      responses:
+        '200':
+          description: Account resolved.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/ResolvedAccount' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404':
+          description: '`account_not_found` — the bank could not resolve the number.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
   /wallets/beneficiaries:
     get:
       tags: [Wallets]
@@ -1346,6 +1427,94 @@ paths:
       description: The user's saved payout recipients.
       responses:
         '200': { $ref: '#/components/responses/BeneficiaryListOk' }
+
+  /wallets/beneficiaries/{beneficiaryId}:
+    parameters:
+      - $ref: '#/components/parameters/BeneficiaryId'
+    patch:
+      tags: [Wallets]
+      operationId: renameBeneficiary
+      summary: Rename a saved beneficiary
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateBeneficiaryRequest' }
+      responses:
+        '200':
+          description: Beneficiary renamed.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Beneficiary' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Wallets]
+      operationId: deleteBeneficiary
+      summary: Remove a saved beneficiary
+      description: |
+        Removes it from your list only. The underlying account stays registered,
+        since other users may pay it too.
+      responses:
+        '200':
+          description: Beneficiary removed.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SuccessEnvelope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /wallets/transfers:
+    get:
+      tags: [Wallets]
+      operationId: listBankTransfers
+      summary: My bank transfers
+      description: Payouts to external banks, newest first.
+      responses:
+        '200':
+          description: Bank transfers, newest first.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/BankTransfer' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /wallets/transfers/{reference}:
+    parameters:
+      - name: reference
+        in: path
+        required: true
+        schema: { type: string, example: payout_9b2e1f6a }
+        description: The payout reference returned by `POST /wallets/withdraw`.
+    get:
+      tags: [Wallets]
+      operationId: getBankTransfer
+      summary: Bank transfer status
+      description: |
+        The payout's current state. A still-pending payout is re-checked against
+        the bank first, so a missed webhook does not leave it pending forever.
+      responses:
+        '200':
+          description: Current transfer state.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/BankTransfer' }
+        '404': { $ref: '#/components/responses/NotFound' }
 
   /wallets/transactions:
     get:
@@ -1408,6 +1577,409 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+
+  # ===========================================================================
+  # Top-ups — fund the NGN wallet by card (Paystack)
+  #
+  # Distinct from `/wallets/payin-details`, which is a bank transfer into a
+  # virtual account. Here the user is charged on a card and the wallet is
+  # credited on the provider webhook.
+  # ===========================================================================
+
+  /topups/initialize:
+    post:
+      tags: [Top-ups]
+      operationId: initializeTopup
+      summary: Start a card top-up
+      description: |
+        Creates a pending top-up and returns the Paystack checkout handles.
+        `amount` is what gets credited to the wallet; the processing fee is added
+        **on top**, so the card is charged `charge_amount`. Open the checkout with
+        `access_code` (SDK) or `authorization_url` (hosted).
+
+        The wallet is credited on `POST /webhooks/paystack`; `GET /topups/{reference}`
+        is the client-side fallback when that webhook is missed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InitializeTopupRequest' }
+      responses:
+        '201':
+          description: Top-up created; checkout handles returned.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Topup' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /topups:
+    get:
+      tags: [Top-ups]
+      operationId: listTopups
+      summary: List my top-ups
+      description: Newest first.
+      responses:
+        '200':
+          description: Top-ups, newest first.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Topup' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /topups/{reference}:
+    parameters:
+      - name: reference
+        in: path
+        required: true
+        schema: { type: string, example: topup_9b2e1f6a-0c8d-4a5b-be11-2d3c4e5f6a7b }
+        description: The reference returned by `POST /topups/initialize`.
+    get:
+      tags: [Top-ups]
+      operationId: getTopup
+      summary: Top-up status
+      description: |
+        Returns the top-up. If it is still pending, it is verified against
+        Paystack first — the client fallback for a missed webhook — so a
+        just-completed payment reflects here.
+      responses:
+        '200':
+          description: Current top-up state.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Topup' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ===========================================================================
+  # Cards — virtual NGN cards
+  #
+  # Each card carries its **own 4-digit PIN**, set at issuance, which authorizes
+  # actions on that card. That is distinct from the account step-up token: the
+  # card PIN gates card actions, step-up gates issuing a card and recovering a
+  # forgotten card PIN.
+  # ===========================================================================
+
+  /cards:
+    post:
+      tags: [Cards]
+      operationId: issueCard
+      summary: Request a card
+      description: |
+        Issues a virtual NGN card. You set the card's own 4-digit PIN here — it
+        authorizes future actions on this card. An issuance fee may be charged; a
+        failed issuance is never charged. Requires a step-up token.
+      security:
+        - accessToken: []
+          stepUpToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/IssueCardRequest' }
+      responses:
+        '201':
+          description: Card issued.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Card' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    get:
+      tags: [Cards]
+      operationId: listCards
+      summary: List my cards
+      description: Newest first; terminated cards excluded.
+      responses:
+        '200':
+          description: Active cards, newest first.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Card' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /cards/{cardId}:
+    parameters:
+      - $ref: '#/components/parameters/CardId'
+    get:
+      tags: [Cards]
+      operationId: getCard
+      summary: Get a card
+      description: Refreshes the card balance from the partner.
+      responses:
+        '200': { $ref: '#/components/responses/CardOk' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Cards]
+      operationId: renameCard
+      summary: Rename a card
+      description: Updates the card label.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateCardRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/CardOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /cards/{cardId}/reveal:
+    parameters:
+      - $ref: '#/components/parameters/CardId'
+    post:
+      tags: [Cards]
+      operationId: revealCard
+      summary: Reveal card details
+      description: |
+        Returns the card number, CVV and expiry. Requires **this card's PIN**.
+        The details are fetched from the partner on demand and are never stored
+        or logged — treat the response as sensitive and do not cache it.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CardPinRequest' }
+      responses:
+        '200':
+          description: Card secrets. Do not cache.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/CardSecrets' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /cards/{cardId}/reveal-pin:
+    parameters:
+      - $ref: '#/components/parameters/CardId'
+    post:
+      tags: [Cards]
+      operationId: revealCardPin
+      summary: Reveal this card's PIN
+      description: |
+        For a forgotten card PIN. Gated by **account step-up** (the transaction
+        PIN) rather than the card PIN, which is the thing being recovered.
+      security:
+        - accessToken: []
+          stepUpToken: []
+      responses:
+        '200':
+          description: The card's PIN.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          pin: { type: string, example: '1234' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /cards/{cardId}/freeze:
+    parameters:
+      - $ref: '#/components/parameters/CardId'
+    post:
+      tags: [Cards]
+      operationId: freezeCard
+      summary: Freeze a card
+      description: |
+        Blocks the card immediately. Deliberately requires **no PIN** — freezing
+        is the safety action and must never be slowed down.
+      responses:
+        '200': { $ref: '#/components/responses/CardOk' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /cards/{cardId}/unfreeze:
+    parameters:
+      - $ref: '#/components/parameters/CardId'
+    post:
+      tags: [Cards]
+      operationId: unfreezeCard
+      summary: Unfreeze a card
+      description: Requires this card's PIN.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CardPinRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/CardOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /cards/{cardId}/terminate:
+    parameters:
+      - $ref: '#/components/parameters/CardId'
+    post:
+      tags: [Cards]
+      operationId: terminateCard
+      summary: Terminate a card
+      description: |
+        Permanently closes the card. Requires this card's PIN. **Refused while the
+        card still holds money** — withdraw it first, or it would be stranded.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CardPinRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/CardOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409':
+          description: '`card_has_balance` — withdraw the remaining balance first.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /cards/{cardId}/fund:
+    parameters:
+      - $ref: '#/components/parameters/CardId'
+    post:
+      tags: [Cards]
+      operationId: fundCard
+      summary: Fund a card
+      description: |
+        Moves money from your NGN wallet onto the card. Requires this card's PIN.
+        Settles asynchronously: the wallet is debited immediately and **refunded
+        if the partner rejects it**.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CardTransferRequest' }
+      responses:
+        '200':
+          description: Funding initiated.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/CardTransfer' }
+        '400':
+          description: '`insufficient_funds` / validation error.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /cards/{cardId}/withdraw:
+    parameters:
+      - $ref: '#/components/parameters/CardId'
+    post:
+      tags: [Cards]
+      operationId: withdrawFromCard
+      summary: Withdraw from a card
+      description: |
+        Moves money from the card back to your NGN wallet. Requires this card's
+        PIN. The wallet is credited **only once the partner confirms** the
+        transfer.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CardTransferRequest' }
+      responses:
+        '200':
+          description: Withdrawal initiated.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/CardTransfer' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /cards/{cardId}/transfers:
+    parameters:
+      - $ref: '#/components/parameters/CardId'
+    get:
+      tags: [Cards]
+      operationId: listCardTransfers
+      summary: Card funding history
+      description: Wallet↔card movements, newest first.
+      responses:
+        '200':
+          description: Wallet↔card transfers, newest first.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/CardTransfer' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /cards/{cardId}/transactions:
+    parameters:
+      - $ref: '#/components/parameters/CardId'
+    get:
+      tags: [Cards]
+      operationId: listCardTransactions
+      summary: Card spend history
+      description: |
+        Authorizations, settlements, refunds and declines, read **live from the
+        partner** rather than from a local table.
+      responses:
+        '200':
+          description: Card spend history.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/CardTransaction' }
+        '404': { $ref: '#/components/responses/NotFound' }
 
   /payments/send:
     post:
@@ -2487,6 +3059,34 @@ paths:
       responses:
         '200': { $ref: '#/components/responses/WebhookAck' }
 
+  /webhooks/paystack:
+    post:
+      tags: [Webhooks]
+      operationId: paystackWebhook
+      summary: Card top-up webhook
+      description: |
+        Charge results for `POST /topups/initialize`. On a successful charge the
+        NGN wallet is credited from the top-up's `fund_amount`, keyed on the
+        top-up `reference` so a replayed delivery credits once.
+
+        Verified by HMAC-SHA512 over the raw request bytes
+        (`x-paystack-signature`), which is why `rawBody: true` is enabled in
+        `main.ts`. Excluded from the generated Swagger UI, and documented here
+        for the same reason `/webhooks/anchor` is.
+      security: []
+      parameters:
+        - name: x-paystack-signature
+          in: header
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        '200': { $ref: '#/components/responses/WebhookAck' }
+
   /webhooks/livekit:
     post:
       tags: [Webhooks]
@@ -2568,6 +3168,20 @@ components:
       in: path
       required: true
       schema: { type: string, pattern: '^[a-zA-Z0-9_]{3,30}$', example: ada_lovelace }
+    CardId:
+      name: cardId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+      description: Card id.
+
+    BeneficiaryId:
+      name: beneficiaryId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+      description: Saved-beneficiary id.
+
     WalletId:
       name: walletId
       in: path
@@ -2623,6 +3237,17 @@ components:
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+    CardOk:
+      description: A single card.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Card' }
 
     ContactListOk:
       description: Contacts registered on Beevia.
@@ -2703,6 +3328,17 @@ components:
                   data:
                     type: array
                     items: { $ref: '#/components/schemas/PublicProfile' }
+
+    ContactProfileOk:
+      description: A contact profile — the chat fields plus the shared-history counts.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/ContactProfile' }
 
     PublicProfileOk:
       description: A public chat profile.
@@ -2866,6 +3502,157 @@ components:
             properties:
               messageId: { type: string, format: uuid }
               ciphertext: { type: string, maxLength: 64000 }
+
+    Bank:
+      type: object
+      description: A bank a transfer can be addressed to.
+      properties:
+        code: { type: string, example: '000014', description: NIP bank code. }
+        name: { type: string, example: Access Bank }
+
+    BankTransfer:
+      type: object
+      description: A payout to an external bank account.
+      properties:
+        reference: { type: string, example: payout_9b2e1f6a }
+        status: { type: string, enum: [pending, processing, completed, failed, reversed] }
+        amount: { $ref: '#/components/schemas/Money' }
+        fee: { $ref: '#/components/schemas/Money' }
+        currency: { type: string, example: NGN }
+        account_name: { type: string, example: Ada Lovelace }
+        account_number: { type: string, example: '0123456789' }
+        bank_name: { type: [string, 'null'], example: Access Bank }
+        reason: { type: [string, 'null'], example: Rent }
+        failure_reason: { type: [string, 'null'] }
+        created_at: { type: string, format: date-time }
+        completed_at: { type: [string, 'null'], format: date-time }
+
+    Card:
+      type: object
+      description: A virtual NGN card. The PAN is masked here — see `POST /cards/{cardId}/reveal`.
+      properties:
+        id: { type: string, format: uuid }
+        status: { type: string, enum: [pending, active, frozen, terminated] }
+        masked_pan: { type: [string, 'null'], example: '539983******1234' }
+        expiry_month: { type: [string, 'null'], example: '09' }
+        expiry_year: { type: [string, 'null'], example: '2029' }
+        description: { type: [string, 'null'], example: Shopping card }
+        currency: { type: string, example: NGN }
+        balance: { $ref: '#/components/schemas/Money' }
+        created_at: { type: string, format: date-time }
+
+    CardSecrets:
+      type: object
+      description: |
+        Full card details, fetched from the partner on demand. Never stored or
+        logged by Beevia. Do not cache this response.
+      properties:
+        pan: { type: string, example: '5399831234561234' }
+        cvv: { type: string, example: '123' }
+        expiry_month: { type: string, example: '09' }
+        expiry_year: { type: string, example: '2029' }
+
+    CardTransaction:
+      type: object
+      description: A card spend event, read live from the partner.
+      properties:
+        id: { type: string }
+        merchant: { type: [string, 'null'], example: Spotify }
+        amount: { $ref: '#/components/schemas/Money' }
+        currency: { type: string, example: NGN }
+        status: { type: string, enum: [authorized, settled, refunded, declined] }
+        decline_reason: { type: [string, 'null'] }
+        created_at: { type: string, format: date-time }
+
+    CardTransfer:
+      type: object
+      description: A wallet↔card movement.
+      properties:
+        reference: { type: string }
+        direction: { type: string, enum: [fund, withdraw] }
+        amount: { $ref: '#/components/schemas/Money' }
+        currency: { type: string, example: NGN }
+        status: { type: string, enum: [pending, completed, failed, reversed] }
+        created_at: { type: string, format: date-time }
+
+    CardPinRequest:
+      type: object
+      description: This card's own 4-digit PIN — not the account transaction PIN.
+      required: [pin]
+      properties:
+        pin: { type: string, pattern: '^\d{4}$', example: '1234' }
+
+    CardTransferRequest:
+      type: object
+      required: [amount, pin]
+      properties:
+        amount: { $ref: '#/components/schemas/Money' }
+        pin: { type: string, pattern: '^\d{4}$', example: '1234', description: "This card's PIN." }
+
+    IssueCardRequest:
+      type: object
+      description: |
+        The `pin` set here becomes the card's own PIN and authorizes later actions
+        on it. No `walletId` — the service resolves the caller's NGN wallet.
+      required: [pin]
+      properties:
+        pin: { type: string, pattern: '^\d{4}$', example: '1234', description: "The card's own 4-digit PIN." }
+        description: { type: string, maxLength: 255, example: Shopping card }
+
+    UpdateCardRequest:
+      type: object
+      required: [description]
+      properties:
+        description: { type: string, minLength: 1, maxLength: 255, example: Shopping card }
+
+    InitializeTopupRequest:
+      type: object
+      description: |
+        `amount` is credited to the wallet on success; the processing fee is added
+        on top, so the card is charged `charge_amount`.
+      required: [amount]
+      properties:
+        amount: { $ref: '#/components/schemas/Money' }
+
+    Topup:
+      type: object
+      description: A card top-up of the NGN wallet via Paystack.
+      properties:
+        reference: { type: string, example: topup_9b2e1f6a-0c8d-4a5b-be11-2d3c4e5f6a7b }
+        status: { type: string, enum: [pending, succeeded, failed, abandoned] }
+        fund_amount: { $ref: '#/components/schemas/Money' }
+        fee_amount: { $ref: '#/components/schemas/Money' }
+        charge_amount:
+          allOf:
+            - $ref: '#/components/schemas/Money'
+          description: What the card is actually charged — `fund_amount` + `fee_amount`.
+        currency: { type: string, example: NGN }
+        channel: { type: [string, 'null'], example: card }
+        authorization_url: { type: [string, 'null'], format: uri, description: Hosted checkout. }
+        access_code: { type: [string, 'null'], description: SDK checkout handle. }
+        paid_at: { type: [string, 'null'], format: date-time }
+        created_at: { type: string, format: date-time }
+
+    ResolveAccountRequest:
+      type: object
+      required: [bankCode, accountNumber]
+      properties:
+        bankCode: { type: string, minLength: 3, maxLength: 10, example: '000014', description: Destination bank code (NIP). }
+        accountNumber: { type: string, pattern: '^\d{10}$', example: '0123456789', description: 10-digit NUBAN. }
+
+    ResolvedAccount:
+      type: object
+      properties:
+        account_name: { type: string, example: Ada Lovelace }
+        account_number: { type: string, example: '0123456789' }
+        bank_code: { type: string, example: '000014' }
+        bank_name: { type: [string, 'null'], example: Access Bank }
+
+    UpdateBeneficiaryRequest:
+      type: object
+      required: [nickname]
+      properties:
+        nickname: { type: string, minLength: 1, maxLength: 128, example: John (rent) }
 
     Beneficiary:
       type: object
@@ -3318,9 +4105,52 @@ components:
       properties:
         pin: { type: string, pattern: '^\d{4}$', example: '1234' }
 
+    ContactProfile:
+      type: object
+      description: |
+        `PublicProfile` plus the fields the contact-profile screen needs. Returned
+        by `GET /users/{id}` and `GET /users/by-username/{username}` — **not** by
+        the list endpoints, which return the lean `PublicProfile`.
+      allOf:
+        - $ref: '#/components/schemas/PublicProfile'
+        - type: object
+          properties:
+            path:
+              type: [string, 'null']
+              enum: [chat_only, chat_banking, null]
+              description: |
+                The peer's account path, added 2026-08-27. Lets the client gate
+                money actions on the profile: you can only send to a
+                `chat_banking` peer. `null` if they have not chosen one yet.
+            phone:
+              type: [string, 'null']
+              example: '+2348012345678'
+              description: |
+                **Relationship-scoped.** Non-null only when the two already have
+                a 1:1 conversation, or when viewing yourself; `null` otherwise.
+            joined_at:
+              type: string
+              format: date-time
+              description: Account creation date; the client renders it as "July 2026".
+            conversation_id:
+              type: [string, 'null']
+              format: uuid
+              description: The 1:1 conversation with this user, or `null` if they have never chatted.
+            media_count:
+              type: integer
+              example: 12
+              description: Undeleted image/audio/file messages in that conversation. `0` with no shared conversation.
+            payment_count:
+              type: integer
+              example: 3
+              description: Payments in either direction between the two, any status. `0` with no shared conversation.
+
     PublicProfile:
       type: object
-      description: The chat-facing projection of another user.
+      description: |
+        The chat-facing projection of another user, returned by the list and
+        search endpoints. The single-user routes return `ContactProfile`, which
+        extends this.
       properties:
         id: { type: string, format: uuid }
         username: { type: [string, 'null'], example: ada_lovelace }

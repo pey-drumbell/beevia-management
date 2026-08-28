@@ -1063,6 +1063,18 @@ def main() -> int:
                     help="GET one API path and dump the raw JSON, e.g. "
                          "--raw 'team/910540998/projects/'")
     ap.add_argument("--sprint", help="sprint name filter (default ZOHO_SPRINT_FILTER)")
+    ap.add_argument("--project",
+                    help="project id to export (default ZOHO_PROJECT_ID). Use for "
+                         "the Admin Dashboard board; see --label and --allow-empty.")
+    ap.add_argument("--label", default="",
+                    help="filename stem prefix, e.g. --label admin writes "
+                         "beevia-admin-sprint-board-<date>.csv. Pair it with --out "
+                         "so a second board never lands in the main folder, which "
+                         "the audit globs wholesale.")
+    ap.add_argument("--allow-empty", action="store_true",
+                    help="exit 3 with a notice instead of failing when the project "
+                         "has no sprints yet (a newly created project). Lets a "
+                         "daily chain continue past a board that does not exist.")
     ap.add_argument("--date", help="date for the filename, YYYY-MM-DD (default today)")
     ap.add_argument("--out", help="output directory (default sprint-board-exports/)")
     ap.add_argument("--dry-run", action="store_true", help="fetch but do not write")
@@ -1088,7 +1100,7 @@ def main() -> int:
         return probe(z)
 
     team = need("ZOHO_TEAM_ID")
-    project = need("ZOHO_PROJECT_ID")
+    project = (args.project or "").strip() or need("ZOHO_PROJECT_ID")
     prefix = os.environ.get("ZOHO_ITEM_PREFIX", "").strip()
     sprint_filter = (args.sprint or os.environ.get("ZOHO_SPRINT_FILTER", "")).strip()
 
@@ -1101,6 +1113,16 @@ def main() -> int:
     sprints = extract_rows(z.get(f"team/{team}/projects/{project}/sprints/",
                                  type=ALL_SPRINT_TYPES))
     if not sprints:
+        # A project that genuinely has no sprints yet is a normal state for a
+        # newly created board, not a misconfiguration. --allow-empty lets a
+        # daily chain step over it; without the flag this stays a hard failure,
+        # because for the main project an empty list means something broke.
+        if args.allow_empty:
+            print(f"No sprints in project {project} yet — nothing to export.",
+                  file=sys.stderr)
+            print("      (--allow-empty: treating an unpopulated project as a "
+                  "skip, not a failure.)", file=sys.stderr)
+            return 3
         die("no sprints returned — run --probe to check ids and endpoints")
 
     if sprint_filter:
@@ -1109,6 +1131,17 @@ def main() -> int:
                     str(s.get("name") or s.get("sprintName") or "").lower()]
         if not selected:
             names = [str(s.get("name") or s.get("sprintName")) for s in sprints]
+            # A second project runs its own sprint names, so the main project's
+            # ZOHO_SPRINT_FILTER will not match it. Under --allow-empty that is
+            # a "not applicable here" rather than a misconfiguration — pass
+            # --sprint explicitly once the second board has its own naming.
+            if args.allow_empty:
+                print(f"No sprint matches {sprint_filter!r} in project {project}. "
+                      f"Available: {names}", file=sys.stderr)
+                print("      (--allow-empty: skipping rather than failing. Pass "
+                      "--sprint to target this project's own sprint.)",
+                      file=sys.stderr)
+                return 3
             die(f"no sprint matches {sprint_filter!r}. Available: {names}")
     else:
         selected = sprints
@@ -1203,7 +1236,12 @@ def main() -> int:
              if args.date else dt.date.today())
     out_dir = args.out or os.path.join(ROOT, "sprint-board-exports")
     os.makedirs(out_dir, exist_ok=True)
-    out = os.path.join(out_dir, f"beevia-sprint-board-{stamp:%Y-%m-%d}.csv")
+    # `--label admin` -> beevia-admin-sprint-board-<date>.csv. The audit globs
+    # sprint-board-exports/*.csv non-recursively and treats every match as a
+    # snapshot of the SAME board, so a second project must also be written to a
+    # subdirectory via --out. The label alone is not enough to keep them apart.
+    tag = f"{args.label.strip('-')}-" if args.label.strip() else ""
+    out = os.path.join(out_dir, f"beevia-{tag}sprint-board-{stamp:%Y-%m-%d}.csv")
 
     meta = {
         "team": os.environ.get("EXPORT_TEAM_NAME", ""),
@@ -1249,7 +1287,7 @@ def main() -> int:
     print(f"{'Overwrote' if existed else 'Wrote'} {out} ({len(items)} items)")
 
     if activity:
-        side = os.path.join(out_dir, f"beevia-activity-{stamp:%Y-%m-%d}.json")
+        side = os.path.join(out_dir, f"beevia-{tag}activity-{stamp:%Y-%m-%d}.json")
         write_activity(side, activity)
         print(f"Wrote {side} ({len(activity)} items with audit trails)")
     return 0
