@@ -112,6 +112,21 @@ tags:
     description: Verification checks, masked-value reveal, and approve/reject decisions.
   - name: Case Notes
     description: Append-only support and compliance notes on a user.
+  - name: Admin Activity
+    description: One cross-module stream of notable admin-console events.
+  - name: Dashboard
+    description: The console landing screen — every headline metric in one payload.
+  - name: Transactions
+    description: Read-only money-movement feeds — platform-wide and per user.
+  - name: Wallets
+    description: Customer wallet balances, statuses and pay-in virtual accounts.
+  - name: Reconciliation
+    description: Ledger-vs-Anchor comparison, per user and system-wide.
+  - name: Chats
+    description: |
+      Conversation metadata and the moderation queue. Chat is end-to-end
+      encrypted, so nothing here exposes message content — see
+      `admin-api-rfc.md` §5.1.
 
 paths:
 
@@ -219,7 +234,7 @@ paths:
       x-required-permission: 'admin_accounts:view'
       parameters:
         - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/ConfigLimit'
         - $ref: '#/components/parameters/Search'
         - name: accessLevel
           in: query
@@ -306,6 +321,60 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
 
+  /admin/accounts/{id}/reinvite:
+    parameters:
+      - $ref: '#/components/parameters/AdminId'
+    post:
+      tags: [Admin Accounts]
+      operationId: reinviteAdmin
+      summary: Re-invite an admin
+      description: |
+        Re-issues the one-time setup link for an admin who is still `invited` —
+        the invite expired, or never arrived — and emails it again.
+
+        **The previous link stops working immediately.** The stored token hash
+        is replaced before the new mail is sent, so a forwarded or stale invite
+        cannot be redeemed after a resend. The expiry restarts from now.
+
+        **Only an `invited` account can be re-invited.** An `active` admin has
+        already set a password, and a deactivated one needs reactivating via
+        `PATCH /admin/accounts/{id}` instead of a second setup link; both are
+        `409 admin_not_invited`, distinguished by the message.
+
+        Takes no request body — the target is the path id, and the role and
+        email are whatever the original invite set.
+
+        **Audit note:** this records an `admin_invited` activity entry, not a
+        distinct re-invite action; the enum has no `admin_reinvited` value. The
+        entry's summary reads "Re-invited …" and its metadata carries
+        `resent: true`, which is how a reader of `GET /admin/activity` tells the
+        two apart.
+      x-required-permission: 'admin_accounts:create'
+      responses:
+        '200':
+          description: A fresh invite was sent; the previous link is now dead.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/AdminAccount' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such admin (`admin_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '409':
+          description: |
+            The account is not awaiting setup (`admin_not_invited`) — it has
+            already accepted its invite, or it is deactivated.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
   # ===========================================================================
   # Roles & Permissions
   # ===========================================================================
@@ -319,7 +388,7 @@ paths:
       x-required-permission: 'roles_permissions:view'
       parameters:
         - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/ConfigLimit'
         - $ref: '#/components/parameters/Search'
         - name: accessLevel
           in: query
@@ -461,7 +530,14 @@ paths:
       tags: [User Management]
       operationId: listUsers
       summary: List users
-      description: Paginated consumer-account search with filters across country, account type, status, verification state and wallet state.
+      description: |
+        Paginated consumer-account search with filters across country, account
+        type, status, verification state and wallet state.
+
+        **Ended accounts are excluded by default.** `deactivated` and `deleted`
+        accounts are filtered out unless `includeEnded=true`, or unless
+        `accountStatus` names one of them explicitly — which makes
+        `accountStatus=deactivated` the restore queue.
       x-required-permission: 'users:view'
       parameters:
         - $ref: '#/components/parameters/Page'
@@ -485,12 +561,28 @@ paths:
         - name: wallet
           in: query
           schema: { type: string, enum: [none, active, frozen, closed] }
+        - name: includeEnded
+          in: query
+          description: |
+            Include `deactivated` and `deleted` accounts, which are otherwise
+            excluded. Ignored when `accountStatus` is given — an explicit status
+            always overrides the exclusion.
+          schema: { type: boolean, default: false }
         - name: joinedFrom
           in: query
-          schema: { type: string, format: date-time }
+          description: |
+            Joined on or after. Accepts a bare `YYYY-MM-DD` (widened to
+            `00:00:00.000Z` of that day) or a full ISO 8601 timestamp.
+            Boundaries are UTC, matching how `created_at` is stored.
+          schema: { type: string, examples: ['2026-08-01', '2026-08-01T00:00:00.000Z'] }
         - name: joinedTo
           in: query
-          schema: { type: string, format: date-time }
+          description: |
+            Joined on or before. A bare `YYYY-MM-DD` is widened to
+            `23:59:59.999Z` of that day, so the named day is **included** —
+            reading it as midnight would silently drop everyone who joined on
+            it. A full ISO 8601 timestamp is taken as given.
+          schema: { type: string, examples: ['2026-08-31', '2026-08-31T23:59:59.999Z'] }
       responses:
         '200':
           description: Paginated users.
@@ -630,7 +722,12 @@ paths:
       tags: [User Management]
       operationId: suspendUser
       summary: Suspend a user
-      description: Blocks access pending review. Requires a structured reason; the action is recorded in the user's lifecycle history.
+      description: |
+        Blocks access pending review. **Every live session is revoked in the
+        same transaction**, so it takes effect immediately rather than when the
+        user's tokens happen to expire; `sessions_revoked` reports how many were
+        ended. Requires a structured reason; the status change, the session
+        revocation and the lifecycle-history row are one transaction.
       x-required-permission: 'users:edit'
       requestBody:
         required: true
@@ -642,6 +739,14 @@ paths:
         '400': { $ref: '#/components/responses/BadRequest' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: |
+            `user_deleted` — the account was deleted by its owner and cannot be
+            changed, or `user_status_unchanged` when it is already in the target
+            status.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 
   /admin/users/{id}/restrict:
     parameters:
@@ -650,7 +755,11 @@ paths:
       tags: [User Management]
       operationId: restrictUser
       summary: Restrict a user
-      description: A softer sanction than suspension — the account remains usable in a limited state.
+      description: |
+        A softer sanction than suspension — money off, chat still working.
+        Sessions are deliberately left alone: a restricted user is meant to keep
+        using the app, so signing them out would make it a suspension by another
+        name. `sessions_revoked` is therefore always `0` here.
       x-required-permission: 'users:edit'
       requestBody:
         required: true
@@ -661,6 +770,14 @@ paths:
         '200': { $ref: '#/components/responses/UserActionOk' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: |
+            `user_deleted` — the account was deleted by its owner and cannot be
+            changed, or `user_status_unchanged` when it is already in the target
+            status.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 
   /admin/users/{id}/activate:
     parameters:
@@ -669,7 +786,17 @@ paths:
       tags: [User Management]
       operationId: activateUser
       summary: Activate a user
-      description: Lifts a suspension or restriction, returning the account to `active`.
+      description: |
+        Lifts a suspension or restriction, returning the account to `active`.
+
+        **This is also the restore.** A `deactivated` account comes back whole —
+        nothing was destroyed when it was ended — and the envelope `message`
+        reads `User restored.` rather than `User activated.` so the console can
+        tell the two apart without inspecting `previous_status`.
+
+        A `deleted` account is refused with `409 user_deleted`: by then the PII
+        has been scrubbed and the phone number recycled, so there is nothing
+        left to restore.
       x-required-permission: 'users:edit'
       requestBody:
         required: true
@@ -680,6 +807,14 @@ paths:
         '200': { $ref: '#/components/responses/UserActionOk' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: |
+            `user_deleted` — the account was deleted by its owner and cannot be
+            changed, or `user_status_unchanged` when it is already in the target
+            status.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 
   /admin/users/{id}/deactivate:
     parameters:
@@ -687,11 +822,23 @@ paths:
     post:
       tags: [User Management]
       operationId: deactivateUser
-      summary: Deactivate a user
+      summary: Deactivate (delete) a user
       description: |
-        The terminal account action. Gated behind `users:delete` rather than
-        `users:edit`, so a role can be allowed to suspend without being allowed
-        to deactivate.
+        The admin delete. Gated behind `users:delete` rather than `users:edit`,
+        so a role can be allowed to suspend without being allowed to deactivate.
+
+        Moves the account to `deactivated`. **Nothing is deleted or scrubbed** —
+        the row, wallets, ledger history and case notes are untouched, and
+        `activate` restores it exactly as it was. Deliberately *not* `deleted`,
+        which is the consumer's own self-deletion: by the time an account
+        reaches that, the PII has been scrubbed and the phone number recycled.
+        One is reversible because nothing was destroyed, the other is not
+        because everything was. An account already in `deleted` is refused with
+        `409 user_deleted`.
+
+        Every live session is revoked in the same transaction; `sessions_revoked`
+        reports how many. Deactivated accounts drop out of `GET /admin/users`
+        unless asked for — `accountStatus=deactivated` is the restore queue.
       x-required-permission: 'users:delete'
       requestBody:
         required: true
@@ -702,6 +849,14 @@ paths:
         '200': { $ref: '#/components/responses/UserActionOk' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: |
+            `user_deleted` — the account was deleted by its owner and cannot be
+            changed, or `user_status_unchanged` when it is already in the target
+            status.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 
   # ===========================================================================
   # KYC Review
@@ -883,6 +1038,624 @@ paths:
         '400': { $ref: '#/components/responses/BadRequest' }
         '403': { $ref: '#/components/responses/Forbidden' }
 
+  # ===========================================================================
+  # Admin Activity
+  # ===========================================================================
+
+  /admin/activity:
+    get:
+      tags: [Admin Activity]
+      operationId: getAdminActivityFeed
+      summary: Recent activity feed
+      description: |
+        One time-ordered stream of notable admin-console events — user status
+        changes, role assignments, admin invites, and admin account
+        deactivate/reactivate — so an admin has situational awareness without
+        walking each module's own history.
+
+        **The permission model differs from every other operation in this file.**
+        There is no single required permission, so no `x-required-permission`
+        appears above: any authenticated admin may call it, and the result is
+        filtered per viewer to the modules that admin can view (`can_view`, or
+        the `can_manage` superset). An admin entitled to nothing receives an
+        empty list, not a `403`. Access control therefore lives in the service's
+        SQL filter rather than on the route.
+
+        **Pagination is cursor-based**, unlike the page-based `page`/`limit` used
+        by every other list operation here. Pass the previous response's
+        `next_cursor` back as `before` to fetch older events; `next_cursor` is
+        `null` on the last page.
+
+        Events are appended by the module that produces them, inside that
+        module's own transaction — so the feed can never record a change that
+        rolled back, nor miss one that committed. Only four of the eleven
+        permission modules currently append to it (`users`, `roles_permissions`,
+        `admin_accounts`, and role changes made from the admin-accounts row).
+      parameters:
+        - name: limit
+          in: query
+          description: Page size, 1–100.
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+        - name: before
+          in: query
+          description: |
+            Cursor — return only events strictly older than this timestamp.
+            Accepts the `next_cursor` from a previous response.
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: Activity feed, newest first.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          items:
+                            type: array
+                            items: { $ref: '#/components/schemas/AdminActivityItem' }
+                          next_cursor:
+                            type: [string, 'null']
+                            format: date-time
+                            description: Pass as `before` for the next page; `null` on the last page.
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  # ===========================================================================
+  # Dashboard
+  # ===========================================================================
+
+  /admin/dashboard:
+    get:
+      tags: [Dashboard]
+      operationId: getDashboardSummary
+      summary: Dashboard summary
+      description: |
+        Every headline metric the console landing screen renders, in one
+        payload: user counts (total, active, new today/7d/30d, split by
+        onboarding path and by account status), the KYC review queue,
+        transaction counts and volume for today and the last 7 days plus
+        volume by ledger type over 30 days, pending payouts, treasury
+        solvency, and admin-account counts.
+
+        Aggregates are a handful of parallel `COUNT`/`SUM` queries against the
+        ledger — no schema change and no cache, so the payload is computed per
+        request and `generated_at` is always the moment of the call. "Volume"
+        is measured on the ledger's credit legs, i.e. total value moved rather
+        than net position. All money is NGN major units as fixed 2-decimal
+        strings.
+
+        **`treasury` reuses the pool-solvency check**, and inherits its
+        semantics exactly: when `ANCHOR_POOL_ACCOUNT_ID` is unset,
+        `pool_balance_ngn` is `null`, `configured` is `false` and `solvent` is
+        `false` — meaning *unknown*, not insolvent. A landing screen binding a
+        red/green badge to `solvent` alone will show an unconfigured pool as a
+        solvency failure; read `configured` first.
+
+        `by_type_this_month` is an open map keyed by ledger transaction type,
+        so new ledger types appear as new keys without a spec change.
+      x-required-permission: 'dashboard:view'
+      responses:
+        '200':
+          description: Dashboard summary.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/DashboardSummary' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  # ===========================================================================
+  # Transactions
+  # ===========================================================================
+
+  /admin/transactions:
+    get:
+      tags: [Transactions]
+      operationId: listGlobalTransactions
+      summary: Global transaction feed
+      description: |
+        Every user-wallet ledger entry across the platform, newest first,
+        paginated, each row attributed to its user.
+
+        **System and escrow wallets are excluded.** The query inner-joins
+        `wallets` to `users`, so only wallets with `wallet_type = 'user'` and a
+        resolvable owner appear — the platform's own fee, escrow and card
+        wallets are not money owed to a customer and would distort the feed.
+
+        **A two-sided flow appears as two rows.** A peer transfer is the
+        sender's debit and the recipient's credit, each under its own user,
+        which is what an audit of "what happened to this person's money" wants.
+        It also means the row count is not the transaction count.
+
+        `direction` is relative to the row's own user: `credit` = in,
+        `debit` = out.
+
+        **`dateFrom` / `dateTo` bound the entry's `created_at`, and they narrow
+        the count as well as the rows** — so `pagination.total` under a date
+        filter is the total *for that range*, not the platform total. Both are
+        optional and independent.
+      x-required-permission: 'transactions:view'
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/DateFrom'
+        - $ref: '#/components/parameters/DateTo'
+      responses:
+        '200':
+          description: Paginated global feed, newest first.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          transactions:
+                            type: array
+                            items: { $ref: '#/components/schemas/GlobalTransactionRow' }
+                          pagination: { $ref: '#/components/schemas/TransactionsPagination' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/transactions/users/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/TxnUserId'
+    get:
+      tags: [Transactions]
+      operationId: listUserTransactions
+      summary: A user's transactions
+      description: |
+        The user's unified ledger statement across **all** of their wallets —
+        deposits, withdrawals, peer transfers, fees, escrow and card movements —
+        newest first, paginated. Every balance change flows through the ledger,
+        so this is the complete money-movement history for the account.
+
+        `currency` is resolved per wallet, so a multi-currency statement stays
+        readable; `direction` is relative to the user (`credit` = in,
+        `debit` = out).
+
+        A user with no wallets returns an empty page (`total: 0`,
+        `total_pages: 1`) rather than a `404` — the account exists, it simply
+        has no money history.
+
+        **`dateFrom` / `dateTo` bound the entry's `created_at`, and they narrow
+        the count as well as the rows**, so a date-scoped `pagination.total` is
+        the total for that range. A statement filtered to a window the user had
+        no activity in is an empty page, not a `404`.
+      x-required-permission: 'transactions:view'
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/DateFrom'
+        - $ref: '#/components/parameters/DateTo'
+      responses:
+        '200':
+          description: Paginated statement, newest first.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user: { $ref: '#/components/schemas/TransactionUserRef' }
+                          transactions:
+                            type: array
+                            items: { $ref: '#/components/schemas/AdminTransactionRow' }
+                          pagination: { $ref: '#/components/schemas/TransactionsPagination' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such user (`user_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  # ===========================================================================
+  # Wallets
+  # ===========================================================================
+
+  /admin/wallets:
+    get:
+      tags: [Wallets]
+      operationId: listWallets
+      summary: Wallets list + summary
+      description: |
+        The money-side view of customer custody: a platform-wide summary over a
+        filterable, paginated list of user wallets, each with its balance,
+        status, provider and pay-in virtual account.
+
+        **This is a different question from `GET /admin/users`.** That list is
+        user-shaped and answers "who is this person"; this one is wallet-shaped
+        and answers "where is the money". A user with three currency wallets is
+        one row there and three rows here.
+
+        **System and escrow wallets are excluded** — the query is filtered to
+        `wallet_type = 'user'` and inner-joins `users`, so the platform's own
+        fee, escrow and card wallets never appear. The summary totals are
+        therefore customer liability, not the platform's balance sheet.
+
+        **The summary ignores the filters.** `total_wallets`, `by_currency` and
+        `by_status` are always computed over every user wallet, so they stay
+        constant while the caller pages or narrows the list. A UI that binds a
+        "total held" tile to this payload will *not* see it react to the
+        currency filter beside it — that is deliberate, but it is the thing most
+        likely to be read as a bug.
+
+        Ordered by balance descending, so page 1 is the largest balances.
+        `search` matches the *owner*, not the wallet: display name, first name,
+        last name, username, email or phone, case-insensitively.
+      x-required-permission: 'wallets:view'
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - name: currency
+          in: query
+          description: |
+            ISO currency code. Upper-cased before matching, so `ngn` and `NGN`
+            are equivalent. An unknown code is not an error — it returns an
+            empty page.
+          schema: { type: string, minLength: 1, examples: ['NGN'] }
+        - name: status
+          in: query
+          description: Wallet status. Rejected with `400` if not one of the four values.
+          schema: { type: string, enum: [active, locked, frozen, closed] }
+        - $ref: '#/components/parameters/Search'
+      responses:
+        '200':
+          description: Platform summary plus one page of wallets, highest balance first.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          summary: { $ref: '#/components/schemas/WalletsSummary' }
+                          wallets:
+                            type: array
+                            items: { $ref: '#/components/schemas/AdminWalletRow' }
+                          pagination: { $ref: '#/components/schemas/TransactionsPagination' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/wallets/users/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/WalletUserId'
+    get:
+      tags: [Wallets]
+      operationId: listUserWallets
+      summary: A user's wallets
+      description: |
+        One user's wallets across every currency, with balances, status and the
+        pay-in virtual account backing each. Unpaginated — a user holds a
+        handful of wallets, not a feed.
+
+        Only `wallet_type = 'user'` wallets are returned, matching the list
+        endpoint. A user who has completed onboarding but has no wallet yet
+        returns `wallets: []` with a populated `user`; an unknown id is a `404`.
+
+        **The VBA shown is the active one for that (user, currency).** Where a
+        user has several virtual accounts on one currency — a re-provisioned
+        account, or a provider migration — the row shows whichever is flagged
+        active, and the others are not exposed here.
+      x-required-permission: 'wallets:view'
+      responses:
+        '200':
+          description: Every wallet the user holds.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user: { $ref: '#/components/schemas/TransactionUserRef' }
+                          wallets:
+                            type: array
+                            items: { $ref: '#/components/schemas/AdminWalletRow' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such user (`user_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  # ===========================================================================
+  # Reconciliation
+  # ===========================================================================
+
+  /admin/reconciliation/pool:
+    get:
+      tags: [Reconciliation]
+      operationId: reconcilePool
+      summary: Pool solvency (Σ user ledger vs FBO balance)
+      description: |
+        System-wide solvency check: the pooled FBO account at Anchor should hold
+        at least what Beevia owes its users — the sum of every `user` NGN wallet
+        balance. Returns the liability, the pool balance, their difference, and
+        whether the pool is solvent.
+
+        **A shortfall is expected before the deposit sweep is live.** Until
+        `ANCHOR_POOL_ACCOUNT_ID` is configured in the *consumer* API, customer
+        funds still sit in individual virtual accounts and the pool reads low;
+        `notes` says so rather than presenting it as an alarm. Once sweeping is
+        live, a shortfall is a real red flag.
+
+        When `ANCHOR_POOL_ACCOUNT_ID` is unset **in this service**, the pool
+        balance cannot be read at all: `status` is `not_configured`,
+        `pool_balance` and `difference` are `null`, and `solvent` is `false` —
+        which means "unknown", not "insolvent". Read `status` before `solvent`.
+
+        Amounts are NGN major units as fixed 2-decimal strings.
+      x-required-permission: 'transactions:view'
+      responses:
+        '200':
+          description: Solvency report.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/PoolReconciliationReport' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/reconciliation/users/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/TxnUserId'
+    get:
+      tags: [Reconciliation]
+      operationId: reconcileUser
+      summary: Reconcile a user's NGN ledger against Anchor
+      description: |
+        Compares the user's **Anchor-rail** ledger movements against Anchor's own
+        account transactions and returns the discrepancies in three buckets, plus
+        a balance check. Report-only — it never writes to the ledger.
+
+        **Scope is deliberately narrow.** Only deposits and NIP payouts have an
+        Anchor counterpart; internal peer transfers, escrow, fees and Paystack
+        top-ups exist solely in our ledger and are excluded by construction, so
+        they cannot false-flag as "missing in Anchor".
+
+        **Match confidence differs by rail, and the response says which.**
+        Payouts correlate exactly, on Anchor's `transfer.id` against
+        `bank_transfers.provider_transfer_ref`. Deposits carry an Anchor
+        `payment.id` that this service does not store, so they fall back to a
+        heuristic — same amount, same direction, within a 10-minute window — and
+        `notes` reports that an unmatched deposit may be a real gap or a
+        near-duplicate. Anchor rows with no transfer/payment relationship (card
+        transfers) are not correlated yet and land in `in_anchor_not_beevia`.
+
+        `summary.anchor_balance` is Anchor's `balance_after` on the newest
+        transaction, so it is `null` for an account with no transaction history.
+
+        A user with no provisioned Anchor NGN wallet returns `200` with
+        `status: no_anchor_account` and empty buckets — not a `404`.
+      x-required-permission: 'transactions:view'
+      responses:
+        '200':
+          description: Reconciliation report.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/UserReconciliationReport' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such user (`user_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  # ===========================================================================
+  # Chats — metadata and moderation only. Chat is E2EE; the server holds no
+  # message keys, so no operation here can return message content, and none
+  # should ever be added that claims to. See admin-api-rfc.md §5.1.
+  # ===========================================================================
+
+  /admin/chats:
+    get:
+      tags: [Chats]
+      operationId: listConversations
+      summary: Conversations list (metadata)
+      description: |
+        Every conversation on the platform, most recently active first, with
+        participant, message and report counts.
+
+        **No message content, ever.** Messages are stored as ciphertext and the
+        server holds no keys. `message_count` is a count of rows, not a sample
+        of them, and there is no operation on this API that returns a message
+        body.
+
+        `search` matches a group `title` **or any participant** — display name,
+        first name, last name, username, email or phone, case-insensitively —
+        so a support agent can find a conversation from either side of it.
+
+        `reported_only=true` narrows to conversations with at least one row in
+        `conversation_reports`, which is the moderation working set.
+
+        Ordered by `last_message_at` descending with nulls last, so a
+        conversation created but never used sorts to the end rather than the
+        top.
+      x-required-permission: 'chats:view'
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - name: type
+          in: query
+          description: Restrict to one-to-one or group conversations.
+          schema: { type: string, enum: [direct, group] }
+        - name: reportedOnly
+          in: query
+          description: |
+            Only conversations carrying at least one report. Defaults to
+            `false`; the parameter is coerced, so any value a checkbox sends is
+            accepted.
+          schema: { type: boolean, default: false }
+        - $ref: '#/components/parameters/Search'
+      responses:
+        '200':
+          description: One page of conversation metadata.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          conversations:
+                            type: array
+                            items: { $ref: '#/components/schemas/ChatConversationRow' }
+                          pagination: { $ref: '#/components/schemas/TransactionsPagination' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/chats/reports:
+    get:
+      tags: [Chats]
+      operationId: listChatReports
+      summary: Report queue
+      description: |
+        The moderation queue: conversation reports, newest first, each with the
+        reporter, the free-text reason they typed, and the conversation it was
+        filed against.
+
+        **This is the first and only reader of `conversation_reports`.** The
+        table is populated by the consumer app's
+        `POST /conversations/{id}/report`; before this endpoint existed reports
+        accumulated with no queue and no reviewer.
+
+        **It is a queue, not a workflow.** There is no status, no assignment and
+        no resolve action — a report cannot be marked handled, and the list
+        cannot be filtered to open items, because it returns every report ever
+        filed. Actioning a report still means acting on the *account* via
+        `POST /admin/users/{id}/suspend` or `/restrict`, with no link recorded
+        back to the report. See `admin-api-rfc.md` §6.3.
+
+        `reason` is the reporter's own text and may be `null`.
+      x-required-permission: 'chats:view'
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: One page of reports, newest first.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          reports:
+                            type: array
+                            items: { $ref: '#/components/schemas/ChatReportRow' }
+                          pagination: { $ref: '#/components/schemas/TransactionsPagination' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/chats/users/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/ChatUserId'
+    get:
+      tags: [Chats]
+      operationId: listUserChats
+      summary: A user's conversations and block graph
+      description: |
+        One user's conversations (metadata only) plus **both directions of their
+        block graph** — who they have blocked, and who has blocked them.
+
+        The two-sided block list is the point of this endpoint: a harassment
+        complaint reads very differently depending on which side the blocks are
+        on, and neither direction is visible from the conversations list.
+
+        Unpaginated. A user with no conversations returns empty arrays with a
+        populated `user`.
+      x-required-permission: 'chats:view'
+      responses:
+        '200':
+          description: The user's conversations and blocks.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/UserChatsView' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/chats/{conversationId}:
+    parameters:
+      - $ref: '#/components/parameters/ConversationId'
+    get:
+      tags: [Chats]
+      operationId: getConversation
+      summary: Conversation detail (metadata)
+      description: |
+        One conversation: the same counters as the list row, plus its avatar and
+        creator, the full participant list with roles and join/leave times, and
+        every report filed against it.
+
+        **No message content.** `message_count` is the only thing this says
+        about what was said.
+
+        Participants include people who have left — `left_at` is populated
+        rather than the row being removed — so a group's history stays
+        readable after someone exits.
+
+        **Route ordering note:** `/admin/chats/reports` is declared before this
+        parameterised route in the controller, so `reports` resolves to the
+        queue and never to a conversation with the id `reports`.
+      x-required-permission: 'chats:view'
+      responses:
+        '200':
+          description: Conversation metadata, participants and reports.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/ChatConversationDetail' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such conversation (`conversation_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
 # =============================================================================
 # Components
 # =============================================================================
@@ -916,6 +1689,26 @@ components:
       required: true
       description: A consumer `users.id`.
       schema: { type: string, format: uuid }
+    TxnUserId:
+      name: userId
+      in: path
+      required: true
+      description: |
+        A consumer `users.id`. Named `userId` rather than `id` because these
+        routes nest the user under a resource collection
+        (`/admin/transactions/users/{userId}`) instead of hanging off
+        `/admin/users/{id}` like the rest of this file.
+      schema: { type: string, format: uuid }
+    WalletUserId:
+      name: userId
+      in: path
+      required: true
+      description: |
+        A consumer `users.id`. Named `userId` for the same reason as
+        `TxnUserId` — the wallet routes nest the user under a resource
+        collection (`/admin/wallets/users/{userId}`) rather than hanging off
+        `/admin/users/{id}`.
+      schema: { type: string, format: uuid }
     KycCheckType:
       name: type
       in: path
@@ -928,11 +1721,63 @@ components:
     Limit:
       name: limit
       in: query
+      description: Page size for user-scale collections.
       schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    ConfigLimit:
+      name: limit
+      in: query
+      description: |
+        Page size for the admin-configured tables — roles and admin accounts.
+        Capped at 500 rather than 100 because the Assign Admins checklist in the
+        Create/Edit Role modal has to render every admin at once, and both
+        tables are bounded at dozens of rows. It matches the 500 ids
+        `assign-admins` accepts back.
+      schema: { type: integer, minimum: 1, maximum: 500, default: 20 }
     Search:
       name: search
       in: query
       schema: { type: string, minLength: 1, maxLength: 200 }
+    ChatUserId:
+      name: userId
+      in: path
+      required: true
+      description: |
+        A consumer `users.id`. Named `userId` for the same reason as
+        `TxnUserId` and `WalletUserId` — the chat routes nest the user under a
+        resource collection (`/admin/chats/users/{userId}`).
+      schema: { type: string, format: uuid }
+    ConversationId:
+      name: conversationId
+      in: path
+      required: true
+      description: A `conversations.id`.
+      schema: { type: string, format: uuid }
+    DateFrom:
+      name: dateFrom
+      in: query
+      description: |
+        Inclusive lower bound on the record's `created_at`, as either
+        `YYYY-MM-DD` or a full ISO 8601 timestamp — a date picker sends the
+        former. A bare date is read as `00:00:00.000Z` on that day.
+
+        Bounds are **UTC**, matching how `created_at` is stored; an operator in
+        another timezone picking "today" gets the UTC day.
+
+        A malformed or impossible value (`2026-02-30`, `last tuesday`) is a
+        `400`, not a silently-ignored filter.
+      schema: { type: string, examples: ['2026-09-01'] }
+    DateTo:
+      name: dateTo
+      in: query
+      description: |
+        Inclusive upper bound, same formats as `dateFrom`. **A bare date is
+        widened to `23:59:59.999Z`**, so `dateTo=2026-09-30` includes
+        everything that happened on the 30th rather than silently dropping the
+        whole day at midnight.
+
+        Not validated against `dateFrom`: an inverted range is accepted and
+        returns an empty page rather than a `400`.
+      schema: { type: string, examples: ['2026-09-30'] }
 
   responses:
     BadRequest:
@@ -954,7 +1799,11 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorEnvelope' }
     UserActionOk:
-      description: The action, as recorded in the user's lifecycle history.
+      description: |
+        The outcome of the action. This is **not** an `AdminUserAction` row —
+        that is the shape `GET /admin/users/{id}/actions` returns. The action
+        endpoints return the transition itself, including how many sessions the
+        change revoked.
       content:
         application/json:
           schema:
@@ -962,7 +1811,7 @@ components:
               - $ref: '#/components/schemas/SuccessEnvelope'
               - type: object
                 properties:
-                  data: { $ref: '#/components/schemas/AdminUserAction' }
+                  data: { $ref: '#/components/schemas/AdminUserActionResult' }
     KycCheckOk:
       description: The updated check.
       content:
@@ -1023,6 +1872,520 @@ components:
         total_pages: { type: integer }
         has_next_page: { type: boolean }
         has_prev_page: { type: boolean }
+
+    TransactionsPagination:
+      type: object
+      description: |
+        Pagination for the transaction feeds and the wallets list. **This is
+        not `PaginationMeta`,
+        and it is not in the envelope's `meta`** — it is nested inside `data`,
+        and it names the current page `page` where `PaginationMeta` uses
+        `current_page`. Every other page-based list in this file returns
+        `meta: PaginationMeta`; `GET /admin/activity` uses a third style again
+        (cursor). The name is transaction-specific for historical reasons; the
+        shape is now shared, and renaming it would churn every generated client.
+        Documented as built — see `admin-api-rfc.md` §6.3.
+      properties:
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }
+        total_pages:
+          type: integer
+          description: At least `1`, even when `total` is `0`.
+      required: [page, limit, total, total_pages]
+
+    TransactionUserRef:
+      type: object
+      description: The owning user, resolved for display.
+      properties:
+        id: { type: string, format: uuid }
+        name:
+          type: [string, 'null']
+          description: |
+            `display_name`, else `first_name last_name`, else `null` when the
+            account has neither.
+      required: [id, name]
+
+    AdminTransactionRow:
+      type: object
+      description: |
+        One ledger entry in a user's statement. Amounts are major-unit strings
+        with 2 decimals; the stored ledger value has scale 8 and is rounded for
+        display, so these are presentation values, not reconciliation inputs.
+      properties:
+        id: { type: string, format: uuid }
+        date: { type: string, format: date-time }
+        type:
+          type: string
+          description: The parent ledger transaction's type (deposit, transfer, fee, …).
+        direction:
+          type: string
+          enum: [credit, debit]
+          description: Relative to the row's own user — `credit` in, `debit` out.
+        amount: { type: string, examples: ['2500.00'] }
+        balance_after: { type: string, examples: ['18420.50'] }
+        status: { type: string }
+        reference: { type: [string, 'null'] }
+        description: { type: [string, 'null'] }
+        currency:
+          type: string
+          description: 'ISO code of the wallet''s currency, or `—` when it cannot be resolved.'
+          examples: ['NGN']
+      required: [id, date, type, direction, amount, balance_after, status, currency]
+
+    GlobalTransactionRow:
+      allOf:
+        - $ref: '#/components/schemas/AdminTransactionRow'
+        - type: object
+          description: A statement row in the platform-wide feed, attributed to its user.
+          properties:
+            user: { $ref: '#/components/schemas/TransactionUserRef' }
+          required: [user]
+
+    WalletVba:
+      type: object
+      description: |
+        The pay-in virtual bank account backing a wallet. `null` on the parent
+        row when none has been provisioned for that (user, currency) yet.
+      properties:
+        account_number: { type: string, examples: ['9901234567'] }
+        bank_name: { type: [string, 'null'] }
+      required: [account_number, bank_name]
+
+    AdminWalletRow:
+      type: object
+      description: |
+        One customer wallet. `balance` is a major-unit string with 2 decimals,
+        rounded from the ledger's scale-8 value for display — a presentation
+        figure, not a reconciliation input. Use
+        `GET /admin/reconciliation/users/{userId}` for the authoritative
+        comparison.
+      properties:
+        id: { type: string, format: uuid }
+        user: { $ref: '#/components/schemas/TransactionUserRef' }
+        currency:
+          type: string
+          description: 'ISO code, or `—` when it cannot be resolved.'
+          examples: ['NGN']
+        balance: { type: string, examples: ['18420.50'] }
+        status:
+          type: string
+          description: |
+            `active`, `locked`, `frozen` or `closed`. Typed as a string rather
+            than an enum because the value is returned verbatim from the
+            column; the `status` *filter* is enum-validated.
+          examples: ['active']
+        provider:
+          type: [string, 'null']
+          description: The custody provider holding the funds, when one is recorded.
+        vba:
+          oneOf:
+            - $ref: '#/components/schemas/WalletVba'
+            - type: 'null'
+      required: [id, user, currency, balance, status, provider, vba]
+
+    WalletsCurrencyTotal:
+      type: object
+      properties:
+        currency: { type: string, examples: ['NGN'] }
+        wallets: { type: integer }
+        total_balance: { type: string, examples: ['48210300.00'] }
+      required: [currency, wallets, total_balance]
+
+    WalletsSummary:
+      type: object
+      description: |
+        Platform-wide custody totals over **all** user wallets. Deliberately
+        independent of the query's `currency`, `status` and `search` filters, so
+        it does not move as the caller pages or narrows the list below it.
+      properties:
+        total_wallets: { type: integer }
+        by_currency:
+          type: array
+          items: { $ref: '#/components/schemas/WalletsCurrencyTotal' }
+        by_status:
+          type: object
+          description: |
+            Wallet count keyed by status. Statuses with no wallets are absent
+            rather than zero, so a client must not assume all four keys exist.
+          additionalProperties: { type: integer }
+      required: [total_wallets, by_currency, by_status]
+
+    ChatUserRef:
+      type: object
+      description: |
+        A minimal participant reference. Deliberately just an id and a name —
+        the chat surface is not a user-management surface, and anything more
+        about the person is a `GET /admin/users/{id}` away.
+      properties:
+        id: { type: string, format: uuid }
+        name:
+          type: string
+          nullable: true
+          description: Display name, or a first/last composite. `null` if neither is set.
+      required: [id, name]
+
+    ChatConversationRow:
+      type: object
+      description: |
+        One conversation, metadata only. The three counters are computed per row
+        as correlated sub-selects: `participant_count` excludes members who have
+        left, `message_count` excludes soft-deleted messages, and `report_count`
+        counts every report ever filed against the conversation.
+      properties:
+        id: { type: string, format: uuid }
+        type: { type: string, enum: [direct, group] }
+        title:
+          type: string
+          nullable: true
+          description: Group title. Always `null` for a `direct` conversation.
+        participant_count:
+          type: integer
+          description: Members who have not left (`left_at is null`).
+        message_count:
+          type: integer
+          description: |
+            Messages not soft-deleted. A count only — no operation on this API
+            returns a message body.
+        report_count: { type: integer }
+        last_message_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: '`null` for a conversation that has never carried a message; these sort last.'
+        created_at: { type: string, format: date-time }
+      required:
+        [id, type, title, participant_count, message_count, report_count, last_message_at, created_at]
+
+    ChatParticipant:
+      type: object
+      description: |
+        One membership row. Former members are retained with `left_at` set
+        rather than removed, so a group's history stays readable.
+      properties:
+        user: { $ref: '#/components/schemas/ChatUserRef' }
+        role:
+          type: string
+          description: Membership role within the conversation, e.g. `member` or `admin`.
+        joined_at: { type: string, format: date-time, nullable: true }
+        left_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: '`null` while the member is still in the conversation.'
+      required: [user, role, joined_at, left_at]
+
+    ChatReportView:
+      type: object
+      description: One report as it appears inside a conversation's detail.
+      properties:
+        id: { type: string, format: uuid }
+        reporter: { $ref: '#/components/schemas/ChatUserRef' }
+        reason:
+          type: string
+          nullable: true
+          description: Free text the reporter typed. Not validated, not categorised, may be `null`.
+        created_at: { type: string, format: date-time }
+      required: [id, reporter, reason, created_at]
+
+    ChatReportRow:
+      type: object
+      description: |
+        One row of the moderation queue — the same report as `ChatReportView`,
+        plus the conversation it belongs to, because the queue is not scoped to
+        one conversation.
+      properties:
+        id: { type: string, format: uuid }
+        conversation:
+          type: object
+          properties:
+            id: { type: string, format: uuid }
+            type: { type: string, enum: [direct, group] }
+            title: { type: string, nullable: true }
+          required: [id, type, title]
+        reporter: { $ref: '#/components/schemas/ChatUserRef' }
+        reason: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+      required: [id, conversation, reporter, reason, created_at]
+
+    ChatConversationDetail:
+      allOf:
+        - $ref: '#/components/schemas/ChatConversationRow'
+        - type: object
+          description: A conversation's full metadata view.
+          properties:
+            avatar_url: { type: string, nullable: true }
+            created_by:
+              type: string
+              nullable: true
+              description: '`users.id` of the creator, as a bare id rather than a resolved reference.'
+            participants:
+              type: array
+              items: { $ref: '#/components/schemas/ChatParticipant' }
+            reports:
+              type: array
+              description: Every report filed against this conversation. Unpaginated.
+              items: { $ref: '#/components/schemas/ChatReportView' }
+          required: [avatar_url, created_by, participants, reports]
+
+    UserChatsView:
+      type: object
+      description: |
+        One user's chat footprint. Both block directions are included because a
+        complaint reads differently depending on which way the blocks point.
+      properties:
+        user: { $ref: '#/components/schemas/ChatUserRef' }
+        conversations:
+          type: array
+          items: { $ref: '#/components/schemas/ChatConversationRow' }
+        blocked:
+          type: array
+          description: Users this user has blocked.
+          items: { $ref: '#/components/schemas/ChatUserRef' }
+        blocked_by:
+          type: array
+          description: Users who have blocked this user.
+          items: { $ref: '#/components/schemas/ChatUserRef' }
+      required: [user, conversations, blocked, blocked_by]
+
+    DashboardSummary:
+      type: object
+      description: |
+        The console landing screen in one object. Money fields are NGN major
+        units as fixed 2-decimal strings. Counts are point-in-time; nothing
+        here is cached, so two calls seconds apart may differ.
+      properties:
+        generated_at: { type: string, format: date-time }
+        users:
+          type: object
+          properties:
+            total: { type: integer }
+            active: { type: integer }
+            new_today: { type: integer }
+            new_this_week: { type: integer, description: Last 7 days. }
+            new_this_month: { type: integer, description: Last 30 days. }
+            by_path:
+              type: object
+              description: Split by onboarding path.
+              properties:
+                chat_only: { type: integer }
+                chat_banking: { type: integer }
+              required: [chat_only, chat_banking]
+            by_status:
+              type: object
+              properties:
+                active: { type: integer }
+                restricted: { type: integer }
+                suspended: { type: integer }
+                deactivated: { type: integer }
+              required: [active, restricted, suspended, deactivated]
+          required:
+            [total, active, new_today, new_this_week, new_this_month, by_path,
+             by_status]
+        kyc:
+          type: object
+          properties:
+            users_pending_review:
+              type: integer
+              description: Distinct users with at least one check awaiting review.
+            users_with_failed_check:
+              type: integer
+              description: Distinct users with at least one failed check.
+          required: [users_pending_review, users_with_failed_check]
+        transactions:
+          type: object
+          properties:
+            today: { $ref: '#/components/schemas/DashboardTxnWindow' }
+            this_week: { $ref: '#/components/schemas/DashboardTxnWindow' }
+            by_type_this_month:
+              type: object
+              description: |
+                Volume by ledger transaction type over the last 30 days. An open
+                map — keys are ledger type values and new types appear without a
+                spec change.
+              additionalProperties: { type: string }
+          required: [today, this_week, by_type_this_month]
+        payouts:
+          type: object
+          properties:
+            pending: { type: integer }
+            pending_amount_ngn: { type: string }
+          required: [pending, pending_amount_ngn]
+        treasury:
+          type: object
+          description: |
+            Pool solvency, reusing the reconciliation service. Read `configured`
+            before `solvent` — see the operation description.
+          properties:
+            ledger_liability_ngn:
+              type: string
+              description: Σ of every `user` NGN wallet balance.
+            pool_balance_ngn:
+              type: [string, 'null']
+              description: '`null` when `ANCHOR_POOL_ACCOUNT_ID` is unset.'
+            solvent:
+              type: boolean
+              description: '`false` also means *unknown* when `configured` is `false`.'
+            configured:
+              type: boolean
+              description: Whether the pool account could be read at all.
+          required: [ledger_liability_ngn, pool_balance_ngn, solvent, configured]
+        admins:
+          type: object
+          properties:
+            total: { type: integer }
+            pending_invites: { type: integer }
+          required: [total, pending_invites]
+      required:
+        [generated_at, users, kyc, transactions, payouts, treasury, admins]
+
+    DashboardTxnWindow:
+      type: object
+      description: Transaction count and total volume moved over one time window.
+      properties:
+        count: { type: integer }
+        volume_ngn: { type: string }
+      required: [count, volume_ngn]
+
+    PoolReconciliationReport:
+      type: object
+      description: |
+        System-wide solvency. All amounts are NGN major-unit strings with 2
+        decimals; the comparison itself is done in integer kobo so the naira
+        decimals never introduce float drift.
+      properties:
+        status:
+          type: string
+          enum: [solvent, shortfall, not_configured]
+          description: |
+            `not_configured` means the pool balance could not be read at all —
+            distinct from a shortfall, and the reason `solvent` may be `false`
+            without anything being wrong.
+        pool_account_id: { type: [string, 'null'] }
+        generated_at: { type: string, format: date-time }
+        ledger_liability:
+          type: string
+          description: Σ of every `user` NGN wallet balance — what Beevia owes its users.
+        pool_balance:
+          type: [string, 'null']
+          description: '`null` when the pool account is not configured.'
+        difference:
+          type: [string, 'null']
+          description: '`pool_balance − ledger_liability`; positive is surplus, negative a shortfall.'
+        solvent:
+          type: boolean
+          description: '`pool_balance ≥ ledger_liability`. Always `false` when `status` is `not_configured`.'
+        balance_matches:
+          type: boolean
+          description: Exact match — pool equals liability to the kobo.
+        user_wallet_count: { type: integer }
+        notes:
+          type: array
+          items: { type: string }
+          description: Human-readable caveats, including the pre-sweep shortfall explanation.
+      required:
+        [status, pool_account_id, generated_at, ledger_liability, pool_balance,
+         difference, solvent, balance_matches, user_wallet_count, notes]
+
+    UserReconciliationReport:
+      type: object
+      properties:
+        user: { $ref: '#/components/schemas/TransactionUserRef' }
+        anchor_account_id:
+          type: [string, 'null']
+          description: The wallet's `provider_wallet_ref`; `null` when unprovisioned.
+        status:
+          type: string
+          enum: [reconciled, discrepancies, no_anchor_account]
+          description: |
+            `reconciled` requires both zero discrepancies **and** a matching
+            balance. `no_anchor_account` is returned with `200` and empty
+            buckets when the user has no provisioned Anchor NGN wallet.
+        generated_at: { type: string, format: date-time }
+        summary: { $ref: '#/components/schemas/ReconciliationSummary' }
+        buckets:
+          type: object
+          properties:
+            amount_mismatch:
+              type: array
+              items: { $ref: '#/components/schemas/AmountMismatchRow' }
+            in_beevia_not_anchor:
+              type: array
+              items: { $ref: '#/components/schemas/BeeviaOnlyRow' }
+            in_anchor_not_beevia:
+              type: array
+              items: { $ref: '#/components/schemas/AnchorOnlyRow' }
+          required: [amount_mismatch, in_beevia_not_anchor, in_anchor_not_beevia]
+        notes:
+          type: array
+          items: { type: string }
+          description: |
+            Caveats attached to this run — notably that deposits were matched
+            heuristically, and that uncorrelated Anchor rows (card transfers)
+            are listed as Anchor-only.
+      required: [user, anchor_account_id, status, generated_at, summary, buckets, notes]
+
+    ReconciliationSummary:
+      type: object
+      properties:
+        matched:
+          type: integer
+          description: Pairs whose amounts agree, by exact ref or by the deposit heuristic.
+        amount_mismatch: { type: integer }
+        in_beevia_not_anchor: { type: integer }
+        in_anchor_not_beevia: { type: integer }
+        beevia_balance: { type: string, description: The wallet's denormalized balance (naira). }
+        anchor_balance:
+          type: [string, 'null']
+          description: |
+            Anchor's `balance_after` on the newest transaction — `null` when the
+            account has no transaction history, which also forces
+            `balance_matches` to `false`.
+        balance_matches: { type: boolean }
+      required:
+        [matched, amount_mismatch, in_beevia_not_anchor, in_anchor_not_beevia,
+         beevia_balance, anchor_balance, balance_matches]
+
+    AmountMismatchRow:
+      type: object
+      description: A pair matched on both sides whose amounts disagree.
+      properties:
+        ref: { type: string, description: Our reference for the movement. }
+        rail: { type: string, enum: [payout, deposit] }
+        beevia_amount: { type: string }
+        anchor_amount: { type: string }
+        direction: { type: string, enum: [credit, debit] }
+        date: { type: [string, 'null'], format: date-time }
+        anchor_txn_id: { type: string }
+      required: [ref, rail, beevia_amount, anchor_amount, direction, date, anchor_txn_id]
+
+    BeeviaOnlyRow:
+      type: object
+      description: A Beevia ledger movement with no Anchor counterpart.
+      properties:
+        ref: { type: string }
+        rail: { type: string, enum: [payout, deposit] }
+        amount: { type: string }
+        direction: { type: string, enum: [credit, debit] }
+        date: { type: [string, 'null'], format: date-time }
+        status: { type: string }
+      required: [ref, rail, amount, direction, date]
+
+    AnchorOnlyRow:
+      type: object
+      description: An Anchor transaction with no Beevia counterpart.
+      properties:
+        anchor_txn_id: { type: string }
+        kind:
+          type: string
+          enum: [payout, deposit, other]
+          description: '`other` covers rows with no transfer/payment relationship — card transfers today.'
+        provider_ref: { type: [string, 'null'] }
+        amount: { type: string }
+        direction: { type: string, enum: [credit, debit] }
+        summary: { type: string, description: Anchor's own free-text description of the row. }
+        date: { type: [string, 'null'], format: date-time }
+      required: [anchor_txn_id, kind, provider_ref, amount, direction, summary, date]
 
     AdminSession:
       type: object
@@ -1134,9 +2497,98 @@ components:
             - $ref: '#/components/schemas/AdminSummary'
         created_at: { type: string, format: date-time }
 
+    AdminUserActionResult:
+      type: object
+      description: |
+        The result of one lifecycle action — the transition that was applied,
+        not the history row it wrote. `previous_status` is what the account was
+        before the call, so a no-op is distinguishable from a real change.
+      properties:
+        user_id: { type: string, format: uuid }
+        action: { type: string, enum: [suspend, restrict, activate, deactivate] }
+        previous_status: { $ref: '#/components/schemas/UserStatus' }
+        status: { $ref: '#/components/schemas/UserStatus' }
+        sessions_revoked:
+          type: integer
+          minimum: 0
+          description: |
+            How many live sessions this call ended, in the same transaction as
+            the status change. Non-zero only for `suspend` and `deactivate` —
+            `restrict` and `activate` deliberately leave sessions alone.
+        reason: { $ref: '#/components/schemas/AdminActionReason' }
+        at: { type: string, format: date-time }
+
+    UserStatus:
+      type: string
+      description: |
+        `deactivated` is an admin ending the account — reversible, nothing
+        destroyed. `deleted` is the consumer's own self-deletion, after which
+        the PII is scrubbed and the phone number recycled; it is terminal and
+        no admin action will act on it.
+      enum: [active, restricted, suspended, deactivated, deleted]
+
     AdminActionReason:
       type: string
       enum: [suspected_account_compromise, repeated_policy_violations, fraud_investigation, compliance_review, regulatory_or_legal_request, other]
+
+    AdminActivityItem:
+      type: object
+      description: |
+        One event in the cross-module activity feed. `target` is the deep-link
+        handle the console uses to open the record the event is about.
+      properties:
+        id: { type: string, format: uuid }
+        action:
+          type: string
+          enum:
+            - user_status_changed
+            - role_assignment_changed
+            - admin_invited
+            - admin_deactivated
+            - admin_reactivated
+        module:
+          type: string
+          description: |
+            The permission module the event belongs to — the feed gates on it.
+            The enum is the full module list; only `users`, `roles_permissions`
+            and `admin_accounts` are currently ever written.
+          enum:
+            - dashboard
+            - users
+            - chats
+            - wallets
+            - transactions
+            - kyc
+            - reports
+            - analytics
+            - roles_permissions
+            - admin_accounts
+            - system_settings
+        actor:
+          type: object
+          description: The admin who performed it; both fields are `null` for a system-originated event.
+          properties:
+            admin_id: { type: [string, 'null'], format: uuid }
+            name: { type: [string, 'null'] }
+        target:
+          type: object
+          properties:
+            entity_type: { type: string, enum: [user, role, admin] }
+            entity_id: { type: string, format: uuid }
+        summary:
+          type: string
+          description: Human-readable one-line description, rendered as written.
+        metadata:
+          type: [object, 'null']
+          additionalProperties: true
+          description: |
+            Free-form per-action detail; the shape varies by `action`. Keys are
+            snake_case like the rest of the envelope — the response interceptor
+            converts them recursively, so a `user_status_changed` event carries
+            `previous_status` / `new_status` / `reason`, and a
+            `role_assignment_changed` event carries `assigned_count` or
+            `previous_role_id` / `new_role_id`.
+        occurred_at: { type: string, format: date-time }
 
     AdminSummary:
       type: object

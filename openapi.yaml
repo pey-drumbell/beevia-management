@@ -609,6 +609,10 @@ paths:
         Residential address and gender — what the banking rail needs to create a
         customer. Unlike `POST /kyc/profile`, `email` is not resubmitted (it was
         established at `/upgrade/email`) and `gender` is optional.
+
+        Requires a verified BVN (`bvn_required`): the profile is the last step
+        before provisioning, so accepting it on an unverified BVN would return a
+        200 that looks like a finished upgrade while no account is ever opened.
       requestBody:
         required: true
         content:
@@ -616,7 +620,11 @@ paths:
             schema: { $ref: '#/components/schemas/UpgradeProfileRequest' }
       responses:
         '200': { $ref: '#/components/responses/UserOk' }
-        '400': { $ref: '#/components/responses/BadRequest' }
+        '400':
+          description: BVN not yet verified (`bvn_required`), or the body failed validation.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 
   /kyc/email:
     post:
@@ -1079,7 +1087,12 @@ paths:
       tags: [Contacts]
       operationId: listContacts
       summary: Contacts on Beevia
-      description: The registered contacts matched by the last sync.
+      description: |
+        The registered contacts matched by the last sync.
+
+        Each `user` is a `ContactUserProfile` — the lean public projection plus
+        `path`, so the client can gate money actions per contact without a second
+        lookup. Added 2026-09-03; the field is absent from older builds.
       responses:
         '200': { $ref: '#/components/responses/ContactListOk' }
 
@@ -2905,6 +2918,19 @@ paths:
         only the plaintext needed for conversion; nothing is stored and the
         provider never gains standing access to a conversation. The original text
         always remains the client's source of truth.
+
+        **No translation provider is connected.** `TranslateModule` binds
+        `TRANSLATE_PORT` unconditionally to `StubTranslateAdapter`, which returns
+        the submitted text unchanged with `from` resolved to `auto`. The route,
+        its validation and its response shape are real and stable to build
+        against; the translation itself is an identity function and has been
+        since the module landed on 2026-07-10. There is no environment switch —
+        unlike the push module, which selects a real FCM adapter when
+        `FCM_SERVICE_ACCOUNT` is present — so connecting a provider is a code
+        change, not configuration.
+
+        Treat a `200` from this operation as "the pipeline works", not as
+        "the text was translated".
       requestBody:
         required: true
         content:
@@ -3016,10 +3042,36 @@ paths:
       operationId: anchorWebhook
       summary: Banking rail webhook
       description: |
-        Deposit settlement, payout results and virtual-account events from the
-        NGN banking partner. Verified by HMAC over the raw request bytes
-        (`x-anchor-signature`); `rawBody: true` is enabled in `main.ts` for this
-        reason. Events are deduplicated through `partner_webhook_events`.
+        Deposit settlement, payout results, virtual-account links and card
+        lifecycle events from the NGN banking partner. Verified by HMAC over the
+        raw request bytes (`x-anchor-signature`); `rawBody: true` is enabled in
+        `main.ts` for this reason. Events are deduplicated through
+        `partner_webhook_events`.
+
+        **Two body shapes are accepted.** Anchor's real deliveries arrive with
+        `{ id, type, attributes, relationships }` at the **top level**; its test
+        probes wrap the same object under `data`. The handler normalises a
+        top-level body into the wrapped shape before dispatch, so both are
+        processed identically.
+
+        > This normalisation was added on 2026-09-03. Before it, the handler read
+        > everything from `payload.data`, so every real delivery fell through the
+        > "unknown type" guard and was acknowledged `200` without being
+        > processed — a silent no-op, not an error, from the endpoint's
+        > introduction on 2026-06-28. Only the wrapped test probes were ever
+        > recorded in the event inbox. Anything that depended on this callback —
+        > deposit crediting, payout settlement, virtual-account linking — did not
+        > happen from a real Anchor event in that window.
+
+        Card events (`card.created`, `card.terminated`, `card.frozen`, …) fetch
+        the card from Anchor and sync its status, last4 and expiry. Anchor emits
+        no distinct activation event — a card is created `PENDING` and goes
+        `ACTIVE` silently — so pending cards are also refreshed when the card
+        list is read, which is what flips a freshly-issued card to active.
+
+        A `200` acknowledges receipt, never successful processing: unrecognised
+        event types are acknowledged and dropped by design, so a caller cannot
+        distinguish "handled" from "ignored" from the status code.
       security: []
       parameters:
         - name: x-anchor-signature
@@ -3028,6 +3080,9 @@ paths:
           schema: { type: string }
       requestBody:
         required: true
+        description: |
+          Either `{ id, type, attributes, relationships }` (real deliveries) or
+          the same object wrapped as `{ data: { … } }` (test probes).
         content:
           application/json:
             schema: { type: object, additionalProperties: true }
@@ -3734,7 +3789,7 @@ components:
       properties:
         phone: { $ref: '#/components/schemas/Phone' }
         contact_name: { type: [string, 'null'], description: The label from the device address book. }
-        user: { $ref: '#/components/schemas/PublicProfile' }
+        user: { $ref: '#/components/schemas/ContactUserProfile' }
 
     # ---------------------------------------------------------------------
     # Chat
@@ -3912,7 +3967,12 @@ components:
       required: [email, gender, addressLine1, city, state, postalCode]
       properties:
         email: { type: string, format: email }
-        gender: { type: string, enum: [male, female] }
+        gender:
+          type: string
+          enum: [male, female]
+          description: |
+            Matched case-insensitively and trimmed before validation, so `Male`
+            and `MALE` are accepted; the canonical stored form is lower-case.
         addressLine1: { type: string, minLength: 1, maxLength: 255 }
         addressLine2: { type: string, maxLength: 255 }
         city: { type: string, minLength: 1, maxLength: 128 }
@@ -4104,6 +4164,32 @@ components:
       required: [pin]
       properties:
         pin: { type: string, pattern: '^\d{4}$', example: '1234' }
+
+    ContactUserProfile:
+      type: object
+      description: |
+        The peer inside a contact row: `PublicProfile` plus `path`. Returned only
+        by `POST /contacts/sync` and `GET /contacts`, both of which resolve people
+        the caller already holds in their address book.
+
+        `path` is deliberately **not** on `PublicProfile`. Search, phone lookup and
+        the block list return the lean projection so that an attacker enumerating
+        numbers cannot harvest account attributes; a contact is an existing
+        relationship, so the same field is safe here.
+
+        Distinct from `ContactProfile`, which is the richer single-user shape
+        returned by `GET /users/{id}`.
+      allOf:
+        - $ref: '#/components/schemas/PublicProfile'
+        - type: object
+          properties:
+            path:
+              type: [string, 'null']
+              enum: [chat_only, chat_banking, null]
+              description: |
+                The peer's account path, added 2026-09-03. Lets the client gate
+                money actions on a contact: you can only send to a `chat_banking`
+                peer. `null` if they have not chosen one yet.
 
     ContactProfile:
       type: object
@@ -4372,7 +4458,13 @@ components:
         optional.
       required: [addressLine1, city, state, postalCode]
       properties:
-        gender: { type: string, enum: [male, female] }
+        gender:
+          type: string
+          enum: [male, female]
+          description: |
+            Optional — defaults to the value read off the BVN record. Matched
+            case-insensitively and trimmed before validation, so `Male` and
+            `MALE` are accepted; the canonical stored form is lower-case.
         addressLine1: { type: string, minLength: 1, maxLength: 255 }
         addressLine2: { type: string, maxLength: 255 }
         city: { type: string, minLength: 1, maxLength: 128 }
@@ -4583,6 +4675,13 @@ components:
         onboarding_step:
           type: string
           enum: [phone_pending, phone_verified, pin_set, path_chosen, profile_done, kyc_pending, kyc_done, completed]
+          description: >-
+            Ordinarily advances one step at a time. The one exception is wallet
+            provisioning: a provisioned NGN wallet IS the terminal state of
+            banking setup, so when one is created the step is set to `completed`
+            and `path` to `chat_banking` regardless of the step the account was
+            on. A client must therefore not assume the value only ever moves to
+            its immediate successor.
         status:
           type: string
           enum: [active, restricted, suspended, deactivated, deleted]

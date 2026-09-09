@@ -434,8 +434,16 @@ paths:
         deletion delay surface as a "deletion in progress" status rather than a
         silent failure, and the compliance KPI tracks completion within 5 days.
 
-        Returns the overall state plus per-partner progress. Callable while the
-        account is in `deleting` state (the `user_status` enum already has it).
+        Returns the overall state plus per-partner progress.
+
+        **Needs a status to hang off.** This was designed when `user_status`
+        carried a `deleting` value covering exactly this window. Migration
+        `0027` (2026-08-06) renamed it to `deactivated` and reassigned it to the
+        admin deactivate path; `AccountDeletionService` now sets `deleted`
+        directly, so an account is never observably mid-deletion. Building this
+        endpoint requires either a new in-flight status or a deletion-request
+        record to read from — see `openapi.admin.proposed.yaml`
+        `GET /admin/deletion-requests`, which has the same problem.
       externalDocs:
         description: "PRD §9 Flow 8 edge cases, §7.4 Compliance and Trust"
         url: ./Beevia_PRD.md
@@ -1118,6 +1126,12 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
 
+  # NOTE (2026-09-08): probably obsolete. Sprint 0901's `BVA-I228` moves chat
+  # translation **on-device** (iOS Translation framework / Android ML Kit), so
+  # there is no per-message HTTP round trip left for a batch call to amortise.
+  # Retained, not deleted, because nothing is built either way and no decision
+  # has been recorded — see api-rfc.md §5.5a, which raises it as an open
+  # question rather than a finding.
   /translate/batch:
     post:
       tags: [Translate]
@@ -1154,6 +1168,9 @@ paths:
                         items: { $ref: '#/components/schemas/BatchTranslation' }
         '400': { $ref: '#/components/responses/BadRequest' }
 
+  # NOTE (2026-09-08): probably obsolete for the same reason as
+  # `/translate/batch` above — the supported-language list of an on-device
+  # engine is the platform framework's, not the server's. See api-rfc.md §5.5a.
   /translate/languages:
     get:
       tags: [Translate]

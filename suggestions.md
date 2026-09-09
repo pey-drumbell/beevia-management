@@ -279,6 +279,23 @@ The same check should compare against `openapi.yaml` so the three artifacts cann
 
 `openapi.proposed.yaml` stays hand-maintained, which is correct: it describes routes that do not exist, so nothing can generate it.
 
+**Update 2026-09-03 — this is now the highest-value item in this document, and there is a second demonstration.** On 2026-09-02 five contract facts were found wrong in `openapi.admin.yaml`, four of them shipped on 6 August and unnoticed through nineteen daily audits. Today `POST /contacts/sync` and `GET /contacts` changed the shape of the `user` object they return — a new `path` field — with no route added, renamed or removed. The daily audit compares route inventories, so it reported both services clean on both days. Every one of these findings came from a person reading a diff.
+
+The pattern is now well enough evidenced to state as a property rather than a run of incidents: **this pipeline reliably detects new routes and reliably misses changed contracts.** Response bodies, query parameters, enum values and status codes are all invisible to an inventory diff. Generating the document from the app and diffing it in CI is not a tidiness improvement — it is the only proposal here that closes the class, and it applies to `beevia-admin-api` (whose `main.ts` also already calls `SwaggerModule.createDocument`) exactly as much as to `beevia-api`.
+
+Credit where it is due on the same commit: the Postman examples for both contacts responses were updated in the same change, which is §5.3's stated policy actually being followed.
+
+**Update 2026-09-04 — the strongest evidence yet, and it cuts the other way too.** Today the audit *worked*: four new admin routes were added, the inventory diff caught all four, and the spec was corrected the same morning. That is the pipeline's good case, and it took minutes.
+
+In the same twenty-four hours it missed two changes that matter more than any of the four:
+
+- **`POST /webhooks/anchor` went from processing nothing to processing everything.** For sixty-seven days it acknowledged every real Anchor delivery with `200` and dropped it (`api-rfc.md` §5.6). No route changed, so no audit ever saw it — nineteen consecutive clean runs over an endpoint that was a silent no-op on the money path.
+- **NGN payouts changed which account they draw on** (`api-rfc.md` §5.7). Same path, same request, same response; different money movement.
+
+Neither is a documentation slip. The first is the single most consequential defect this pipeline has encountered, and an inventory diff was structurally incapable of noticing it — the route existed and returned `200` throughout, which is exactly what "healthy" looks like from the outside.
+
+**That bounds what generating the document from the app would buy, and it is worth being honest about.** It would have caught the contacts response shape, the five wrong admin facts, and today's pagination divergence. It would **not** have caught the webhook no-op or the treasury change, because neither altered the document. Generation closes the contract-drift class; it does not close the behaviour-drift class, and this cycle produced one of each. The second class needs a different instrument — a provider-event fixture exercised end to end against a real delivery shape, and an alert on "webhook received, no handler matched" rather than a silent acknowledgement. That last one is five lines and would have flagged this on day one of sixty-seven.
+
 Two cheap CI guards are worth adding alongside:
 
 - **No overlap.** Fail if any `(path, method)` appears in both files, except the three deliberate entries under `MODIFICATIONS TO LIVE ENDPOINTS`. This catches the most likely mistake — copying an operation across instead of moving it.
@@ -294,6 +311,19 @@ The gap is that **no controller has an HTTP-level test**. Guards, pipes, the res
 
 ---
 
+### 5.6 A shipped feature and a standing proposal are claiming the same path
+
+**Added 2026-09-09.** `openapi.admin.proposed.yaml` has reserved `/admin/reports/{reportId}` for Module 4's moderation-report detail since 5 August. The unmerged branch `feat/admin-reports` implements `GET /admin/reports/{id}` as a *generated CSV report*. Same path, unrelated resources; whichever merges first silently takes the name.
+
+This is not a mistake by either author — the proposal is a year-old design document and the branch is this week's work, and nobody read one against the other. It is a structural gap worth one cheap habit: **`/admin/reports` was never a good name for either of them.** "Report" means both "a complaint about a user" and "an exported dataset", and the admin API now needs both.
+
+Two mitigations, in order of cost:
+
+- **Grep the proposed specs for the path before naming a new controller.** Four files, one `grep -n "'/admin/<segment>"`. It costs seconds and it is the only check that catches this class of collision before the merge rather than after.
+- **Consider a CI check** that fails when a route in either service matches a path in the *proposed* spec for a different operation. The audit already extracts routes and parses all four specs, so it is a small addition to work already done — and unlike most lint rules, it catches a design problem rather than a formatting one.
+
+For this specific case the resolution is in `admin-api-rfc.md` §5.4b: Module 4's workflow operations should move under `/admin/chats/reports/{reportId}`, where the shipped queue already lives.
+
 ## 6. Product-facing gaps
 
 These are specified in detail in [`api-rfc.md`](./api-rfc.md) §4–§5 and appear as operations in [`openapi.proposed.yaml`](./openapi.proposed.yaml). Listed here only so this document stands alone:
@@ -307,22 +337,88 @@ These are specified in detail in [`api-rfc.md`](./api-rfc.md) §4–§5 and appe
 | **Only the local KYC tier exists**, and `kyc_level` is an opaque integer with no status endpoint. | The client cannot explain why a currency is locked, and discovers gates only as errors from `POST /wallets`. |
 | **No consent record**, despite §10.4 listing Consent Management as MVP and Phase 4 requiring consent logging and audit trails. | A stated MVP feature and a pre-launch compliance requirement are both unmet. |
 | **No dispute or support surface.** | §7.4 tracks dispute resolution time and partner escalations as KPIs; neither is instrumentable. |
-| **No deletion status.** `DELETE /users/me` acknowledges synchronously while partner deletion is asynchronous. | Flow 8 explicitly requires "deletion in progress", "not a silent failure". The `user_status` enum already has a `deleting` value that nothing reads. |
+| **No deletion status.** `DELETE /users/me` acknowledges synchronously while partner deletion is asynchronous. | Flow 8 explicitly requires "deletion in progress", "not a silent failure". **Corrected 2026-09-02:** this row used to add that "the `user_status` enum already has a `deleting` value that nothing reads" — migration `0027` (2026-08-06) renamed it to `deactivated` for the admin deactivate path, so there is now no in-flight state at all and the work is larger than this row implied. |
 | **`account_resolution` has no endpoint.** | The payee's account name is returned only *after* the debit, so a user cannot confirm who they are paying. |
 | **Message deletion is modelled but unreachable.** `message_delete_scope` and `deleted_for` exist; no route sets them. | Flow 1 lists deletion as an expected thread action. |
 | **Translation is stateless only.** | §8.1 requires per-conversation *and* global opt-in; the preference cannot survive a reinstall. |
 
 ---
 
-## 7. Suggested order
+## 7. Supply chain and repository integrity
 
-1. **§1.1** — malformed UUID → 500. Small fix, trivially reachable, currently generates false 500s in monitoring.
-2. **§1.2** — enforce `OTP_ECHO` off in production at startup.
-3. **§4.1** — rate limiting, especially PIN verification and `GET /keys/{userId}`.
-4. **§2.1** — un-ignore the design documents, or make the references resolve.
-5. **§4.4 / §4.5** — health probe and request ids, before public launch.
-6. **§1.4 / §5.3** — reconcile Postman with the code and add a drift check.
-7. **§4.2 / §4.3** — CORS allowlist and security headers.
-8. **§5.1** — collapse the Zod/DTO duplication before it drifts further.
-9. **§3.x** — status codes, phone validation, webhook grouping; batch into one consistency pass.
-10. **§6** — the product gaps, sequenced in `api-rfc.md` §8.
+Added 2026-09-07, after `origin/main` of `beevia-api`, `beevia-admin-api` and `beevia-db-schema` was force-pushed with a malware loader appended to `eslint.config.mjs`. Full incident detail is in `project-status/project-status-2026-09-07.md` §0; this section is the durable engineering lesson, not the incident log.
+
+### 7.1 `main` was force-pushable
+
+The single control whose absence turned a stolen token into a rewrite of three repositories' history. **Enable branch protection on all five repos with force-push disabled and deletion disabled**, require a pull request to `main`, and enable signed commits if the org plan allows it. This is a settings change, not an engineering task, and it is the highest value-per-minute item in this document.
+
+The rewrite was also detectable in seconds and nobody was watching: `git reflog show origin/main` printed `forced-update` on all three. A CI job or a scheduled script that alerts when the default branch's history is not a fast-forward of its previous state is a few lines and would have raised this at the moment it happened.
+
+### 7.2 Config files are executable code, and nothing treats them that way
+
+The payload lived in `eslint.config.mjs`. That is a JavaScript module, executed by any lint invocation — `npm run lint`, a pre-commit hook, an editor integration, a CI job. Two properties made it a good hiding place, and both generalise beyond this incident:
+
+- **The file exempts itself from linting.** Its first line is `globalIgnores(['eslint.config.mjs'])`, so no lint run will ever inspect it.
+- **The payload was appended to the last line**, after a long run of tab characters. In a diff view the line reads as unchanged; in an editor it is off-screen.
+
+The same is true of `jest.config.js`, `next.config.js`, `vite.config.*`, `postcss.config.js`, `tailwind.config.js` and every `package.json` lifecycle script. **Review them with the same care as application code**, and consider a CI check that fails on any config file exceeding a sane line length or byte size — a 9 KB ESLint config is not a thing that happens by accident.
+
+### 7.3 Lockfiles and install scripts
+
+`npm ci` runs arbitrary `postinstall` scripts from every transitive dependency. Given a compromise of this shape, the cheap hardening is `npm config set ignore-scripts true` in CI with an explicit allowlist for the packages that genuinely need to build, plus `npm audit signatures` to verify registry provenance. Neither would have stopped this particular payload, but both narrow the next one.
+
+### 7.4 The spec pipeline cannot see this class of problem — and one guardrail could
+
+For the second consecutive cycle the most serious finding touched no route, no DTO, no schema and no spec. §5.4's recommendation — generate both services' OpenAPI documents and diff them in CI — closes *contract* drift. It does not close behaviour drift (the Anchor webhook no-op, 3 Sep) and it does not close *supply chain* drift. Three distinct classes, one instrument.
+
+What actually caught this was `sync_repos.py` refusing a non-fast-forward merge. That rule exists so the refresh pipeline never creates a merge commit in a repository it is only meant to read; it caught a malware push as a side effect, because **"the remote's history changed shape" and "the remote is hostile" produce the same signal**. The generalisable version: *prefer tooling that fails closed on an unexpected repository state rather than reconciling it automatically.* A `git pull` with default settings would have merged the payload into this workspace without comment.
+
+### 7.5 Rotate on the assumption of workstation compromise, not remote compromise
+
+The payload reached `origin/main` in a commit that also contained genuine, well-written application work (`09fda4f`, the admin dashboard endpoint). That means it was authored on a machine whose working copy already held the malicious file — so the remote is a symptom. **Cleaning the remote without cleaning the workstation does not hold**, because the next legitimate commit re-introduces the file. Credential rotation should assume everything that machine could read: GitHub and npm tokens, both services' `.env` files, and the Anchor, Paystack, Entrust and database credentials in them.
+
+### 7.6 Cleaning `main` is not cleaning the repository
+
+**Added 2026-09-08, after the remediation. Closed 2026-09-09.** `main` was rebuilt on all three repositories and is now verifiably clean. On 2026-09-08 `beevia-admin-api` still had **eight other remote branches carrying the payload**, byte-identical.
+
+**As of 2026-09-09 they are gone.** Seven were deleted and `feat/admin-chats` — the only one with unique content — was merged onto the clean history rather than discarded, which is exactly the disposition §7.6 recommended and the one that preserved an entire module (`admin-api-rfc.md` §3.13). A full-history sweep of **every remote ref in all five repositories** now finds only the two known-good `eslint.config.mjs` blobs (`09fc5b23`, 1485 B, and its `4e9f8271` predecessor, 899 B) in the Node services; the 9167-byte payload is reachable from nothing. The one new branch, `feat/admin-reports`, is clean.
+
+The remediation is therefore complete **on the remote**. Two things this workspace still cannot see, and which are the reason this section stays open rather than being deleted: whether the workstation that authored the poisoned commit has been cleaned (§7.5), and whether branch protection is now enabled (§7.1). Both are invisible from a git clone.
+
+The lesson below is kept in full, because it is the part that generalises.
+
+That is the durable lesson, and it is not specific to this incident. A force-push cleanup naturally targets the branch everyone looks at, and every long-lived feature branch that was cut from, or rebased onto, the poisoned tip keeps its own copy. Three consequences follow:
+
+- **The payload is still one `git checkout` away.** Anyone resuming work on a feature branch, and any CI job triggered by a push or PR from one, loads the malicious config and executes it. The exposure did not end with the `main` rebuild.
+- **A merge re-infects `main`.** These are open feature branches. Merging one without rebasing onto the clean history reintroduces the file into the branch the cleanup just fixed.
+- **A repo-wide sweep is the only check that answers the question.** "Is `main` clean" and "is the repository clean" are different queries. The second is one command:
+
+  ```bash
+  git for-each-ref --format='%(refname:short)' refs/remotes/origin/ |
+    while read b; do
+      s=$(git rev-parse "$b:eslint.config.mjs" 2>/dev/null) || continue
+      echo "$b $(git cat-file -s $s)"
+    done
+  ```
+
+  Run it against every ref, not just the default branch, and compare blob hashes rather than eyeballing diffs — the payload is appended after a run of tabs and is invisible in a diff view (§7.2).
+
+The generalisable rule: **after any history-rewrite remediation, enumerate every ref and every reachable object, and verify by content hash.** Then delete the branches that cannot be salvaged rather than leaving them for someone to find later, because a stale infected branch is indistinguishable from an active one in the GitHub branch list.
+
+## 8. Suggested order
+
+1. ~~**§7.6** — delete or rebase the eight `beevia-admin-api` branches that still carry the payload.~~ **Done 2026-09-09**: seven deleted, one merged, and a full-ref sweep across all five repos finds the payload nowhere. What is left of §7 is items 2 and 3 below, which are the two nobody outside the team can verify.
+2. **§7.1** — branch protection with force-push disabled, on all five repos. Minutes, and it is the control that failed. Cannot be verified from this workspace — the GitHub token available here has no access to the org's repositories — so confirm it in the GitHub UI rather than assuming it.
+3. **§7.5** — rotate every credential reachable from the affected workstation and CI, if that has not already happened.
+4. **§1.1** — malformed UUID → 500. Small fix, trivially reachable, currently generates false 500s in monitoring.
+5. **§1.2** — enforce `OTP_ECHO` off in production at startup.
+6. **§4.1** — rate limiting, especially PIN verification and `GET /keys/{userId}`.
+7. **§7.2** — review config files as executable code; add a size/length check in CI.
+8. **§2.1** — un-ignore the design documents, or make the references resolve.
+9. **§4.4 / §4.5** — health probe and request ids, before public launch.
+10. **§1.4 / §5.3** — reconcile Postman with the code and add a drift check.
+11. **§4.2 / §4.3** — CORS allowlist and security headers.
+12. **§7.3** — `ignore-scripts` in CI with an explicit allowlist.
+13. **§5.1** — collapse the Zod/DTO duplication before it drifts further.
+14. **§3.x** — status codes, phone validation, webhook grouping; batch into one consistency pass.
+15. **§6** — the product gaps, sequenced in `api-rfc.md` §8.

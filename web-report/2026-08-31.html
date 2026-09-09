@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beevia — Project Status — 31 Aug 2026</title>
+<meta name="description" content="Sprint 08-01 ended three days ago and nothing replaced it. 27 leaves remain in review, and no item has ever been completed out of that queue.">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!--
+  DIRECTION CONTRACT · seed 6c4a0ed0 (carried forward unchanged)
+  THESIS: A status report whose subject is the disagreement between its sources.
+  STORY: The sprint ended and nothing replaced it. The board records two actions
+  in three days. A prior claim is corrected: items DID leave review — always
+  backwards, never forward. Meanwhile the admin dashboard ships its largest
+  commit ever, four of six new modules drawing mock data.
+-->
+
+<div class="topbar">
+    <div class="topbar__mark">
+      <span class="barcode" aria-hidden="true"></span>
+      <span class="topbar__wordmark">Beevia</span>
+    </div>
+    <nav class="topbar__nav label" aria-label="Report">
+      <a href="index.html">Archive</a>
+      <a href="#overview">Overview</a>
+      <a href="#s1"><span>Corrections</span></a>
+      <a href="#method">Method</a>
+    </nav>
+</div>
+
+<header class="masthead">
+  <div class="field">
+    <div class="field__rail field__rail--l">
+      <dl>
+        <dt>Sprint</dt>
+        <dd>closed 3 days ago</dd>
+        <dt>Successor</dt>
+        <dd>none created</dd>
+        <dt>In review</dt>
+        <dd>27 · 63%</dd>
+        <dt>Forward exits</dt>
+        <dd>0 · ever</dd>
+      </dl>
+    </div>
+
+    <div class="field__stage">
+      <div class="field__title">
+        <h1>Project<br>Status</h1>
+      </div>
+      <div class="field__meta num">
+        <span>2026-08-31</span>
+        <span>Sprint 08-01</span>
+        <span>10&ndash;28 Aug &middot; closed</span>
+        <span>Three days after</span>
+      </div>
+    </div>
+
+    <div class="field__rail field__rail--r">
+      <dl>
+        <dt>API surface</dt>
+        <dd>131 / 29 &middot; no drift</dd>
+        <dt>Board actions, 3d</dt>
+        <dd>2</dd>
+        <dt>Admin board</dt>
+        <dd>still no sprint</dd>
+        <dt>Estimated</dt>
+        <dd>0 / 67</dd>
+      </dl>
+    </div>
+  </div>
+</header>
+
+<section class="mvp" aria-label="MVP readiness estimate">
+  <div class="mvp__head">
+    <span class="label">MVP readiness &mdash; estimate</span>
+    <span class="mvp__pct num">&asymp;58%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 1 day out</span>
+  </div>
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 58 percent built. Admin oversight rises from 0.45 to 0.50. International KYC, cross-currency FX and consent management are not started.">
+    <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.9"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.8"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:7" title="Message translation — 0.7"><i style="width:70%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.9"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
+    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.75"><i style="width:75%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.80"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
+    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0.45"><i style="width:45%"></i></span>
+    <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
+    <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.50"><i style="width:50%"></i></span>
+  </div>
+  <p class="mvp__read"><strong>The provisional target arrives tomorrow, and the product is roughly 58% built.</strong> Three capabilities carrying 22 weighted points have not been started at all. The one movement is admin oversight, 0.45 &rarr; 0.50: the largest commit in <code>beevia-admin</code>'s history moves the total by 0.3 points, because four of its six new modules draw mock data. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. <a href="#mvp-method">Method and capability table</a>.</p>
+</section>
+
+<div class="shell">
+  <nav class="contents label" aria-label="Contents">
+    Contents
+    <ol>
+      <li><a href="#overview"><span>00</span> Quick overview</a></li>
+      <li><a href="#s1"><span>01</span> Corrections</a></li>
+      <li><a href="#s2"><span>02</span> Three days after close</a></li>
+      <li><a href="#s3"><span>03</span> What shipped</a></li>
+      <li><a href="#s4"><span>04</span> Specs &amp; a gap found by hand</a></li>
+      <li><a href="#s5"><span>05</span> Admin dashboard</a></li>
+      <li><a href="#s6"><span>06</span> Team detail</a></li>
+      <li><a href="#s7"><span>07</span> Risks &amp; recommendations</a></li>
+      <li><a href="#s8"><span>08</span> What I would do</a></li>
+      <li><a href="#method"><span>&mdash;</span> Method</a></li>
+    </ol>
+  </nav>
+
+  <main class="doc">
+
+    <section class="sec" id="overview">
+      <div class="invert" style="margin-bottom:var(--s-6)">
+        <p class="lede">Sprint 08-01 ended three days ago and nothing has replaced it. The board has recorded exactly two actions since &mdash; both completions of the same design item. 27 leaves remain in review, and no item has ever been completed out of that queue in the sprint's entire history.</p>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">Movement, 28 &rarr; 31 Aug</caption>
+          <thead>
+            <tr><th scope="col">Measure</th><th scope="col" class="r">28 Aug</th><th scope="col" class="r">31 Aug</th><th scope="col" class="r">&Delta;</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">To do (leaves)</th><td class="r">0</td><td class="r">0</td><td class="r">0</td></tr>
+            <tr><th scope="row">In progress (leaves)</th><td class="r">6</td><td class="r">5</td><td class="r">&minus;1</td></tr>
+            <tr><th scope="row">Blocked (leaves)</th><td class="r">0</td><td class="r">0</td><td class="r">0</td></tr>
+            <tr><th scope="row">Review / QA (leaves)</th><td class="r">27</td><td class="r hi">27</td><td class="r">0</td></tr>
+            <tr><th scope="row">Done (leaves)</th><td class="r">10</td><td class="r hi">11</td><td class="r">+1</td></tr>
+            <tr><th scope="row">Forward review exits, whole sprint</th><td class="r">0</td><td class="r hi">0</td><td class="r hi">21 days</td></tr>
+            <tr><th scope="row">API surface (consumer / admin)</th><td class="r">131 / 29</td><td class="r">131 / 29</td><td class="r">0</td></tr>
+            <tr><th scope="row">Commits merged</th><td class="r">1</td><td class="r">1</td><td class="r"><code>beevia-admin</code>, 120 files</td></tr>
+            <tr><th scope="row">Successor sprint</th><td class="r">&mdash;</td><td class="r hi">none created</td><td class="r">&mdash;</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">Team at a glance</caption>
+          <thead><tr><th scope="col">Person</th><th scope="col">Owns</th><th scope="col">Leaf state</th><th scope="col" class="r">Subs (7d)</th><th scope="col" class="r">Median cycle</th><th scope="col">Open WIP</th><th scope="col" class="r">Commits (7d)</th><th scope="col">Flag</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Ayomikun Araoye</th><td>backend + admin API</td><td>3 In prog, <strong>13 Review</strong>, 3 Done</td><td class="r">3</td><td class="r">0.9 d</td><td>3 &middot; 2 d</td><td class="r">30</td><td>No commits for 3 days after a 30-commit week</td></tr>
+            <tr><th scope="row">David Samuel</th><td>mobile</td><td>1 In prog, <strong>9 Review</strong></td><td class="r">4</td><td class="r">4.2 d</td><td>1 &middot; 3 d</td><td class="r">1</td><td>Performs every review send-back; client ~23 endpoints behind</td></tr>
+            <tr><th scope="row">Philip Chidera</th><td>design</td><td>1 In prog, 5 Review, <strong>8 Done</strong></td><td class="r">3</td><td class="r">0.9 d</td><td>1 &middot; 4 d</td><td class="r">&mdash;</td><td>8 of the sprint's 11 completions</td></tr>
+            <tr><th scope="row">Promise Udo</th><td>admin dashboard</td><td>&mdash; no board presence</td><td class="r">&mdash;</td><td class="r">&mdash;</td><td>&mdash;</td><td class="r">1</td><td><strong>Largest commit in the repo's history</strong>; 4 of 6 new modules mock-backed</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <span class="label">The two questions for standup</span>
+        <p>Who is creating sprint 08-02, and what happens to the 27 items when it is created?</p>
+        <p style="margin-bottom:0">The admin dashboard just landed six modules &mdash; four of them mock-backed against endpoints the admin API has not built. Is that sequencing deliberate?</p>
+      </div>
+
+      <h3>The three things worth knowing</h3>
+
+      <div class="stack">
+        <div class="finding">
+          <div class="finding__n num">1</div>
+          <div>
+            <p><strong>The sprint is over and nothing replaced it.</strong> 08-01 closed 28 Aug. The Zoho project holds only <code>08-01</code>, <code>0702</code> and <code>0701</code> &mdash; <strong>no 08-02 exists</strong>. Twenty-seven leaves sit in review with no sprint to carry them into, and the board has recorded two actions in three days: <code>BVA-I159</code> and <code>BVA-I160</code> marked complete today at 13:15 UTC. Every backend and mobile item is exactly where the last report left it.</p>
+          </div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">2</div>
+          <div>
+            <p><strong>The review queue has never released anything forward &mdash; and the previous report's &ldquo;zero exits&rdquo; figure was wrong in an instructive way.</strong> Items <em>have</em> left REVIEW/QA 22 times. Every one went <strong>backwards</strong>: 11 to To do, 10 to In progress, 1 to BLOCKED. Zero went to Done. All 11 completed leaves bypassed review entirely. The queue is not merely stalled; the forward path out of it has never once been exercised (&sect;1).</p>
+          </div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">3</div>
+          <div>
+            <p><strong>The admin dashboard delivered its largest commit ever &mdash; and it barely moves MVP readiness.</strong> 120 files, +9,503/&minus;1,428, six new feature modules, landing 49 minutes after the last report's cut-off. But <code>transactions</code>, <code>pending-transfers</code>, <code>wallet</code> and <code>reconciliation</code> are all headed <code>MOCK IMPLEMENTATION &mdash; no network calls</code>. Three modules are genuinely wired to live <code>/admin/*</code> endpoints; the money-oversight UI is built against a backend that does not exist and has been silent for 24 days (&sect;5).</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="invert">
+        <span class="label" style="display:block;margin-bottom:var(--s-3)">If you read nothing else</span>
+        <p style="margin-bottom:0;font-variation-settings:'wdth' 75,'wght' 500;max-width:64ch">The sprint has no successor, the review queue has no demonstrated exit, and the admin dashboard's new money screens are drawing mock data because the admin API has not moved since 6 August.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s1">
+      <div class="sec__h"><span class="sec__n">01</span><h2>Corrections to the 28 August edition</h2></div>
+
+      <h3>1.1 &ldquo;27 items entered REVIEW/QA and none ever left&rdquo;</h3>
+      <p><strong>Wrong as stated.</strong> The activity trail records <strong>22 transitions out of REVIEW/QA on leaf items</strong>, in three clusters: 18 Aug (8 items, &rarr; To do), 26 Aug (5 items, &rarr; In progress/BLOCKED) and 27 Aug (6 items, &rarr; In progress).</p>
+      <p>The error came from a metric artifact, not carelessness: <code>audit.py</code> derives review exits by comparing consecutive exports, and every one of these items <em>re-entered</em> the queue before the next export was taken. Export-to-export the count never changed, so each edition reported zero, and the narrative hardened into &ldquo;nothing ever left&rdquo;.</p>
+      <p>The corrected claim is <strong>sharper than the original, not softer</strong>:</p>
+      <div class="note">
+        <p><strong>26 of 27 items now in review</strong> have been there since a first submission between 17 and 26 August. None has been accepted.</p>
+        <p><strong>Zero items have ever moved REVIEW/QA &rarr; Done.</strong> All 11 completions went In progress &rarr; Done, bypassing review.</p>
+        <p style="margin-bottom:0">Every recorded exit was a <strong>send-back</strong>, all performed by one person &mdash; the mobile lead &mdash; while submissions into the queue were performed overwhelmingly by the backend lead.</p>
+      </div>
+      <p>So review is <em>happening</em>; acceptance is not. That is a different diagnosis from &ldquo;nobody looks at the queue&rdquo;, and it changes the fix: the missing thing is not a reviewer, it is a defined accept path and someone empowered to use it.</p>
+
+      <h3>1.2 &ldquo;<code>beevia-admin</code> 22 days silent&rdquo;</h3>
+      <p>Correct at that report's 14:06 UTC cut-off, and superseded 49 minutes later &mdash; Promise Udo's commit is authored <code>2026-08-28T15:55+01:00</code> (14:55 UTC). No fault in the previous edition, but the standing &ldquo;the admin dashboard workstream is invisible&rdquo; framing, carried for twelve editions, <strong>no longer holds for the front end</strong>. It still holds for <code>beevia-admin-api</code>, at <strong>24 days</strong>.</p>
+    </section>
+
+    <section class="sec" id="s2">
+      <div class="sec__h"><span class="sec__n">02</span><h2>Sprint 08-01 &mdash; three days after close</h2></div>
+
+      <h3>2.1 Where the 43 leaves sit</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Status</th><th scope="col" class="r">Leaves</th><th scope="col" class="r">Share</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" class="hi">Review / QA</th><td class="r hi">27</td><td class="r hi">63%</td></tr>
+            <tr><th scope="row">Done</th><td class="r">11</td><td class="r">26%</td></tr>
+            <tr><th scope="row">In progress</th><td class="r">5</td><td class="r">12%</td></tr>
+            <tr><th scope="row">To do</th><td class="r">0</td><td class="r">0%</td></tr>
+            <tr><th scope="row">Blocked</th><td class="r">0</td><td class="r">0%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Owner split of the review queue: Ayomikun 13, David 9, Philip 5 &mdash; unchanged from 28 Aug. 67 board rows = 43 leaves + 24 parent stories; all figures are leaves.</p>
+
+      <h3>2.2 The review queue, measured properly</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Measure</th><th scope="col" class="r">Value</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Leaves currently in REVIEW/QA</th><td class="r">27</td></tr>
+            <tr><th scope="row">Distinct leaves that have <em>ever</em> entered</th><td class="r">27</td></tr>
+            <tr><th scope="row">Transitions <strong>into</strong> REVIEW/QA (all time)</th><td class="r">48</td></tr>
+            <tr><th scope="row">Transitions <strong>out of</strong> REVIEW/QA (all time)</th><td class="r">22 &mdash; all backwards</td></tr>
+            <tr><th scope="row" class="hi">Transitions REVIEW/QA &rarr; Done</th><td class="r hi">0</td></tr>
+            <tr><th scope="row">Median queue age</th><td class="r">4 days</td></tr>
+            <tr><th scope="row">Oldest in queue</th><td class="r">13 days (7 items)</td></tr>
+            <tr><th scope="row">Arrived in the last 3 days</th><td class="r">0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The gap between 48 entries and 27 distinct items is <strong>churn</strong>: items sent back in bulk and re-submitted, twice over. Read as throughput it would suggest a busy queue; read correctly it is the same work circulating.</p>
+      <div class="note">
+        <span class="label">Data gap</span>
+        <p style="margin-bottom:0"><code>BVA-I185</code> (Wallet Summary Endpoint) shows status REVIEW/QA with no recorded transition into it. It was completed 13 Aug and reopened 14 Aug; its current status appears to have been set by that reopen. Counted in the 27, excluded from age statistics.</p>
+      </div>
+
+      <h3>2.3 Everything the board recorded in three days</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">When (UTC)</th><th scope="col">Item</th><th scope="col">Action</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">31 Aug 13:15</th><td>BVA-I159 <em>Dark Mode Design &mdash; Core Navigation &amp; Home</em> (parent)</td><td>Completed</td></tr>
+            <tr><th scope="row">31 Aug 13:15</th><td>BVA-I160 <em>Core Screens Dark Mode</em> (leaf)</td><td>In progress &rarr; <strong>Done</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>That is the complete list. Only <code>BVA-I160</code> is a leaf, which is why Done moved 10 &rarr; 11 and not 10 &rarr; 12.</p>
+
+      <h3>2.4 No successor sprint</h3>
+      <div class="invert">
+        <p style="margin-bottom:0">The Zoho project holds exactly three sprints: <code>08-01</code>, <code>0702</code>, <code>0701</code>. <strong>08-02 has not been created.</strong> The board is three days past its end date with 27 items in review, 5 in progress, and nowhere for them to go. Until a sprint exists, &ldquo;carry-over&rdquo; is not a decision anyone has made &mdash; it is just the absence of one.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s3">
+      <div class="sec__h"><span class="sec__n">03</span><h2>What shipped this cycle</h2></div>
+      <p><strong>One commit, and it is a large one</strong> &mdash; but not in the API. <code>update dashboard_wallet_transactions</code> (Promise Udo, <code>beevia-admin</code>, 28 Aug 14:55 UTC): <strong>120 files, +9,503 / &minus;1,428</strong>. Detail in &sect;5.</p>
+      <p>No commits at all in <code>beevia-api</code>, <code>beevia-mobile</code>, <code>beevia-db-schema</code> or <code>beevia-admin-api</code> since 27 Aug.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Repo</th><th scope="col">Last commit to <code>main</code></th><th scope="col" class="r">Days silent</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>beevia-admin</code></th><td>28 Aug</td><td class="r">2</td></tr>
+            <tr><th scope="row"><code>beevia-api</code></th><td>27 Aug</td><td class="r">3</td></tr>
+            <tr><th scope="row"><code>beevia-mobile</code></th><td>26 Aug</td><td class="r">4</td></tr>
+            <tr><th scope="row"><code>beevia-db-schema</code></th><td>26 Aug</td><td class="r">4</td></tr>
+            <tr><th scope="row" class="hi"><code>beevia-admin-api</code></th><td class="hi">6 Aug</td><td class="r hi">24</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Unmerged remote branches worth noting: <code>beevia-mobile</code> carries <code>origin/BVA-I192</code> and <code>origin/Deps-updates-2026-08-20</code>; <code>beevia-api</code> carries <code>origin/victor</code>. Unmerged work does not count toward readiness scoring.</p>
+    </section>
+
+    <section class="sec" id="s4">
+      <div class="sec__h"><span class="sec__n">04</span><h2>Specs &mdash; and a gap found by hand</h2></div>
+      <p><strong>No spec edits were required.</strong> The audit reports <code>code=131 spec=131</code> consumer, <code>29/29</code> admin, all four specs valid, no drift, no <code>x-beevia-*</code> markers. No API code changed since the last edition, so there was nothing to reconcile.</p>
+      <p>The three payment operations appearing in <em>both</em> <code>openapi.yaml</code> and <code>openapi.proposed.yaml</code> (<code>/payments/send</code>, <code>/payments/request</code>, <code>/payments/{id}/pay</code>) were checked and are <strong>correct as-is</strong> &mdash; the sanctioned &ldquo;modifies a live endpoint&rdquo; entries, each documented as a widening of a live, narrower operation. Not drift.</p>
+
+      <h3>4.1 The admin audit-trail endpoint</h3>
+      <p><code>beevia-admin</code> calls <strong><code>GET /users/{id}/audit-trail</code></strong> (<code>src/features/users/api.ts:229</code>). That path appears in <strong>neither</strong> admin spec. Two things are wrong with it:</p>
+      <div class="stack">
+        <div class="finding">
+          <div class="finding__n num">1</div>
+          <div><p>It is <strong>missing the <code>/admin</code> prefix</strong> that every other admin route carries &mdash; all 25 implemented operations and all 23 proposed ones.</p></div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">2</div>
+          <div><p><strong>An endpoint documented as exactly this already exists.</strong> <code>GET /admin/users/{id}/actions</code> is live, and its spec description reads: <em>&ldquo;Every suspend / restrict / activate / deactivate taken against this account, with actor, reason and timestamp. This is the audit trail for account-level actions.&rdquo;</em></p></div>
+        </div>
+      </div>
+      <p>The dashboard code acknowledges the uncertainty in a comment &mdash; <em>&ldquo;The audit trail has no confirmed endpoint yet in this module's contract&rdquo;</em> &mdash; and routes the call through a mock adapter, so nothing is broken today.</p>
+      <div class="note">
+        <span class="label">No spec edit was made, deliberately</span>
+        <p style="margin-bottom:0">Either the dashboard wants the existing <code>/admin/users/{id}/actions</code> (a client fix, not a spec change), or it wants a broader trail covering more than lifecycle actions (in which case the contract needs designing before it is written down). That is a decision for the two owners, not an inference this report should bake into a spec file.</p>
+      </div>
+      <p><strong>This is the fifth contract-level finding in eleven days that the automated check could not see</strong> &mdash; the audit compares route inventories between API code and spec, and a client calling an undesigned endpoint is invisible to it.</p>
+    </section>
+
+    <section class="sec" id="s5">
+      <div class="sec__h"><span class="sec__n">05</span><h2>Admin dashboard &mdash; the workstream is no longer invisible</h2></div>
+      <p>The second Zoho project, <em>Beevia Admin Dashboard</em>, <strong>still has no sprints</strong>; step 1b returned exit 3 again, for the twelfth consecutive edition. The board tells us nothing. The code now tells us a great deal.</p>
+
+      <h3>5.1 What landed</h3>
+      <p>One commit took <code>beevia-admin</code> from three feature modules to nine:</p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Feature module</th><th scope="col" class="r">Files</th><th scope="col" class="r">Lines</th><th scope="col">State</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>users</code></th><td class="r">26</td><td class="r">2,422</td><td><strong>Wired</strong> &mdash; <code>/admin/users</code>, <code>/{id}/actions</code>, <code>/case-notes</code>, <code>/verification</code>, <code>/verification/{type}/unmask</code></td></tr>
+            <tr><th scope="row"><code>pending-transfers</code></th><td class="r">11</td><td class="r">1,366</td><td class="hi"><strong>Mock</strong> &mdash; <code>no network calls</code></td></tr>
+            <tr><th scope="row"><code>dashboard</code></th><td class="r">13</td><td class="r">1,471</td><td>Partly mock (<code>mock/activity.ts</code>)</td></tr>
+            <tr><th scope="row"><code>roles</code></th><td class="r">9</td><td class="r">874</td><td><strong>Wired</strong> &mdash; <code>/admin/roles</code> CRUD + <code>assign-admins</code></td></tr>
+            <tr><th scope="row"><code>wallet</code></th><td class="r">9</td><td class="r">874</td><td class="hi"><strong>Mock</strong></td></tr>
+            <tr><th scope="row"><code>transactions</code></th><td class="r">6</td><td class="r">734</td><td class="hi"><strong>Mock</strong></td></tr>
+            <tr><th scope="row"><code>reconciliation</code></th><td class="r">9</td><td class="r">717</td><td class="hi"><strong>Mock</strong></td></tr>
+            <tr><th scope="row"><code>admin-accounts</code></th><td class="r">6</td><td class="r">919</td><td><strong>Wired</strong> &mdash; pre-existing, extended</td></tr>
+            <tr><th scope="row"><code>auth</code></th><td class="r">2</td><td class="r">283</td><td><strong>Wired</strong> &mdash; pre-existing, extended</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Every wired path resolves against a real operation in <code>openapi.admin.yaml</code>. The one exception is the audit trail in &sect;4.1.</p>
+
+      <h3>5.2 Against the dashboard spec's eight modules</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col" class="r">#</th><th scope="col">Module</th><th scope="col">State</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" class="r">1</th><td>Authentication &amp; Access Control</td><td><strong>Wired</strong> &mdash; login, accept-invite, roles CRUD, role gating</td></tr>
+            <tr><th scope="row" class="r">2</th><td>Admin Account Management</td><td><strong>Wired</strong> &mdash; accounts, invite, deactivate/reactivate</td></tr>
+            <tr><th scope="row" class="r">3</th><td>User Management &amp; Support Tools</td><td><strong>Wired</strong> &mdash; largest module; KYC review still a placeholder</td></tr>
+            <tr><th scope="row" class="r">4</th><td>Trust &amp; Safety / Content Moderation</td><td>Placeholder page only</td></tr>
+            <tr><th scope="row" class="r">5</th><td>Transaction &amp; Wallet Oversight</td><td class="hi"><strong>Substantial UI, mock-backed</strong> &mdash; no admin API behind it</td></tr>
+            <tr><th scope="row" class="r">6</th><td>Country &amp; Feature Configuration</td><td>Not started (static stub)</td></tr>
+            <tr><th scope="row" class="r">7</th><td>Analytics &amp; Reporting</td><td>Placeholder; home dashboard partly mock</td></tr>
+            <tr><th scope="row" class="r">8</th><td>Account Deletion Requests</td><td>Not started</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Three of eight wired, one built against mocks, four absent or placeholder.</p>
+
+      <h3>5.3 The sequencing problem this exposes</h3>
+      <p>Module 5 is the clearest case. <code>beevia-admin</code> has built transaction search, pending-transfer tracking, wallet balances and an Anchor reconciliation runner &mdash; roughly <strong>3,700 lines of working UI</strong>. The endpoints it needs (<code>/admin/transactions/{id}/flag</code>, <code>/admin/reconciliation</code>, <code>/admin/users/{id}/wallets</code>, <code>/admin/users/{id}/transactions</code>) are <strong>all still in <code>openapi.admin.proposed.yaml</code></strong>, and <code>beevia-admin-api</code> has not received a commit in 24 days.</p>
+      <p>To the front end's credit this is done honestly: each mock file documents the exact seam to replace, and the filter shapes already match the intended server parameters. But a UI cannot be verified against mock data it defines itself, and the gap between &ldquo;screens exist&rdquo; and &ldquo;oversight works&rdquo; is entirely on the API side.</p>
+    </section>
+
+    <section class="sec" id="s6">
+      <div class="sec__h"><span class="sec__n">06</span><h2>Team performance &mdash; detail</h2></div>
+      <p>All figures come from the activity sidecar and git. None comes from the <code>Last Modified</code> column, which bulk board operations rewrite without producing per-item audit entries.</p>
+
+      <h3>6.1 Per person</h3>
+      <p><strong>Ayomikun Araoye &mdash; backend + admin API.</strong> 13 items in review, 3 in progress (all at 2 days), 3 Done. Median cycle time In progress &rarr; REVIEW/QA is <strong>0.9 days</strong>. Commits in the last 7 days: <strong>30</strong> across <code>beevia-api</code> (14) and <code>beevia-db-schema</code> (16), counting both the <code>Ayomikun Araoye</code> and <code>Phoenixdadhev</code> identities. All fall on 26&ndash;27 August; <strong>nothing in the last three days.</strong> After a week that delivered cards, top-ups, bank transfers and payout reconciliation, that is either a deliberate pause at sprint end or a signal worth a question &mdash; the data cannot distinguish them.</p>
+      <p><strong>David Samuel &mdash; mobile.</strong> 9 items in review, 1 in progress (3 days), 0 Done. Median cycle time <strong>4.2 days</strong> &mdash; the longest of the three, on 13 measured items, consistent with mobile items being larger rather than slower. One commit in 7 days. He is also <strong>the only person who has ever moved an item out of REVIEW/QA</strong>: all 30 recorded exits (22 on leaves) are his, and all are send-backs. That is review work the board records as nothing at all.</p>
+      <p><strong>Philip Chidera &mdash; design.</strong> 8 of the sprint's 11 completions, 5 in review, 1 in progress (4 days), median cycle <strong>0.9 days</strong>. The only person to move anything in the last three days. Design items complete without passing through review, which is why his Done count is high and his queue short &mdash; a workflow difference, not a performance one.</p>
+      <p><strong>Promise Udo &mdash; admin dashboard.</strong> No board presence, twelfth consecutive edition. Judged from commits: one commit, 120 files, +9,503/&minus;1,428 &mdash; the largest single change in <code>beevia-admin</code>'s history, taking it from 3 to 9 feature modules. &sect;5 covers what is wired and what is mocked.</p>
+
+      <h3>6.2 Weekly submission trend</h3>
+      <p>First-ever submissions into REVIEW/QA, by week: <strong>17&ndash;23 Aug &mdash; 17 items</strong>; <strong>24&ndash;31 Aug &mdash; 10 items</strong>; <strong>last 3 days &mdash; 0</strong>. Against an acceptance rate of <strong>zero for the whole sprint</strong>.</p>
+
+      <h3>6.3 What these figures do not measure</h3>
+      <div class="note">
+        <p><strong>No estimation points exist on any of the 67 items.</strong> Nothing is normalised for size; an item count says nothing about who is carrying more.</p>
+        <p><strong>Board actions are not evenly attributable.</strong> Submissions into review were overwhelmingly performed by one person on behalf of the whole team, and the single highest action count on the board belongs to board administration rather than delivery. Per-person figures are keyed to the item's <strong>assignee</strong>, not to whoever clicked.</p>
+        <p><strong>Cycle time rewards small items; commit counts reward small commits.</strong> Neither measures difficulty or quality. Promise's single commit is 120 files; Ayomikun's 30 commits are mostly incremental.</p>
+        <p><strong>The zero-acceptance rate is a process finding, not a personal one.</strong> Output has been steady and acceptance zero for 21 days; that gap is not attributable to any individual on this table.</p>
+        <p style="margin-bottom:0"><strong>Correctness and testing are out of scope for scoring</strong>, per the owner's 2026-08-07 instruction. Nothing here claims the code works.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s7">
+      <div class="sec__h"><span class="sec__n">07</span><h2>Risks &amp; previous recommendations</h2></div>
+
+      <h3>7.1 Risks</h3>
+      <ol>
+        <li><strong>No sprint 08-02 exists</strong>, three days after 08-01 closed. 27 review items and 5 in-progress items have no destination.</li>
+        <li><strong>The forward path out of REVIEW/QA has never been exercised</strong> &mdash; 0 of 27 accepted in 21 days. A demonstrated property of the process, not a backlog.</li>
+        <li><strong>A large money-handling surface remains unverified</strong> &mdash; cards, top-ups, payouts and bank transfers all sit in that queue.</li>
+        <li><strong>The admin dashboard's money modules are built on mocks</strong> while <code>beevia-admin-api</code> has been silent 24 days.</li>
+        <li><strong>The mobile client is still ~23 endpoints behind the API</strong> &mdash; no <code>/cards</code>, <code>/topups</code>, <code>/wallets/banks</code> or <code>/wallets/transfers</code> references anywhere in <code>beevia-mobile/lib</code>.</li>
+        <li><strong>Contract drift stays invisible to automation</strong> &mdash; fifth instance in eleven days (&sect;4.1).</li>
+        <li><strong>0/67 estimation points</strong>, so any carry-over conversation still has no size data.</li>
+      </ol>
+
+      <h3>7.2 Previous recommendations</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Recommendation from 28 Aug</th><th scope="col">Status on 31 Aug</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Dispose of the 27 review items before planning 08-02</th><td><strong>Not done.</strong> Queue unchanged at 27; no 08-02 exists to plan.</td></tr>
+            <tr><th scope="row">Name one person who can accept out of REVIEW/QA</th><td><strong>Not done.</strong> Zero forward exits; the only exits remain send-backs.</td></tr>
+            <tr><th scope="row">Demonstrate the money paths</th><td><strong>No evidence</strong> in anything this pipeline can see.</td></tr>
+            <tr><th scope="row">Decide whether 08-02 gets estimates</th><td><strong>Moot</strong> &mdash; 08-02 has not been created.</td></tr>
+            <tr><th scope="row">Set up the Admin Dashboard board</th><td><strong>Not done.</strong> Still no sprint (exit 3, twelfth edition).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Zero of five. <strong>Four of the five are now blocked behind the same missing decision:</strong> what happens to sprint 08-01's contents.</p>
+    </section>
+
+    <section class="sec" id="s8">
+      <div class="sec__h"><span class="sec__n">08</span><h2>What I would do this week</h2></div>
+      <div class="stack">
+        <div class="finding"><div class="finding__n num">1</div><div><p><strong>Create 08-02, or say explicitly that the project is not running sprints.</strong> Everything else is downstream of this. Three days of drift after a sprint close is a decision being made by default.</p></div></div>
+        <div class="finding"><div class="finding__n num">2</div><div><p><strong>Dispose of the 27 items in one session</strong>, into three buckets: accepted, sent back with a reason, or never built. Earlier editions established that some carry no code; moving those forward silently would put fiction into the next backlog.</p></div></div>
+        <div class="finding"><div class="finding__n num">3</div><div><p><strong>Exercise the accept path once, on anything.</strong> The transition REVIEW/QA &rarr; Done has never happened. Until it does, &ldquo;in review&rdquo; has no demonstrated meaning and the Done count measures only work that skipped the queue.</p></div></div>
+        <div class="finding"><div class="finding__n num">4</div><div><p><strong>Decide the admin API sequencing.</strong> The dashboard has ~3,700 lines of oversight UI against four proposed endpoints and a repo that has not moved in 24 days. Either schedule that API work or accept that module 5 stays undemonstrable.</p></div></div>
+        <div class="finding"><div class="finding__n num">5</div><div><p><strong>Resolve the audit-trail endpoint</strong> (&sect;4.1) &mdash; point the client at <code>/admin/users/{id}/actions</code>, or design the broader trail and add it to the proposed spec.</p></div></div>
+      </div>
+    </section>
+
+    <section class="sec" id="method">
+      <div class="sec__h"><span class="sec__n">&mdash;</span><h2>Appendix &mdash; method</h2></div>
+
+      <p><strong>Pipeline.</strong> <code>beevia-refresh</code>: main board export (67 items, cut-off 13:15 UTC) &rarr; admin board (exit 3, no sprints) &rarr; fast-forward sync (<strong>all five repos already current, none dirty, none diverged</strong>) &rarr; deterministic audit (exit 1: board findings, no route drift) &rarr; manual contract review, which found &sect;4.1 &rarr; this report.</p>
+
+      <div class="note">
+        <span class="label">Degraded inputs</span>
+        <p style="margin-bottom:0">The <code>Epic</code> column is blank across all 67 items &mdash; the OAuth refresh token lacks <code>ZohoSprints.epic.READ</code>. This is a known scope gap, <em>not</em> &ldquo;no epic assigned&rdquo;. <code>Comments</code> bodies are unavailable from the API. No other input degraded.</p>
+      </div>
+
+      <p><strong>Window.</strong> 28 Aug 14:06 UTC &rarr; 31 Aug 13:15 UTC. <code>actiontime</code> values are UTC; CSV header times are the exporting machine's local MDT.</p>
+
+      <div class="tbl-wrap">
+        <table>
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">Sources</caption>
+          <tbody>
+            <tr><th scope="row">Board</th><td><code>beevia-sprint-board-2026-08-31.csv</code> &mdash; 67 rows, 43 leaves; <code>beevia-activity-2026-08-31.json</code></td></tr>
+            <tr><th scope="row">Admin board</th><td>None &mdash; project has no sprints (exit 3)</td></tr>
+            <tr><th scope="row">Code</th><td>Five repos at <code>origin/main</code>; all already current</td></tr>
+            <tr><th scope="row">Specs</th><td><code>openapi.yaml</code> (131), <code>openapi.proposed.yaml</code> (42), <code>openapi.admin.yaml</code> (29), <code>openapi.admin.proposed.yaml</code> (23) &mdash; validated, no drift</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="mvp-method">MVP readiness &mdash; how the &asymp;58% is computed</h3>
+      <p>Eleven capabilities from PRD &sect;1.2/&sect;11 with <strong>frozen weights</strong>, each scored 0&ndash;1 from build evidence. Target date 2026-09-01 is provisional, set by the owner on 2026-08-07 &mdash; <strong>it arrives tomorrow, and will not be met.</strong></p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col" class="r">#</th><th scope="col">Capability</th><th scope="col" class="r">Weight</th><th scope="col" class="r">Score</th><th scope="col">Evidence</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" class="r">1</th><td>E2EE messaging</td><td class="r">15</td><td class="r">0.9</td><td>Conversation/message/key/attachment paths live; client crypto, socket and attachment layers present</td></tr>
+            <tr><th scope="row" class="r">2</th><td>Voice &amp; video calling</td><td class="r">8</td><td class="r">0.8</td><td>4 call endpoints live; call screens present</td></tr>
+            <tr><th scope="row" class="r">3</th><td>Message translation</td><td class="r">7</td><td class="r">0.7</td><td><code>POST /translate</code> live since 10 July; batch/languages/preference still proposed</td></tr>
+            <tr><th scope="row" class="r">4</th><td>Local KYC tier (BVN)</td><td class="r">8</td><td class="r">0.9</td><td>KYC/upgrade endpoints + provider webhook live; NGN wallet auto-provisioned after BVN + profile</td></tr>
+            <tr><th scope="row" class="r">5</th><td>International KYC tier</td><td class="r">6</td><td class="r hi">0.0</td><td>proposed only</td></tr>
+            <tr><th scope="row" class="r">6</th><td>Multi-currency wallets</td><td class="r">12</td><td class="r">0.75</td><td>Bank payouts observable end to end; card top-ups present. Ceiling: server NGN-only</td></tr>
+            <tr><th scope="row" class="r">7</th><td>Send / request / receive</td><td class="r">12</td><td class="r">0.80</td><td><code>wallet_service.dart</code> calls <code>/wallets</code>, <code>/wallets/transactions</code>, <code>/payments/recent-recipients</code>, <code>/payments/transfer</code> against the real client. Ceiling: request/receive have no client flow</td></tr>
+            <tr><th scope="row" class="r">8</th><td>Cross-currency FX</td><td class="r">12</td><td class="r hi">0.0</td><td>proposed only</td></tr>
+            <tr><th scope="row" class="r">9</th><td>Virtual cards</td><td class="r">10</td><td class="r">0.45</td><td>13 operations live. Ceiling: client has zero <code>/cards</code> references, no issuer webhook, no <code>reveal_ttl_seconds</code></td></tr>
+            <tr><th scope="row" class="r">10</th><td>Consent management</td><td class="r">4</td><td class="r hi">0.0</td><td>no endpoint or record anywhere</td></tr>
+            <tr><th scope="row" class="r">11</th><td>Admin oversight</td><td class="r">6</td><td class="r hi">0.50 &uarr;</td><td><strong>Moved +0.05.</strong> 3 of 8 dashboard modules now wired to live <code>/admin/*</code> endpoints. Held down by: admin API unchanged at 29/52 and 24 days silent; 4 of the 6 new modules explicitly mock-backed</td></tr>
+            <tr><th scope="row" class="r hi"></th><td class="hi">Weighted total</td><td class="r hi">100</td><td class="r hi">58.1</td><td class="hi">&asymp;58%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Weights frozen &mdash; no methodology change this edition. Scores measure <strong>merged, reachable build evidence</strong>: never board status, never items in review, never unmerged branches.</p>
+      <div class="note">
+        <span class="label">Why the largest admin commit in the project's history moves the number by 0.3 points</span>
+        <p style="margin-bottom:0">Capability 11 carries weight 6, and four of the commit's six new modules are marked <code>MOCK IMPLEMENTATION &mdash; no network calls</code> by their own authors. Per the standing wired-vs-stub rule, a stub adds at most ~0.1 over nothing. The commit is real progress on the design; it is not yet progress on the product's capability to do oversight, because the API half does not exist.</p>
+      </div>
+
+      <h3>What this report cannot tell you</h3>
+      <div class="note">
+        <p><strong>What the 27 review items are worth</strong> &mdash; whether they represent finished work, work shipped earlier, or scope never built. Twenty-one days of zero acceptances means nobody has recorded an opinion.</p>
+        <p><strong>Whether any of the sprint's 26 new operations function.</strong> None has been demonstrated; testing is out of scope for scoring.</p>
+        <p><strong>Why there is no 08-02</strong> &mdash; whether that is a deliberate pause, a planning session not yet held, or an oversight.</p>
+        <p><strong>Whether the three-day commit silence is a sprint-end pause or a stall.</strong> The board and git agree that nothing moved; neither says why.</p>
+        <p><strong>Anything about the Admin Dashboard board</strong> beyond its existence &mdash; it still has no sprint.</p>
+        <p style="margin-bottom:0"><strong>Velocity or scope-fit for any future sprint</strong> &mdash; the board remains at 0/67 estimated.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="foot">
+  <span class="barcode barcode--lg" aria-hidden="true"></span>
+  <span>Beevia project status &middot; 2026-08-31 &middot; Sprint 08-01, three days after close</span>
+  <span><a href="index.html">All frames</a></span>
+</footer>
+
+<script src="ui.js"></script>
+</body>
+</html>

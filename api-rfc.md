@@ -25,7 +25,7 @@ Re-derived from the code on 2026-08-05. The consumer API grew from **90 to 100 o
 | **New: `POST /users/me/contact-change` + `/verify`** | Phone/email change, step-up gated on initiation. |
 | **New: `GET /users/{id}` is now a contact profile** | Returns relationship-scoped `phone`, `joined_at`, shared `media_count` / `payment_count`. The scoping is deliberate anti-harvesting design — see §5.3. |
 | **Database extracted to a package** | Schema and migrations now ship as `@drumbell-technologies/beevia-db-schema`, consumed by both services. This is what makes a separate admin service defensible — see §2.9. |
-| **New service: `beevia-admin-api`** | 29 operations. Documented separately in [`admin-api-rfc.md`](./admin-api-rfc.md). |
+| **New service: `beevia-admin-api`** | 42 operations. Documented separately in [`admin-api-rfc.md`](./admin-api-rfc.md). |
 | **Unchanged** | FX/multi-currency, virtual cards, international KYC tier and consent management remain entirely unbuilt. `PaymentService.activeNgn()` is still there at `payment.service.ts:63`. |
 
 ---
@@ -55,7 +55,7 @@ This RFC proposes **49 additional operations** to close those gaps and the small
 |---|---|---|
 | [`openapi.yaml`](./openapi.yaml) | **100 operations that exist today** in `beevia-api`. No status markers. | Client generation, contract tests. Safe to trust. |
 | [`openapi.proposed.yaml`](./openapi.proposed.yaml) | **52 operations that do not exist.** Every one 404s. | Design review and planning only. |
-| [`openapi.admin.yaml`](./openapi.admin.yaml) | **29 operations that exist today** in `beevia-admin-api`. | Same, for the back office. |
+| [`openapi.admin.yaml`](./openapi.admin.yaml) | **42 operations that exist today** in `beevia-admin-api`. | Same, for the back office. |
 | [`openapi.admin.proposed.yaml`](./openapi.admin.proposed.yaml) | **23 operations that do not exist.** | Design review only. |
 
 The consumer proposed file's 52 operations are 49 new endpoints plus 3 restatements of live endpoints whose *request contract* needs to widen (`POST /payments/send`, `POST /payments/request`, `POST /payments/{id}/pay`) — OpenAPI has no way to express "add these fields", so the whole operation is restated in its target state under a clearly delimited **MODIFICATIONS TO LIVE ENDPOINTS** section.
@@ -167,7 +167,7 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | Calls | 5 | 0 | Complete |
 | Attachments | 2 | 1 | No single-attachment download presign |
 | Upload | 5 | 0 | Public, permanent objects — distinct from Attachments (encrypted, presigned-only) |
-| Translate | 1 | 5 | Stateless only; no preference storage |
+| Translate | 1 | 5 | Stub engine (§5.5); stateless only; no preference storage |
 | Notifications | 5 | 0 | Complete |
 | Support | **0** | 4 | Does not exist. Includes `POST /payments/{id}/dispute`, listed under §7.2 but tagged Support |
 | Webhooks | **4** | 1 | **+1:** `POST /webhooks/paystack` for card top-ups. Card issuer callback still missing |
@@ -265,11 +265,13 @@ This is a small amount of work relative to its impact and is the highest value-p
 
 **No dispute or support surface.** §7.4 tracks "Dispute Resolution Time — 90% within 72 hours" and "Financial Partner Escalations" as compliance KPIs, and §8.3 commits that a user is never told to contact the partner directly. Neither the promise nor the metric is instrumentable today.
 
-**No deletion status.** `DELETE /users/me` returns `{ deleted: true }` synchronously, but partner-side deletion is asynchronous. Flow 8 explicitly requires that a partner delay surface as *"deletion in progress"*, "not a silent failure", and §7.4 tracks completion within 5 days. The `user_status` enum already has a `deleting` state with nothing reading it.
+**No deletion status — and, since 2026-08-06, nothing left to build it on.** `DELETE /users/me` returns `{ deleted: true }` synchronously, but partner-side deletion is asynchronous. Flow 8 explicitly requires that a partner delay surface as *"deletion in progress"*, "not a silent failure", and §7.4 tracks completion within 5 days.
+
+> **Correction.** Every previous edition of this RFC closed this item by noting that "the `user_status` enum already has a `deleting` state with nothing reading it" — i.e. that the hard part was already done. **That is no longer true, and has not been since migration `0027` on 2026-08-06**, which renamed the value to `deactivated` and reassigned it to the admin deactivate path. `AccountDeletionService` writes `deleted` directly, so an account is never observably mid-deletion. The gap is therefore one step wider than this document has been reporting for roughly four weeks: the status this feature was going to read no longer exists, and a deletion-request record is now the more likely design.
 
 **No health probe.** `GET /` returns a static `"Hello World!"` and stays 200 with Postgres down. There is nothing for a load balancer or orchestrator to key on, against a 99.9% uptime objective.
 
-**Translation is stateless only.** §8.1 requires opt-in translation "set per conversation **or globally**". `POST /translate` is a one-shot call with the target language supplied every time, so the preference lives only in client storage and does not survive reinstall or follow the user to a new device. There is also no supported-language list (so no validated picker) and no batch endpoint (so opening a thread with auto-translate on means one HTTP round trip per visible message).
+**Translation is stateless only — and does not translate.** §8.1 requires opt-in translation "set per conversation **or globally**". `POST /translate` is a one-shot call with the target language supplied every time, so the preference lives only in client storage and does not survive reinstall or follow the user to a new device. There is also no supported-language list (so no validated picker) and no batch endpoint (so opening a thread with auto-translate on means one HTTP round trip per visible message). **On top of all of that, no provider is connected at all — see §5.5.**
 
 ~~**Message deletion is modelled but unreachable.**~~ **Closed 2026-08.** `DELETE /messages/{id}` shipped — see §5.2 below.
 
@@ -277,7 +279,7 @@ This is a small amount of work relative to its impact and is the highest value-p
 
 ## 5A. Notes on the work that shipped this cycle
 
-Three of the ten new endpoints carry design decisions worth recording, because each one constrains what can be built next.
+Design decisions worth recording, because each one constrains what can be built next. The list started as three notes on the ten endpoints that shipped in the 2026-08-05 cycle and has grown as later cycles added their own; each subsection is dated where it was added or revised.
 
 ### 5.1 `/upgrade/*` duplicates `/kyc/*` and should converge
 
@@ -300,6 +302,16 @@ The separation is defensible — entry conditions, resumability and error codes 
 
 **Recommendation:** keep the distinct entry points, but converge the ladder onto one set of step routes and one status endpoint that reports for either cohort.
 
+**Update 2026-09-01 — the ladders have now diverged further, in a way that argues the same point.** `POST /upgrade/profile` gained a precondition the KYC profile does not have: the BVN must already be verified, or the call fails `400 bvn_required`. The fix is correct — provisioning is enqueued from the profile step, so accepting a profile on an unverified BVN returned a 200 that looked like a completed upgrade while no account was ever opened. But it now exists on one of the two ladders only, and `POST /kyc/profile` still has no equivalent guard. Both schemas were also widened the same day to accept `gender` case-insensitively (`Male` → `male`), which is the second correction applied twice because the code is duplicated. Converging the ladder would have made both of these one change instead of two.
+
+**Update 2026-09-02 — still one-sided, and the class of bug it fixed has reappeared one layer down.** `POST /kyc/profile` was checked again today and still accepts a profile on an unverified BVN, still returns 200, and still leaves `maybeProvision()` to no-op. Second consecutive edition reporting it; the fix is a five-line copy of a guard already written on the other ladder.
+
+Separately, today's provisioning work introduced a *new* silent-success path of exactly the same shape, and it is worth understanding as a category rather than an incident. `WalletProvisioningService` now refuses to connect an Anchor customer that another Beevia user already holds, throwing `400 anchor_customer_claimed` — the right guard, and it protects a real invariant (two users sharing one Anchor deposit account would mix funds). But **it throws inside the queued provisioning job, not inside the request.** `maybeProvision()` only ever enqueues. So a user whose BVN is already linked to another account gets a `200` from `/upgrade/profile`, sees a completed upgrade, and never receives a wallet — and no client-visible error is produced at any point, because the failure happens after the response was sent.
+
+This is not an argument against the guard. It is an argument that **the enqueue boundary is where this API keeps losing errors**: three distinct silent-200s have now been found on the same seam in two days. Nothing surfaces a failed provisioning job to the user. The durable fix is a readable provisioning state on the user — the `GET /upgrade/status` endpoint (§5.1.3) is the obvious place — carrying `failed` and a reason, so the client can say *"we could not open your account, and here is why"* rather than showing a finished upgrade with nothing behind it. That is more valuable than either individual guard.
+
+One further note on today's changes: `anchor_customer_claimed` **replaces** `bvn_registered_elsewhere`, the code the 2026-09-01 report named. That code existed for one day and never appeared in any spec. The new guard also has different semantics — it gates on whether another *Beevia user* already claims the Anchor customer, not on whether the customer's name matches — which is the better invariant, since Anchor's own customer names are frequently test data.
+
 ### 5.2 Message deletion is sender-only in both modes — and the reason is a schema limit
 
 The implementation notes it plainly: `deleted_for` is a *single scope on the message row*, not a per-user flag, so a recipient hiding a message has nowhere to record that. Rather than fake it, the route returns 403 to a non-sender in both modes.
@@ -314,11 +326,70 @@ Note also the query parameter is `?forEveryone=true`, whereas this RFC had propo
 
 This is the kind of thinking §4 of `suggestions.md` asks for elsewhere — worth naming because it should be the template for the proposed admin and support surfaces, where the same temptation exists at greater scale.
 
+**Update 2026-09-03 — the same reasoning was applied again, correctly, and it changed a response shape.** `POST /contacts/sync` and `GET /contacts` now return the peer's `path` (`chat_only` | `chat_banking`) on the user object, so the client can grey out "send money" against a chat-only contact instead of discovering the restriction at submit time. The field was deliberately **not** added to the shared lean projection: search, phone lookup and the block list still return `PublicProfile` without it, because those routes accept an arbitrary handle or number and would otherwise let an enumerator harvest account attributes. A contact is a relationship the caller already had, so the disclosure is bounded by their own address book.
+
+The spec now carries this as a distinct `ContactUserProfile` (`PublicProfile` + `path`), mirroring the code's own split rather than widening `PublicProfile` for every consumer. Note the name collision to watch: `ContactProfile` is the richer single-user shape from `GET /users/{id}`; `ContactUserProfile` is the peer inside a contact row.
+
+**This is a contract change with no route change, which is the class of drift the daily audit cannot see** — the same class as the five `beevia-admin-api` corrections recorded on 2026-09-02. It was caught by reading the commit, not by the check. That remains the argument for having both services publish their generated OpenAPI documents.
+
+### 5.5 `POST /translate` has never translated anything
+
+**Recorded 2026-09-03, and it corrects an impression every previous revision of this document has left.** `TranslateModule` binds `TRANSLATE_PORT` unconditionally to `StubTranslateAdapter`, whose entire behaviour is to return the submitted text unchanged with `from` resolved to `auto`. No provider adapter exists anywhere in the repository, and there is no environment switch — the module has looked exactly like this since its only commit, `feat(translate): add translate module`, on 2026-07-10.
+
+Contrast `NotificationsModule`, which uses the same port/adapter shape but selects a real FCM adapter when `FCM_SERVICE_ACCOUNT` parses and falls back to a stub otherwise. That is the pattern this module needs; connecting a provider here is currently a code change rather than configuration.
+
+Nothing about the route is wrong: the contract, validation, envelope and the deliberate statelessness (ADR-0004) are all real and stable to build a client against. What is wrong is reading "`POST /translate` is live" — which this document, `openapi.yaml` and every status report have said since July — as "the product can translate a message". It cannot, and the distinction matters now because the sprint that started on 2026-09-03 is a translation sprint whose client-side stories assume a working engine underneath.
+
+The implemented spec now states this plainly on the operation.
+
+#### 5.5a Correction, 2026-09-08 — the sequencing conclusion above was wrong
+
+**This section previously ended: "connecting a real provider is a prerequisite for the translation sprint, and it is not on the board."** It is not a prerequisite, and the reason is on the board — it was simply not read.
+
+Sprint 0901's foundation story, `BVA-I228` *On-Device Translation Engine Integration*, states the design in its own acceptance criteria: *"a working on-device translation capability, so chat messages can be translated without any message content leaving the user's phone"*, integrating **iOS's native Translation framework and Android's ML Kit Translation behind one unified internal service**, for English (UK/US), French, Spanish and Mandarin, including on-device model download and offline fallback.
+
+That is a different architecture from the one this document assumed, and it is the **right** one for this product. Server-side translation of chat requires plaintext at the server, which is precisely what E2EE forbids — the same constraint that makes the admin API's content-moderation module unbuildable (`admin-api-rfc.md` §5.1). A server-side translation provider would have been a hole in the product's central privacy claim. The team appears to have reached that conclusion; nothing in writing records it, which is why this document reached the opposite one.
+
+Three consequences follow, and the third needs a decision rather than an edit:
+
+1. **`POST /translate`'s stub is no longer on the critical path** for chat. It remains a live route returning its input unchanged, which is still a trap for any *other* caller, so §6.8's marker stays.
+2. **Preference storage is unaffected and is now board-backed.** `BVA-I230`/`BVA-I231` (*Language Preference Storage, App-Wide & Per-Conversation*) is exactly §7.7's `/users/me/translation` and `/conversations/{id}/translation`. Those three proposed operations are still needed — a client-side engine still needs a server-side preference that survives reinstall.
+3. **`GET /translate/languages` and `POST /translate/batch` are probably obsolete.** Both exist to serve a server-side engine: the language list is the provider's, and batching exists to avoid one HTTP round trip per visible message. On-device translation has no round trip to batch and its language list is the platform framework's, not the server's. They are **annotated, not deleted**, in `openapi.proposed.yaml` — nothing is built either way, no decision is recorded, and retiring a proposal on inference is how a spec starts lying in the other direction. **This is an open question for the owner**, not a finding.
+
+Separately, `BVA-I244`/`BVA-I245` (*Static Backend-Originated Text Localization*) is a genuinely server-side translation requirement that no proposed operation covers: push-notification bodies, OTP and transaction messages rendered from per-user language preference. That is string bundles and template selection, not a translation API, and it should not be conflated with §7.7.
+
+### 5.6 `POST /webhooks/anchor` acknowledged every real delivery without processing it
+
+**Recorded 2026-09-04, from the fix that landed on 2026-09-03** (`fix(webhooks): process real Anchor deliveries`). Anchor's real webhooks arrive as `{ id, type, attributes, relationships }` at the top level; its test probes wrap the same object under `data`. The handler read everything from `payload.data`, so a real delivery produced no `type`, hit the unknown-type guard, and returned `200` without doing anything. The commit message reports the event inbox confirming it: **only wrapped test probes were ever recorded.**
+
+The window is the endpoint's whole life — introduced 2026-06-28, fixed 2026-09-03, roughly **sixty-seven days**. Everything downstream of the callback was affected: deposit crediting, payout settlement, virtual-account linking, and card events.
+
+Three things make this worth more than a changelog line.
+
+**It is the exact failure mode this document keeps naming, on the highest-stakes route in the API.** A `200` that means "received" and never "processed" cannot distinguish a handled event from a silently dropped one, and here the two were indistinguishable for two months. §4 already argues that failed provisioning surfaces nowhere; this is the same absence one layer down, on money settlement.
+
+**Tests did not and could not catch it**, because the fixtures were built from the same wrapped shape the probes send. The bug lived in the gap between the provider's documented example and its actual delivery, which is precisely where integration tests written from the documentation cannot reach. The fix adds fixtures in both shapes.
+
+**It bounds what the ledger can be trusted to contain.** Any reasoning about deposits or payouts settling before 2026-09-03 should assume the webhook path contributed nothing, and reconciliation runs over that period will surface it as real discrepancies rather than tooling noise — which is the correct outcome, and worth expecting rather than discovering.
+
+### 5.7 Payouts now source from a pooled FBO account
+
+`feat(treasury): sweep deposits to the pool + fund payouts from it` (2026-09-04) moves NGN payouts to draw on a pooled For-Benefit-Of account rather than the paying user's own virtual account, and sweeps each credited deposit from the user's VBA into that pool via an instant Anchor `BookTransfer`. The motivation is sound and specific: a user can withdraw money the ledger says they own even when it physically landed in another customer's VBA.
+
+**No HTTP contract changes**, which is why the audit sees nothing — the whole change is behavioural, behind `POST /wallets/payout` and the deposit webhook.
+
+Two properties worth recording:
+
+- **It is off until configured.** Both behaviours are guarded on `ANCHOR_POOL_ACCOUNT_ID`; unset, payouts still draw on the VBA and no sweep runs. The rollout is therefore a config change, not a deploy, which also means the "before" and "after" states can coexist across environments.
+- **A failed sweep is deliberately non-fatal.** The money is already safe in the VBA and the ledger is already credited, so a sweep failure alerts (`deposit_sweep_failed`) and defers to reconciliation rather than failing the deposit. That is the right trade, and it makes the aggregate reconciliation endpoint load-bearing rather than merely informational.
+
+The interaction to watch is cross-service: the admin API's per-user reconciliation compares a user's wallet balance against the balance on *their own* Anchor account, which sweeping empties. See `admin-api-rfc.md` §3.10 — the two commits landed within half an hour of each other in different repositories.
+
 ---
 
 ## 6. Implemented surface
 
-Status legend: **✅ Complete** · **🟡 Partial** — works but materially narrower than the PRD describes.
+Status legend: **✅ Complete** · **🟡 Partial** — works but materially narrower than the PRD describes · **🔴 Facade** — the route is real and the behaviour behind it is not.
 
 Auth: 🔓 public · 🔑 access token · 🔐 access + step-up token.
 
@@ -369,7 +440,7 @@ Parallel ladder for `chat_only` users adopting banking. See §5.1 for why this s
 | | POST | `/upgrade/email/verify` | 🔑 | ✅ |
 | | POST | `/upgrade/bvn` | 🔑 | ✅ Lookup only |
 | | POST | `/upgrade/bvn/verify` | 🔑 | 🟡 Same `phone` gap as §6.3; path segment differs from KYC |
-| | POST | `/upgrade/profile` | 🔑 | ✅ No `email`; `gender` optional |
+| | POST | `/upgrade/profile` | 🔑 | ✅ No `email`; `gender` optional. Since 2026-09-01 requires a verified BVN (`bvn_required`) — see §5.1 |
 
 ### 6.4 Users
 
@@ -394,8 +465,8 @@ Parallel ladder for `chat_only` users adopting banking. See §5.1 for why this s
 
 | | Method | Path | Auth | Status |
 |---|---|---|---|---|
-| | POST | `/contacts/sync` | 🔑 | ✅ Max 500 entries |
-| | GET | `/contacts` | 🔑 | ✅ |
+| | POST | `/contacts/sync` | 🔑 | ✅ Max 500 entries resolved synchronously; peer carries `path` since 2026-09-03 — see §5.3 |
+| | GET | `/contacts` | 🔑 | ✅ Peer carries `path` since 2026-09-03 — see §5.3 |
 | | POST | `/devices` | 🔑 | ✅ |
 | | GET | `/devices` | 🔑 | ✅ |
 | | DELETE | `/devices/{id}` | 🔑 | ✅ |
@@ -465,13 +536,13 @@ Escrow mechanics themselves are sound: a 24-hour hold scheduled through BullMQ, 
 | | POST | `/calls/{id}/end` | 🔑 | ✅ |
 | | POST | `/attachments/upload-url` | 🔑 | ✅ |
 | | POST | `/attachments/{id}/finalize` | 🔑 | ✅ Size enforced from the stored object |
-| | POST | `/translate` | 🔑 | 🟡 Stateless; no preference, languages or batch |
+| | POST | `/translate` | 🔑 | 🔴 **Stub engine — returns the input unchanged.** Also stateless; no preference, languages or batch. See §5.5 |
 | | POST | `/notifications/token` | 🔑 | ✅ |
 | | DELETE | `/notifications/token` | 🔑 | ✅ Body-based, not path-based |
 | | GET | `/notifications/preferences` | 🔑 | ✅ |
 | | PATCH | `/notifications/preferences` | 🔑 | ✅ |
 | | POST | `/notifications/test` | 🔑 | ✅ |
-| | POST | `/webhooks/anchor` | 🔓 | ✅ HMAC over raw body; deduped |
+| | POST | `/webhooks/anchor` | 🔓 | ✅ HMAC over raw body; deduped. **Processed no real delivery until 2026-09-03** — envelope mismatch, see §5.6. Now also syncs card lifecycle events |
 | | POST | `/webhooks/livekit` | 🔓 | ✅ JWT in `Authorization` |
 
 ### 6.9 WebSocket surface

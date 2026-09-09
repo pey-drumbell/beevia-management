@@ -34,7 +34,7 @@
       <span class="topbar__wordmark">Beevia</span>
     </div>
     <nav class="topbar__nav label" aria-label="Report">
-      <a href="2026-08-28.html">Latest frame</a>
+      <a href="2026-09-09.html">Latest frame</a>
     </nav>
 </div>
 
@@ -43,9 +43,9 @@
     <div class="field__rail field__rail--l">
       <dl>
         <dt>Frames held</dt>
-        <dd>18</dd>
+        <dd>26</dd>
         <dt>Latest</dt>
-        <dd>2026-08-28 · 08-01 closed</dd>
+        <dd>2026-09-09 · malware closed, admin board open</dd>
       </dl>
     </div>
 
@@ -55,7 +55,7 @@
       </div>
       <div class="field__meta num">
         <span>Beevia project status</span>
-        <span>2026-08-05 &rarr; 2026-08-28</span>
+        <span>2026-08-05 &rarr; 2026-09-09</span>
         <span>Newest first</span>
       </div>
     </div>
@@ -74,26 +74,162 @@
 <section class="mvp" aria-label="MVP readiness estimate">
   <div class="mvp__head">
     <span class="label">MVP readiness &mdash; estimate</span>
-    <span class="mvp__pct num">&asymp;58%</span>
-    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 4 days out</span>
+    <span class="mvp__pct num">&asymp;57%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 8 days past</span>
   </div>
-  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 58 percent built, unchanged today. Over the sprint it moved from 46 to 58 percent. International KYC, cross-currency FX and consent management are not started.">
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 57 percent built. Admin oversight rises to 0.85 as the chats module and the re-invite endpoint merge, opening spec Module 4. International KYC, cross-currency FX and consent management are not started.">
     <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.9"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.8"><i style="width:80%"></i></span>
-    <span class="mvp__seg" style="flex:7" title="Message translation — 0.7"><i style="width:70%"></i></span>
+    <span class="mvp__seg" style="flex:7" title="Message translation — 0.15"><i style="width:15%"></i></span>
     <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.9"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
-    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.75"><i style="width:75%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.70"><i style="width:70%"></i></span>
     <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.80"><i style="width:80%"></i></span>
     <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
-    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0.45"><i style="width:45%"></i></span>
+    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0.55"><i style="width:55%"></i></span>
     <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
-    <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.45"><i style="width:45%"></i></span>
+    <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.85 (was 0.78)"><i style="width:85%"></i></span>
   </div>
-  <p class="mvp__read"><strong>Unchanged today &mdash; but the sprint moved it 46% &rarr; 58%</strong>, driven entirely by merged code while the board's Done count moved 0 &rarr; 10. Those two lines describe the same eighteen days. Today's single commit adds <code>path</code> to the contact profile so the client can gate sends on a <code>chat_banking</code> peer. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 28 Aug 2026 &mdash; <a href="2026-08-28.html#mvp-method">method and capability table</a>.</p>
+  <p class="mvp__read"><strong>The target date passed eight days ago; the product is roughly 57% built.</strong> One capability moves &mdash; admin oversight 0.78 &rarr; 0.85, on merged code: the admin API goes 37 &rarr; 42, the chats module opens <strong>spec Module 4</strong> after a month of the RFC calling it unbuildable, and the client reaches 8 of 10 modules on the live API. <strong>Nothing else moves</strong>, and three of the latest frame's most prominent events are worth zero points by design &mdash; seven items in review that describe already-merged July code, an unmerged reports feature, and two board items marked Done for code on no default branch. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 9 Sep 2026 &mdash; <a href="2026-09-09.html#mvp-method">method and capability table</a>.</p>
 </section>
 
 <main class="frames">
+
+  <a class="frame" href="2026-09-09.html">
+    <span class="frame__idx num">26</span>
+    <span>
+      <span class="frame__date">9 Sep 2026</span>
+      <span class="frame__sum">Three long-running findings closed at once: the malware is reachable from no ref in any repository, the admin dashboard board finally exists, and Module 4 &mdash; called unbuildable since 5 August &mdash; is merged, built metadata-only exactly as the RFC recommended. Against that, the headline throughput number is an artifact: seven items entered review after eleven days of silence, and every one of them describes code that shipped in July.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:0"></i></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>0901 · day 7 of 20</span></div>
+      <div><span>MVP est</span><span>≈57% · +0.4 pt</span></div>
+      <div><span>Payload on any ref</span><span>0 · was 8 branches</span></div>
+      <div><span>Admin board</span><span>12 items · was none</span></div>
+      <div><span>Admin API</span><span>37 → 42 · chats + reinvite</span></div>
+      <div><span>Dashboard live</span><span>8 of 10 · recount</span></div>
+    </span>
+  </a>
+
+  <a class="frame" href="2026-09-08.html">
+    <span class="frame__idx num">25</span>
+    <span>
+      <span class="frame__date">8 Sep 2026</span>
+      <span class="frame__sum">The malware is off <code>main</code> in all three repositories &mdash; rebuilt this morning and verified by blob hash across every ref. Eight <code>beevia-admin-api</code> branches still carry it, and one of them is the only copy of an entire unreported module: Trust &amp; Safety, built metadata-only exactly as this project's own RFC recommended, by someone who never said so. Both of the week's good architectural calls had to be found by reading code.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:0"></i></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>0901 · day 6 of 19</span></div>
+      <div><span>MVP est</span><span>≈56% · +0.4 pt</span></div>
+      <div><span>Repos compromised</span><span>0 of 5 · was 3</span></div>
+      <div><span>Branches infected</span><span>8 · new finding</span></div>
+      <div><span>Admin API</span><span>35 → 37 · wallets</span></div>
+      <div><span>Dashboard live</span><span>6 of 10 · was 5</span></div>
+    </span>
+  </a>
+
+  <a class="frame" href="2026-09-07.html">
+    <span class="frame__idx num">24</span>
+    <span>
+      <span class="frame__date">7 Sep 2026</span>
+      <span class="frame__sum"><code>origin/main</code> of three repositories was force-pushed with a blockchain-addressed malware loader appended to <code>eslint.config.mjs</code> &mdash; and it is on a developer machine, not just the remote. The guardrail that caught it was written for an unrelated reason. Meanwhile the admin dashboard wired four modules to the live API on Friday, which three editions of this report wrongly called blocked.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:0"></i></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>0901 · day 5 of 19</span></div>
+      <div><span>MVP est</span><span>≈56% · +1</span></div>
+      <div><span>Repos compromised</span><span>3 of 5</span></div>
+      <div><span>0901 started</span><span>3 of 17 leaves</span></div>
+      <div><span>Admin API</span><span>34 → 35 · dashboard</span></div>
+      <div><span>Dashboard live</span><span>5 of 10 · was 1 of 9</span></div>
+    </span>
+  </a>
+
+  <a class="frame" href="2026-09-04.html">
+    <span class="frame__idx num">23</span>
+    <span>
+      <span class="frame__date">4 Sep 2026</span>
+      <span class="frame__sum">The board moves zero items in 24 hours while ten commits ship four admin endpoints and a treasury change, none of it tracked anywhere. Reading those commits finds <code>POST /webhooks/anchor</code> acknowledged every real Anchor delivery and processed none of it &mdash; for sixty-seven days.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:0"></i></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>0901 · day 2 of 19</span></div>
+      <div><span>MVP est</span><span>≈55% · +1</span></div>
+      <div><span>Board moves</span><span>0 · in 24 h</span></div>
+      <div><span>Commits</span><span>10 · off-board</span></div>
+      <div><span>Admin API</span><span>30 → 34 · Module 5</span></div>
+      <div><span>Webhook dead</span><span>67 days · fixed</span></div>
+    </span>
+  </a>
+
+  <a class="frame" href="2026-09-03.html">
+    <span class="frame__idx num">22</span>
+    <span>
+      <span class="frame__date">3 Sep 2026</span>
+      <span class="frame__sum">Sprint 08-01 is closed by marking 46 items Done in a two-minute sweep, taking a 23-day-old review queue from 28 to zero without a line of code changing. Sprint 0901 starts ninety seconds later &mdash; and its foundation, <code>POST /translate</code>, has never translated anything, while seven of its nine backend stories describe code merged weeks ago.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:41"></i></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>08-01 closed · 0901 open</span></div>
+      <div><span>MVP est</span><span>≈54% · corrected</span></div>
+      <div><span>Done</span><span>41 / 41 · in 74 s</span></div>
+      <div><span>Review / QA</span><span>0 · queue emptied</span></div>
+      <div><span>Dropped</span><span>3 · not finished</span></div>
+      <div><span>Commits</span><span>1 · contacts path</span></div>
+    </span>
+  </a>
+
+  <a class="frame" href="2026-09-02.html">
+    <span class="frame__idx num">21</span>
+    <span>
+      <span class="frame__date">2 Sep 2026</span>
+      <span class="frame__sum">The quietest day on record &mdash; zero board transitions, zero commits authored. Reading the code instead finds <code>openapi.admin.yaml</code> wrong since 6 August, five contract facts through nineteen &ldquo;clean&rdquo; audits; and a finished mobile payout feature sitting unmerged on a branch for five days.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:11"></i><u style="flex:32"></u></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>08-01 · closed 5d ago</span></div>
+      <div><span>MVP est</span><span>≈58%</span></div>
+      <div><span>Done</span><span>11 / 43</span></div>
+      <div><span>Review / QA</span><span>28 · 0 accepted</span></div>
+      <div><span>Blocked</span><span>2 · both cards</span></div>
+      <div><span>Commits</span><span>0 · admin API +1</span></div>
+    </span>
+  </a>
+
+  <a class="frame" href="2026-09-01.html">
+    <span class="frame__idx num">20</span>
+    <span>
+      <span class="frame__date">1 Sep 2026</span>
+      <span class="frame__sum">The backend restarts hard &mdash; 24 commits, not one a new endpoint, all repairs to the KYC-to-wallet path. The board goes the other way: the sprint's first two BLOCKED items, both card work. And a first file-level look at the mobile wallet finds two complete money flows making zero network calls.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:11"></i><u style="flex:32"></u></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>08-01 · closed 4d ago</span></div>
+      <div><span>MVP est</span><span>≈58%</span></div>
+      <div><span>Done</span><span>11 / 43</span></div>
+      <div><span>Review / QA</span><span>28 · 0 accepted</span></div>
+      <div><span>Blocked</span><span>2 · both cards</span></div>
+      <div><span>Commits</span><span>24 · 0 endpoints</span></div>
+    </span>
+  </a>
+
+  <a class="frame" href="2026-08-31.html">
+    <span class="frame__idx num">19</span>
+    <span>
+      <span class="frame__date">31 Aug 2026</span>
+      <span class="frame__sum">The sprint ended three days ago and nothing replaced it &mdash; no 08-02 exists. Two board actions in three days. A correction: items <em>have</em> left review 22 times, always backwards, never once to Done. The admin dashboard ships its largest commit ever, four of six new modules drawing mock data.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:11"></i><u style="flex:32"></u></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>08-01 · closed 3d ago</span></div>
+      <div><span>MVP est</span><span>≈58%</span></div>
+      <div><span>Done</span><span>11 / 43</span></div>
+      <div><span>Review / QA</span><span>27 · 0 accepted</span></div>
+      <div><span>Successor sprint</span><span>none created</span></div>
+      <div><span>Admin board</span><span>no sprint</span></div>
+    </span>
+  </a>
 
   <a class="frame" href="2026-08-28.html">
     <span class="frame__idx num">18</span>

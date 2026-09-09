@@ -255,45 +255,48 @@ paths:
   # construction. These endpoints expose report metadata only.
   # ===========================================================================
 
-  /admin/reports:
-    get:
-      tags: [Trust & Safety]
-      operationId: listReports
-      summary: Moderation queue
-      description: |
-        Reported conversations awaiting review. The `conversation_reports` table
-        already exists and is populated by the consumer app's
-        `POST /conversations/{id}/report`, but nothing reads it — reports
-        currently accumulate with no queue and no reviewer.
+  # NOTE: the moderation queue SHIPPED on 2026-09-08, as
+  # `GET /admin/chats/reports` — a different path, under a new `Chats` module
+  # that also carries three conversation-metadata operations that were never
+  # proposed. It now lives in openapi.admin.yaml. This is the metadata-only
+  # Option A of admin-api-rfc.md §5.1, chosen and built without the decision
+  # being recorded anywhere but the code.
+  #
+  # **Three things did NOT ship, and they are the workflow half of Module 4:**
+  #   * the `status` filter (open / reviewing / actioned / dismissed) — the
+  #     shipped queue has no status at all, so every report ever filed is
+  #     returned forever and "handled" cannot be expressed;
+  #   * the reported user's prior report history alongside the row, which is
+  #     what tells a reviewer whether this is a first complaint or a pattern;
+  #   * any link from a report to the account action taken on it.
+  # A queue that cannot be worked off is a list. Tracked as a gap in
+  # admin-api-rfc.md §6.3 rather than re-proposed here as a whole operation.
+  #
+  # `GET /admin/reports/{reportId}` and its `resolve` below are UNAFFECTED and
+  # still not built — but see the path-collision warning on them.
 
-        **Returns metadata only**: who reported whom, when, the free-text reason
-        the reporter typed, and the reported user's history. Message content is
-        not available and no endpoint can make it available.
-      x-required-permission: 'reports:view'
-      externalDocs:
-        description: 'Beevia Admin Dashboard.md — Module 4'
-        url: ./Beevia%20Admin%20Dashboard.md
-      parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/Limit'
-        - name: status
-          in: query
-          schema: { type: string, enum: [open, reviewing, actioned, dismissed] }
-      responses:
-        '200':
-          description: Paginated reports.
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessEnvelope'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items: { $ref: '#/components/schemas/Report' }
-                      meta: { $ref: '#/components/schemas/PaginationMeta' }
-        '403': { $ref: '#/components/responses/Forbidden' }
+  # ---------------------------------------------------------------------------
+  # PATH COLLISION — read before building either of the two operations below.
+  #
+  # The unmerged branch `feat/admin-reports` (beevia-admin-api, 2026-09-08)
+  # claims `/admin/reports` for something entirely different: a **report
+  # generation** feature — a catalogue of report types, async CSV generation,
+  # and a run history. Its routes are `GET /admin/reports/types`,
+  # `POST /admin/reports`, `GET /admin/reports`, `GET /admin/reports/{id}` and
+  # `GET /admin/reports/{id}/download`, under a `reports` permission module.
+  #
+  # `GET /admin/reports/{id}` there returns a *generated CSV report*. The
+  # operation proposed below returns a *moderation report*. They cannot both
+  # live at this path, and the generation feature has a board behind it
+  # (project "Beevia Admin Dashboard", sprint 0901-admin) while this does not.
+  #
+  # So when Module 4's workflow half is built, it should hang off the path the
+  # shipped queue already uses — `/admin/chats/reports/{reportId}` and
+  # `/admin/chats/reports/{reportId}/resolve` — rather than these. The two
+  # operations are left here unchanged, at their original path, because
+  # renaming them on the strength of an unmerged branch would be guessing;
+  # this note is the decision point. See admin-api-rfc.md §6.3.
+  # ---------------------------------------------------------------------------
 
   /admin/reports/{reportId}:
     parameters:
@@ -372,79 +375,23 @@ paths:
   # Module 5 — Transaction & Wallet Oversight  (NOT BUILT)
   # ===========================================================================
 
-  /admin/users/{id}/wallets:
-    parameters:
-      - $ref: '#/components/parameters/UserId'
-    get:
-      tags: [Transaction Oversight]
-      operationId: getUserWallets
-      summary: A user's wallets
-      description: |
-        Balances and virtual-account detail per wallet, with the ledger balance
-        shown alongside the partner-reported balance so a mismatch is visible at
-        a glance rather than requiring a manual reconciliation run.
-      x-required-permission: 'wallets:view'
-      externalDocs:
-        description: 'Beevia Admin Dashboard.md — Module 5'
-        url: ./Beevia%20Admin%20Dashboard.md
-      responses:
-        '200':
-          description: The user's wallets.
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessEnvelope'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items: { $ref: '#/components/schemas/AdminWallet' }
-        '403': { $ref: '#/components/responses/Forbidden' }
+  # NOTE: the per-user wallet view SHIPPED on 2026-09-06, as
+  # `GET /admin/wallets/users/{userId}` — a different path, alongside a new
+  # platform-wide `GET /admin/wallets` list that was never proposed. Both are in
+  # openapi.admin.yaml. **The part that did NOT ship is the reason this was
+  # proposed**: the shipped row carries the ledger balance only, with no
+  # `partner_balance` and no `in_sync` flag, so a wallet-level ledger-vs-partner
+  # mismatch is still invisible without a separate reconciliation run. Tracked
+  # as a gap in admin-api-rfc.md §6.3 rather than re-proposed here.
 
-  /admin/users/{id}/transactions:
-    parameters:
-      - $ref: '#/components/parameters/UserId'
-    get:
-      tags: [Transaction Oversight]
-      operationId: getUserTransactions
-      summary: A user's transaction history
-      description: |
-        Paginated ledger history across all of a user's wallets, filterable by
-        direction, kind and date. This is what the spec means by "investigate a
-        specific user's transaction history if a dispute or regulatory inquiry
-        comes in".
-      x-required-permission: 'transactions:view'
-      externalDocs:
-        description: 'Beevia Admin Dashboard.md — Module 5'
-        url: ./Beevia%20Admin%20Dashboard.md
-      parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/Limit'
-        - name: direction
-          in: query
-          schema: { type: string, enum: [credit, debit] }
-        - name: from
-          in: query
-          schema: { type: string, format: date-time }
-        - name: to
-          in: query
-          schema: { type: string, format: date-time }
-      responses:
-        '200':
-          description: Paginated ledger entries.
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessEnvelope'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items: { $ref: '#/components/schemas/AdminLedgerEntry' }
-                      meta: { $ref: '#/components/schemas/PaginationMeta' }
-        '403': { $ref: '#/components/responses/Forbidden' }
+  # NOTE: the per-user statement SHIPPED on 2026-09-04, as
+  # `GET /admin/transactions/users/{userId}` — a different path. It now lives in
+  # openapi.admin.yaml.
+  #
+  # UPDATE 2026-09-09: the date half of the proposed filter set shipped on
+  # 2026-09-08 as `dateFrom` / `dateTo`, on **both** transaction feeds, and it
+  # narrows the count as well as the rows. `direction` (credit/debit) is now the
+  # only proposed filter still missing; see admin-api-rfc.md §6.3.
 
   /admin/transactions/{transactionId}/flag:
     parameters:
@@ -484,48 +431,13 @@ paths:
         '400': { $ref: '#/components/responses/BadRequest' }
         '403': { $ref: '#/components/responses/Forbidden' }
 
-  /admin/reconciliation:
-    get:
-      tags: [Transaction Oversight]
-      operationId: getReconciliation
-      summary: Partner reconciliation report
-      description: |
-        Compares Beevia's ledger against the banking partner's records for a
-        period and lists the discrepancies: entries the ledger has and the
-        partner does not, the reverse, and amount mismatches.
-
-        The spec frames this as answering "does this user's balance match what
-        the banking partner's records say". Note the dependency: this needs a
-        statement or balance-report call on the partner adapter, which does not
-        exist in the consumer API today either.
-      x-required-permission: 'transactions:view'
-      externalDocs:
-        description: 'Beevia Admin Dashboard.md — Module 5'
-        url: ./Beevia%20Admin%20Dashboard.md
-      parameters:
-        - name: from
-          in: query
-          required: true
-          schema: { type: string, format: date }
-        - name: to
-          in: query
-          required: true
-          schema: { type: string, format: date }
-        - name: currency
-          in: query
-          schema: { type: string, default: NGN }
-      responses:
-        '200':
-          description: Reconciliation result.
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessEnvelope'
-                  - type: object
-                    properties:
-                      data: { $ref: '#/components/schemas/ReconciliationReport' }
-        '403': { $ref: '#/components/responses/Forbidden' }
+  # NOTE: reconciliation SHIPPED on 2026-09-04, as two operations rather than
+  # one — `GET /admin/reconciliation/users/{userId}` and
+  # `GET /admin/reconciliation/pool` — and without the `from` / `to` / `currency`
+  # period parameters proposed here. Both now live in openapi.admin.yaml. The
+  # dependency this note warned about (a partner statement call) was resolved by
+  # building `listAccountTransactions` on the admin service's own Anchor adapter.
+  # Date-range scoping is the part that did not ship; see admin-api-rfc.md §6.3.
 
   # ===========================================================================
   # Module 6 — Country & Feature Configuration  (NOT BUILT)
@@ -791,10 +703,22 @@ paths:
       operationId: listDeletionRequests
       summary: Deletion queue
       description: |
-        Pending and completed account deletions. The `user_status` enum already
-        has a `deleting` state, and the consumer API's `DELETE /users/me` moves
-        accounts into it, but nothing surfaces the queue — so no one can confirm
-        a deletion completed rather than silently failing.
+        Pending and completed account deletions, so someone can confirm a
+        deletion completed rather than silently failing.
+
+        **This design needs revisiting before it is built.** It was written when
+        `user_status` carried a `deleting` state that `DELETE /users/me` moved
+        accounts into — an in-flight queue this endpoint would have read.
+        Migration `0027` (2026-08-06) renamed that value to `deactivated` and
+        gave it to the *admin* deactivate path instead, and
+        `AccountDeletionService` now writes `deleted` directly. There is no
+        longer any in-flight state, so **there is no queue to list**: a deletion
+        is either not started or finished.
+
+        Whoever builds this has to choose — reintroduce an in-flight status,
+        or drive the queue from a deletion-request table rather than from
+        `users.status`. The latter is probably right, since the PRD wants
+        per-partner progress that a single enum column cannot hold anyway.
 
         The PRD tracks completion within 5 days as a compliance KPI, which is
         unmeasurable without this.
@@ -1082,23 +1006,6 @@ components:
                   text: { type: string }
                   sent_at: { type: string, format: date-time }
 
-    AdminWallet:
-      type: object
-      properties:
-        id: { type: string, format: uuid }
-        currency: { type: string }
-        ledger_balance: { type: string, description: Beevia's own ledger balance. }
-        partner_balance: { type: [string, 'null'], description: As reported by the banking partner. Null when unavailable. }
-        in_sync: { type: [boolean, 'null'] }
-        status: { type: string }
-        virtual_account:
-          oneOf:
-            - type: 'null'
-            - type: object
-              properties:
-                account_number: { type: string }
-                bank_name: { type: string }
-
     AdminLedgerEntry:
       type: object
       properties:
@@ -1116,25 +1023,10 @@ components:
         flag_reason: { type: [string, 'null'] }
         created_at: { type: string, format: date-time }
 
-    ReconciliationReport:
-      type: object
-      properties:
-        from: { type: string, format: date }
-        to: { type: string, format: date }
-        currency: { type: string }
-        ledger_total: { type: string }
-        partner_total: { type: string }
-        in_sync: { type: boolean }
-        discrepancies:
-          type: array
-          items:
-            type: object
-            properties:
-              kind: { type: string, enum: [missing_in_partner, missing_in_ledger, amount_mismatch] }
-              reference: { type: string }
-              ledger_amount: { type: [string, 'null'] }
-              partner_amount: { type: [string, 'null'] }
-              occurred_at: { type: string, format: date-time }
+    # ReconciliationReport moved to openapi.admin.yaml on 2026-09-04, restructured
+    # as UserReconciliationReport (+ PoolReconciliationReport) to match what was
+    # actually built: three named discrepancy buckets and a balance check, rather
+    # than one flat `discrepancies[]` over a date range.
 
     CountryConfig:
       type: object
