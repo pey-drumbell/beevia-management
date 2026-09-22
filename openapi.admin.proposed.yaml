@@ -17,25 +17,34 @@ openapi: 3.1.0
 #   1. Authentication & Access Control ... PARTIAL — no 2FA (spec says mandatory)
 #   2. Admin Account Management ......... BUILT
 #   3. User Management & Support Tools ... PARTIAL — no assisted PIN reset
-#   4. Trust & Safety / Moderation ...... NOT BUILT   ← see the E2EE note below
+#   4. Trust & Safety / Moderation ...... PARTIAL — queue, detail and review
+#                                         decisions shipped 2026-09-17; no
+#                                         enforcement link  ← see the E2EE note
 #   5. Transaction & Wallet Oversight ... NOT BUILT
 #   6. Country & Feature Configuration .. NOT BUILT
 #   7. Analytics & Reporting ............ NOT BUILT
 #   8. Account Deletion Requests ........ NOT BUILT
 #
 # ---------------------------------------------------------------------------
-# LOAD-BEARING CONSTRAINT: Module 4 cannot be built as specified.
+# LOAD-BEARING CONSTRAINT: Module 4 could not be built as specified — RESOLVED
+# 2026-09-17, by changing the consumer app rather than the server.
 #
 # The spec asks the moderation queue to show "reported messages". Beevia's chat
 # is genuinely end-to-end encrypted — the server stores ciphertext and per-device
 # envelopes and holds no key that can decrypt them. The PRD states this directly
 # (§1.5: E2EE "limits any form of message moderation") and §2.2 commits that
-# Beevia "is not a content policing platform".
+# Beevia "is not a content policing platform". That has not changed: no endpoint
+# returns server-decrypted content, and none ever will.
 #
-# No endpoint can return message content. What is proposed instead is a queue
-# built on report *metadata* plus any plaintext excerpt the REPORTING USER
-# voluntarily attaches from their own device at report time — which requires a
-# corresponding change on the consumer side (see admin-api-rfc.md §5.1).
+# What shipped is option 2 of admin-api-rfc.md §5.1, on both sides in one day:
+# `POST /conversations/{id}/report` now accepts up to 20 plaintext messages the
+# REPORTER chose to disclose from their own device, and
+# `GET /admin/chats/reports/{reportId}` returns them. The server decrypts
+# nothing; nothing is captured from a conversation nobody reported. Both routes
+# are in the implemented specs.
+#
+# The constraint therefore no longer blocks the module. What remains unbuilt is
+# enforcement — see `/admin/chats/reports/{reportId}/resolve` below.
 # ---------------------------------------------------------------------------
 #
 # The live surface is openapi.admin.yaml. To ship an operation from this file,
@@ -272,73 +281,61 @@ paths:
   # A queue that cannot be worked off is a list. Tracked as a gap in
   # admin-api-rfc.md §6.3 rather than re-proposed here as a whole operation.
   #
-  # `GET /admin/reports/{reportId}` and its `resolve` below are UNAFFECTED and
-  # still not built — but see the path-collision warning on them.
+  # The two operations below are still not built. They have MOVED PATH — see
+  # the resolution note immediately following.
 
   # ---------------------------------------------------------------------------
-  # PATH COLLISION — read before building either of the two operations below.
+  # PATH COLLISION — RESOLVED 2026-09-10 by renaming these two operations.
   #
-  # The unmerged branch `feat/admin-reports` (beevia-admin-api, 2026-09-08)
-  # claims `/admin/reports` for something entirely different: a **report
-  # generation** feature — a catalogue of report types, async CSV generation,
-  # and a run history. Its routes are `GET /admin/reports/types`,
-  # `POST /admin/reports`, `GET /admin/reports`, `GET /admin/reports/{id}` and
-  # `GET /admin/reports/{id}/download`, under a `reports` permission module.
+  # The 2026-09-09 edition flagged this as a collision about to happen and left
+  # the two operations at `/admin/reports/{reportId}` because renaming them on
+  # the strength of an *unmerged* branch would have been guessing. That branch
+  # merged: `feat/admin-reports` landed on beevia-admin-api `main` as `434d5e6`
+  # on 2026-09-09 at 23:02 UTC, and `/admin/reports` now belongs to **report
+  # generation** — a catalogue of report types, async CSV generation and a run
+  # history, under a `reports` permission module. `GET /admin/reports/{id}`
+  # there returns a *generated CSV report*.
   #
-  # `GET /admin/reports/{id}` there returns a *generated CSV report*. The
-  # operation proposed below returns a *moderation report*. They cannot both
-  # live at this path, and the generation feature has a board behind it
-  # (project "Beevia Admin Dashboard", sprint 0901-admin) while this does not.
+  # So the guess is gone and the decision is forced. These two operations —
+  # which return and action a *moderation* report — move under the path the
+  # shipped moderation queue already occupies:
   #
-  # So when Module 4's workflow half is built, it should hang off the path the
-  # shipped queue already uses — `/admin/chats/reports/{reportId}` and
-  # `/admin/chats/reports/{reportId}/resolve` — rather than these. The two
-  # operations are left here unchanged, at their original path, because
-  # renaming them on the strength of an unmerged branch would be guessing;
-  # this note is the decision point. See admin-api-rfc.md §6.3.
+  #     /admin/reports/{reportId}          ->  /admin/chats/reports/{reportId}
+  #     /admin/reports/{reportId}/resolve  ->  /admin/chats/reports/{reportId}/resolve
+  #
+  # Nothing else changed: same two operations, same permissions, same schemas,
+  # so the proposed total is unmoved at 19. The `ReportId` parameter is retained
+  # under its own name because it now unambiguously means a moderation report.
+  #
+  # The general lesson is in suggestions.md §5.6: `/admin/reports` was never a
+  # good name for either, because "report" means both "a complaint about a user"
+  # and "an exported dataset", and this API needs both. It is now spelled
+  # `/admin/chats/reports` for the first and `/admin/reports` for the second,
+  # which is legible but was arrived at by collision rather than by design.
+  # See admin-api-rfc.md §5.4b and §6.3.
   # ---------------------------------------------------------------------------
 
-  /admin/reports/{reportId}:
+  # NOTE: the report detail view SHIPPED on 2026-09-17 as
+  # `GET /admin/chats/reports/{reportId}`, at the proposed path, and is now in
+  # openapi.admin.yaml. **The E2EE question this proposal left open is answered:**
+  # the consumer app was changed the same day to offer disclosure, so
+  # `POST /conversations/{id}/report` now carries up to 20 reporter-supplied
+  # plaintext messages and the shipped detail route returns them as `messages`.
+  # That is option 2 of admin-api-rfc.md §5.1 — reporter-side disclosure — built
+  # on both sides, and it retires the "empty until the consumer app offers this"
+  # caveat this proposal carried.
+  #
+  # Two things proposed here did NOT ship and are not re-proposed: the
+  # `reported_user` field (the shipped route returns the whole participant list
+  # instead, which is the only well-defined answer for a group), and
+  # `reporter_prior_reports` / `reported_prior_reports` — the prior-history
+  # counters on both sides. The second is a real gap: a first complaint and a
+  # tenth read identically on the shipped detail view. Tracked in
+  # admin-api-rfc.md §6.3.
+
+  /admin/chats/reports/{reportId}/resolve:
     parameters:
-      - $ref: '#/components/parameters/ReportId'
-    get:
-      tags: [Trust & Safety]
-      operationId: getReport
-      summary: Report detail
-      description: |
-        Everything available to assess a report:
-
-        * the reporting and reported users, with their account status and prior
-          report history on both sides,
-        * the reason text the reporter supplied,
-        * conversation metadata — type, member count, message volume, first and
-          last activity,
-        * `reporter_excerpts`: plaintext the **reporter** chose to attach from
-          their own device at report time. Empty unless the consumer app is
-          changed to offer this (see `admin-api-rfc.md` §5.1).
-
-        There is deliberately no field for server-decrypted content.
-      x-required-permission: 'reports:view'
-      externalDocs:
-        description: 'Beevia Admin Dashboard.md — Module 4'
-        url: ./Beevia%20Admin%20Dashboard.md
-      responses:
-        '200':
-          description: Report detail.
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessEnvelope'
-                  - type: object
-                    properties:
-                      data: { $ref: '#/components/schemas/ReportDetail' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
-
-  /admin/reports/{reportId}/resolve:
-    parameters:
-      - $ref: '#/components/parameters/ReportId'
+      - $ref: '#/components/parameters/ChatReportId'
     post:
       tags: [Trust & Safety]
       operationId: resolveReport
@@ -348,6 +345,21 @@ paths:
         Suspension and ban delegate to the existing account-action routes so
         there is one lifecycle path and one audit trail, rather than a second way
         to suspend an account.
+
+        **Partly superseded, and the remaining half is the point.** On 2026-09-17
+        `PATCH /admin/chats/reports/{reportId}` shipped with
+        `reviewed` / `actioned` / `dismissed` and an optional note. That closes
+        the *bookkeeping* half — a report can now be marked handled, and the
+        queue filtered to `pending` — so this proposal is no longer needed for
+        that.
+
+        What shipped does **not** enforce anything. `actioned` records that
+        somebody did something without recording what, and suspending the account
+        is still an unlinked call to `POST /admin/users/{id}/suspend`. This
+        operation is kept proposed for the enforcement half alone: one action that
+        both closes the report and applies the outcome through the existing
+        account routes, so the report and the account action share an audit
+        trail. Re-read alongside `admin-api-rfc.md` §6.3.
       x-required-permission: 'reports:approve'
       externalDocs:
         description: 'Beevia Admin Dashboard.md — Module 4'
@@ -356,7 +368,7 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ResolveReportRequest' }
+            schema: { $ref: '#/components/schemas/ResolveChatReportRequest' }
       responses:
         '200':
           description: Report resolved.
@@ -367,7 +379,7 @@ paths:
                   - $ref: '#/components/schemas/SuccessEnvelope'
                   - type: object
                     properties:
-                      data: { $ref: '#/components/schemas/Report' }
+                      data: { $ref: '#/components/schemas/ChatReport' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '403': { $ref: '#/components/responses/Forbidden' }
 
@@ -841,7 +853,7 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
-    ReportId:
+    ChatReportId:
       name: reportId
       in: path
       required: true
@@ -960,7 +972,7 @@ components:
         secret: { type: string }
         otpauth_uri: { type: string, description: 'Provisioning URI for an authenticator app.' }
 
-    Report:
+    ChatReport:
       type: object
       properties:
         id: { type: string, format: uuid }
@@ -976,35 +988,6 @@ components:
             - $ref: '#/components/schemas/AdminSummary'
         created_at: { type: string, format: date-time }
         resolved_at: { type: [string, 'null'], format: date-time }
-
-    ReportDetail:
-      allOf:
-        - $ref: '#/components/schemas/Report'
-        - type: object
-          properties:
-            reporter_prior_reports: { type: integer, description: How many reports this user has filed before. }
-            reported_prior_reports: { type: integer, description: How many times this user has been reported before. }
-            conversation:
-              type: object
-              description: Metadata only — no content.
-              properties:
-                type: { type: string, enum: [direct, group] }
-                member_count: { type: integer }
-                message_count: { type: integer }
-                first_message_at: { type: [string, 'null'], format: date-time }
-                last_message_at: { type: [string, 'null'], format: date-time }
-            reporter_excerpts:
-              type: array
-              description: |
-                Plaintext the reporter voluntarily attached from their own device
-                at report time. Empty until the consumer app offers this. The
-                server can never populate this itself.
-              items:
-                type: object
-                properties:
-                  message_id: { type: string, format: uuid }
-                  text: { type: string }
-                  sent_at: { type: string, format: date-time }
 
     AdminLedgerEntry:
       type: object
@@ -1149,7 +1132,7 @@ components:
         reason: { $ref: '#/components/schemas/AdminActionReason' }
         note: { type: string, maxLength: 2000 }
 
-    ResolveReportRequest:
+    ResolveChatReportRequest:
       type: object
       required: [outcome]
       properties:

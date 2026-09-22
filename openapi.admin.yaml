@@ -127,6 +127,11 @@ tags:
       Conversation metadata and the moderation queue. Chat is end-to-end
       encrypted, so nothing here exposes message content — see
       `admin-api-rfc.md` §5.1.
+  - name: Reports
+    description: |
+      The Reports screen — a catalogue of report types, asynchronous CSV
+      generation, and a shared run history. A "report" here is an **exported
+      dataset**, not a user complaint; the moderation queue is under `Chats`.
 
 paths:
 
@@ -585,7 +590,11 @@ paths:
           schema: { type: string, examples: ['2026-08-31', '2026-08-31T23:59:59.999Z'] }
       responses:
         '200':
-          description: Paginated users.
+          description: |
+            Paginated users. Unlike Roles, Admin Accounts and Reports, this list
+            does **not** use the top-level `meta` block: the rows and the page
+            counters sit flat on `data` (`data.items`, `data.total`,
+            `data.total_pages`). `meta` is absent.
           content:
             application/json:
               schema:
@@ -594,9 +603,16 @@ paths:
                   - type: object
                     properties:
                       data:
-                        type: array
-                        items: { $ref: '#/components/schemas/AdminUserSummary' }
-                      meta: { $ref: '#/components/schemas/PaginationMeta' }
+                        type: object
+                        required: [items, page, limit, total, total_pages]
+                        properties:
+                          items:
+                            type: array
+                            items: { $ref: '#/components/schemas/AdminUserSummary' }
+                          page: { type: integer, minimum: 1 }
+                          limit: { type: integer }
+                          total: { type: integer }
+                          total_pages: { type: integer, minimum: 1 }
         '403': { $ref: '#/components/responses/Forbidden' }
 
   /admin/users/export:
@@ -1547,23 +1563,37 @@ paths:
         reporter, the free-text reason they typed, and the conversation it was
         filed against.
 
-        **This is the first and only reader of `conversation_reports`.** The
-        table is populated by the consumer app's
-        `POST /conversations/{id}/report`; before this endpoint existed reports
-        accumulated with no queue and no reviewer.
+        The table is populated by the consumer app's
+        `POST /conversations/{id}/report`, which since 2026-09-17 also carries
+        the messages the reporter chose to disclose and whether they blocked the
+        other party at the same time. Both are summarised on the row
+        (`message_count`, `blocked_contact`); the messages themselves are only on
+        the detail route.
 
-        **It is a queue, not a workflow.** There is no status, no assignment and
-        no resolve action — a report cannot be marked handled, and the list
-        cannot be filtered to open items, because it returns every report ever
-        filed. Actioning a report still means acting on the *account* via
-        `POST /admin/users/{id}/suspend` or `/restrict`, with no link recorded
-        back to the report. See `admin-api-rfc.md` §6.3.
+        **This is now a workflow, not just a queue.** Each report carries a
+        `status`, the list can be filtered to `pending` — the work to be done —
+        and a decision is recorded with `PATCH /admin/chats/reports/{reportId}`.
+        `review` is `null` until someone has looked, which is the useful signal
+        on a queue.
 
-        `reason` is the reporter's own text and may be `null`.
+        **Recording a decision is still not enforcement.** Suspending or
+        restricting an account remains `POST /admin/users/{id}/suspend` or
+        `/restrict`, with no link written back to the report, so `actioned`
+        asserts that something was done without saying what. See
+        `admin-api-rfc.md` §6.3.
+
+        `reason` is the reporter's own text and may be `null`. Unfiltered, the
+        list still returns every report ever filed.
       x-required-permission: 'chats:view'
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/Limit'
+        - name: status
+          in: query
+          description: |
+            Restrict to one moderation state. Omitted, the queue returns
+            everything; `pending` is the work outstanding.
+          schema: { type: string, enum: [pending, reviewed, actioned, dismissed] }
       responses:
         '200':
           description: One page of reports, newest first.
@@ -1583,6 +1613,99 @@ paths:
                           pagination: { $ref: '#/components/schemas/TransactionsPagination' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/chats/reports/{reportId}:
+    parameters:
+      - $ref: '#/components/parameters/ChatReportId'
+    get:
+      tags: [Chats]
+      operationId: getChatReport
+      summary: A report
+      description: |
+        One report with everything needed to judge it without opening the chat —
+        which an admin cannot do anyway: the reporter, everyone who has been in
+        the conversation, the reason, the review decision if one has been
+        recorded, and the messages the reporter disclosed.
+
+        **`messages` is the only message content anywhere in this API.** It is
+        here because the reporter handed those messages over from their own
+        device when filing the report, not because the server can read the
+        conversation — nothing is decrypted server-side, and nothing is captured
+        from a conversation nobody reported. See `admin-api-rfc.md` §5.1.
+
+        The order is the order the reporter submitted, not `sent_at`: that field
+        is optional and several messages can share one, so it cannot be trusted
+        to order an exchange a moderator has to read.
+
+        `participants` includes people who have left, so the subject of a report
+        stays identifiable after they exit a group.
+      x-required-permission: 'chats:view'
+      responses:
+        '200':
+          description: The report, its disclosed messages and the conversation's participants.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/ChatReportDetail' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such report (`report_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    patch:
+      tags: [Chats]
+      operationId: reviewChatReport
+      summary: Review a report
+      description: |
+        Record a decision on a report: `reviewed` (looked at, nothing done),
+        `actioned` (looked at, something done) or `dismissed`, with an optional
+        note. Returns the report as `GET` would.
+
+        **`pending` cannot be set.** It is where a report starts, and restoring
+        it would erase the fact that someone had already looked — the one thing
+        this state exists to remember.
+
+        The reviewer and the timestamp are stamped from the caller's session
+        rather than taken from the body. Re-reviewing an already-reviewed report
+        is allowed: a second look that changes the verdict is a real thing, and
+        both decisions are kept in the activity feed
+        (`chats` / `chat_report_reviewed`, targeting the report rather than the
+        person who filed it). The update and the feed entry share one
+        transaction.
+
+        This records a judgement; it does not enforce anything. Suspending or
+        restricting the account is still a separate call — see §6.3 of
+        `admin-api-rfc.md`.
+      x-required-permission: 'chats:edit'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReviewChatReportRequest' }
+      responses:
+        '200':
+          description: The report, with the decision recorded.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/ChatReportDetail' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such report (`report_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 
   /admin/chats/users/{userId}:
     parameters:
@@ -1652,6 +1775,220 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404':
           description: 'No such conversation (`conversation_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  # ===========================================================================
+  # Reports — the Reports screen (report GENERATION, not moderation)
+  #
+  # `/admin/reports` here is an exported dataset. The moderation queue lives at
+  # `GET /admin/chats/reports`. The two meanings of "report" collided at this
+  # path and generation won it on 2026-09-09; see admin-api-rfc.md §5.4b.
+  # ===========================================================================
+
+  /admin/reports/types:
+    get:
+      tags: [Reports]
+      operationId: listReportTypes
+      summary: Available report types
+      description: |
+        The gallery. Each type declares its own `columns` and its own `filters`
+        with their allowed `options`, so the parameter form is **rendered from
+        this response** rather than hard-coded per report — adding a report type
+        server-side needs no client release.
+
+        Every type additionally takes the required `dateFrom` / `dateTo` window,
+        which is not listed in `filters` because it is universal.
+
+        Four types ship today: `user_signups`, `transactions`,
+        `kyc_verifications` and `admin_activity`.
+      x-required-permission: 'reports:view'
+      responses:
+        '200':
+          description: Every report type the server can generate.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/ReportTypeDef' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/reports:
+    get:
+      tags: [Reports]
+      operationId: listReports
+      summary: Recent reports
+      description: |
+        The run history, newest first. **It is the team's history, not the
+        caller's** — every report anyone generated is listed, so one can be
+        revisited or re-downloaded without regenerating it. Pass `mine=true` to
+        narrow it to the caller's own runs.
+
+        Pagination is the envelope's `meta` (`PaginationMeta`), not the nested
+        `pagination` object the transaction feeds and wallets list use.
+      x-required-permission: 'reports:view'
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/ReportTypeQuery'
+        - $ref: '#/components/parameters/ReportStatusQuery'
+        - $ref: '#/components/parameters/ReportMineQuery'
+      responses:
+        '200':
+          description: One page of report runs, newest first.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/ReportSummary' }
+                      meta: { $ref: '#/components/schemas/PaginationMeta' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Reports]
+      operationId: generateReport
+      summary: Generate a report
+      description: |
+        Records the request, starts the run and **returns immediately** with the
+        report in `queued`. Generation is asynchronous — poll
+        `GET /admin/reports/{id}` until `status` is `ready` or `failed`.
+
+        `dateFrom` and `dateTo` are required for every type, and `dateFrom` must
+        be on or before `dateTo`. `filters` are validated against the chosen
+        type's own schema, so an unknown key or a bad value is a `400`
+        `validation_error` naming `filters.<key>` rather than a run that fails
+        minutes later.
+
+        **What the report may contain is fixed at request time, not run time.**
+        The requesting admin's viewable modules are resolved when this returns,
+        so a role change mid-run cannot widen or narrow the output. That scoping
+        currently applies to the `admin_activity` report only; the other three
+        types are gated by the `reports:create` permission alone.
+
+        **Generation runs in-process**, detached from this request — there is no
+        job queue and no worker. A restart mid-run leaves nothing stuck: those
+        rows are swept to `failed` at boot with a message telling the operator
+        to run it again.
+      x-required-permission: 'reports:create'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GenerateReportRequest' }
+      responses:
+        '201':
+          description: |
+            The queued report, ready to poll. Note the status is `queued`, not
+            `ready` — nothing has been generated yet.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/ReportDetail' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'Unknown report type (`report_type_not_found`). Unreachable in practice — an unknown `type` fails validation first.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /admin/reports/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ReportId'
+    get:
+      tags: [Reports]
+      operationId: getReport
+      summary: A report
+      description: |
+        Status while it runs; once `ready`, the structured `preview` — the
+        columns, the leading rows and the headline totals — plus `download_url`.
+
+        `row_count` is the size of the **full** result, not the preview length:
+        the preview is capped at 50 rows. `truncated` is true when generation hit
+        the 50,000-row ceiling, so an over-large report says so rather than
+        quietly returning a prefix.
+
+        **This operation is scoped by `reports:view` and nothing else.** It does
+        not check who requested the report, and it does not re-apply the module
+        scoping used to build it — see `admin-api-rfc.md` §6.3.
+      x-required-permission: 'reports:view'
+      responses:
+        '200':
+          description: The report, with its preview once it is ready.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/ReportDetail' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such report (`report_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /admin/reports/{id}/download:
+    parameters:
+      - $ref: '#/components/parameters/ReportId'
+    get:
+      tags: [Reports]
+      operationId: downloadReport
+      summary: Download a report
+      description: |
+        The generated CSV **exactly as it was produced** — stored at generation
+        time and never recomputed, so a report downloaded today and again next
+        month is byte-for-byte the same file even if the underlying data has
+        moved. The file is UTF-8 with a BOM, and the header row carries the
+        column *labels* from the catalogue rather than its keys.
+
+        Filename is `beevia-<type>-<from>_to_<to>.csv`, delivered as an
+        attachment.
+
+        This route opts out of the response envelope (`@SkipResponseInterceptor`)
+        and returns `text/csv` directly. It needs `reports:export`, which is a
+        **different permission from the `reports:view`** that lists and reads the
+        same report.
+      x-required-permission: 'reports:export'
+      responses:
+        '200':
+          description: The stored CSV.
+          content:
+            text/csv:
+              schema: { type: string, format: binary }
+          headers:
+            Content-Disposition:
+              description: '`attachment; filename="beevia-transactions-2026-09-01_to_2026-09-30.csv"`'
+              schema: { type: string }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such report (`report_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '409':
+          description: |
+            `report_not_ready` — there is no file to send. It covers **two
+            opposite situations**, distinguished only by the message text: the
+            report is still generating (retry later), or it failed (regenerate
+            it). `status` on the report itself is the reliable discriminator.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
@@ -1752,6 +2089,14 @@ components:
       required: true
       description: A `conversations.id`.
       schema: { type: string, format: uuid }
+    ChatReportId:
+      name: reportId
+      in: path
+      required: true
+      description: |
+        A `conversation_reports.id`. Validated as a UUID by the route itself, so
+        a malformed id is a `400` rather than a `404`.
+      schema: { type: string, format: uuid }
     DateFrom:
       name: dateFrom
       in: query
@@ -1766,6 +2111,32 @@ components:
         A malformed or impossible value (`2026-02-30`, `last tuesday`) is a
         `400`, not a silently-ignored filter.
       schema: { type: string, examples: ['2026-09-01'] }
+    ReportId:
+      name: id
+      in: path
+      required: true
+      description: The generated report's id.
+      schema: { type: string, format: uuid }
+    ReportTypeQuery:
+      name: type
+      in: query
+      required: false
+      description: Narrow the history to one report type.
+      schema: { $ref: '#/components/schemas/ReportType' }
+    ReportStatusQuery:
+      name: status
+      in: query
+      required: false
+      description: Narrow the history to one generation status.
+      schema: { $ref: '#/components/schemas/ReportStatus' }
+    ReportMineQuery:
+      name: mine
+      in: query
+      required: false
+      description: |
+        `true` restricts the history to the caller's own runs. The default is
+        `false` — the history is the whole team's.
+      schema: { type: string, enum: ['true', 'false'], default: 'false' }
     DateTo:
       name: dateTo
       in: query
@@ -1872,6 +2243,187 @@ components:
         total_pages: { type: integer }
         has_next_page: { type: boolean }
         has_prev_page: { type: boolean }
+
+    # --- Reports (generated datasets) ---------------------------------------
+
+    ReportType:
+      type: string
+      enum: [user_signups, transactions, kyc_verifications, admin_activity]
+      description: |
+        A report type from `GET /admin/reports/types`. The catalogue is the
+        source of truth; this enum lists what it contains today.
+
+    ReportStatus:
+      type: string
+      enum: [queued, generating, ready, failed]
+      description: |
+        `queued` → `generating` → `ready` | `failed`. A run interrupted by a
+        service restart is swept to `failed` at boot rather than left in
+        `generating` forever.
+
+    ReportColumn:
+      type: object
+      required: [key, label]
+      properties:
+        key: { type: string, example: balanceAfter }
+        label:
+          type: string
+          description: The heading. This — not `key` — is what the CSV's header row carries.
+          example: Balance after
+
+    ReportFilterDef:
+      type: object
+      required: [key, label, options]
+      properties:
+        key: { type: string, example: direction }
+        label: { type: string, example: Direction }
+        options:
+          type: array
+          description: The allowed values, with display labels. A value outside this set is a `400`.
+          items:
+            type: object
+            properties:
+              value: { type: string, example: credit }
+              label: { type: string, example: Credit }
+
+    ReportTypeDef:
+      type: object
+      description: One entry in the gallery, carrying everything needed to render its parameter form.
+      required: [type, label, description, columns, filters]
+      properties:
+        type: { $ref: '#/components/schemas/ReportType' }
+        label: { type: string, example: 'User signups & verification' }
+        description: { type: string }
+        columns:
+          type: array
+          items: { $ref: '#/components/schemas/ReportColumn' }
+        filters:
+          type: array
+          description: |
+            Type-specific filters only. The required `dateFrom` / `dateTo` window
+            is universal and is deliberately not listed here.
+          items: { $ref: '#/components/schemas/ReportFilterDef' }
+
+    ReportBreakdown:
+      type: object
+      description: |
+        A grouped count the report contributes, e.g. signups by verification
+        outcome. **Zero rows are kept** — a compliance breakdown is read down the
+        same rows every period, so an absent row would read as a silence rather
+        than a zero.
+      required: [key, label, rows]
+      properties:
+        key: { type: string, example: verification }
+        label: { type: string, example: 'By verification outcome' }
+        rows:
+          type: array
+          items:
+            type: object
+            properties:
+              label: { type: string, example: Verified }
+              count: { type: integer, example: 0 }
+
+    ReportPreview:
+      type: object
+      description: The stored extract the screen renders without loading the whole file.
+      required: [columns, rows, totals]
+      properties:
+        columns:
+          type: array
+          items: { $ref: '#/components/schemas/ReportColumn' }
+        rows:
+          type: array
+          description: 'The leading rows only — capped at 50. `row_count` on the report says how many there really are.'
+          items:
+            type: object
+            additionalProperties: true
+        totals:
+          type: object
+          description: Headline figures for the whole result, not for the preview rows.
+          additionalProperties: true
+        breakdowns:
+          type: array
+          description: |
+            Optional, and **absent on reports generated before breakdowns
+            existed** — the screen must render without it.
+          items: { $ref: '#/components/schemas/ReportBreakdown' }
+
+    ReportSummary:
+      type: object
+      description: A row of the Recent Reports history.
+      required: [id, type, label, status, date_from, date_to, filters, row_count, truncated, error, requested_by, created_at, started_at, completed_at, download_url]
+      properties:
+        id: { type: string, format: uuid }
+        type: { $ref: '#/components/schemas/ReportType' }
+        label:
+          type: string
+          description: The catalogue label, denormalised onto the row so the list needs no lookup table of its own.
+        status: { $ref: '#/components/schemas/ReportStatus' }
+        date_from: { type: string, format: date-time }
+        date_to: { type: string, format: date-time }
+        filters:
+          type: object
+          description: The filters this run was generated with, as sent.
+          additionalProperties: { type: string }
+        row_count:
+          type: [integer, 'null']
+          description: Rows in the full result. `null` until the run finishes.
+        truncated:
+          type: boolean
+          description: |
+            True when generation hit the 50,000-row ceiling. Unlike the
+            reconciliation caps, this one is **reported rather than silent** —
+            but the file is still a prefix, not the whole answer.
+        error:
+          type: [string, 'null']
+          description: Why generation failed. `null` otherwise.
+        requested_by:
+          type: object
+          properties:
+            admin_id: { type: [string, 'null'], format: uuid }
+            name: { type: [string, 'null'], example: Ada Lovelace }
+        created_at: { type: string, format: date-time }
+        started_at: { type: [string, 'null'], format: date-time }
+        completed_at: { type: [string, 'null'], format: date-time }
+        download_url:
+          type: [string, 'null']
+          description: 'Path to `GET /admin/reports/{id}/download`. `null` unless `status` is `ready`.'
+          example: /admin/reports/2f1c8b6a-9e4d-4b21-9c77-0a5f3d2e1b88/download
+
+    ReportDetail:
+      allOf:
+        - $ref: '#/components/schemas/ReportSummary'
+        - type: object
+          required: [preview]
+          properties:
+            preview:
+              oneOf:
+                - $ref: '#/components/schemas/ReportPreview'
+                - type: 'null'
+              description: '`null` until the run reaches `ready`.'
+
+    GenerateReportRequest:
+      type: object
+      required: [type, dateFrom, dateTo]
+      properties:
+        type: { $ref: '#/components/schemas/ReportType' }
+        dateFrom:
+          type: string
+          description: 'Inclusive lower bound, `YYYY-MM-DD` or full ISO 8601. A bare date is read as `00:00:00.000Z`. Must be on or before `dateTo`, unlike the transaction feeds where an inverted range is merely empty.'
+          example: '2026-09-01'
+        dateTo:
+          type: string
+          description: 'Inclusive upper bound. A bare date is widened to `23:59:59.999Z`.'
+          example: '2026-09-30'
+        filters:
+          type: object
+          description: |
+            Values for the chosen type's own filters, keyed as in its
+            `ReportFilterDef.key`. Defaults to `{}`. Validated against that
+            type's schema, so a bad key or value is a `400` naming
+            `filters.<key>` rather than a run that fails later.
+          additionalProperties: { type: string }
+          default: {}
 
     TransactionsPagination:
       type: object
@@ -2091,9 +2643,9 @@ components:
     ChatReportRow:
       type: object
       description: |
-        One row of the moderation queue — the same report as `ChatReportView`,
-        plus the conversation it belongs to, because the queue is not scoped to
-        one conversation.
+        One row of the moderation queue — the report as `ChatReportView` sees it,
+        plus the conversation it belongs to (the queue is not scoped to one
+        conversation) and its moderation state.
       properties:
         id: { type: string, format: uuid }
         conversation:
@@ -2105,8 +2657,87 @@ components:
           required: [id, type, title]
         reporter: { $ref: '#/components/schemas/ChatUserRef' }
         reason: { type: string, nullable: true }
+        status: { type: string, enum: [pending, reviewed, actioned, dismissed] }
+        message_count:
+          type: integer
+          description: |
+            How many messages the reporter disclosed. Written on the report when
+            it was filed rather than counted from the rows, so a message removed
+            later cannot quietly change what was consented to. The messages
+            themselves are on the detail route only.
+        blocked_contact:
+          type: boolean
+          description: Whether the reporter also blocked the other party when filing.
+        review:
+          nullable: true
+          description: |
+            `null` until someone has looked — the absence is the useful signal on
+            a queue, and an object full of nulls would not read as "untouched".
+          allOf:
+            - $ref: '#/components/schemas/ChatReportReview'
         created_at: { type: string, format: date-time }
-      required: [id, conversation, reporter, reason, created_at]
+      required: [id, conversation, reporter, reason, status, message_count, blocked_contact, review, created_at]
+
+    ChatReportReview:
+      type: object
+      description: A recorded moderation decision.
+      properties:
+        by:
+          nullable: true
+          description: The admin who recorded it, resolved to a name. `null` if that admin no longer exists.
+          allOf:
+            - $ref: '#/components/schemas/ChatUserRef'
+        at: { type: string, format: date-time, nullable: true }
+        note: { type: string, nullable: true }
+      required: [by, at, note]
+
+    ChatReportedMessage:
+      type: object
+      description: |
+        One message the reporter handed over, in the clear. The only message
+        content in this API, present because the reporter disclosed it from their
+        own device — not because the server can read the conversation.
+      properties:
+        id: { type: string, format: uuid }
+        message_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: The original message, when the client named one.
+        sender:
+          nullable: true
+          description: '`null` when the sender''s account is gone — a deleted account must not drop their message from the evidence.'
+          allOf:
+            - $ref: '#/components/schemas/ChatUserRef'
+        body: { type: string }
+        sent_at: { type: string, format: date-time, nullable: true }
+      required: [id, message_id, sender, body, sent_at]
+
+    ChatReportDetail:
+      allOf:
+        - $ref: '#/components/schemas/ChatReportRow'
+        - type: object
+          description: One report, with the evidence and the conversation's membership.
+          properties:
+            participants:
+              type: array
+              description: Everyone who has been in the reported conversation, joined-first, so the subject is identifiable.
+              items: { $ref: '#/components/schemas/ChatParticipant' }
+            messages:
+              type: array
+              description: Disclosed messages, in the order the reporter submitted them — not by `sent_at`.
+              items: { $ref: '#/components/schemas/ChatReportedMessage' }
+          required: [participants, messages]
+
+    ReviewChatReportRequest:
+      type: object
+      description: |
+        A moderation decision. `pending` is deliberately not offered — it is the
+        starting state, and setting it back would erase that someone had looked.
+      required: [status]
+      properties:
+        status: { type: string, enum: [reviewed, actioned, dismissed] }
+        note: { type: string, maxLength: 2000, example: 'Spam, account restricted.' }
 
     ChatConversationDetail:
       allOf:

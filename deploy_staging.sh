@@ -9,6 +9,13 @@ REMOTE_PORT="2222"
 SSH_KEY="$HOME/.ssh/id_rsa_inmotion_pey"
 REMOTE_PATH="/home/peytec5/beevia-management.peytechnologies.com"
 
+# Generated reports may inherit a private umask (0600). Only normalize
+# public HTML documents; leave authentication files and other secrets alone.
+for report in "${SOURCE_DIR}"/*.html; do
+    [ -f "$report" ] || continue
+    chmod 644 "$report" || exit 1
+done
+
 echo "Deploying ${SOURCE_DIR} to staging server..."
 
 rsync -avz --delete \

@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft — for review · created 2026-08-05 |
 | **Scope** | The HTTP surface of `beevia-admin-api`: what exists today, and what "Beevia Admin Dashboard.md" specifies that does not exist yet |
-| **Companion artifacts** | [`openapi.admin.yaml`](./openapi.admin.yaml) — implemented, 42 operations · [`openapi.admin.proposed.yaml`](./openapi.admin.proposed.yaml) — designed but unbuilt, 19 operations |
+| **Companion artifacts** | [`openapi.admin.yaml`](./openapi.admin.yaml) — implemented, **49 operations** · [`openapi.admin.proposed.yaml`](./openapi.admin.proposed.yaml) — designed but unbuilt, 18 operations |
 | **Sibling RFC** | [`api-rfc.md`](./api-rfc.md) — the consumer API |
 | **Sources** | `beevia-admin-api/src/**`, `beevia-db-schema/src/schema/*`, `Beevia Admin Dashboard.md` |
 | **Base path** | `/api/v1`, with every business route further prefixed `/admin` |
@@ -15,9 +15,9 @@
 
 ## 1. Summary
 
-`beevia-admin-api` is a **separate NestJS service** from the consumer API, sharing the database through the published `@drumbell-technologies/beevia-db-schema` package. It is **42 operations** across eleven controllers, backing the admin dashboard specified in `Beevia Admin Dashboard.md`.
+`beevia-admin-api` is a **separate NestJS service** from the consumer API, sharing the database through the published `@drumbell-technologies/beevia-db-schema` package. It is **49 operations** across twelve controllers, backing the admin dashboard specified in `Beevia Admin Dashboard.md`.
 
-**Three of the spec's eight modules are built, a fourth opened on 2026-09-02** when the cross-module activity feed merged (§5.4a), **and a fifth opened on 2026-09-04** when transaction oversight and reconciliation landed (§3.9, §3.10, §5.2) — the first money-oversight surface this service has ever had. Module 5 widened again on **2026-09-06** with the wallets screen (§3.12), leaving flagging as its only unbuilt operation. **On 2026-09-08 a sixth module opened, and it is the one this RFC has called blocking since 5 August**: the `/admin/chats` module merged to `main` (§3.13), implementing Module 4 as the metadata-only Option A of §5.1 — no message content, and the first reader `conversation_reports` has ever had. What exists is well-made: the permission model is more capable than the spec asked for, KYC values are masked by default with reveals logged, case notes are append-only, and account actions require a structured reason and land in a queryable history.
+**Three of the spec's eight modules are built, a fourth opened on 2026-09-02** when the cross-module activity feed merged (§5.4a), **and a fifth opened on 2026-09-04** when transaction oversight and reconciliation landed (§3.9, §3.10, §5.2) — the first money-oversight surface this service has ever had. Module 5 widened again on **2026-09-06** with the wallets screen (§3.12), leaving flagging as its only unbuilt operation. **On 2026-09-08 a sixth module opened, and it is the one this RFC has called blocking since 5 August**: the `/admin/chats` module merged to `main` (§3.13), implementing Module 4 as the metadata-only Option A of §5.1 — no message content, and the first reader `conversation_reports` has ever had. **On 2026-09-09/10 a seventh opened**: the Reports screen merged (§3.14), giving Module 7 its first exportable dataset and taking this service from 42 to 47 operations in two days. **On 2026-09-17 Module 4 became a workflow and the E2EE question was answered** (§3.13, §5.1b): report detail and a review decision shipped, taking the service to **49 operations**, and the consumer app was changed the same night so that a reporter can hand over the messages they chose to disclose — Option B of §5.1, which had waited since 5 August for exactly that consumer change. What exists is well-made: the permission model is more capable than the spec asked for, KYC values are masked by default with reveals logged, case notes are append-only, and account actions require a structured reason and land in a queryable history.
 
 Against that, three findings need attention before this service is exposed to real staff:
 
@@ -25,7 +25,7 @@ Against that, three findings need attention before this service is exposed to re
 |---|---|---|
 | 1 | **No 2FA**, despite the spec making it mandatory. Email + password is the only barrier to an account that can read BVNs and suspend users. Also no lockout and no rate limiting on login. | **High** |
 | 2 | **Guards are per-controller, not global.** A new controller that omits `@UseGuards(...)` is completely unauthenticated — not merely under-authorised. | **High** |
-| 3 | **Module 4 (Trust & Safety) cannot be built as specified.** It asks the moderation queue to show "reported messages"; chat is end-to-end encrypted and the server holds no key. **Resolved in code on 2026-09-08** — Option A (metadata-only) shipped (§3.13, §5.1a). The product decision it implies is still recorded nowhere but the code. | ~~Blocking~~ → **Decided in code, unrecorded** |
+| 3 | **Module 4 (Trust & Safety) cannot be built as specified.** It asks the moderation queue to show "reported messages"; chat is end-to-end encrypted and the server holds no key. **Resolved in code across two dates** — Option A (metadata-only) on 2026-09-08, then Option B (reporter-disclosed messages) on both sides on 2026-09-17 (§3.13, §5.1a, §5.1b). The server still decrypts nothing. **The product decision is still recorded nowhere but the code**, and it is now a two-part decision rather than one. | ~~Blocking~~ → **Decided in code, still unrecorded** |
 
 ### Module coverage
 
@@ -34,10 +34,10 @@ Against that, three findings need attention before this service is exposed to re
 | 1 | Authentication & Access Control | 🟡 **Partial** — login and invite work; **no 2FA** | 2 |
 | 2 | Admin Account Management | ✅ **Built** — re-invite added 2026-09-08 | 4 |
 | 3 | User Management & Support Tools | 🟡 **Partial** — no assisted PIN reset | 18 |
-| 4 | Trust & Safety / Content Moderation | 🟡 **Built as Option A, merged 2026-09-08** (§3.13); not buildable *as written*. A queue, not yet a workflow — no status, no resolve | 4 |
+| 4 | Trust & Safety / Content Moderation | 🟡 **Option A merged 2026-09-08, Option B and the workflow 2026-09-17** (§3.13, §5.1b); not buildable *as written*. Now a workable queue — status, filter, detail, review decision — **and, since 2026-09-21, a dashboard that calls it** (`beevia-admin` `c1b0aeb`, §5.1b). Still no enforcement link and no prior-report history | **6** |
 | 5 | Transaction & Wallet Oversight | 🟡 **Partial** — feeds and reconciliation shipped 2026-09-04, wallets 2026-09-06; no flagging, no partner-balance comparison | 6 |
 | 6 | Country & Feature Configuration | ⛔ **Not built** | 0 |
-| 7 | Analytics & Reporting Dashboard | 🟡 **Partial** — activity feed + the landing-screen summary (2026-09-06); no time-series analytics. A report-generation feature sits unmerged on `feat/admin-reports` (§5.4b) | 2 |
+| 7 | Analytics & Reporting Dashboard | 🟡 **Partial** — activity feed, the landing-screen summary (2026-09-06) and **the Reports screen, merged 2026-09-09/10** (§3.14). Still no time-series analytics: four exportable datasets, no trend anywhere | **7** |
 | 8 | Account Deletion Requests | ⛔ **Not built** | 0 |
 
 Modules 3 and 2 being the built ones is the right call — user search and support tooling is what a support agent needs on day one, and admin account management is its prerequisite.
@@ -271,12 +271,14 @@ Four contract facts worth stating:
 
 **What it does not do is the reason it was proposed.** The retired proposal asked for the ledger balance shown *alongside the partner-reported balance*, with an `in_sync` flag, so a per-wallet mismatch was visible without a reconciliation run. The shipped row carries the ledger balance only. That gap is now the substantive one in Module 5 — see §6.3.
 
-### 3.13 Chats (4) — spec Module 4, shipped 2026-09-08
+### 3.13 Chats (6) — spec Module 4, shipped 2026-09-08, completed as a workflow 2026-09-17
 
 | Method | Path | Permission | Notes |
 |---|---|---|---|
 | GET | `/admin/chats` | `chats:view` | Conversations list; filters `type`, `reportedOnly`, `search` |
-| GET | `/admin/chats/reports` | `chats:view` | The moderation queue — reporter, reason, conversation, newest first |
+| GET | `/admin/chats/reports` | `chats:view` | The moderation queue — reporter, reason, conversation, newest first; `status` filter and moderation state added 2026-09-17 |
+| GET | `/admin/chats/reports/{reportId}` | `chats:view` | **Shipped 2026-09-17.** One report: reporter, participants, reason, review decision, and the messages the reporter disclosed |
+| PATCH | `/admin/chats/reports/{reportId}` | `chats:edit` | **Shipped 2026-09-17.** Records `reviewed` / `actioned` / `dismissed` with an optional note |
 | GET | `/admin/chats/users/{userId}` | `chats:view` | A user's conversations plus both directions of their block graph |
 | GET | `/admin/chats/{conversationId}` | `chats:view` | Conversation detail — metadata, participants, its reports |
 
@@ -286,16 +288,47 @@ Four contract facts worth stating:
 
 **`GET /admin/chats/reports` is the first reader `conversation_reports` has ever had.** §5.1 has noted since 5 August that the consumer app's `POST /conversations/{id}/report` writes to that table and nothing reads it, so reports accumulated unreviewed. That is now false, which is the single most consequential line in this section.
 
-Four contract facts:
+Six contract facts:
 
-- **It is a queue, not a workflow.** There is no status column, no assignment, no resolve action and no filter for open items — the endpoint returns *every report ever filed*, forever, newest first. A moderator cannot mark one handled, and tomorrow's queue is today's queue plus new arrivals. This is the substantive gap in Module 4 and it is tracked in §6.3.
-- **Acting on a report is disconnected from the report.** The account actions exist (`suspend`, `restrict`, §3.4) but nothing links a report to the action taken on it, so "what did we do about this?" is unanswerable from the API. The `admin_activity` feed records the suspension without the reason that prompted it.
+- ~~**It is a queue, not a workflow.**~~ **Closed 2026-09-17.** Reports now carry a `status` (`pending` / `reviewed` / `actioned` / `dismissed`), the list filters on it, and `PATCH /admin/chats/reports/{reportId}` records a decision with a note. Two details are better than the proposal asked for: `pending` cannot be set back, so "somebody already looked" is not erasable; and `review` is `null` rather than an object of nulls until someone has looked, which is the difference a queue actually reads on. Re-reviewing is allowed on purpose and both decisions stay in the activity feed. The feed entry targets the *report*, not the reporter — pointing it at the person who filed would read as an action taken against them.
+- **Acting on a report is still disconnected from the report** — the one part of the gap 2026-09-17 did not close. The account actions exist (`suspend`, `restrict`, §3.4) but nothing links a report to the action taken on it, so `actioned` asserts that something was done without recording what. "What did we do about this?" remains unanswerable from the API, and the `admin_activity` feed still records the suspension without the report that prompted it. Tracked in §6.3; the proposed `POST /admin/chats/reports/{reportId}/resolve` is kept in `openapi.admin.proposed.yaml` for this half alone.
+- **`message_count` is stored, not derived, and that is the right call.** The count is written on the report when it is filed rather than counted from the disclosed rows, so deleting a message later cannot quietly change what the reporter consented to hand over. The reverse — a count that drifts down as evidence disappears — would be an audit trail that edits itself.
+- **The only message content in the admin API is on the detail route, and the reporter put it there.** `GET /admin/chats/reports/{reportId}` returns `messages`: plaintext the reporter could already read on their own device and chose to disclose. The server decrypts nothing, and nothing is captured from a conversation nobody reported. Ordering is the reporter's submitted order, not `sent_at`, because `sent_at` is optional and several messages can share one — so it cannot be trusted to order an exchange a moderator has to read. A sender whose account is since gone comes back as `null` rather than dropping their message out of the evidence.
 - **The counters are correlated sub-selects, one per row.** `participant_count` excludes members who left, `message_count` excludes soft-deleted messages, `report_count` counts everything. Three sub-selects × page size, plus a separate `count(*)`; fine at current volume, and the first thing to watch when the conversations table grows, because the list has no index-friendly ordering path — it sorts on `last_message_at desc nulls last`.
 - **`search` scans participants via an `exists` sub-query** matching six user columns with `ilike '%term%'`. Leading-wildcard matching cannot use a b-tree index; this is the same pattern as the users list and will need the same attention at the same time.
 
-**Route ordering is correct and load-bearing.** `@Get('reports')` is declared before `@Get(':conversationId')`, so `/admin/chats/reports` resolves to the queue. Reordering those two methods silently turns the moderation queue into a 404 for a conversation named `reports` — worth a comment in the controller more than a note here.
+**Route ordering is correct and load-bearing.** `@Get('reports')` and both `reports/:reportId` handlers are declared before `@Get('users/:userId')` and `@Get(':conversationId')`, so `/admin/chats/reports` resolves to the queue and `/admin/chats/reports/{id}` to a report rather than to a conversation. The 2026-09-17 additions were inserted in the right place, which is worth recording because the next person adding a route here has two ordering constraints to preserve rather than one. Reordering those two methods silently turns the moderation queue into a 404 for a conversation named `reports` — worth a comment in the controller more than a note here.
 
 **The block graph is the quietly good part.** `GET /admin/chats/users/{userId}` returns both who the user blocked and who blocked them. A harassment complaint reads very differently depending on which direction the blocks point, and neither direction is visible anywhere else in the admin API.
+
+### 3.14 Reports (5) — spec Module 7, shipped 2026-09-09/10
+
+| Method | Path | Permission | Notes |
+|---|---|---|---|
+| GET | `/admin/reports/types` | `reports:view` | The catalogue — four types, each carrying its own columns and filter options |
+| POST | `/admin/reports` | `reports:create` | Records the request and returns `queued`; generation is asynchronous |
+| GET | `/admin/reports` | `reports:view` | Run history, newest first. **The team's, not the caller's** — `mine=true` narrows it |
+| GET | `/admin/reports/{id}` | `reports:view` | Status, then the preview: columns, first 50 rows, totals, breakdowns |
+| GET | `/admin/reports/{id}/download` | `reports:**export**` | The stored CSV, byte for byte. A *different* permission from viewing it |
+
+Merged as `434d5e6` (2026-09-09 23:02 UTC), then extended twice on 2026-09-10 — `da01324` turned the admin-actions report into a real audit trail, `4f3df97` made the signups report answer verification outcomes. Roughly 2,400 lines across the three, each with its own `.spec.ts` and each adding its Postman folder in the same commit.
+
+**A "report" here is an exported dataset, not a complaint about a user.** That second meaning already lives at `GET /admin/chats/reports` (§3.13). The two collided at `/admin/reports` and this one took the path — see §5.4b.
+
+Four report types ship: `user_signups`, `transactions`, `kyc_verifications`, `admin_activity`.
+
+**The catalogue drives the form.** `GET /admin/reports/types` returns each type's columns and each filter's allowed options, so the parameter screen is rendered from the response rather than hard-coded per report. Adding a report type is a server change with no client release — the best structural decision in the module, and the reason the three commits could each add a type without touching the shell.
+
+Four contract facts worth carrying into the client:
+
+- **Generation is in-process, not queued.** `POST` returns immediately and the run is a detached `void this.run(...)` in the same Node process. There is no worker and no job table beyond the report row itself. It is handled honestly at the edges — a restart sweeps every `queued`/`generating` row to `failed` at boot with a message telling the operator to re-run it, rather than leaving a spinner that never resolves — but it does mean several concurrent 50,000-row reports compete with live request handling in one process.
+- **Truncation is reported, not silent.** The row cap is 50,000 and `truncated` says when it was hit. Worth naming explicitly because it is the **opposite** of the reconciliation caps (§6.3), where exceeding 500 payouts / 1,000 ledger rows produces wrong output with no signal. Same team, same service, two weeks apart — the newer pattern is the right one and reconciliation should adopt it.
+- **The CSV is stored, and never recomputed.** `content` is a column on `admin_reports`, so a report downloaded next month is byte-for-byte the file generated today even if the underlying rows have moved. That is the correct choice for an audit artifact. It also means the table grows without bound: a 50,000-row CSV per run, no retention policy, no size cap on the column. Nothing to fix today; something to have decided before someone schedules a monthly export.
+- **`409 report_not_ready` covers two opposite situations** — still generating (retry) and failed (regenerate) — distinguished only by the message text. This is the third operation in this service to overload one status code that way, after `409 admin_not_invited` (§3.2). `status` on the report is the reliable discriminator; the client should branch on it rather than on the error code.
+
+**One access-control gap, and it is the finding in this section.** The output of a report is scoped to what the *requesting* admin may see — `viewableModules` is resolved at request time so a mid-run role change cannot widen it. That scoping is applied at generation and **never re-applied at read.** `GET /admin/reports/{id}` and `/download` require only `reports:view` / `reports:export`; neither checks who requested the report. So an admin whose role sees one module can open, preview and download an `admin_activity` report generated by an admin who sees all of them, and read the rows their own role would have excluded. The history is team-wide by design (`mine=false` is the default), so those reports are not merely reachable — they are listed. See §6.3.
+
+Two smaller notes. The `admin_activity` report is the only one of the four that is module-scoped at all; the other three are gated by the `reports` permission alone, which is defensible but should be a decision rather than an omission. And `4f3df97` folded the Users list's verification rule into one place — the SQL filter had a hardcoded `5` while the TypeScript counted off `KYC_CHECK_ORDER`; both now count off `KYC_CHECK_ORDER`. No behaviour changes today, because there are five checks. It is a latent-drift fix, and it is the kind that is invisible until a sixth check is added.
 
 ---
 
@@ -358,7 +391,7 @@ The last one matters more here. **The admin API's Swagger UI is an index of ever
 
 ## 5. The unbuilt modules
 
-All 19 proposed operations are in [`openapi.admin.proposed.yaml`](./openapi.admin.proposed.yaml), and all 19 are designs — nothing in that file describes code that exists. Two left it on **2026-09-04**, when the per-user statement and reconciliation shipped (§5.2); one left it on **2026-09-02**, when the activity feed merged (§5.4a); one left it on **2026-09-06**, when the wallets screen shipped (§3.12); and one left it on **2026-09-08**, when the moderation queue shipped as `GET /admin/chats/reports` (§3.13).
+All 18 proposed operations are in [`openapi.admin.proposed.yaml`](./openapi.admin.proposed.yaml), and all 18 are designs — nothing in that file describes code that exists. Two left it on **2026-09-04**, when the per-user statement and reconciliation shipped (§5.2); one left it on **2026-09-02**, when the activity feed merged (§5.4a); one left it on **2026-09-06**, when the wallets screen shipped (§3.12); one left it on **2026-09-08**, when the moderation queue shipped as `GET /admin/chats/reports` (§3.13); and one left it on **2026-09-17**, when report detail shipped at the proposed path `GET /admin/chats/reports/{reportId}` (§5.1b).
 
 ### 5.1 Module 4 cannot be built as specified — needs a product decision
 
@@ -371,10 +404,10 @@ No endpoint can satisfy this requirement. There are three honest options:
 | Option | What it means | Cost |
 |---|---|---|
 | **A. Metadata-only moderation** *(proposed)* | The queue shows who reported whom, when, the reporter's free-text reason, both parties' report history, and conversation metadata. Moderators act on patterns and reporter accounts, not content. | Weaker signal; some reports undecidable |
-| **B. Reporter-attached excerpts** *(proposed, needs consumer change)* | At report time the consumer app offers to attach specific messages, decrypted **on the reporter's device** and uploaded as plaintext with explicit consent. | Requires a consumer-side change; only the reporter's view, which they could fabricate |
+| **B. Reporter-attached excerpts** ✅ **BUILT 2026-09-17** | At report time the consumer app offers to attach specific messages, decrypted **on the reporter's device** and uploaded as plaintext with explicit consent. | Requires a consumer-side change; only the reporter's view, which they could fabricate |
 | **C. Break E2EE** | Escrow keys or server-side plaintext copies. | **Destroys the product's core claim. Not recommended.** |
 
-The proposed endpoints implement **A**, with a `reporter_excerpts` field ready for **B**. `ReportDetail` has no field for server-decrypted content, deliberately.
+The proposed endpoints implemented **A**, with a `reporter_excerpts` field ready for **B**. Both have now shipped — A on 2026-09-08, B on 2026-09-17 — and neither has a field for server-decrypted content. **C was never built and should not be.**
 
 ~~Note the data already accumulates: `conversation_reports` is populated by the consumer app's `POST /conversations/{id}/report`, and **nothing reads it**. Reports are piling up unreviewed today.~~ **Closed 2026-09-08** — `GET /admin/chats/reports` reads it (§3.13). The reports that accumulated between the consumer app shipping reporting and that merge are all still in the queue, undifferentiated from new ones, because the queue has no status.
 
@@ -384,7 +417,24 @@ The proposed endpoints implement **A**, with a `reporter_excerpts` field ready f
 
 **The product decision is still recorded nowhere but the code.** §5.1 laid out three options and asked for a decision; Option A was implemented, merged and is now the shipped behaviour, and no document anywhere says it was chosen. That matters more now than it did as a branch: the spec module says "reported messages", the API says metadata-only, and the gap between them is currently reconciled only by a controller docstring. Someone should write down that Option A is the answer, so that the next person reading `Beevia Admin Dashboard.md` does not file the difference as a bug.
 
-**What was built is the queue, not the workflow.** Option A as proposed had a `status` filter (open / reviewing / actioned / dismissed) and a `resolve` action; neither shipped. §6.3 carries this as a gap rather than §5.1 carrying it as a blocker, because the unbuildable-as-specified problem is genuinely solved — what remains is ordinary unfinished scope.
+**What was built is the queue, not the workflow.** Option A as proposed had a `status` filter (open / reviewing / actioned / dismissed) and a `resolve` action; neither shipped. §6.3 carries this as a gap rather than §5.1 carrying it as a blocker, because the unbuildable-as-specified problem is genuinely solved — what remains is ordinary unfinished scope. **Closed 2026-09-17 — see §5.1b.**
+
+#### 5.1b Option B was built too, on both sides, on 2026-09-17
+
+**The decision this RFC asked for on 5 August is now fully answered in code: A, then B, never C.** In one night the consumer API learned to accept disclosed messages and the admin API learned to show them.
+
+Consumer side (`beevia-api`): `POST /conversations/{id}/report` and the `conversation.report` socket command now take `messages` (up to 20) and `blockContact`. The messages are plaintext the reporter could already read on their own device. Report, evidence and block commit in one transaction — a block that outlived a failed report would leave someone silently muted with nothing written down to explain why. `blockContact` on a group is refused (`block_requires_direct`) rather than guessed at, because there is no single contact to block and silently ignoring the toggle would leave the reporter believing they had blocked someone they had not.
+
+Admin side (`beevia-admin-api`): `GET /admin/chats/reports/{reportId}` returns those messages as `messages`, at the path this file proposed, alongside the conversation's full participant list.
+
+**This is not a weakening of E2EE, and the shape of the implementation is what makes that true rather than the claim.** Nothing is decrypted server-side; nothing is captured from a conversation nobody reported; the disclosure is per-report, bounded at 20, ordered as the reporter submitted it, and its count is frozen at filing time so later deletion cannot rewrite what was consented to. The PRD's §1.5 and §2.2 commitments are intact: the server still cannot read a conversation, and Beevia still is not policing content — it is showing a moderator what a user handed over.
+
+**Two things still need writing down, and one of them is not a documentation task.**
+
+1. **The decision is still recorded nowhere but the code** — now doubly so, because it is a two-part decision taken two weeks apart. `Beevia Admin Dashboard.md` still says "reported messages" without saying whose or how they got there. Someone should write the two sentences that reconcile the module spec with A-then-B, or the next reader files the difference as a bug.
+2. **The consumer *client* has not shipped its half.** As of 2026-09-18 the Flutter app still posts `{"reason": reason}` and nothing else — no `messages`, no `blockContact`, no count picker. Until it does, every report reaching the queue carries `message_count: 0` and an empty `messages` array, so the admin detail route is correct and empty. Option B is built on the server and absent on the device that is supposed to originate the consent.
+
+**Update 2026-09-22 — the dashboard half landed; the device half still has not.** `beevia-admin` `c1b0aeb` (21 Sep) added the Module 4 screens — conversations list and detail, a per-user chat activity view, the report queue, report detail with a `reported-messages` panel, and a review form — and all six chat operations are called through `liveClient`, i.e. against the real service rather than fixtures. The same day `beevia-admin-api` `b4c545e` fixed `GET /admin/chats` and `GET /admin/chats/{conversationId}` reporting 0 participants, 0 messages and 0 reports for every conversation (a correlated subquery bound to its own `id`; no contract change). So the admin side is now end-to-end, and the gap in point 2 is the only thing between Option B and a moderator actually seeing evidence: re-checked on 2026-09-22, `chat_service.dart:258` at `beevia-mobile` `origin/main` still posts `{"reason": reason}`, and no mobile commit has landed since 15 September. One client detail worth removing once confirmed: `useReportDetail` carries a `TODO(backend)` fallback that unwraps a list envelope from the detail route, written against the Postman sample that `e128cc6` has since corrected — the service has always returned a bare report there.
 
 ### 5.2 Module 5 — Transaction & Wallet Oversight (1 proposed, 6 shipped 2026-09-04 → 09-06)
 
@@ -427,25 +477,35 @@ Two notes for the record, because this is the first proposal this pipeline has w
 
 Not resolved by this: the per-user audit trail the admin console calls at `GET /users/{id}/audit-trail` (`beevia-admin/src/features/users/api.ts`), which still matches no operation in either spec and still lacks the `/admin` prefix every other admin route carries. The activity feed is a global stream, not a per-user one. It does, however, add a third way to close it — filtering `admin_activity` on `target_type = 'user'` would make the trail a query parameter on the feed rather than a fourth endpoint.
 
-### 5.4b A report-generation feature is unmerged on `feat/admin-reports` — and it collides with Module 4's proposed paths
+### 5.4b The `/admin/reports` collision — predicted 2026-09-09, landed 2026-09-09, resolved 2026-09-10
 
-**Found 2026-09-09.** `origin/feat/admin-reports` (pushed 2026-09-08, ~1,700 lines) carries a complete Reports module: a catalogue of report types, asynchronous CSV generation, a run history and a download route, under a new `reports` permission module with an `admin_reports` table already released in `beevia-db-schema` v0.0.28/29.
+**This section was written on 2026-09-09 as a warning about an unmerged branch. The branch merged the same evening**, as `434d5e6` at 23:02 UTC, so it is rewritten here as a record of what happened and what was done about it.
 
-| Method | Path (unmerged) | Permission |
+The feature is described as built in §3.14. What matters here is the path.
+
+**The collision.** `/admin/reports` was claimed by two unrelated resources:
+
+| | Path | Resource |
 |---|---|---|
-| GET | `/admin/reports/types` | `reports:view` |
-| POST | `/admin/reports` | `reports:create` |
-| GET | `/admin/reports` | `reports:view` |
-| GET | `/admin/reports/{id}` | `reports:view` |
-| GET | `/admin/reports/{id}/download` | `reports:export` |
+| **Shipped** (§3.14) | `GET /admin/reports/{id}` | A **generated CSV dataset** |
+| **Proposed** (Module 4) | `GET /admin/reports/{reportId}`, `POST …/resolve` | A **moderation report** — a complaint about a user |
 
-**It is not in `openapi.admin.yaml` and should not be until it merges** — the implemented spec documents `main`. It is recorded here because of what it does to the proposed file.
+The word "report" means both things, and this API needs both. They cannot share a path.
 
-**The collision.** Module 4's two remaining proposed operations are `GET /admin/reports/{reportId}` and `POST /admin/reports/{reportId}/resolve` — a *moderation* report. This branch's `GET /admin/reports/{id}` returns a *generated CSV report*. Same path, unrelated resources, and the two cannot coexist. The generation feature has a board behind it (project "Beevia Admin Dashboard", sprint `0901-admin`, three of its four stories in flight) while Module 4's workflow half has nothing, so in practice the branch wins by default.
+**Resolution, 2026-09-10.** Module 4's two workflow operations are renamed in `openapi.admin.proposed.yaml` to hang off the path its shipped queue already occupies:
 
-**The resolution is cheap if it is made before the merge and expensive after.** Module 4's workflow operations should hang off the path its shipped queue already occupies — `/admin/chats/reports/{reportId}` and `/admin/chats/reports/{reportId}/resolve` — which is also where a reader would look for them now that §3.13 exists. The proposed file carries this as a comment above both operations rather than a rename, because renaming a proposal on the strength of an unmerged branch is guessing; the note is the decision point.
+```
+/admin/reports/{reportId}          ->  /admin/chats/reports/{reportId}
+/admin/reports/{reportId}/resolve  ->  /admin/chats/reports/{reportId}/resolve
+```
 
-Worth noting separately: this feature is the answer to "Analytics & Reporting" that Module 7 has been waiting for, and it arrived as exports rather than as the five time-series operations §5.4 proposes. That is a reasonable substitution — an operator who can export a filtered CSV can answer more questions than five fixed charts — but §5.4's proposals should be re-read against it when it merges, not before.
+Their schemas are renamed to match — `Report` → `ChatReport`, `ReportDetail` → `ChatReportDetail`, `ResolveReportRequest` → `ResolveChatReportRequest`, `ReportId` → `ChatReportId` — because the same ambiguity was about to reappear in the schema namespace, where the audit caught it as a cross-file divergence rather than as a naming problem. Nothing else changed: same two operations, same permissions, same shapes, proposed total unmoved at 19.
+
+**Why the rename waited a day, and what that cost.** The 2026-09-09 edition deliberately left the proposal at its original path and wrote the collision as a comment instead, on the grounds that renaming a proposal on the strength of an *unmerged* branch is guessing. That reasoning was right and the outcome was still the worse one: the branch merged roughly seven hours after the note was written, and the recommendation to "decide `/admin/reports` before `feat/admin-reports` merges" had no time to be acted on. The cost was small — nothing consumed either path, so this is a spec edit rather than a breaking change — but it is a clean example of a real pattern: **a proposal and an unmerged branch racing for a name is decided by whoever merges, not by whoever is right**, and the merge can happen the same day the conflict is noticed.
+
+The generalisable version is in `suggestions.md` §5.6: `/admin/reports` was never a good name for either resource, and a CI check comparing extracted routes against both spec files would have flagged the overlap when the branch was pushed rather than when a human read it.
+
+Worth noting separately: this feature is the answer to "Analytics & Reporting" that Module 7 has been waiting for, and it arrived as **exports rather than as the five time-series operations §5.4 proposes**. That is a reasonable substitution — an operator who can export a filtered CSV can answer more questions than five fixed charts can — but it is a substitution, not a completion: there is still no trend, no time series and no chart-shaped endpoint anywhere in this service. §5.4 should now be re-read as "what the CSVs do not answer" rather than as a standing proposal.
 
 ### 5.5 Module 8 — Account Deletion Requests (3 proposed)
 
@@ -480,24 +540,28 @@ Module 8. Small, and unblocks a compliance KPI that is currently unmeasurable.
 **Phase 4 — oversight and analytics.**
 Modules 5 and 7. ~~Module 5's reconciliation depends on a partner statement API that does not exist yet; scope that separately.~~ **Overtaken on 2026-09-04**: half of Module 5 shipped, out of order, and the dependency turned out to be a day's work (§5.2). What remains here is Module 7's analytics queries and Module 5's wallet detail and flagging.
 
-**Blocked on a decision — Module 4.**
-Do not start until §5.1 is resolved. Building the queue on metadata (option A) is a day's work; building it on reporter-attached excerpts (option B) requires a consumer-app change and a consent flow. Choosing C would trade the product's core claim for a moderation feature and should be an explicit, documented decision if it is ever made.
+~~**Blocked on a decision — Module 4.**~~ **Unblocked and largely built.** Option A shipped 2026-09-08, Option B and the review workflow on 2026-09-17 (§5.1a, §5.1b); C was never built and should not be. What remains in this module is not a decision but two pieces of scope: the enforcement link (§6.3) and the client half of the disclosure flow, which is a `beevia-mobile` task rather than an admin-API one.
 
-### 6.3 What the shipped modules went without — five gaps for the dashboard
+### 6.3 What the shipped modules went without — six gaps for the dashboard
 
-The ten operations that landed between 2026-09-04 and 2026-09-08 are narrower than their proposals in five ways. None is a defect; all five are things a dashboard build will hit on day one. **One of the four listed here on 2026-09-08 has since been fixed**, and is kept with its resolution rather than deleted, so the list reads as a record rather than a snapshot.
+The seventeen operations that landed between 2026-09-04 and 2026-09-17 are narrower than their proposals in six ways. Five are scope gaps a dashboard build will hit on day one; **the sixth is an access-control gap and is the only entry here that is a defect rather than a narrowing.** Resolved entries are kept with their resolution rather than deleted, so the list reads as a record rather than a snapshot.
 
 | Gap | Proposed | Shipped | Consequence |
 |---|---|---|---|
 | ~~**Statement filters**~~ **— mostly closed 2026-09-08** | `direction`, `from`, `to` on the per-user statement | `dateFrom` / `dateTo` on **both** feeds, bounding the count as well as the rows; `direction` still missing | The date half is done and done carefully: a bare `dateTo` widens to `23:59:59.999Z` so picking a day includes that day, an impossible date is a `400` rather than a filter that silently matches nothing, and `pagination.total` under a filter is the total *for that range*. What remains is `direction` — "show me only money out" is still a client-side filter over a paged feed. |
 | **Reconciliation period** | `from` / `to` / `currency`, required | None; the run is unbounded and NGN-only | Reconciliation always covers the account's whole history, capped at 500 payouts and 1000 ledger rows. On an active account those caps bind silently, and movements older than the window fall into the buckets as false discrepancies. |
-| **Pagination shape** | `meta: PaginationMeta` | `data.pagination`, with `page` where `PaginationMeta` says `current_page` | This service now has **three** pagination conventions — `meta`/`PaginationMeta` on every earlier list, cursor `before`/`next_cursor` on the activity feed, and `data.pagination` on the transaction feeds *and now the wallets list*. A shared client-side pager cannot cover all three, and the third has stopped being a one-off. |
+| **Pagination shape** | `meta: PaginationMeta` | `data.pagination`, with `page` where `PaginationMeta` says `current_page` | This service has **four** pagination conventions, not the three this row claimed until 2026-09-22 — `meta`/`PaginationMeta` on roles, admin accounts and reports; cursor `before`/`next_cursor` on the activity feed; `data.pagination` on the transaction feeds, wallets, chats and the report queue; **and a fourth on `GET /admin/users`, which puts `items`, `page`, `limit`, `total` and `total_pages` flat on `data` with no `meta` at all.** The fourth was found by the backend's own Postman pass on 2026-09-21 (`e128cc6`), which probed each list route on a running service; the spec had described users as `data[]` + `meta` since 4 August and was corrected on 2026-09-22. A shared client-side pager cannot cover all four. |
 | **Per-wallet partner balance** | `partner_balance` and `in_sync` beside the ledger balance on every wallet row (§5.2) | Ledger balance only | A per-wallet mismatch is invisible in the Wallets screen. Answering "is this one wallet in sync" means leaving the screen for `GET /admin/reconciliation/users/{userId}`, which runs a full unbounded comparison for the whole account. |
-| **Module 4 is a queue without a workflow** *(new 2026-09-09)* | `status` (open/reviewing/actioned/dismissed), the reported user's prior report history, and a `resolve` action closing the report with an outcome | `GET /admin/chats/reports` returns every report ever filed, newest first, with no status and no way to action one | **The queue cannot be worked off.** A moderator who handles a report has no way to say so, so tomorrow's queue is today's plus arrivals and the backlog only grows. Nothing links a report to the suspension it caused, so "what did we do about this?" is unanswerable from the API. And because there is no per-user report history on the row, a reviewer cannot tell a first complaint from a pattern — which is the *only* signal metadata-only moderation has (§5.1). |
+| ~~**Module 4 is a queue without a workflow**~~ *(new 2026-09-09)* **— mostly closed 2026-09-17** | `status` (open/reviewing/actioned/dismissed), the reported user's prior report history, and a `resolve` action closing the report with an outcome | `status` (`pending`/`reviewed`/`actioned`/`dismissed`) with a list filter, a detail route, and `PATCH .../{reportId}` recording a decision + note. **Still missing: prior-report history, and any link between the decision and an account action** | **The queue can now be worked off** — two of the three pieces shipped, and the status enum is better chosen than the proposal's (`pending` cannot be restored, so "someone looked" is not erasable). Two consequences remain. **`actioned` says something was done without saying what**: suspension is still an unlinked call to `POST /admin/users/{id}/suspend`, so "what did we do about this?" is answerable only as far as "something". And **a first complaint still reads identically to a tenth** — no per-party report history on the row or the detail view, which §5.1 argues is the primary signal this kind of moderation has. |
+| **A generated report is readable by any admin with `reports:view`** *(new 2026-09-10 — a defect, not a narrowing)* | n/a — the module was never proposed here, so nothing specified its read model | Output is scoped to the **requesting** admin's viewable modules at generation time. `GET /admin/reports/{id}` and `/download` check only `reports:view` / `reports:export`; neither re-applies that scoping, and neither checks who requested the report | **A narrow role can read a broad role's rows.** An admin who may view one module can open, preview and download an `admin_activity` report generated by an admin who views all of them. The history is team-wide by default (`mine=false`), so those reports are not merely reachable — they are listed, with the requester's name beside them. The stored CSV makes it durable: the artifact keeps the wider scope even after the generating admin's role is narrowed. |
 
-The pagination gap is the one worth fixing while it is cheap, and it has now spread from two endpoints to six — the chats list and the report queue both use `data.pagination` too — so it gets cheaper to fix only in the sense that it will never be cheaper than today. The reconciliation caps should become a board item rather than a surprise, because exceeding them produces *wrong output* rather than a truncation the caller can see. The partner-balance gap is the one that most undercuts the screen it shipped for: a wallets list whose whole purpose is custody oversight cannot show whether custody agrees with the partner.
+The pagination gap is the one worth fixing while it is cheap, and it has now spread from two endpoints to six (seven, counting the users list's flat shape, which predates all of them) — the chats list and the report queue both use `data.pagination` too — so it gets cheaper to fix only in the sense that it will never be cheaper than today. (The Reports history is the exception and the right one: it returns `meta: PaginationMeta`, the majority convention.) The reconciliation caps should become a board item rather than a surprise, because exceeding them produces *wrong output* rather than a truncation the caller can see — and §3.14 shows the same team getting this right two weeks later, with a `truncated` flag on every report row.
 
-**The fifth is the one to act on first**, because it is the only one where the shipped code changes a *policy* position. Module 4 was blocked on a product decision for a month; it is now unblocked and half-built, and the half that is missing is the half that makes it a moderation tool rather than a list. The reported-user history in particular is not scope creep — §5.1 argues that patterns across reports are the entire signal available to metadata-only moderation, so a queue that does not surface them delivers the option's costs without its benefit.
+**The sixth is the one to act on first**, and it displaces Module 4's workflow gap from that position. It is the only entry in this table where the shipped behaviour is wrong rather than merely narrow, it is in the newest code, and it is cheapest to fix now — before any admin has generated a report worth reading. Two options, either sufficient: store the generating admin's `viewableModules` on the row and re-filter the preview and the CSV at read time, or scope reads to reports whose requester's role is a subset of the reader's. The first is more honest about what the artifact *is*; the second is fewer lines.
+
+**Module 4's remaining gap moves from second to third**, because 2026-09-17 closed the part that made it urgent. The queue is workable: a moderator can filter to `pending`, open a report, read what the reporter disclosed and record a decision. What is left is narrower and should be sized accordingly — the prior-report counters (a query, not a design question) and the enforcement link (a design question: whether `actioned` should *perform* the account action or merely reference one). The counters are the cheaper half and the more valuable: §5.1 argues that patterns across reports are the primary signal this kind of moderation has, and a reviewer who cannot tell a first complaint from a tenth is reading each report as though it were the only one.
+
+**A new second, from 2026-09-17, and it is not in the table above because it is not an admin-API gap.** Option B is built on the server and absent on the client: the Flutter app still posts a bare `reason`, so every report reaching this queue has `message_count: 0` and no `messages`. The most capable part of the module — the evidence a moderator reads — has no producer. Whoever picks up Module 4's dashboard screen should know that the field will be empty against today's app, and whoever owns the client should know that the server has been waiting for it since 2026-09-17.
 
 ---
 

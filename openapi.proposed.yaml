@@ -528,42 +528,38 @@ paths:
                       data: { $ref: '#/components/schemas/DataExport' }
         '404': { $ref: '#/components/responses/NotFound' }
 
-  /users/me/translation:
-    get:
-      tags: [Translate]
-      operationId: getTranslationPreference
-      summary: 'My global translation preference'
-      description: |
-        The PRD requires translation to be "opt-in, set per conversation **or
-        globally**", with the user's preferred target language. Today
-        `POST /translate` is a stateless one-shot call and the target language
-        must be supplied on every request, so the preference lives only in client
-        storage and does not survive a reinstall or follow the user to a new
-        device.
-      externalDocs:
-        description: "PRD §8.1 Messaging & Calling, §9 Flow 3"
-        url: ./Beevia_PRD.md
-      responses:
-        '200': { $ref: '#/components/responses/TranslationPrefOk' }
-    patch:
-      tags: [Translate]
-      operationId: updateTranslationPreference
-      summary: 'Update my global translation preference'
-      description: |
-        Enable/disable auto-translation globally and set the target language.
-        Gated by the `translation` consent scope — revoking that consent must
-        disable this preference (see `PATCH /users/me/consents`).
-      externalDocs:
-        description: "PRD §8.1 Messaging & Calling, §10.4 Consent Management"
-        url: ./Beevia_PRD.md
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/UpdateTranslationPrefRequest' }
-      responses:
-        '200': { $ref: '#/components/responses/TranslationPrefOk' }
-        '400': { $ref: '#/components/responses/BadRequest' }
+  # NOTE: translation preference storage SHIPPED on 2026-09-10 (beevia-api
+  # `a08bf13`), at a different path and in a different shape. What was proposed
+  # here as `GET`/`PATCH /users/me/translation` plus
+  # `PATCH /conversations/{id}/translation` is now five operations under
+  # `/translate/preferences`, in openapi.yaml. The shipped design is better than
+  # this proposal in two respects and short of it in one:
+  #
+  #   BETTER — precedence is returned, not recomputed. Every response carries
+  #   `override`, `app_wide` and a `source` saying which won, so a client never
+  #   has to re-derive the rule. And an unset preference resolves from the
+  #   device's OS language WITHOUT persisting that derivation, so "we defaulted
+  #   for you" never silently becomes "you chose this".
+  #
+  #   BETTER — clearing an override is explicit. `language: null` (or `DELETE`)
+  #   is a real value, so "stop overriding" is expressible; an empty body is a
+  #   400 rather than a silent clear.
+  #
+  #   MISSING — **there is no on/off flag, and the PRD asks for one.** PRD §8.1
+  #   requires translation to be "opt-in, set per conversation or globally".
+  #   What shipped stores only a target *language*; it always resolves to some
+  #   language, and there is no way for a user or a client to express "do not
+  #   auto-translate this thread". `is_explicit` is not that flag — it says the
+  #   user picked the language, not that they want translation on. Today the
+  #   toggle can only live in client storage, which is exactly the problem this
+  #   proposal was written to solve.
+  #
+  #   MISSING — the consent gate. The proposal tied this to a `translation`
+  #   consent scope; consent management is still entirely unbuilt (§4 of
+  #   api-rfc.md), so there is nothing to gate it with.
+  #
+  # Tracked as a gap in api-rfc.md §5.5a rather than re-proposed here as a whole
+  # operation — the route to add a flag to already exists.
 
   /wallets/beneficiaries:
     post:
@@ -1065,29 +1061,13 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 
-  /conversations/{id}/translation:
-    parameters:
-      - $ref: '#/components/parameters/ConversationId'
-    patch:
-      tags: [Translate]
-      operationId: updateConversationTranslation
-      summary: 'Per-conversation translation setting'
-      description: |
-        Overrides the global preference for one thread — the "set per
-        conversation **or** globally" half of the PRD's translation requirement.
-        Per-conversation state already has a home (`conversation_participants`
-        carries the per-user archived/muted flags), so this fits the existing model.
-      externalDocs:
-        description: "PRD §8.1 \"Opt-in translation, set per conversation or globally\""
-        url: ./Beevia_PRD.md
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/UpdateConversationTranslationRequest' }
-      responses:
-        '200': { $ref: '#/components/responses/TranslationPrefOk' }
-        '400': { $ref: '#/components/responses/BadRequest' }
+  # NOTE: the per-conversation override SHIPPED on 2026-09-10 as
+  # `GET`/`PUT`/`DELETE /translate/preferences/conversations/{conversationId}`,
+  # in openapi.yaml. It is stored in its own table rather than as a column on
+  # `conversation_participants` as proposed here, which is why "changing the
+  # app-wide default does not reset existing overrides" holds by construction
+  # rather than by remembering. See the note above `/wallets/beneficiaries` for
+  # the one thing that did not ship: an on/off flag.
 
   /attachments/{attachmentId}/download-url:
     parameters:
@@ -1168,35 +1148,27 @@ paths:
                         items: { $ref: '#/components/schemas/BatchTranslation' }
         '400': { $ref: '#/components/responses/BadRequest' }
 
-  # NOTE (2026-09-08): probably obsolete for the same reason as
-  # `/translate/batch` above — the supported-language list of an on-device
-  # engine is the platform framework's, not the server's. See api-rfc.md §5.5a.
-  /translate/languages:
-    get:
-      tags: [Translate]
-      operationId: listTranslateLanguages
-      summary: 'Supported languages'
-      description: |
-        `POST /translate` accepts any 2–10 character `to` value and only fails at
-        provider call time, so the client has no way to populate a language
-        picker or validate a stored preference. Returns the provider's current
-        supported set with display names.
-      externalDocs:
-        description: "PRD §8.1 Messaging & Calling"
-        url: ./Beevia_PRD.md
-      responses:
-        '200':
-          description: Supported languages.
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessEnvelope'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items: { $ref: '#/components/schemas/Language' }
+  # NOTE: `GET /translate/languages` SHIPPED on 2026-09-10 (beevia-api `a08bf13`)
+  # and now lives in openapi.yaml. It shipped **differently from this proposal**,
+  # in two ways worth carrying forward rather than rediscovering:
+  #
+  #   * The proposal returned `data` as a bare ARRAY of `Language`
+  #     (`code` / `name` / `supports_detection`). The shipped route returns an
+  #     OBJECT — `{ "languages": [{ "value", "label" }] }` — so the payload has
+  #     somewhere to grow, and it carries no detection flag.
+  #   * The proposal described "the provider's current supported set". What
+  #     shipped is a **product** list: five hardcoded values in
+  #     `src/translate/preferences/device-language.ts`, with no engine consulted.
+  #     The 2026-09-08 note below anticipated this — an on-device engine's
+  #     language list belongs to the platform framework, not to the server — and
+  #     the answer the team chose is a third thing again: the list is neither
+  #     the provider's nor the platform's, it is the set Beevia has decided to
+  #     offer, and the picker is driven from it.
+  #
+  # The gap the proposal actually named is still open: `POST /translate` accepts
+  # any 2–10 character `to` value and is NOT validated against this list, so the
+  # two halves of the translate surface still disagree about what a language is.
+  # Tracked in api-rfc.md §5.5a rather than re-proposed here.
 
   /support/tickets:
     post:
@@ -1445,11 +1417,6 @@ paths:
 components:
 
   parameters:
-    ConversationId:
-      name: id
-      in: path
-      required: true
-      schema: { type: string, format: uuid }
     Limit:
       name: limit
       in: query
@@ -1550,16 +1517,6 @@ components:
                     properties:
                       revoked: { type: boolean, example: true }
 
-    TranslationPrefOk:
-      description: Effective translation preference.
-      content:
-        application/json:
-          schema:
-            allOf:
-              - $ref: '#/components/schemas/SuccessEnvelope'
-              - type: object
-                properties:
-                  data: { $ref: '#/components/schemas/TranslationPreference' }
     Unauthorized:
       description: 'Missing/invalid access token (`unauthorized`) or missing/invalid step-up token (`step_up_required`, `step_up_invalid`, `step_up_mismatch`).'
       content:
@@ -1875,13 +1832,6 @@ components:
                 items: { type: string, example: id_document }
               updated_at: { type: [string, 'null'], format: date-time }
 
-    Language:
-      type: object
-      properties:
-        code: { type: string, example: fr }
-        name: { type: string, example: French }
-        supports_detection: { type: boolean }
-
     LedgerEntry:
       type: object
       properties:
@@ -2165,15 +2115,6 @@ components:
               id: { type: string, description: Echoed back so results can be reattached to messages. }
               text: { type: string, minLength: 1, maxLength: 5000 }
 
-    TranslationPreference:
-      type: object
-      properties:
-        scope: { type: string, enum: [global, conversation] }
-        conversation_id: { type: [string, 'null'], format: uuid }
-        enabled: { type: boolean }
-        target_language: { type: [string, 'null'], example: en }
-        inherited: { type: boolean, description: True when a conversation has no override and is following the global setting. }
-
     UpdateConsentsRequest:
       type: object
       description: 'Partial — send only the scopes being changed.'
@@ -2185,13 +2126,6 @@ components:
         contacts: { type: boolean }
         marketing: { type: boolean }
 
-    UpdateConversationTranslationRequest:
-      type: object
-      description: '`enabled: null` clears the override and falls back to the global preference.'
-      properties:
-        enabled: { type: [boolean, 'null'] }
-        targetLanguage: { type: [string, 'null'], minLength: 2, maxLength: 10 }
-
     UpdateLimitsRequest:
       type: object
       description: 'May only tighten below the tier/provider ceiling.'
@@ -2200,13 +2134,6 @@ components:
         currency: { $ref: '#/components/schemas/CurrencyCode' }
         perTransactionMax: { $ref: '#/components/schemas/Money' }
         dailyMax: { $ref: '#/components/schemas/Money' }
-
-    UpdateTranslationPrefRequest:
-      type: object
-      minProperties: 1
-      properties:
-        enabled: { type: boolean }
-        targetLanguage: { type: string, minLength: 2, maxLength: 10, example: en }
 
     Wallet:
       type: object

@@ -1,0 +1,1546 @@
+{
+ "BVA-I4": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Reports Module Generation Infrastructure ",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T14:26:52.118Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Reports Module Generation Infrastructure "
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Report Generation & History Endpoints",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T14:27:55.301Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Report Generation & History Endpoints",
+      "url": "#itemdetails/P8/I5"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Report Picker, Parameter Form & History UI",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T14:28:28.027Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Report Picker, Parameter Form & History UI",
+      "url": "#itemdetails/P8/I6"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T15:39:55.820Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 0901-admin",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-07T15:40:32.906Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "0901-admin",
+      "url": "#sprintdetails/P8/SP1"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000091169",
+   "display": "Updated the status from To do to In progress",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-08T16:08:06.120Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "In progress"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "Ayomikun Araoye"
+  },
+  {
+   "activity": 12,
+   "extusername": "",
+   "actionby": "187554000000091169",
+   "display": "Item Completed from In progress to Done",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-10T09:05:10.205Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "In progress"
+     },
+     "100": "to",
+     "101": {
+      "title": "Done"
+     }
+    },
+    "action": "Item Completed"
+   },
+   "actionByName": "Ayomikun Araoye"
+  }
+ ],
+ "BVA-I5": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Report Generation & History Endpoints",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T14:27:55.301Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Report Generation & History Endpoints"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T15:39:55.820Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 0901-admin",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-07T15:40:32.906Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "0901-admin",
+      "url": "#sprintdetails/P8/SP1"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000091169",
+   "display": "Updated the status from To do to In progress",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-08T16:08:06.122Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "In progress"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "Ayomikun Araoye"
+  },
+  {
+   "activity": 12,
+   "extusername": "",
+   "actionby": "187554000000091169",
+   "display": "Item Completed from In progress to Done",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-10T09:05:10.209Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "In progress"
+     },
+     "100": "to",
+     "101": {
+      "title": "Done"
+     }
+    },
+    "action": "Item Completed"
+   },
+   "actionByName": "Ayomikun Araoye"
+  }
+ ],
+ "BVA-I6": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Report Picker, Parameter Form & History UI",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T14:28:28.027Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Report Picker, Parameter Form & History UI"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Promise Udo",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T15:40:21.524Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Promise Udo"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 0901-admin",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-07T15:40:32.906Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "0901-admin",
+      "url": "#sprintdetails/P8/SP1"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000091169",
+   "display": "Updated the status from To do to In progress",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-08T16:08:06.123Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "In progress"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "Ayomikun Araoye"
+  },
+  {
+   "activity": 12,
+   "extusername": "",
+   "actionby": "187554000000091169",
+   "display": "Item Completed from In progress to Done",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-10T09:05:10.210Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "In progress"
+     },
+     "100": "to",
+     "101": {
+      "title": "Done"
+     }
+    },
+    "action": "Item Completed"
+   },
+   "actionByName": "Ayomikun Araoye"
+  }
+ ],
+ "BVA-I7": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item User & KYC Report",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T14:30:02.075Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "User & KYC Report"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Report Data Query",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T14:30:32.238Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Report Data Query",
+      "url": "#itemdetails/P8/I8"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Report Content Display",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T14:31:13.772Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Report Content Display",
+      "url": "#itemdetails/P8/I9"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T15:39:55.820Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 0901-admin",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-07T15:40:32.907Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "0901-admin",
+      "url": "#sprintdetails/P8/SP1"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I8": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Report Data Query",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T14:30:32.238Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Report Data Query"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T15:39:55.820Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 0901-admin",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-07T15:40:32.907Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "0901-admin",
+      "url": "#sprintdetails/P8/SP1"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I9": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Report Content Display",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T14:31:13.772Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Report Content Display"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Promise Udo",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T15:40:21.524Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Promise Udo"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 0901-admin",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-07T15:40:32.907Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "0901-admin",
+      "url": "#sprintdetails/P8/SP1"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  }
+ ],
+ "BVA-I10": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Transaction & Financial Report",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T14:32:04.812Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Transaction & Financial Report"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Report Data Query",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T14:32:44.474Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Report Data Query",
+      "url": "#itemdetails/P8/I11"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Report Content Display",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T14:33:07.135Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Report Content Display",
+      "url": "#itemdetails/P8/I12"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T15:39:55.820Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 0901-admin",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-07T15:40:32.908Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "0901-admin",
+      "url": "#sprintdetails/P8/SP1"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 12,
+   "extusername": "",
+   "actionby": "187554000000091169",
+   "display": "Item Completed from To do to Done",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-08T16:08:17.313Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "Done"
+     }
+    },
+    "action": "Item Completed"
+   },
+   "actionByName": "Ayomikun Araoye"
+  },
+  {
+   "activity": 14,
+   "extusername": "",
+   "actionby": "187554000000091169",
+   "display": "Item Reopened from Done to To do",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-08T16:08:33.481Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Done"
+     },
+     "100": "to",
+     "101": {
+      "title": "To do"
+     }
+    },
+    "action": "Item Reopened"
+   },
+   "actionByName": "Ayomikun Araoye"
+  },
+  {
+   "activity": 12,
+   "extusername": "",
+   "actionby": "187554000000091169",
+   "display": "Item Completed from To do to Done",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-08T16:08:49.807Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "Done"
+     }
+    },
+    "action": "Item Completed"
+   },
+   "actionByName": "Ayomikun Araoye"
+  }
+ ],
+ "BVA-I11": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Report Data Query",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T14:32:44.474Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Report Data Query"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T15:39:55.820Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 0901-admin",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-07T15:40:32.908Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "0901-admin",
+      "url": "#sprintdetails/P8/SP1"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 12,
+   "extusername": "",
+   "actionby": "187554000000091169",
+   "display": "Item Completed from To do to Done",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-08T16:08:17.314Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "Done"
+     }
+    },
+    "action": "Item Completed"
+   },
+   "actionByName": "Ayomikun Araoye"
+  },
+  {
+   "activity": 14,
+   "extusername": "",
+   "actionby": "187554000000091169",
+   "display": "Item Reopened from Done to To do",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-08T16:08:30.454Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Done"
+     },
+     "100": "to",
+     "101": {
+      "title": "To do"
+     }
+    },
+    "action": "Item Reopened"
+   },
+   "actionByName": "Ayomikun Araoye"
+  },
+  {
+   "activity": 12,
+   "extusername": "",
+   "actionby": "187554000000091169",
+   "display": "Item Completed from To do to Done",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-08T16:08:49.809Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "Done"
+     }
+    },
+    "action": "Item Completed"
+   },
+   "actionByName": "Ayomikun Araoye"
+  }
+ ],
+ "BVA-I12": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Report Content Display",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T14:33:07.135Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Report Content Display"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Promise Udo",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T15:40:21.524Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Promise Udo"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 0901-admin",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-07T15:40:32.908Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "0901-admin",
+      "url": "#sprintdetails/P8/SP1"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 12,
+   "extusername": "",
+   "actionby": "187554000000091169",
+   "display": "Item Completed from To do to Done",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-08T16:08:17.314Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "Done"
+     }
+    },
+    "action": "Item Completed"
+   },
+   "actionByName": "Ayomikun Araoye"
+  },
+  {
+   "activity": 14,
+   "extusername": "",
+   "actionby": "187554000000091169",
+   "display": "Item Reopened from Done to To do",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-08T16:08:33.482Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Done"
+     },
+     "100": "to",
+     "101": {
+      "title": "To do"
+     }
+    },
+    "action": "Item Reopened"
+   },
+   "actionByName": "Ayomikun Araoye"
+  },
+  {
+   "activity": 12,
+   "extusername": "",
+   "actionby": "187554000000091169",
+   "display": "Item Completed from To do to Done",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-08T16:08:49.809Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "Done"
+     }
+    },
+    "action": "Item Completed"
+   },
+   "actionByName": "Ayomikun Araoye"
+  }
+ ],
+ "BVA-I13": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Admin Activity / Audit Report",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T14:34:04.327Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Admin Activity / Audit Report"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Report Data Query",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T14:34:55.883Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Report Data Query",
+      "url": "#itemdetails/P8/I14"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 8,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Subitem Added Report Content Display",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T14:35:31.933Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{2}",
+    "values": {
+     "2": {
+      "title": "Report Content Display",
+      "url": "#itemdetails/P8/I15"
+     }
+    },
+    "action": "Subitem Added"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Ayomikun Araoye",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T15:39:55.820Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Ayomikun Araoye"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 0901-admin",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-07T15:40:32.909Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "0901-admin",
+      "url": "#sprintdetails/P8/SP1"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000091169",
+   "display": "Updated the status from To do to In progress",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-10T09:11:17.728Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "In progress"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "Ayomikun Araoye"
+  },
+  {
+   "activity": 12,
+   "extusername": "",
+   "actionby": "187554000000091169",
+   "display": "Item Completed from In progress to Done",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-10T10:24:42.444Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "In progress"
+     },
+     "100": "to",
+     "101": {
+      "title": "Done"
+     }
+    },
+    "action": "Item Completed"
+   },
+   "actionByName": "Ayomikun Araoye"
+  }
+ ],
+ "BVA-I14": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Report Data Query",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T14:34:55.883Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Report Data Query"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 0901-admin",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-07T15:40:32.909Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "0901-admin",
+      "url": "#sprintdetails/P8/SP1"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000091169",
+   "display": "Updated the status from To do to In progress",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-10T09:11:17.730Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "In progress"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "Ayomikun Araoye"
+  },
+  {
+   "activity": 12,
+   "extusername": "",
+   "actionby": "187554000000091169",
+   "display": "Item Completed from In progress to Done",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-10T10:24:42.446Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "In progress"
+     },
+     "100": "to",
+     "101": {
+      "title": "Done"
+     }
+    },
+    "action": "Item Completed"
+   },
+   "actionByName": "Ayomikun Araoye"
+  }
+ ],
+ "BVA-I15": [
+  {
+   "activity": 0,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Created the item Report Content Display",
+   "action": 1,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T14:35:31.933Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{1}",
+    "values": {
+     "1": {
+      "title": "Report Content Display"
+     }
+    },
+    "action": "Created the item"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 2,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Updated the owner from Unassigned to Promise Udo",
+   "action": 2,
+   "addedvia": 0,
+   "actiontime": "2026-09-07T15:40:21.524Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "Unassigned"
+     },
+     "100": "to",
+     "101": {
+      "title": "Promise Udo"
+     }
+    },
+    "action": "Updated the owner"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 13,
+   "extusername": "",
+   "actionby": "187554000000087007",
+   "display": "Item Moved from Backlog to 0901-admin",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-07T15:40:32.909Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {2} {100} {102}",
+    "values": {
+     "0": "from",
+     "100": "to",
+     "2": {
+      "title": "Backlog"
+     },
+     "102": {
+      "title": "0901-admin",
+      "url": "#sprintdetails/P8/SP1"
+     }
+    },
+    "action": "Item Moved"
+   },
+   "actionByName": "Fortune Okwu"
+  },
+  {
+   "activity": 5,
+   "extusername": "",
+   "actionby": "187554000000091169",
+   "display": "Updated the status from To do to In progress",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-10T09:11:17.731Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "To do"
+     },
+     "100": "to",
+     "101": {
+      "title": "In progress"
+     }
+    },
+    "action": "Updated the status"
+   },
+   "actionByName": "Ayomikun Araoye"
+  },
+  {
+   "activity": 12,
+   "extusername": "",
+   "actionby": "187554000000091169",
+   "display": "Item Completed from In progress to Done",
+   "action": 3,
+   "addedvia": null,
+   "actiontime": "2026-09-10T10:24:42.446Z",
+   "entity": 3,
+   "displayprop": {
+    "display": "{0} {1} {100} {101}",
+    "values": {
+     "0": "from",
+     "1": {
+      "title": "In progress"
+     },
+     "100": "to",
+     "101": {
+      "title": "Done"
+     }
+    },
+    "action": "Item Completed"
+   },
+   "actionByName": "Ayomikun Araoye"
+  }
+ ]
+}

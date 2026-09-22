@@ -34,7 +34,7 @@
       <span class="topbar__wordmark">Beevia</span>
     </div>
     <nav class="topbar__nav label" aria-label="Report">
-      <a href="2026-09-09.html">Latest frame</a>
+      <a href="2026-09-22.html">Latest frame</a>
     </nav>
 </div>
 
@@ -43,9 +43,9 @@
     <div class="field__rail field__rail--l">
       <dl>
         <dt>Frames held</dt>
-        <dd>26</dd>
+        <dd>34</dd>
         <dt>Latest</dt>
-        <dd>2026-09-09 · malware closed, admin board open</dd>
+        <dd>2026-09-22 · the dashboard is finished — the phone is the missing half</dd>
       </dl>
     </div>
 
@@ -55,7 +55,7 @@
       </div>
       <div class="field__meta num">
         <span>Beevia project status</span>
-        <span>2026-08-05 &rarr; 2026-09-09</span>
+        <span>2026-08-05 &rarr; 2026-09-22</span>
         <span>Newest first</span>
       </div>
     </div>
@@ -74,26 +74,162 @@
 <section class="mvp" aria-label="MVP readiness estimate">
   <div class="mvp__head">
     <span class="label">MVP readiness &mdash; estimate</span>
-    <span class="mvp__pct num">&asymp;57%</span>
-    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 8 days past</span>
+    <span class="mvp__pct num">&asymp;62%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 21 days past</span>
   </div>
-  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 57 percent built. Admin oversight rises to 0.85 as the chats module and the re-invite endpoint merge, opening spec Module 4. International KYC, cross-currency FX and consent management are not started.">
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 62 percent built, up 0.18 of a point from the previous edition. Only admin oversight moved, from 0.92 to 0.95, because the Module 4 dashboard landed in beevia-admin wired to the live API. Two translation items entering review moved nothing, because unmerged work does not score.">
     <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.9"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.8"><i style="width:80%"></i></span>
-    <span class="mvp__seg" style="flex:7" title="Message translation — 0.15"><i style="width:15%"></i></span>
+    <span class="mvp__seg" style="flex:7" title="Message translation — 0.30"><i style="width:30%"></i></span>
     <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.9"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
-    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.70"><i style="width:70%"></i></span>
-    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.80"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.75"><i style="width:75%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.90"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
-    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0.55"><i style="width:55%"></i></span>
+    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0.70"><i style="width:70%"></i></span>
     <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
-    <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.85 (was 0.78)"><i style="width:85%"></i></span>
+    <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.95"><i style="width:95%"></i></span>
   </div>
-  <p class="mvp__read"><strong>The target date passed eight days ago; the product is roughly 57% built.</strong> One capability moves &mdash; admin oversight 0.78 &rarr; 0.85, on merged code: the admin API goes 37 &rarr; 42, the chats module opens <strong>spec Module 4</strong> after a month of the RFC calling it unbuildable, and the client reaches 8 of 10 modules on the live API. <strong>Nothing else moves</strong>, and three of the latest frame's most prominent events are worth zero points by design &mdash; seven items in review that describe already-merged July code, an unmerged reports feature, and two board items marked Done for code on no default branch. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 9 Sep 2026 &mdash; <a href="2026-09-09.html#mvp-method">method and capability table</a>.</p>
+  <p class="mvp__read"><strong>61.70, up 0.18.</strong> One line changed: admin oversight 0.92 &rarr; 0.95, on named evidence &mdash; the Module 4 dashboard landed in <code>beevia-admin</code> (<code>c1b0aeb</code>) calling all six <code>/admin/chats</code> operations against the live API, and the admin API's counts fix (<code>b4c545e</code>) made the numbers it shows correct. Two translation items entering REVIEW/QA move nothing: both l10n branches are unmerged, and board status never scores. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 22 Sep 2026 &mdash; <a href="2026-09-22.html#mvp-method">method and capability table</a>.</p>
 </section>
 
 <main class="frames">
+
+  <a class="frame" href="2026-09-22.html">
+    <span class="frame__idx num">34</span>
+    <span>
+      <span class="frame__date">22 Sep 2026</span>
+      <span class="frame__sum"><strong>Sprint 0901 closes with 20 items in review and none ever reviewed &mdash; and the admin dashboard finally shipped.</strong> Over a four-day window the review queue grew 15 &rarr; <strong>20</strong>; every arrival was moved by a board administrator, and <strong>two are translation items with no code on <code>main</code></strong> &mdash; both l10n branches are unmerged and <code>beevia-mobile</code> has had no commit for 7.0 days. <strong>Eleven mobile QA bugs were added to the sprint on its penultimate day.</strong> The good news is in the workstream this report called invisible for nineteen editions: <strong><code>beevia-admin</code> shipped Module 4</strong> &mdash; conversations, the report queue, report detail with disclosed messages and a review form &mdash; calling all six <code>/admin/chats</code> operations against the live API, the same day the admin API stopped reporting every conversation as empty. The admin side of Trust &amp; Safety is end to end; the phone still posts a bare <code>reason</code>. Also: the org-admin blocker was apparently cleared on 18 Sep (unverifiable from here), and <code>GET /admin/users</code> had been mis-specified since 4 August &mdash; fixed.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:0"></i></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>0901 &middot; day 20 of 20</span></div>
+      <div><span>MVP est</span><span>&asymp;62% &middot; &Delta; +0.18</span></div>
+      <div><span>0901 in review</span><span>20 of 37 leaves &middot; oldest 14.0 d</span></div>
+      <div><span>Added on day 19</span><span>11 QA bugs</span></div>
+      <div><span>Mobile since a commit</span><span>7.0 d</span></div>
+      <div><span>API surface</span><span>137 / 49 &middot; 1 contract fix</span></div>
+    </span>
+  </a>
+
+  <a class="frame" href="2026-09-18.html">
+    <span class="frame__idx num">33</span>
+    <span>
+      <span class="frame__date">18 Sep 2026</span>
+      <span class="frame__sum"><strong>23 commits after a day with none &mdash; and one of them rolled back production.</strong> The three backend repos went from silent to the busiest day in this record: <strong>Trust &amp; Safety moderation built end-to-end on the server</strong>, NestJS 12 across all three, Semgrep CI landed. Then the NestJS 12 release <strong>never bound <code>:3000</code></strong> &mdash; one optional field (<code>sentAt: z.coerce.date()</code>) the new Swagger version could not render, throwing at boot inside <code>createDocument()</code>. <strong>CI was green the whole way, because nothing runs <code>main.ts</code></strong>; the fix added a test that does. Two long-standing asks moved: the <strong>E2EE deadlock blocking admin Module 4 since 5 August is answered in code on both sides</strong>, and Semgrep now runs on every backend PR. Two catches. The client half of the report flow does not exist &mdash; the Flutter app still posts a bare <code>reason</code>, so the new moderation queue will show empty evidence for every report, and its board item sits in REVIEW/QA anyway. And <strong>three of the five security items turn out to be blocked on a GitHub org-admin grant</strong>, which a board comment says plainly: <code>BVA-I269</code> is the first BLOCKED item this board has carried. The review queue grew 11 &rarr; <strong>15</strong> and has still never lost an item, with four days left.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:0"></i></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>0901 &middot; day 16 of 20</span></div>
+      <div><span>MVP est</span><span>&asymp;62% &middot; &Delta; +0.12</span></div>
+      <div><span>Commits, any ref</span><span>23 &middot; was 0</span></div>
+      <div><span>Deploys rolled back</span><span>1 &middot; was 0</span></div>
+      <div><span>0901 in review</span><span>15 of 26 leaves &middot; 8.2 d</span></div>
+      <div><span>API surface</span><span>137 / 49 &middot; +2 admin</span></div>
+    </span>
+  </a>
+
+  <a class="frame" href="2026-09-17.html">
+    <span class="frame__idx num">32</span>
+    <span>
+      <span class="frame__date">17 Sep 2026</span>
+      <span class="frame__sum"><strong>Nothing was built. The work moved onto the board instead.</strong> For the first time in this record, <strong>zero commits landed on any ref in any of the five repositories</strong> in a full 24-hour window &mdash; not a merge, not a branch push, not a bot. What happened instead: <strong>five new items appeared on sprint 0901 under a new <code>security</code> epic, and four of them are recommendations this report has been making for five editions</strong> &mdash; branch protection, Semgrep on every PR, Dependabot, secret scanning with push protection. Ayomikun picked up three within two hours. The catch is the scope: all five say &ldquo;every <em>backend</em> repository&rdquo;, which excludes <code>beevia-admin</code> (no CI at all) and <code>beevia-mobile</code> (missing both security workflows, nine unmerged Dependabot PRs, oldest 37 days) &mdash; the two repos the recommendations were about. The review queue did not move: same eleven items, now <strong>8.9 days</strong>, five days to sprint close. Also corrected here: sixteen editions claimed the <code>Epic</code> column was broken by an OAuth scope gap, when it has been resolving fine since at least 7 September.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:0"></i></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>0901 &middot; day 15 of 20</span></div>
+      <div><span>MVP est</span><span>&asymp;61% &middot; &Delta; 0</span></div>
+      <div><span>Commits, any ref</span><span>0 &middot; was 17</span></div>
+      <div><span>New board items</span><span>5 &middot; was 0</span></div>
+      <div><span>0901 in review</span><span>11 of 26 leaves &middot; 8.9 d</span></div>
+      <div><span>Spec drift</span><span>0 &middot; no spec edit needed</span></div>
+    </span>
+  </a>
+
+  <a class="frame" href="2026-09-16.html">
+    <span class="frame__idx num">31</span>
+    <span>
+      <span class="frame__date">16 Sep 2026</span>
+      <span class="frame__sum"><strong>The branch merged.</strong> After 40 days <code>origin/BVA-I242</code> landed on <code>beevia-mobile</code>'s <code>main</code> as one squash commit &mdash; and it landed <strong>split</strong>, exactly as the previous frame asked. The money half is in: the in-chat send-money flow, the socket commands that make payment request / accept / decline / cancel real, virtual-card issuance, bank transfers, withdrawals, seven new test files. The language half is not: the whole <code>lib/l10n</code> layer, four locales and the on-device translation engine are still only on the branch. <strong>MVP readiness moves for the first time in nine editions, +3.30 to &asymp;61%.</strong> Two smaller firsts came with it &mdash; David moved his own board items, and an item finally left REVIEW/QA &mdash; though that item was created 46 hours earlier and never queued, and the eleven engineering items behind it are the same eleven, a day older.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:0"></i></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>0901 &middot; day 14 of 20</span></div>
+      <div><span>MVP est</span><span>&asymp;61% &middot; &Delta; +3.30</span></div>
+      <div><span>Commits merged</span><span>14 &middot; was 12</span></div>
+      <div><span>Board transitions</span><span>4 &middot; was 11</span></div>
+      <div><span>BVA-I242</span><span>money half merged</span></div>
+      <div><span>0901 in review</span><span>11 of 21 leaves &middot; 7.9 d</span></div>
+    </span>
+  </a>
+
+  <a class="frame" href="2026-09-15.html">
+    <span class="frame__idx num">30</span>
+    <span>
+      <span class="frame__date">15 Sep 2026</span>
+      <span class="frame__sum">The backend's most substantial day in two weeks &mdash; a real server-side response-localisation feature, a fix for a duplicate-account bug, a second CI security scan &mdash; while the mobile board caught up on paper without a line of new code anywhere. Four of David's items advanced two statuses each in one bulk action four hours after his last commit, made by a non-contributor, not by him; <code>origin/BVA-I242</code> has not changed since the last frame. The admin board shows the same pattern in miniature: Ayomikun moved Promise's own item for him, again. The MVP estimate does not move &mdash; correctly, since today's real feature is not the capability the rubric is scoring.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:0"></i></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>0901 &middot; day 13 of 20</span></div>
+      <div><span>MVP est</span><span>&asymp;58% &middot; &Delta; 0.00</span></div>
+      <div><span>Commits merged</span><span>12 &middot; was 4</span></div>
+      <div><span>Board transitions</span><span>11 &middot; was 6</span></div>
+      <div><span>Unmerged on BVA-I242</span><span>15 commits &middot; 40 d</span></div>
+      <div><span>0901 in review</span><span>11 of 21 leaves &middot; 6.9 d</span></div>
+    </span>
+  </a>
+
+  <a class="frame" href="2026-09-14.html">
+    <span class="frame__idx num">29</span>
+    <span>
+      <span class="frame__date">14 Sep 2026</span>
+      <span class="frame__sum">The stall was never real: six items were completed and four created on Friday, 19 to 103 minutes <em>after</em> the previous frame's cut-off &mdash; the exact failure that frame had named and declined to fix. Corrected, real movement follows. The admin Reports module stopped being a mock and wired all five endpoints; a genuine on-device translation engine appeared; the org supply-chain guard went live in three repos. But every mobile gain sits on a branch <strong>39 days and 15 commits</strong> unmerged, while the board has begun marking that work Done &mdash; and sprint 0901 has eight days left with 13 of 20 leaves unfinished.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:0"></i></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>0901 · day 12 of 20</span></div>
+      <div><span>MVP est</span><span>≈58% · +0.18 pt</span></div>
+      <div><span>Commits merged</span><span>4 · was 0</span></div>
+      <div><span>Board transitions</span><span>6 · was 0</span></div>
+      <div><span>Unmerged on BVA-I242</span><span>15 commits · 39 d</span></div>
+      <div><span>Dashboard live</span><span>9 of 10 · was 8</span></div>
+    </span>
+  </a>
+
+  <a class="frame" href="2026-09-11.html">
+    <span class="frame__idx num">28</span>
+    <span>
+      <span class="frame__date">11 Sep 2026</span>
+      <span class="frame__sum">Nothing moved &mdash; not one commit on any ref of any of the five repositories, not one status transition on any of the three boards, in the twenty-four hours after the busiest day the project has had. It is the second fully static <em>working</em> day in a thirty-eight-day record, and the first one preceded the largest delivery day on record &mdash; so a data point, not yet a diagnosis. What did move is age, against the people already late: two WIP items cross 2.7&times; their owner's median, one design item 7.7&times;, and <code>beevia-mobile</code> reaches 16 days cold with eleven days left in a sprint whose entire remainder is client-side.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:0"></i></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>0901 · day 9 of 20</span></div>
+      <div><span>MVP est</span><span>≈58% · Δ 0.00</span></div>
+      <div><span>Commits, all refs</span><span>0 · was 7</span></div>
+      <div><span>Board transitions</span><span>0 · was 13</span></div>
+      <div><span>API</span><span>137 / 47 · unchanged</span></div>
+      <div><span>Static working days</span><span>2 of 38 — corrected to 1, see 14 Sep</span></div>
+    </span>
+  </a>
+
+  <a class="frame" href="2026-09-10.html">
+    <span class="frame__idx num">27</span>
+    <span>
+      <span class="frame__date">10 Sep 2026</span>
+      <span class="frame__sum">The best delivery day the project has had &mdash; eleven endpoints across two services, and for the first time a board that moved <em>because</em> code merged rather than instead of it. Against it, a correction this pipeline has now made twice: &ldquo;the review queue has never released anything&rdquo; contradicts its own 3 September frame, which documented 46 items swept to Done in 47 seconds. The forward path out of review has been exercised exactly once, in one bulk action &mdash; and sprint 0901 closes on 22 September with eight items in it.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:0"></i></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>0901 · day 8 of 20</span></div>
+      <div><span>MVP est</span><span>≈58% · +1.2 pt</span></div>
+      <div><span>Endpoints merged</span><span>11 · two services</span></div>
+      <div><span>API</span><span>137 / 47 · +6 / +5</span></div>
+      <div><span>Left review, ever</span><span>46 · one 47-s sweep</span></div>
+      <div><span>Admin board Done</span><span>6 of 8 · 3 no code</span></div>
+    </span>
+  </a>
 
   <a class="frame" href="2026-09-09.html">
     <span class="frame__idx num">26</span>
@@ -540,7 +676,7 @@
 <footer class="foot">
   <span class="barcode barcode--lg" aria-hidden="true"></span>
   <span>Frames are written by the <code>beevia-refresh</code> skill alongside the Markdown in <code>project-status/</code>.</span>
-  <span><a href="2026-08-14.html">Latest</a></span>
+  <span><a href="2026-09-22.html">Latest</a></span>
 </footer>
 
 <script src="ui.js"></script>

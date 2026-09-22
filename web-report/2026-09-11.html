@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beevia — Project Status — 11 Sep 2026</title>
+<meta name="description" content="Nothing moved: zero commits on any ref of any of five repositories, zero transitions on all three boards. The second fully static working day in a thirty-eight-day record — and the first one preceded the project's biggest day.">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!--
+  DIRECTION CONTRACT · seed 6c4a0ed0 (carried forward unchanged)
+  THESIS: A status report whose subject is the disagreement between its sources.
+  STORY: Today there is no disagreement, because there is nothing to disagree
+  about. Not one commit on any ref, not one board transition, in the 24 hours
+  after the busiest day the project has had. The report's job becomes reading a
+  zero honestly: placing it against the one working-day precedent (25 August,
+  which preceded the largest day in the record), separating it from the
+  cut-off artifact it could be mistaken for, and noticing that the only thing
+  that moved is age — against the people who were already late.
+-->
+
+<div class="topbar">
+    <div class="topbar__mark">
+      <span class="barcode" aria-hidden="true"></span>
+      <span class="topbar__wordmark">Beevia</span>
+    </div>
+    <nav class="topbar__nav label" aria-label="Report">
+      <a href="index.html">Archive</a>
+      <a href="#overview">Overview</a>
+      <a href="#s2"><span>The zero</span></a>
+      <a href="#s3"><span>Where the sprint stands</span></a>
+      <a href="#method">Method</a>
+    </nav>
+</div>
+
+<header class="masthead">
+  <div class="field">
+    <div class="field__rail field__rail--l">
+      <dl>
+        <dt>Commits, all refs, all repos</dt>
+        <dd>0 &middot; was 7</dd>
+        <dt>Board transitions, all boards</dt>
+        <dd>0 &middot; was 13</dd>
+        <dt>Sprint 0901</dt>
+        <dd>day 9 of 20</dd>
+        <dt>Spec drift vs origin/main</dt>
+        <dd>0 &middot; both services</dd>
+      </dl>
+    </div>
+
+    <div class="field__stage">
+      <div class="field__title">
+        <h1>Project<br>Status</h1>
+      </div>
+      <div class="field__meta num">
+        <span>2026-09-11</span>
+        <span>0901 &middot; 0901-admin &middot; 08-01 closed</span>
+        <span>3&ndash;22 Sep</span>
+        <span>A full stop, and one precedent</span>
+      </div>
+    </div>
+
+    <div class="field__rail field__rail--r">
+      <dl>
+        <dt>API surface</dt>
+        <dd>137 / 47 &middot; unchanged</dd>
+        <dt>Static working days on record</dt>
+        <dd>2 of 38 &middot; incl. today</dd>
+        <dt>0901 in review</dt>
+        <dd>8 of 17 leaves &middot; 2.9 d</dd>
+        <dt>Estimated</dt>
+        <dd>0 / 25 &middot; 0 / 12</dd>
+      </dl>
+    </div>
+  </div>
+</header>
+
+<section class="mvp" aria-label="MVP readiness estimate">
+  <div class="mvp__head">
+    <span class="label">MVP readiness &mdash; estimate</span>
+    <span class="mvp__pct num">&asymp;58%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 10 days past</span>
+  </div>
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 58 percent built, unchanged from the previous frame because no code merged. International KYC, cross-currency FX and consent management remain at zero.">
+    <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.9"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.8"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:7" title="Message translation — 0.30"><i style="width:30%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.9"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
+    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.70"><i style="width:70%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.80"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
+    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0.55"><i style="width:55%"></i></span>
+    <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
+    <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.87"><i style="width:87%"></i></span>
+  </div>
+  <p class="mvp__read"><strong>The target date passed ten days ago; the product is roughly 58% built, and for the first time the estimate is unchanged to two decimal places.</strong> That is the rubric working, not an oversight: scores measure <em>merged</em> build evidence, and <strong>zero code merged in this window</strong>, so nothing could have moved one. Three capabilities carrying 22 weighted points &mdash; international KYC, cross-currency FX, consent management &mdash; remain entirely unstarted. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. <a href="#mvp-method">Method and capability table</a>.</p>
+</section>
+
+<div class="shell">
+  <nav class="contents label" aria-label="Contents">
+    Contents
+    <ol>
+      <li><a href="#overview"><span>00</span> Quick overview</a></li>
+      <li><a href="#s1"><span>01</span> Corrections</a></li>
+      <li><a href="#s2"><span>02</span> Sprint 0901 &amp; the zero</a></li>
+      <li><a href="#s3"><span>03</span> Where the sprint stands</a></li>
+      <li><a href="#s4"><span>04</span> What shipped</a></li>
+      <li><a href="#s5"><span>05</span> Spec updates</a></li>
+      <li><a href="#s6"><span>06</span> Admin dashboard board</a></li>
+      <li><a href="#s7"><span>07</span> Team detail</a></li>
+      <li><a href="#s8"><span>08</span> Risks &amp; recommendations</a></li>
+      <li><a href="#s9"><span>09</span> What I would do</a></li>
+      <li><a href="#method"><span>&mdash;</span> Method</a></li>
+    </ol>
+  </nav>
+
+  <main class="doc">
+
+    <section class="sec" id="overview">
+      <div class="sec__h"><span class="sec__n">00</span><h2>Quick overview</h2></div>
+
+      <div class="invert" style="margin-bottom:var(--s-6)">
+        <p class="lede">Nothing moved. Not one commit on any ref of any of the five repositories, and not one status transition on any of the three boards, in the twenty-four hours after the busiest day this project has had. <strong>That is the second fully static <em>working</em> day in the pipeline's thirty-eight-day record &mdash; and the first one, Tuesday 25 August, was immediately followed by the biggest delivery day of the project.</strong> So this is a data point, not yet a diagnosis. What did move is the clock, and it moves against the people who are already late.</p>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">Movement, 10 Sep &rarr; 11 Sep</caption>
+          <thead>
+            <tr><th scope="col">Measure</th><th scope="col" class="r">10 Sep</th><th scope="col" class="r">11 Sep</th><th scope="col" class="r">&Delta;</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Commits on <em>any</em> ref, all five repos</th><td class="r">7</td><td class="r hi"><strong>0</strong></td><td class="r hi">&minus;7</td></tr>
+            <tr><th scope="row">Board transitions, all three boards</th><td class="r">13</td><td class="r hi"><strong>0</strong></td><td class="r hi">&minus;13</td></tr>
+            <tr><th scope="row">API surface (consumer / admin)</th><td class="r">137 / 47</td><td class="r">137 / 47</td><td class="r">0</td></tr>
+            <tr><th scope="row">Proposed operations (consumer / admin)</th><td class="r">38 / 19</td><td class="r">38 / 19</td><td class="r">0</td></tr>
+            <tr><th scope="row">Spec drift vs <code>origin/main</code>, both services</th><td class="r">0</td><td class="r">0</td><td class="r">0</td></tr>
+            <tr><th scope="row">Sprint 0901 leaves in REVIEW/QA</th><td class="r">8</td><td class="r">8</td><td class="r">0</td></tr>
+            <tr><th scope="row">Review-queue median age (0901)</th><td class="r">1.9 d</td><td class="r hi">2.9 d</td><td class="r hi">+1.0</td></tr>
+            <tr><th scope="row">Oldest open WIP (0901)</th><td class="r">5.9 d</td><td class="r hi">6.9 d</td><td class="r hi">+1.0</td></tr>
+            <tr><th scope="row"><code>beevia-mobile</code> <code>main</code> days since a commit</th><td class="r">15</td><td class="r hi">16</td><td class="r hi">+1</td></tr>
+            <tr><th scope="row"><code>beevia-admin</code> days since a commit</th><td class="r">2</td><td class="r hi">3</td><td class="r">+1</td></tr>
+            <tr><th scope="row">Ayomikun commits (7d, 3 identities)</th><td class="r">30</td><td class="r hi">20</td><td class="r">&minus;10</td></tr>
+            <tr><th scope="row">Ayomikun submissions (7d)</th><td class="r hi">&ldquo;1&rdquo; &rarr; <strong>8</strong></td><td class="r">8</td><td class="r hi">0 &mdash; correction</td></tr>
+            <tr><th scope="row">Estimation points set (0901 / 0901-admin)</th><td class="r hi">0 / 25 &middot; 0 / 12</td><td class="r hi">0 / 25 &middot; 0 / 12</td><td class="r">0</td></tr>
+            <tr><th scope="row">MVP readiness (estimate)</th><td class="r">&asymp;58%</td><td class="r">&asymp;58%</td><td class="r hi">0.00 pt</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">Team at a glance</caption>
+          <thead><tr><th scope="col">Person</th><th scope="col">Owns</th><th scope="col">Board leaves</th><th scope="col" class="r">Subs (7d)</th><th scope="col" class="r">Median cycle</th><th scope="col">Open WIP</th><th scope="col" class="r">Commits (7d)</th><th scope="col">Flag</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Ayomikun Araoye</th><td>backend + admin API</td><td>9 on 0901 &middot; 3 on 0901-admin</td><td class="r">8</td><td class="r">3.0 d</td><td>1 (1.2 d)</td><td class="r">20 (was 30)</td><td>No commits and no transitions in the window, after eleven endpoints yesterday. The 30 &rarr; 20 fall is <strong>ageing out, not a slowdown</strong> &mdash; the commits that left were made on 4 Sep, and none were added</td></tr>
+            <tr><th scope="row">David Samuel</th><td>mobile</td><td>6 on 0901 &mdash; <strong>4 In progress</strong></td><td class="r hi">0 &mdash; last 3 Sep, <strong>8.2 d</strong></td><td class="r">2.6 d</td><td class="hi">4; ages <strong>6.9 d &times;2</strong>, 3.1 d, 2.9 d</td><td class="r hi">0 to <code>main</code>; <code>BVA-I192</code> frozen <strong>4 d</strong></td><td><code>beevia-mobile</code> <code>main</code> untouched <strong>16 days</strong>; two WIP at <strong>2.7&times; his median</strong>; <code>BVA-I229</code> still To do on day 9. <strong>Third consecutive edition asking</strong></td></tr>
+            <tr><th scope="row">Philip Chidera</th><td>design</td><td>2 on 0901 &mdash; both In progress</td><td class="r">0 &mdash; last 28 Aug, <strong>14.1 d</strong></td><td class="r">0.9 d</td><td class="hi">2; ages <strong>6.9 d</strong>, 2.9 d</td><td class="r">&mdash;</td><td><code>BVA-I240</code> at <strong>7.7&times; his own median</strong> &mdash; the most overdue WIP relative to its owner on any board</td></tr>
+            <tr><th scope="row">Promise Udo</th><td>admin dashboard</td><td>4 on 0901-admin &mdash; 3 Done</td><td class="r">&mdash;</td><td class="r">&mdash;</td><td>0</td><td class="r">4, <strong>none since 8 Sep</strong></td><td class="hi">His three Done items still have no code &mdash; the reports client is still <code>MOCK IMPLEMENTATION</code>, untouched since 1 Sep. <strong>Unchanged, so the question is now two editions old</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <span class="label">The two questions for standup</span>
+        <p><strong>Was yesterday a day off, or a stop?</strong> Zero commits and zero board activity across the whole team, on a Friday, after a Thursday that merged eleven endpoints. That shape has appeared once before &mdash; 25 August &mdash; and it preceded the project's biggest day. It is cheap to answer in the room and impossible to answer from here.</p>
+        <p style="margin-bottom:0"><strong>What is happening with the mobile client?</strong> Third edition asking, every signal moved the wrong way for three days running, and &sect;3 is why it cannot keep waiting: <strong>eleven days remain in sprint 0901 and all of the remaining scope is David's and Philip's.</strong></p>
+      </div>
+
+      <h3>The three things worth knowing</h3>
+
+      <div class="stack">
+        <div class="finding">
+          <div class="finding__n num">1</div>
+          <div>
+            <p><strong>A complete stop, and its precedent is encouraging rather than alarming.</strong> Across five repositories and <em>every remote ref</em> &mdash; not just <code>main</code> &mdash; there is not one commit in the window; across sprint 0901, sprint 0901-admin and the closed 08-01 board there is not one status transition. Reconstructed day by day from the activity sidecars and git, the thirty-eight-day record contains <strong>eight fully static days: six weekend days, Tuesday 25 August, and today</strong> (&sect;2.2). <strong>25 August was followed by 26 August &mdash; 24 commits and 56 board transitions, the largest single day in the record.</strong> One static working day is not a stall. Two would be a different conversation, and the next report is the one that can tell them apart.</p>
+          </div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">2</div>
+          <div>
+            <p><strong>The only thing that changed is age, and age is the metric that was already bad.</strong> Every queue and WIP figure here is yesterday's plus exactly one day, which is precisely why it is worth printing: <code>BVA-I233</code> and <code>BVA-I241</code> cross <strong>2.7&times; David's median</strong>, <code>BVA-I240</code> sits at <strong>7.7&times; Philip's</strong>, the seven notification items in review reach <strong>2.9 days</strong>, <code>beevia-mobile</code>'s <code>main</code> reaches <strong>16 days</strong>, and sprint 0901 spends another of its twenty days with its entire remaining client scope untouched. <strong>Yesterday's report could point to eleven merged endpoints as the reason the board was quiet. Today there is nothing to point at.</strong></p>
+          </div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">3</div>
+          <div>
+            <p><strong>Yesterday's own glanceable table under-reported the one throughput number it carried &mdash; in the direction that flatters.</strong> The team table printed Ayomikun's submissions as <strong>&ldquo;1 (was 8)&rdquo;</strong>, a 7-point collapse. The metric as defined, and as computed in that same report's &sect;6.1, gives <strong>8</strong> at that cut-off and <strong>8</strong> today: flat, not collapsed. The &ldquo;1&rdquo; is the delivery-only subset with seven reconciliation submissions stripped out &mdash; a defensible number, but not under a column labelled <code>Submissions (7d)</code> and not with a &Delta; attached (&sect;1.1).</p>
+          </div>
+        </div>
+      </div>
+
+      <p><strong>If you read nothing else:</strong> nobody committed anything and nobody moved anything for a full day, which has one working-day precedent and that precedent was benign &mdash; so ask in the room before treating it as a stall; the specs, the audit and the MVP estimate are all unchanged at 137/38/47/19, zero drift and &asymp;58%, because with no merged code there is nothing for them to move to; and the mobile workstream is now three editions of unanswered questions deep, with eleven days left in a sprint whose entire remainder is client-side.</p>
+    </section>
+
+    <section class="sec" id="s1">
+      <div class="sec__h"><span class="sec__n">01</span><h2>Corrections</h2></div>
+
+      <h3>1.1 Yesterday's team table showed a throughput collapse that did not happen</h3>
+
+      <div class="invert" style="margin-bottom:var(--s-6)">
+        <p><strong>Claim (2026-09-10 quick-overview team table):</strong> Ayomikun Araoye, &ldquo;Submissions (7d): <strong>1</strong> (was 8)&rdquo;.</p>
+      </div>
+
+      <p>Recomputed from the activity sidecars at yesterday's own cut-off, the trailing-7-day count of leaf transitions into <code>REVIEW/QA</code> by assignee is:</p>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Cut-off</th><th scope="col" class="r">Ayomikun</th><th scope="col">Composition</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">9 Sep 14:03 UTC</th><td class="r">8</td><td><code>BVA-I197</code> (3 Sep) + the seven notification items (8 Sep)</td></tr>
+            <tr><th scope="row" class="hi">10 Sep 14:03 UTC</th><td class="r hi"><strong>8</strong></td><td class="hi">the seven notification items (8 Sep) + <code>BVA-I231</code> (10 Sep)</td></tr>
+            <tr><th scope="row" class="hi">11 Sep 14:01 UTC</th><td class="r hi"><strong>8</strong></td><td class="hi">unchanged &mdash; nothing entered or aged out</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>So the figure was <strong>8, then 8, then 8</strong>. Printing &ldquo;1 (was 8)&rdquo; turned a flat line into a 7-point fall, in the one table this report is written to be read from.</p>
+
+      <div class="note">
+        <span class="label">Where the 1 came from &mdash; not wrong so much as mislabelled</span>
+        <p>The same edition's &sect;6.1 states the split correctly: <em>&ldquo;W37's eight are yesterday's seven notification items &mdash; a board reconciliation, not delivery &mdash; plus <code>BVA-I231</code>, which is delivery.&rdquo;</em> The 1 is the delivery-only subset, and it is a genuinely more informative number than the raw 8. This report keeps printing both.</p>
+        <p style="margin-bottom:0">But it sat in a column labelled <code>Submissions (7d)</code> with a <code>(was 8)</code> comparison against the <strong>raw</strong> figure &mdash; comparing a filtered number against an unfiltered one. That is the arithmetic that produced the phantom drop.</p>
+      </div>
+
+      <div class="stack">
+        <div class="finding">
+          <div class="finding__n num">1</div>
+          <div><p><strong>Ayomikun's board output did not fall between 9 and 10 September.</strong> It was flat at 8 raw / 1 delivery on both days, and it is flat again today. The real movement in his row is the commit count, 30 &rarr; 20, and &sect;7 shows that is ageing-out rather than a slowdown.</p></div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">2</div>
+          <div><p><strong>A derived metric and its raw metric must not share a column.</strong> Every other cell in that table is raw. This edition prints the raw number in the column and carries the delivery/reconciliation split beside it in words, so the &Delta; is always computed on like against like.</p></div>
+        </div>
+      </div>
+
+      <p>This is the third consecutive edition to open with a correction, and the three share a shape. <strong>9 Sep</strong> restated a superseded sentence; <strong>10 Sep</strong> restated one that had already been corrected once; today's is a number that was <em>correct in the body and wrong in the summary</em>. The first two were failures of re-derivation. This one is a failure of transcription from the report's own detail section into its own overview &mdash; which is a shorter distance, and therefore a worse place to lose a number.</p>
+
+      <h3>1.2 The admin board has recorded 21 status transitions, not 22</h3>
+      <p>Yesterday's edition said, twice, <em>&ldquo;all 22 transitions the admin board has ever recorded&rdquo;</em>. The sidecar records <strong>21</strong>: 6 <code>Updated the status</code>, 12 <code>Item Completed</code>, 3 <code>Item Reopened</code>, across 9 items on two days. Today it still records 21, because nothing moved.</p>
+      <p>The substance is untouched and still worth stating: <strong>all 21 were made by one person</strong>, and <strong>9 of them fall on 4 items he does not own</strong> &mdash; <code>BVA-I6</code>, <code>BVA-I12</code>, <code>BVA-I15</code> (Promise Udo) and <code>BVA-I14</code> (Unassigned). Yesterday's phrase &ldquo;four of them on items he does not own&rdquo; reads as four transitions; it is four <em>items</em>, nine transitions. Both are corrected here rather than left for a future edition to re-derive, since this pipeline has now twice reinstated a stale claim by carrying a sentence forward.</p>
+
+      <h3>1.3 The 14:00 UTC cut-off is not the explanation for today's zero</h3>
+      <p>The obvious objection to a zero-movement report is that the export simply ran before the work happened. It does not apply here, and the window is the reason.</p>
+      <p>The window runs <strong>10 Sep 14:03 UTC &rarr; 11 Sep 14:01 UTC</strong>. It therefore contains the <strong>whole of Thursday afternoon and evening UTC</strong> as well as Friday morning UTC. Yesterday's eleven endpoints and thirteen transitions all landed between 08:49 and 10:25 UTC on Thursday &mdash; <em>before</em> the window opens. Everything after that is inside it, and it is empty.</p>
+      <p>What remains unobserved is <strong>Friday after 14:01 UTC</strong> only. If this team worked a normal afternoon today, tomorrow's report will show it and today's zero will read as a half-day artifact. That is exactly the ambiguity risk #23 has described for five editions, and it is why the recommendation to move the cut-off to ~20:00 UTC keeps returning: <strong>a zero is the one result a too-early cut-off makes genuinely hard to interpret</strong>, because a busy morning proves activity while a quiet day proves nothing until the day is over.</p>
+    </section>
+
+    <section class="sec" id="s2">
+      <div class="sec__h"><span class="sec__n">02</span><h2>Sprint 0901 &mdash; and the zero</h2></div>
+
+      <h3>2.1 State &mdash; identical to yesterday, in every cell</h3>
+      <p>25 items &mdash; <strong>17 leaves, 8 parent Stories</strong>. Day 9 of 20.</p>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Status</th><th scope="col" class="r">Leaves</th><th scope="col" class="r">10 Sep</th><th scope="col" class="r">&Delta;</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">To do</th><td class="r">2</td><td class="r">2</td><td class="r">0</td></tr>
+            <tr><th scope="row">In progress</th><td class="r">7</td><td class="r">7</td><td class="r">0</td></tr>
+            <tr><th scope="row">REVIEW/QA</th><td class="r">8</td><td class="r">8</td><td class="r">0</td></tr>
+            <tr><th scope="row">BLOCKED</th><td class="r">0</td><td class="r">0</td><td class="r">0</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>The CSV exports for all three boards are <strong>byte-identical to yesterday's apart from the export timestamp on line 4</strong>, and the three activity sidecars are identical after normalisation. The last transition on this board was <code>BVA-I231</code> at <strong>10 Sep 10:25:03 UTC</strong>, 1.1 days ago.</p>
+
+      <h3>2.2 The zero, placed in the record</h3>
+      <p>Commits from <code>git log --all</code> across all five repositories with bot commits excluded; board transitions from the three activity sidecars. The last fortnight, by UTC day:</p>
+
+      <div class="bars bars--share">
+        <div class="bars__row"><span class="bars__label">29 Aug &middot; Sat</span><span class="r">0</span><span class="r">0</span><span class="bar" aria-hidden="true"></span></div>
+        <div class="bars__row"><span class="bars__label">30 Aug &middot; Sun</span><span class="r">0</span><span class="r">0</span><span class="bar" aria-hidden="true"></span></div>
+        <div class="bars__row"><span class="bars__label">31 Aug &middot; Mon</span><span class="r">5</span><span class="r">5</span><span class="bar" aria-hidden="true"><i style="width:41px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">01 Sep &middot; Tue</span><span class="r">29</span><span class="r">2</span><span class="bar" aria-hidden="true"><i style="width:126px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">02 Sep &middot; Wed</span><span class="r">3</span><span class="r">0</span><span class="bar" aria-hidden="true"><i style="width:12px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">03 Sep &middot; Thu</span><span class="r">3</span><span class="r">51</span><span class="bar" aria-hidden="true"><i style="width:220px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">04 Sep &middot; Fri</span><span class="r">13</span><span class="r">11</span><span class="bar" aria-hidden="true"><i style="width:98px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">05 Sep &middot; Sat</span><span class="r">0</span><span class="r">0</span><span class="bar" aria-hidden="true"></span></div>
+        <div class="bars__row"><span class="bars__label">06 Sep &middot; Sun</span><span class="r">3</span><span class="r">0</span><span class="bar" aria-hidden="true"><i style="width:12px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">07 Sep &middot; Mon</span><span class="r">3</span><span class="r">0</span><span class="bar" aria-hidden="true"><i style="width:12px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">08 Sep &middot; Tue</span><span class="r">9</span><span class="r">30</span><span class="bar" aria-hidden="true"><i style="width:159px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">09 Sep &middot; Wed</span><span class="r">1</span><span class="r">0</span><span class="bar" aria-hidden="true"><i style="width:4px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">10 Sep &middot; Thu</span><span class="r">7</span><span class="r">13</span><span class="bar" aria-hidden="true"><i style="width:81px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">11 Sep &middot; Fri</span><span class="r">0</span><span class="r">0</span><span class="bar" aria-hidden="true"></span></div>
+      </div>
+      <p class="label" style="margin-top:calc(-1 * var(--s-4))">Commits &middot; board transitions &middot; combined, scaled to the 3 Sep peak</p>
+
+      <div class="tbl-wrap">
+        <table>
+          <caption class="label" style="text-align:left;padding:var(--s-3);border-bottom:var(--hair)">Every fully static day since 5 August</caption>
+          <thead><tr><th scope="col">Date</th><th scope="col">Day</th><th scope="col" class="r">Commits</th><th scope="col" class="r">Transitions</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">8&ndash;9, 15&ndash;16, 22&ndash;23, 29&ndash;30 Aug, 5 Sep</th><td>Sat / Sun</td><td class="r">0</td><td class="r">0</td></tr>
+            <tr><th scope="row" class="hi"><strong>25 Aug</strong></th><td class="hi"><strong>Tue</strong></td><td class="r hi">0</td><td class="r hi">0</td></tr>
+            <tr><th scope="row" class="hi"><strong>11 Sep</strong></th><td class="hi"><strong>Fri</strong></td><td class="r hi">0</td><td class="r hi">0</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="invert" style="margin-bottom:var(--s-6)">
+        <p style="margin-bottom:0">Every other static day in the record is a weekend. <strong>Today is the second static working day, and the first &mdash; 25 August &mdash; was followed by 26 August: 24 commits and 56 board transitions, the largest day in the record.</strong> A static working day on this project has, on its one prior occurrence, been the quiet before a large merge rather than the start of a stall.</p>
+      </div>
+
+      <div class="note">
+        <span class="label">Two caveats that keep this honest</span>
+        <p>The sidecars carry audit trails only for items <strong>currently</strong> on the three boards, so a transition on an item since removed from a board would not appear. The commit half of the table has no such limitation &mdash; it is <code>git log --all</code> over every ref.</p>
+        <p style="margin-bottom:0">Today's row is measured to the 14:01 UTC cut-off rather than to midnight (&sect;1.3). Neither caveat affects the window's own zero, which covers a full working afternoon.</p>
+      </div>
+
+      <h3>2.3 The eight in review are a day older and otherwise unchanged</h3>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Item</th><th scope="col">Owner</th><th scope="col">Entered REVIEW/QA</th><th scope="col" class="r">Age</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>BVA-I231</code></th><td>Ayomikun Araoye</td><td>10 Sep 10:25 UTC</td><td class="r">1.1 d</td></tr>
+            <tr><th scope="row"><code>BVA-I246</code>&ndash;<code>BVA-I252</code> (7)</th><td>Ayomikun Araoye</td><td>8 Sep 16:02&ndash;16:04 UTC</td><td class="r hi"><strong>2.9 d</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Nothing entered, nothing left, nothing was sent back. The notification workstream's seven items &mdash; all describing code merged in July and August &mdash; are now <strong>2.9 days</strong> in the queue, and nothing has touched <code>src/notifications/</code>, <code>src/devices/</code> or <code>src/messaging/</code> since.</p>
+
+      <p>The recommendation to settle whether these seven are being reviewed as new work or acknowledged as already-shipped work is now <strong>three editions unactioned</strong>, and the arithmetic has not softened: sprint 0901 closes on 22 September, and this project's only precedent for emptying a review column is the 47-second sweep of 3 September that marked 46 queued items Done without a line of code changing.</p>
+
+      <p><strong><code>FCM_SERVICE_ACCOUNT</code> is still blank</strong> in <code>beevia-api/.env.example</code> (line 79) and still optional in <code>env.ts</code>, re-verified at <code>origin/main</code> today. Accepting <code>BVA-I246</code> without checking the deployed value still accepts a <code>StubPushAdapter</code>.</p>
+
+      <h3>2.4 Translation: backend parked in review, client still at zero</h3>
+      <p>Unchanged in both halves, which for the client half means the sixteenth consecutive day.</p>
+      <p><strong>Backend.</strong> <code>BVA-I230</code>/<code>BVA-I231</code> in review since yesterday; <code>BVA-I244</code>/<code>BVA-I245</code> In progress (<code>BVA-I245</code> at 1.2 days); the six merged endpoints untouched.</p>
+      <p><strong>Client.</strong> <code>beevia-mobile</code> <code>main</code> unchanged since 26 August &mdash; <strong>16 days</strong>. <code>BVA-I229</code> <em>Translation Engine Integration</em>, which the rest of the sprint's client work depends on, is <strong>still To do on day 9 of 20</strong>. Re-verified at <code>origin/main</code> today: the only translation reference anywhere in <code>beevia-mobile/lib</code> is <code>TranslateChatScreen</code>, reached by the <code>/chat_translate</code> route in <code>core/routes.dart</code>, and a grep of the whole <code>lib</code> tree for <code>/translate</code> returns <strong>zero</strong> hits. A screen exists; nothing behind it calls the API.</p>
+      <p><code>POST /translate</code> itself is unchanged: <code>translate.module.ts:23</code> still binds <code>TRANSLATE_PORT</code> unconditionally to <code>StubTranslateAdapter</code>, and <code>GET /translate/languages</code> still does not constrain its <code>to</code> field.</p>
+
+      <h3>2.5 Still no estimates &mdash; eighth consecutive edition</h3>
+      <p><strong>0 of 25 on 0901, 0 of 12 on 0901-admin, 0 of 64 on 08-01.</strong> No tags. Velocity, burn-down and any normalisation of one person's load against another's remain underivable &mdash; which matters more than usual on a day whose only finding is about elapsed time.</p>
+    </section>
+
+    <section class="sec" id="s3">
+      <div class="sec__h"><span class="sec__n">03</span><h2>Where the sprint stands, at day 9 of 20</h2></div>
+
+      <p>Unchanged from yesterday except for the day count, and that is the point.</p>
+
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Workstream</th><th scope="col">Board</th><th scope="col">Code</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Notifications (7 items)</th><td>All in REVIEW/QA, 2.9 d</td><td><strong>Merged in July/August.</strong> Nothing this sprint</td></tr>
+            <tr><th scope="row">Translation &mdash; language preference (2)</th><td>In REVIEW/QA, 1.1 d</td><td><strong>Merged 10 Sep</strong>, matches the items</td></tr>
+            <tr><th scope="row">Translation &mdash; backend text bundles (1)</th><td>In progress, 1.2 d</td><td>No code yet</td></tr>
+            <tr><th scope="row" class="hi">Translation &mdash; mobile engine + UI (7)</th><td class="hi">2 To do, 4 In progress, 1 design</td><td class="hi"><strong>No code, 16 days, no branch</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="invert" style="margin-bottom:var(--s-6)">
+        <p style="margin-bottom:0"><strong>Eleven days remain, and the entire remaining scope is still mobile.</strong> The backend half of this sprint is merged or one item from it. The client half has not started, and today it did not start either: <code>BVA-I229</code>, the on-device engine everything else depends on, is To do on day 9, and the developer who owns it has now gone four days without a commit on any branch and eight days without a submission.</p>
+      </div>
+
+      <p>That arithmetic is the whole risk of this sprint, and <strong>each static day removes one of the eleven days available to answer it.</strong></p>
+    </section>
+
+    <section class="sec" id="s4">
+      <div class="sec__h"><span class="sec__n">04</span><h2>What shipped this cycle</h2></div>
+
+      <p><strong>Nothing.</strong> This section is short because it can be, and it is worth being precise about how wide the search was.</p>
+
+      <p>Across <code>beevia-api</code>, <code>beevia-admin-api</code>, <code>beevia-db-schema</code>, <code>beevia-admin</code> and <code>beevia-mobile</code>, <code>git log --all --since='2026-09-10T14:03:00Z'</code> returns <strong>zero commits on every remote and local ref</strong> &mdash; not merely zero merges to the default branch. All five tips are exactly where yesterday's report left them:</p>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Repo</th><th scope="col"><code>origin/main</code> tip</th><th scope="col">Dated</th><th scope="col" class="r">Age at cut-off</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>beevia-api</code></th><td><code>f4f6dd1</code></td><td>10 Sep 09:16 UTC</td><td class="r">1.2 d</td></tr>
+            <tr><th scope="row"><code>beevia-admin-api</code></th><td><code>4f3df97</code></td><td>10 Sep 09:25 UTC</td><td class="r">1.2 d</td></tr>
+            <tr><th scope="row"><code>beevia-db-schema</code></th><td><code>9fd0139</code> (v0.0.30)</td><td>10 Sep 08:52 UTC</td><td class="r">1.2 d</td></tr>
+            <tr><th scope="row"><code>beevia-admin</code></th><td><code>a33b34c</code></td><td>8 Sep 15:59 UTC</td><td class="r hi"><strong>2.9 d</strong></td></tr>
+            <tr><th scope="row"><code>beevia-mobile</code></th><td><code>0ad0083</code></td><td>27 Aug 04:09 UTC</td><td class="r hi"><strong>16 d</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p><code>beevia-mobile</code>'s <code>origin/BVA-I192</code> remains <strong>14 commits ahead</strong> of <code>main</code> at <code>295a7bd</code>, unchanged since <strong>7 September 12:57 UTC &mdash; 4.0 days</strong>, up from 3. No new branch appeared in any repository.</p>
+
+      <div class="note">
+        <span class="label">Repository integrity &mdash; not re-swept, and why that is sound</span>
+        <p style="margin-bottom:0">The 9 and 10 September editions each verified by blob hash that every <code>eslint.config.mjs</code> reachable from every remote ref in all five repositories is one of the three known-good files, and that the 9167-byte malware payload is reachable from nothing. <strong>No ref in any repository has moved since that sweep</strong>, which is the same evidence a fresh sweep would produce; a re-run is deferred to the next edition in which a ref changes. This is an inference from ref immutability, not a fresh hash check &mdash; stated so it can be challenged. Unchanged and still invisible from here: the workstation, credential rotation, and branch protection.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s5">
+      <div class="sec__h"><span class="sec__n">05</span><h2>Spec updates</h2></div>
+
+      <p><strong>None, and none were warranted.</strong> With zero merged commits there is no new route to document, no proposal to move, and no contract to amend. The deterministic audit run against a read-only <code>origin/main</code> shadow reports:</p>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Service</th><th scope="col" class="r">Code</th><th scope="col" class="r">Spec</th><th scope="col" class="r">Proposed</th><th scope="col">Result</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>beevia-api</code></th><td class="r">137</td><td class="r">137</td><td class="r">38</td><td class="hi"><strong>OK</strong></td></tr>
+            <tr><th scope="row"><code>beevia-admin-api</code></th><td class="r">47</td><td class="r">47</td><td class="r">19</td><td class="hi"><strong>OK</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p><strong>Drift: zero, both services, both directions.</strong> All four files parse. No <code>x-beevia-*</code> markers, no broken <code>$ref</code>s, no orphaned components, no duplicate <code>operationId</code>s, no cross-file schema divergence outside the two whitelisted cases.</p>
+
+      <p>Per the audit skill's own instruction for a clean run &mdash; <em>&ldquo;say so and stop; do not rewrite documents that are already correct&rdquo;</em> &mdash; <code>openapi.yaml</code>, <code>openapi.proposed.yaml</code>, <code>openapi.admin.yaml</code>, <code>openapi.admin.proposed.yaml</code>, <code>api-rfc.md</code>, <code>admin-api-rfc.md</code> and <code>suggestions.md</code> are unmodified today. Yesterday's <code>/admin/reports</code> &rarr; <code>/admin/chats/reports/{reportId}</code> rename and its four schema renames remain the last change to the proposed admin file.</p>
+
+      <p><strong>The working-tree audit still reports 19 phantom &ldquo;documented, not in code&rdquo; lines</strong> &mdash; 6 on <code>beevia-api</code>, 13 on <code>beevia-admin-api</code> &mdash; because three repositories are <code>diverged</code> and their working trees are 4 September code. Unchanged from yesterday, and <strong>fifth consecutive edition flagging it</strong>, so that nobody &ldquo;fixes&rdquo; the spec by deleting nineteen operations that exist.</p>
+
+      <h3>5.1 The access-control gap from yesterday is still open</h3>
+      <p>Re-verified at <code>origin/main</code>: <code>GET /admin/reports/{id}</code> and <code>GET /admin/reports/{id}/download</code> are gated by <code>reports:view</code> and <code>reports:export</code> and nothing else. <code>ReportsService.generate</code> still resolves the requesting admin's <code>viewableModules</code> at request time, and that scoping is still never re-applied at read &mdash; so a narrower admin can still open and download a report generated under a wider role, from a CSV stored on the row, listed in a team-wide run history that names its requester.</p>
+      <p>It is one day older rather than brand new, and still the cheapest it will ever be to fix: <strong>nothing consumes the module</strong>, because <code>beevia-admin/src/features/reports/api.ts</code> is a mock file.</p>
+    </section>
+
+    <section class="sec" id="s6">
+      <div class="sec__h"><span class="sec__n">06</span><h2>Admin dashboard board &mdash; <code>0901-admin</code></h2></div>
+
+      <p><strong>Sprint <code>0901-admin</code>, 3 Sep &rarr; 22 Sep, day 9.</strong> 12 items &mdash; <strong>8 leaves, 4 parent Stories</strong>. Zero transitions in the window; the export is byte-identical to yesterday's.</p>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Status</th><th scope="col" class="r">Leaves</th><th scope="col" class="r">10 Sep</th><th scope="col" class="r">&Delta;</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">To do</th><td class="r">2</td><td class="r">2</td><td class="r">0</td></tr>
+            <tr><th scope="row">In progress</th><td class="r">0</td><td class="r">0</td><td class="r">0</td></tr>
+            <tr><th scope="row">Done</th><td class="r">6</td><td class="r">6</td><td class="r">0</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>The last transition was <code>BVA-I13</code>/<code>BVA-I14</code>/<code>BVA-I15</code> &rarr; Done at <strong>10 Sep 10:24:42 UTC</strong>, 1.2 days ago. The board's whole history remains 21 transitions on two days (&sect;1.2).</p>
+
+      <h3>6.1 Three items are still Done for client code that does not exist</h3>
+      <p>Re-verified at <code>origin/main</code> today, unchanged:</p>
+
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Item</th><th scope="col">Owner</th><th scope="col">Half</th><th scope="col">Done?</th><th scope="col">Code</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>BVA-I5</code></th><td>Ayomikun</td><td>backend</td><td>&#10003;</td><td><strong>Merged</strong> &mdash; <code>434d5e6</code></td></tr>
+            <tr><th scope="row"><code>BVA-I11</code></th><td>Ayomikun</td><td>backend</td><td>&#10003;</td><td><strong>Merged</strong></td></tr>
+            <tr><th scope="row"><code>BVA-I14</code></th><td><em>Unassigned</em></td><td>backend</td><td>&#10003;</td><td><strong>Merged</strong> &mdash; <code>da01324</code></td></tr>
+            <tr><th scope="row" class="hi"><code>BVA-I6</code></th><td class="hi">Promise</td><td class="hi">frontend</td><td class="hi">&#10003;</td><td class="hi"><strong>None.</strong> <code>features/reports/api.ts</code> imports <code>buildGeneratedReport</code> / <code>buildRecentReports</code> from <code>@/features/reports/mock-data</code></td></tr>
+            <tr><th scope="row" class="hi"><code>BVA-I12</code></th><td class="hi">Promise</td><td class="hi">frontend</td><td class="hi">&#10003;</td><td class="hi"><strong>None.</strong> Same file</td></tr>
+            <tr><th scope="row" class="hi"><code>BVA-I15</code></th><td class="hi">Promise</td><td class="hi">frontend</td><td class="hi">&#10003;</td><td class="hi"><strong>None.</strong> Same file</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p><code>beevia-admin/src/features/reports/</code> was last touched by <code>a537f40</code> on <strong>1 September</strong> &mdash; ten days ago, and before the backend it is supposed to consume existed. The repository as a whole has had <strong>no commits since 8 September</strong>.</p>
+
+      <p>Across the client's ten feature modules, <strong>8 are on the live API and 2 are mock</strong> (<code>reports</code>, <code>pending-transfers</code>) &mdash; unchanged, and unchanged for the fourth consecutive edition.</p>
+
+      <p><strong>The &ldquo;what does Done mean here&rdquo; question is now two editions old and has not been answered.</strong> It was cheap yesterday and it is the same price today: the board is nine days old and has twelve items.</p>
+
+      <h3>6.2 Never summed with the main board</h3>
+      <p>12 items here and 25 on sprint 0901 are different projects and different backlogs; one person appears on both. A combined figure would be meaningless. The export stays in <code>sprint-board-exports/admin/</code> because <code>beevia-audit</code> globs <code>sprint-board-exports/*.csv</code> non-recursively and would otherwise diff two unrelated boards.</p>
+    </section>
+
+    <section class="sec" id="s7">
+      <div class="sec__h"><span class="sec__n">07</span><h2>Team performance &mdash; detail</h2></div>
+
+      <p>All figures come from the activity sidecars and git, never from <code>Last Modified</code>. Commit counts are trailing-7-day, merged to the default branch except where stated, summing each person's git identities and excluding bots. <strong>Method unchanged from yesterday</strong> &mdash; every figure below reproduces yesterday's at yesterday's cut-off, which is how the corrections in &sect;1 were found.</p>
+
+      <p><strong>Ayomikun Araoye &mdash; backend + admin API.</strong> <strong>Zero commits and zero board transitions in the window</strong>, the day after merging eleven endpoints across two services. His trailing-7-day commit count falls <strong>30 &rarr; 20</strong> (<code>beevia-admin-api</code> 13, <code>beevia-api</code> 4, <code>beevia-db-schema</code> 3, summing <code>Ayomikun Araoye</code>, <code>Phoenixdadhev</code> and <code>phoenixdahdev</code>), and the fall is <strong>entirely the window sliding</strong>: the ten commits that dropped out were made on 4 September, and none were added. <strong>8 submissions</strong> in the trailing 7 days &mdash; 7 notification reconciliation items on 8 Sep, 1 delivery item on 10 Sep &mdash; flat against both previous editions (&sect;1.1). Median cycle 3.0 d over 12 passes. One open WIP, <code>BVA-I245</code>, 1.2 days old, well inside his median.</p>
+
+      <p><strong>David Samuel &mdash; mobile.</strong> <strong>Zero submissions for the eighth consecutive day</strong> &mdash; his last was <code>BVA-I182</code> on 3 September, now 8.2 days ago. Median cycle 2.6 d over 14 passes. <strong>Zero commits to <code>main</code></strong>; <code>origin/BVA-I192</code> stands at 14 commits, unchanged since 7 September &mdash; <strong>4 days</strong>. He holds four 0901 leaves In progress: <code>BVA-I233</code> and <code>BVA-I241</code> at <strong>6.9 days against a 2.6-day median &mdash; 2.7&times;</strong>, plus <code>BVA-I243</code> (3.1 d) and <code>BVA-I236</code> (2.9 d). <code>beevia-mobile</code> <code>main</code> is <strong>16 days</strong> without a commit.</p>
+
+      <p>Third consecutive edition raising it, and every signal has again moved the wrong way by exactly one day, because nothing else moved at all. <strong>&sect;3 is the consequence:</strong> eleven days remain and every remaining sprint item is his or Philip's.</p>
+
+      <p><strong>Philip Chidera &mdash; design.</strong> No submissions in the window; his last was <strong>28 August, 14.1 days ago</strong>. Median cycle 0.9 d over 7 passes. Two leaves In progress: <code>BVA-I240</code> at <strong>6.9 days against a 0.9-day median &mdash; 7.7&times; his own pace</strong>, the most overdue WIP relative to its owner on any of the three boards, and <code>BVA-I235</code> at 2.9 days. No transitions in the window, which extends the break in his two-week pattern of short board-maintenance bursts to a second day.</p>
+
+      <p><strong>Promise Udo &mdash; admin dashboard.</strong> <strong>4 commits</strong> in the trailing window, <strong>none since 8 September &mdash; 3 days</strong>. He holds four leaves on <code>0901-admin</code>, three of them Done, and none has any client code (&sect;6.1). He made no board transitions, again; his items continue to be moved by someone else. The five admin endpoints that shipped on 9&ndash;10 September still have no consumer.</p>
+
+      <h3>7.1 Weekly submission trend</h3>
+      <p>Genuine submissions into REVIEW/QA by leaf items, counting <strong>each pass</strong>, across the main board and 0901:</p>
+      <div class="bars">
+        <div class="bars__row"><span class="bars__label">W33 &middot; 11&ndash;17 Aug</span><span class="r">1</span><span class="bar" aria-hidden="true"><i style="width:7px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">W34 &middot; 17&ndash;23 Aug</span><span class="r">17</span><span class="bar" aria-hidden="true"><i style="width:121px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">W35 &middot; 24&ndash;30 Aug</span><span class="r">31</span><span class="bar" aria-hidden="true"><i style="width:220px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">W36 &middot; 31 Aug&ndash;6 Sep</span><span class="r">3</span><span class="bar" aria-hidden="true"><i style="width:21px"></i></span></div>
+        <div class="bars__row"><span class="bars__label">W37 &middot; 7&ndash;11 Sep</span><span class="r">8</span><span class="bar" aria-hidden="true"><i style="width:57px"></i></span></div>
+      </div>
+      <p>W37 is unchanged at eight with one working day left in the week: seven notification reconciliation items and one delivery item. <strong>Only one of the eight is delivery</strong>, and that distinction is the whole of &sect;1.1.</p>
+
+      <h3>7.2 Cycle times</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th scope="col">Person</th><th scope="col" class="r">n</th><th scope="col" class="r">Median</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Philip Chidera</th><td class="r">7</td><td class="r"><strong>0.9 d</strong></td></tr>
+            <tr><th scope="row">David Samuel</th><td class="r">14</td><td class="r"><strong>2.6 d</strong></td></tr>
+            <tr><th scope="row">Ayomikun Araoye</th><td class="r">12</td><td class="r"><strong>3.0 d</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Unchanged &mdash; no item completed a pass in the window, so no sample grew.</p>
+      <p><strong>Worth reading against the WIP ages, because that is where the signal is today.</strong> Three of the six open client-side WIP items now exceed their owner's median by more than 2&times;, and two of those three by more than 2.7&times;. <strong>Cycle time measures items that <em>finished</em> a pass; WIP age measures items that have not.</strong> On a day with no completions, the second is the only one that moves.</p>
+
+      <h3>7.3 Completion, unchanged</h3>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">When</th><th scope="col" class="r">Completions</th><th scope="col">From</th><th scope="col">Character</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">12&ndash;31 Aug, over 6 days</th><td class="r">20 (12 leaves)</td><td><strong>Never REVIEW/QA</strong></td><td>Owners closing their own items, bypassing the queue</td></tr>
+            <tr><th scope="row" class="hi">3 Sep, one 47-second action</th><td class="r hi"><strong>46</strong> (30 leaves)</td><td class="hi"><strong>REVIEW/QA, all 46</strong></td><td class="hi">Sprint close</td></tr>
+            <tr><th scope="row">Since 3 Sep, on 0901</th><td class="r"><strong>0</strong></td><td>&mdash;</td><td>&mdash;</td></tr>
+            <tr><th scope="row">On <code>0901-admin</code></th><td class="r">9 (6 leaves)</td><td>In progress / To do</td><td>By one person, on 2 days; 9 transitions across 4 items he does not own (&sect;1.2)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Zero movement in any row today. The main board records <strong>176</strong> <code>Updated the status</code>, <strong>66</strong> <code>Item Completed</code> and <strong>2</strong> <code>Item Reopened</code> &mdash; 244 status transitions in total, identical to yesterday and confirming yesterday's figures.</p>
+
+      <h3>7.4 Method note</h3>
+      <p>Status-transition extraction matches three Zoho audit actions &mdash; <code>Updated the status</code>, <strong><code>Item Completed</code></strong> and <strong><code>Item Reopened</code></strong>. Keying only on the word &ldquo;status&rdquo; sees 176 transitions on the main board and drops 66 completions silently. Restated because this pipeline has twice reinstated a claim that this omission produced.</p>
+      <p>Today the deterministic audit's <code>delta</code> block reports <strong>no net status change and zero throughput on every measure</strong>, and for once that is not an extraction artifact &mdash; it agrees with the sidecars, the byte-identical CSVs and the git log.</p>
+
+      <h3>7.5 What these figures do not measure</h3>
+      <div class="note">
+        <p><strong>They cannot tell a day off from a stop.</strong> A zero is produced identically by a team that rested, a team that was blocked, and a team working untracked. Only &sect;2.2's precedent and a conversation can separate them.</p>
+        <p><strong>They cannot distinguish delivery from reconciliation.</strong> Seven of W37's eight submissions describe code merged in July and August.</p>
+        <p><strong>They say nothing about whether a completion was reviewed.</strong> All 46 of 3 September's came from REVIEW/QA and none was reviewed; the 20 before it skipped the queue entirely.</p>
+        <p><strong>They do not see branches</strong> &mdash; except where stated. David reads zero commits while fourteen sit on <code>origin/BVA-I192</code>; today's &sect;4 sweep of every ref is the exception that confirms the zero.</p>
+        <p><strong>They count merge commits</strong>, and they <strong>do not measure whether &ldquo;Done&rdquo; means merged</strong> &mdash; three items are Done on the admin board for a mock file.</p>
+        <p><strong>No estimation points exist on any item, on any of the three boards</strong> &mdash; 0/64, 0/25, 0/12.</p>
+        <p><strong>Board actions are not evenly attributable.</strong> Figures key to the item's assignee, not to whoever clicked.</p>
+        <p style="margin-bottom:0"><strong>Cycle time rewards small items; commit counts reward small commits.</strong> Neither measures difficulty or quality. Correctness and testing are out of scope for scoring, per the owner's 2026-08-07 instruction.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s8">
+      <div class="sec__h"><span class="sec__n">08</span><h2>Risks &amp; previous recommendations</h2></div>
+
+      <p>Ordered by what would cost most to leave alone. Nothing was retired this cycle, because nothing changed; three moved up because time passed.</p>
+
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col" class="r">#</th><th scope="col">Risk</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" class="r hi">1</th><td class="hi"><strong>The entire remaining scope of sprint 0901 is mobile, and mobile has not started.</strong> <code>BVA-I229</code> is To do on day 9 of 20, with eleven days left. <strong>Promoted to first</strong> &mdash; now the risk with the least remaining time to absorb it</td></tr>
+            <tr><th scope="row" class="r hi">2</th><td class="hi"><strong><code>beevia-mobile</code> <code>main</code> is 16 days stale</strong>; the 14-commit branch has not moved in 4 days; two WIP items at 2.7&times; their owner's median and one design item at 7.7&times;. <strong>Third edition asking</strong></td></tr>
+            <tr><th scope="row" class="r">3</th><td>A generated report can be read by an admin whose role could not have generated it (&sect;5.1). Two days old, still unconsumed</td></tr>
+            <tr><th scope="row" class="r">4</th><td>Eight items sit in REVIEW/QA and the only precedent for emptying that column is a 47-second bulk close. Sprint 0901 ends 22 September</td></tr>
+            <tr><th scope="row" class="r">5</th><td>Seven of those eight describe code merged in July and August, so accepting them would record delivery no sprint-0901 commit supports</td></tr>
+            <tr><th scope="row" class="r">6</th><td>Three admin-board items are Done for client code that does not exist, marked Done by someone who does not own them. Second edition</td></tr>
+            <tr><th scope="row" class="r">7</th><td>Translation shipped without its opt-in flag. PRD &sect;8.1 requires opt-in; the stored preference is a language only</td></tr>
+            <tr><th scope="row" class="r">8</th><td><code>POST /translate</code> still returns its input unchanged, and <code>GET /translate/languages</code> does not constrain its <code>to</code> field</td></tr>
+            <tr><th scope="row" class="r">9</th><td>Accepting <code>BVA-I246</code> may accept a stub &mdash; <code>FCM_SERVICE_ACCOUNT</code> optional and blank in <code>.env.example</code> line 79</td></tr>
+            <tr><th scope="row" class="r">10&ndash;11</th><td>Report CSVs stored in Postgres with no retention policy; report generation in-process and unbounded in concurrency</td></tr>
+            <tr><th scope="row" class="r">12</th><td>Three repositories remain unsynced locally &mdash; 19 phantom drift lines in the working-tree audit. Fifth edition</td></tr>
+            <tr><th scope="row" class="r">13&ndash;15</th><td>Workstation status, credential rotation and branch protection all unverifiable from here. Sixth edition for branch protection</td></tr>
+            <tr><th scope="row" class="r">16&ndash;17</th><td>Module 4 shipped as a queue with no way to work it off; the product decision behind it is recorded nowhere but a controller docstring</td></tr>
+            <tr><th scope="row" class="r">18&ndash;19</th><td>Per-user reconciliation will report false discrepancies once the treasury pool is enabled (<code>ANCHOR_POOL_ACCOUNT_ID</code> still optional and unset); reconciliation is unbounded and silently capped at 500 payouts / 1000 ledger rows</td></tr>
+            <tr><th scope="row" class="r">20&ndash;22</th><td><code>treasury.solvent</code> reads <code>false</code> for &ldquo;unknown&rdquo; on a live screen; the money-oversight surface has no second reviewer; the Anchor webhook backfill is still unscoped after ten days</td></tr>
+            <tr><th scope="row" class="r">23&ndash;24</th><td>The daily export still targets a closed sprint (sixth edition) and the cut-off is still 14:00 UTC &mdash; &sect;1.3 shows this pair is what makes a zero hard to read. No estimation points on any of three boards (eighth edition)</td></tr>
+            <tr><th scope="row" class="r">25&ndash;28</th><td>Silent-200 on <code>POST /kyc/profile</code> (ninth edition); a hard-coded account number on a money screen on <code>main</code> (ninth); the admin client's <code>wallet</code> module still ignores the endpoint built for it (third); three pagination conventions across seven endpoints</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>8.1 Previous recommendations &mdash; where they stand</h3>
+
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col">Recommendation from 10 Sep</th><th scope="col">Status on 11 Sep</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Scope the eight items in REVIEW/QA before 22 September</th><td>&#10007; <strong>Not done.</strong> Unmoved, now 2.9 d and 1.1 d old</td></tr>
+            <tr><th scope="row">Fix the report read-scoping</th><td>&#10007; <strong>Not done.</strong> Re-verified at <code>origin/main</code>; unchanged</td></tr>
+            <tr><th scope="row">Ask David what is happening &mdash; second time</th><td>&#10007; <strong>Not visible from here.</strong> Every signal moved one day the wrong way</td></tr>
+            <tr><th scope="row">Add the <code>enabled</code> flag to the translation preference</th><td>&#10007; <strong>Not done.</strong> Still a language-only surface</td></tr>
+            <tr><th scope="row">Agree what Done means on the admin board</th><td>&#10007; <strong>Not done.</strong> Still three Done items over a mock file</td></tr>
+            <tr><th scope="row">Have Promise move his own board items</th><td>&#10007; <strong>Not done.</strong> No transitions at all on that board</td></tr>
+            <tr><th scope="row">Wire the admin client to the five endpoints waiting for it</th><td>&#10007; <strong>Not done.</strong> <code>beevia-admin</code> had no commits</td></tr>
+            <tr><th scope="row">Write down that Option A is the answer to Module 4</th><td>&#10007; <strong>No decision recorded.</strong> Sixth edition</td></tr>
+            <tr><th scope="row">Adopt the Reports truncation pattern in reconciliation</th><td>&#10007; <strong>Not done</strong></td></tr>
+            <tr><th scope="row">Add the route-collision check to CI, on push</th><td>&#10007; <strong>Not done</strong></td></tr>
+            <tr><th scope="row">Move the daily export to 0901 and the cut-off to ~20:00 UTC</th><td>&#10007; <strong>Not done.</strong> Sixth and fifth editions; &sect;1.3 is a fresh argument for the cut-off half</td></tr>
+            <tr><th scope="row">Put estimation points on all three boards</th><td>&#10007; <strong>Not done.</strong> 0/25, 0/12</td></tr>
+            <tr><th scope="row">Apply the BVN-ordering guard to <code>POST /kyc/profile</code></th><td>&#10007; <strong>Not done.</strong> Re-checked at <code>origin/main</code>; unchanged</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="invert" style="margin-bottom:var(--s-6)">
+        <p><strong>Zero of thirteen actioned</strong> &mdash; the first time this table has been entirely empty. Yesterday's edition closed on the observation that <em>&ldquo;things that are code get done; things that are decisions do not&rdquo;</em>: one of twelve actioned, and that one by a commit rather than a decision. Today neither happened.</p>
+        <p style="margin-bottom:0">It is worth being fair about what that does and does not show. <strong>Twelve of the thirteen are decisions, conversations or small edits that could have been made on a day when nothing else was happening</strong> &mdash; in that sense a static day is the cheapest possible day to clear them. That none were cleared is a weaker signal than a missed delivery, but it is the same signal this table has produced for four editions running, and the list is no longer short.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="s9">
+      <div class="sec__h"><span class="sec__n">09</span><h2>What I would do this week</h2></div>
+
+      <p>Deliberately unchanged in substance from yesterday, because nothing about the project changed. Reordered by remaining time.</p>
+
+      <div class="stack">
+        <div class="finding">
+          <div class="finding__n num">1</div>
+          <div><p><strong>Ask David what is happening &mdash; this is the third time, and &sect;3 is why it cannot wait another day.</strong> Zero submissions in 8 days, zero commits on any branch in 4 days, <code>main</code> 16 days stale, two items at 2.7&times; his median, and <code>BVA-I229</code> still To do on day 9 of 20. Eleven days remain and every remaining sprint item is client-side. If the answer is &ldquo;blocked&rdquo;, the board should say so; if it is &ldquo;working on the branch&rdquo;, the branch should show it.</p></div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">2</div>
+          <div><p><strong>Confirm whether today was a day off.</strong> One sentence at standup converts &sect;2.2 from an open question into either a non-event or the first day of a trend, and it is the single cheapest input the next edition of this report could receive.</p></div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">3</div>
+          <div><p><strong>Scope the eight items in REVIEW/QA before 22 September, not on it.</strong> Seven describe July code. If accepting them as-is is fine, say so on the board now &mdash; the sprint's real remaining scope becomes visible and the burn-down stops lying. If it is not, name a reviewer this week.</p></div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">4</div>
+          <div><p><strong>Fix the report read-scoping</strong> (&sect;5.1). Persist the generating admin's <code>viewableModules</code> on the row and re-filter on read. Two days old, and nothing consumes the module yet.</p></div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">5</div>
+          <div><p><strong>Add the <code>enabled</code> flag to the translation preference.</strong> One column and one field on two responses <em>while nothing consumes the endpoints</em> &mdash; after the mobile client is written against them it is a contract change.</p></div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">6</div>
+          <div><p><strong>Agree what Done means on the admin board</strong>, and have Promise move his own items. Third edition. Nine days old, twelve items, five minutes of conversation.</p></div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">7</div>
+          <div><p><strong>Wire the admin client to the five endpoints waiting for it.</strong> <code>reports</code> and <code>pending-transfers</code> are still mocks, the entire Reports backend exists, and the <code>wallet</code> module's own comment still asks for an endpoint that shipped five days ago.</p></div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">8</div>
+          <div><p><strong>Write down that Option A is the answer to Module 4.</strong> Sixth edition asking. Built, merged, shipped, and recorded in a controller docstring.</p></div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">9</div>
+          <div><p><strong>Move the cut-off to ~20:00 UTC and the daily export to sprint 0901.</strong> Fifth and sixth editions. &sect;1.3 adds an argument the earlier ones did not have: <strong>a too-early cut-off is most damaging on exactly the days when nothing happened</strong>, because a zero cannot be distinguished from an unobserved afternoon.</p></div>
+        </div>
+        <div class="finding">
+          <div class="finding__n num">10</div>
+          <div><p><strong>The standing four:</strong> adopt the Reports truncation pattern in reconciliation; add the route-collision check to CI on push; put estimation points on all three boards (eighth edition &mdash; conspicuous on a day whose only finding is about elapsed time); apply the BVN-ordering guard to <code>POST /kyc/profile</code> (ninth edition, five lines, already written).</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec" id="method">
+      <div class="sec__h"><span class="sec__n">&mdash;</span><h2>Method</h2></div>
+
+      <p><strong>Pipeline.</strong> <code>beevia-refresh</code>: main board export (64 items, sprint 08-01, cut-off 14:01 UTC) &rarr; admin board export with <code>--sprint 0901-admin</code> (12 items) &rarr; fast-forward sync (<strong>0 repos synced; 3 refused as <code>diverged</code>, 2 already current</strong>) &rarr; deterministic audit against the working tree &rarr; <strong>a second audit run against a read-only <code>origin/main</code> shadow workspace</strong> built with <code>git archive</code> into <code>/tmp</code> &rarr; <code>git log --all</code> sweep of every ref in all five repositories across the window &rarr; read-only scratch export of sprint 0901 &rarr; day-by-day reconstruction of commit and transition counts since 5 August (&sect;2.2) &rarr; re-verification at <code>origin/main</code> of the code facts this edition carries forward &rarr; this report. <strong>No spec, RFC or suggestions file was modified, because the audit was clean</strong> (&sect;5).</p>
+
+      <p><strong>Nothing was executed from any sub-repo.</strong> No <code>npm</code>, <code>node</code>, <code>eslint</code> or build step ran. The unsynced repositories were read with <code>git log</code>, <code>git archive</code> and <code>git show</code> into <code>/tmp</code>, outside the workspace. No repository was reset, rebased, reverted or cleaned, no file in any sub-repo was edited, and the sync step's <code>--ff-only</code> limit was not overridden. Nothing was committed, pushed or deployed.</p>
+
+      <h3>Degraded inputs</h3>
+      <div class="note">
+        <p><strong>Three repositories could not be synced.</strong> <code>beevia-api</code>, <code>beevia-admin-api</code> and <code>beevia-db-schema</code> remain <code>diverged</code> because <code>origin/main</code> was rewritten during the 8 September remediation; <code>sync_repos.py</code> is <code>--ff-only</code> and correctly refuses. Their working trees are 4 September code, the sole cause of the working-tree audit's <strong>19</strong> phantom drift lines. Resolving it needs <code>git reset --hard origin/main</code> or equivalent, outside this pipeline's sanctioned exception. <strong>Capture the local tips first</strong> (<code>d9af17b</code>, <code>43abc3a</code>, <code>5b0592a</code>) &mdash; they are the only offline copy of the pre-incident history. Every code claim here was made against <code>origin/main</code>.</p>
+        <p><strong>The <code>Epic</code> column is blank</strong> on both in-repo boards &mdash; the OAuth refresh token lacks <code>ZohoSprints.epic.READ</code>. A known scope gap, not &ldquo;no epic assigned&rdquo;.</p>
+        <p><strong><code>Comments</code> bodies are unavailable</strong> from the API.</p>
+        <p><strong><code>ZOHO_SPRINT_FILTER</code> is stale</strong> &mdash; still <code>08-01</code>, so the in-repo main export covers a sprint that closed on 28 August and reads 41 leaves all <code>Done</code>. Sprint 0901 is exported to <code>/tmp/beevia-scratch/</code> for the seventh consecutive edition. <strong>The deterministic audit's board section therefore describes the closed sprint</strong>, and every 0901 figure here comes from the scratch export.</p>
+        <p><strong>The window ends at 14:01 UTC.</strong> Friday afternoon UTC is unobserved, which matters more on a zero-movement day than on any other (&sect;1.3).</p>
+        <p><strong>The static-day reconstruction (&sect;2.2) is bounded by the sidecars</strong>, which carry audit trails only for items currently on the three boards. The commit half is <code>git log --all</code> over every ref and has no such limitation.</p>
+        <p><strong>Repository integrity was not re-swept this cycle.</strong> No ref moved since the 10 September sweep, so its result stands unchanged (&sect;4) &mdash; an inference from ref immutability, not a fresh hash check.</p>
+        <p><strong>Branch protection, credential rotation and workstation remediation are unverifiable</strong> from this workspace.</p>
+        <p style="margin-bottom:0"><strong>No estimation points on any item, on any of three boards</strong>, so velocity is not derivable and no per-person figure is normalised for size.</p>
+      </div>
+
+      <p><strong>Window.</strong> 10 Sep 14:03 UTC &rarr; 11 Sep 14:01 UTC. All <code>actiontime</code> values and board times are UTC; the local export host runs UTC&minus;6, so the 08:01 local run is a 14:01 UTC cut-off. The window contains the whole of Thursday afternoon and evening UTC and Friday morning UTC, and <strong>no event of any kind falls inside it</strong>.</p>
+
+      <p><strong>Sources.</strong> Boards: <code>beevia-sprint-board-2026-09-11.csv</code> (64 rows, 41 leaves, sprint 08-01) + activity sidecar; <code>admin/beevia-admin-sprint-board-2026-09-11.csv</code> (12 rows, 8 leaves, sprint 0901-admin) + activity sidecar; scratch export of <code>0901</code> (25 rows, 17 leaves) + activity sidecar. All three are byte-identical to 10 September's apart from the export timestamp. Code: all five repositories at <code>origin/main</code>. Specs: <code>openapi.yaml</code> (<strong>137</strong>), <code>openapi.proposed.yaml</code> (<strong>38</strong>), <code>openapi.admin.yaml</code> (<strong>47</strong>), <code>openapi.admin.proposed.yaml</code> (<strong>19</strong>) &mdash; all validated, zero drift against <code>origin/main</code>.</p>
+
+      <p><strong>A note on who appears here.</strong> Only people whose work is tracked have rows. Board transitions performed by non-contributors are reported without attribution, per the standing instruction.</p>
+
+      <h3 id="mvp-method">MVP readiness &mdash; how the &asymp;58% is computed</h3>
+      <p>Eleven capabilities from PRD &sect;1.2/&sect;11 with <strong>frozen weights</strong>, each scored 0&ndash;1 from build evidence. Target date 2026-09-01 is provisional, set by the owner on 2026-08-07 &mdash; <strong>it passed ten days ago, and it is not met.</strong></p>
+      <p><strong>No score moved, and that is the rubric working rather than an oversight.</strong> Scores measure merged, reachable build evidence; <strong>zero code merged in this window</strong>, so nothing could have moved one. This is the first edition in which the estimate is unchanged to two decimal places.</p>
+      <div class="tbl-wrap scrolls">
+        <table class="wide">
+          <thead><tr><th scope="col" class="r">#</th><th scope="col">Capability</th><th scope="col" class="r">Weight</th><th scope="col" class="r">Score</th><th scope="col">Evidence</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" class="r">1</th><td>E2EE messaging</td><td class="r">15</td><td class="r">0.9</td><td>Unchanged. Conversation/message/key/attachment paths live; client crypto, socket and attachment layers present. No commit touched <code>src/messaging/</code></td></tr>
+            <tr><th scope="row" class="r">2</th><td>Voice &amp; video calling</td><td class="r">8</td><td class="r">0.8</td><td>Unchanged. 4 call endpoints live; <code>audio_call_screen</code> / <code>video_call_screen</code> present at <code>origin/main</code>; the push transport still falls back to a stub without <code>FCM_SERVICE_ACCOUNT</code></td></tr>
+            <tr><th scope="row" class="r">3</th><td>Message translation</td><td class="r">7</td><td class="r">0.30</td><td>Unchanged. Seven <code>/translate</code> operations implemented, one proposed. Ceiling re-verified today: <code>translate.module.ts:23</code> binds <code>TRANSLATE_PORT</code> unconditionally to <code>StubTranslateAdapter</code>; no opt-in flag; <strong>a grep of all of <code>beevia-mobile/lib</code> for <code>/translate</code> returns zero hits</strong>. Language <em>selection</em> is built; language <em>translation</em> is not</td></tr>
+            <tr><th scope="row" class="r">4</th><td>Local KYC tier (BVN)</td><td class="r">8</td><td class="r">0.9</td><td>Unchanged. Ceiling unchanged: silent-200 on <code>/kyc/profile</code>, failed provisioning surfaces nowhere</td></tr>
+            <tr><th scope="row" class="r">5</th><td>International KYC tier</td><td class="r">6</td><td class="r hi">0.0</td><td>proposed only &mdash; 3 operations in <code>openapi.proposed.yaml</code>, none implemented</td></tr>
+            <tr><th scope="row" class="r">6</th><td>Multi-currency wallets</td><td class="r">12</td><td class="r">0.70</td><td>Unchanged. Pooled treasury merged but <strong>disabled</strong> (<code>ANCHOR_POOL_ACCOUNT_ID</code> optional in <code>env.ts</code> and unset), so not scored. Server is NGN-only; <code>PaymentService.activeNgn()</code> re-verified at three call sites today</td></tr>
+            <tr><th scope="row" class="r">7</th><td>Send / request / receive</td><td class="r">12</td><td class="r">0.80</td><td>Unchanged. Ceiling: request/receive still have no client flow; <code>beevia-mobile/lib</code> carries 6 <code>/payments</code> references but the money UI is still mock routes</td></tr>
+            <tr><th scope="row" class="r">8</th><td>Cross-currency FX</td><td class="r">12</td><td class="r hi">0.0</td><td>proposed only &mdash; 3 <code>/fx</code> operations, none implemented</td></tr>
+            <tr><th scope="row" class="r">9</th><td>Virtual cards</td><td class="r">10</td><td class="r">0.55</td><td>Unchanged. 13 <code>/cards</code> operations live server-side; ceiling still low &mdash; the client has <strong>zero</strong> <code>/cards</code> references and there is no issuer reveal flow</td></tr>
+            <tr><th scope="row" class="r">10</th><td>Consent management</td><td class="r">4</td><td class="r hi">0.0</td><td>No endpoint or record anywhere</td></tr>
+            <tr><th scope="row" class="r">11</th><td>Admin oversight</td><td class="r">6</td><td class="r">0.87</td><td>Unchanged. Admin API 47 operations; modules with something built 6 of 8; client <strong>8 of 10</strong> on the live API, <code>reports</code> and <code>pending-transfers</code> still mock. The five Reports endpoints still have no consumer, and the access-control gap in the same code is still open (&sect;5.1)</td></tr>
+            <tr><th scope="row" class="r hi"></th><td class="hi">Weighted total</td><td class="r hi">100</td><td class="r hi">57.92</td><td class="hi">&asymp;58% &middot; <strong>&Delta; 0.00</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Weights frozen &mdash; no methodology change this edition. Scores measure <strong>merged, reachable build evidence</strong>: never board status, never items in review, never unmerged branches, never merged-but-disabled code, and never a design decision on its own.</p>
+      <div class="note">
+        <span class="label">Three things that might look like progress, worth zero by design</span>
+        <p><strong>The eight items sitting in REVIEW/QA.</strong> Seven describe already-scored July code.</p>
+        <p><strong>The six Done items on the admin board.</strong> Three have no code at all (&sect;6.1).</p>
+        <p style="margin-bottom:0"><strong>The 14 commits on <code>origin/BVA-I192</code></strong> &mdash; real work by any human measure, and unmerged by this one.</p>
+      </div>
+
+      <h3>What this report cannot tell you</h3>
+      <div class="note">
+        <p><strong>Whether today's zero was rest, a block, or untracked work.</strong> The single most important thing this edition cannot answer, and the only one a sentence at standup would settle.</p>
+        <p><strong>Whether anything happened after 14:01 UTC today.</strong> The cut-off, not the data (&sect;1.3).</p>
+        <p><strong>Whether the eight items in REVIEW/QA will be reviewed or swept.</strong> The precedent is established; the intent is not.</p>
+        <p><strong>Whether the seven notification items are being reviewed as new work or acknowledged as old.</strong> The code's history is unambiguous; the intent behind the board move is recorded nowhere.</p>
+        <p><strong>Whether <code>FCM_SERVICE_ACCOUNT</code> is set in any deployed environment.</strong> The fallback is silent by design.</p>
+        <p><strong>Whether metadata-only moderation is the accepted answer to Module 4</strong>, and <strong>whether the server-side <code>/translate</code> surface is being retired.</strong></p>
+        <p><strong>Whether any of the 137 + 47 endpoints work.</strong> Unit tests exist and no HTTP-level tests do; there is no second reviewer. Testing is out of scope for scoring per the owner's 2026-08-07 instruction.</p>
+        <p><strong>Whether the infected workstation has been cleaned, or whether credentials were rotated.</strong> Invisible from a git clone. <strong>Whether branch protection is enabled</strong> &mdash; the available GitHub token cannot see the org.</p>
+        <p><strong>What the 67 days of dropped Anchor events cost.</strong> Still unmeasured, ten days after the fix.</p>
+        <p style="margin-bottom:0"><strong>Why <code>BVA-I192</code> has not merged</strong>, fourteen commits deep and four days without movement. And <strong>velocity for any of the three sprints</strong> &mdash; 0 of 64, 0 of 25 and 0 of 12 items estimated.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="foot">
+  <span class="barcode barcode--lg" aria-hidden="true"></span>
+  <span>Beevia project status &middot; 2026-09-11 &middot; Sprint 0901 day 9 &middot; zero commits, zero transitions, one precedent</span>
+  <span><a href="index.html">All frames</a></span>
+</footer>
+
+<script src="ui.js"></script>
+</body>
+</html>

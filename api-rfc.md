@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft — for review · **updated 2026-08-05** |
 | **Scope** | The complete HTTP surface of `beevia-api` (the consumer API): what exists today, and what the PRD requires that does not exist yet |
-| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, 100 operations · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, 52 operations · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
+| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, **137 operations** · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, **38 operations** (35 net-new + 3 live-endpoint modifications) · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
 | **Sibling RFC** | [`admin-api-rfc.md`](./admin-api-rfc.md) — the `beevia-admin-api` back-office service |
 | **Sources** | `beevia-api/src/**/*.controller.ts`, `beevia-api/src/**/dto/*.ts`, `beevia-db-schema/src/schema/*`, `beevia-api/postman/Beevia.postman_collection.json`, `Beevia_PRD.pdf` |
 | **Base path** | `/api/v1` (global prefix set in `src/main.ts`; `/i/:code` is explicitly excluded) |
@@ -167,11 +167,11 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | Calls | 5 | 0 | Complete |
 | Attachments | 2 | 1 | No single-attachment download presign |
 | Upload | 5 | 0 | Public, permanent objects — distinct from Attachments (encrypted, presigned-only) |
-| Translate | 1 | 5 | Stub engine (§5.5); stateless only; no preference storage |
+| Translate | **7** | **1** | **+6 (2026-09-10):** the language-preference surface — `GET /translate/languages`, plus app-wide and per-conversation preferences with precedence. **−4 proposed:** `/translate/languages` moved, and all three proposed preference operations shipped under `/translate/preferences` instead. Only `/translate/batch` is left proposed, and it is probably obsolete (§5.5a). The engine itself is still a stub (§5.5) |
 | Notifications | 5 | 0 | Complete |
 | Support | **0** | 4 | Does not exist. Includes `POST /payments/{id}/dispute`, listed under §7.2 but tagged Support |
 | Webhooks | **4** | 1 | **+1:** `POST /webhooks/paystack` for card top-ups. Card issuer callback still missing |
-| **Total** | **131** | **39** | +3 live-endpoint modifications = 42 operations in the proposed file |
+| **Total** | **137** | **35** | +3 live-endpoint modifications = 38 operations in the proposed file |
 
 ---
 
@@ -358,6 +358,22 @@ Three consequences follow, and the third needs a decision rather than an edit:
 
 Separately, `BVA-I244`/`BVA-I245` (*Static Backend-Originated Text Localization*) is a genuinely server-side translation requirement that no proposed operation covers: push-notification bodies, OTP and transaction messages rendered from per-user language preference. That is string bundles and template selection, not a translation API, and it should not be conflated with §7.7.
 
+#### 5.5b Preference storage shipped, 2026-09-10 — and one requirement did not come with it
+
+`BVA-I231` merged as `a08bf13`, with the schema in `beevia-db-schema` v0.0.30. Point 2 of §5.5a — "preference storage is unaffected and is now board-backed" — is now built, and it is the first code in this workstream: six operations under `/translate/preferences`, an app-wide language on `users`, and per-conversation overrides in their own table.
+
+**Three things it does better than the proposal it replaces**, all worth keeping when the client is written against it:
+
+1. **Precedence is returned, not recomputed.** Every conversation response carries `override`, `app_wide` and a `source` naming the winner. No client re-implements the rule, so no client can implement it differently.
+2. **A derived default is never persisted.** With no explicit choice, the answer comes from `Accept-Language` (or `?deviceLanguage`, which wins), and reading it does not write it. `is_explicit` distinguishes "you chose this" from "we guessed", so a later OS language change is still honoured and a picker does not show a phantom selection. `es-MX` collapses to `es`, `en-AU` to `en-US`, and a quality-ordered header is walked in order — a device's second choice beats the fallback.
+3. **Clearing an override is expressible.** `language: null`, or `DELETE`, and `language` is *required* — so an empty body is a `400` rather than a silent clear.
+
+**What did not ship is the PRD's actual requirement.** §8.1 asks for translation that is *"opt-in, set per conversation or globally"*. What shipped stores a **target language**, and nothing else. There is no `enabled` flag at either scope — the proposal had one at both — so the server always resolves *some* language and there is no way to say "do not auto-translate this thread". `is_explicit` is not that flag; it says the user picked a language, not that they want translation on.
+
+So the opt-in half of an opt-in feature still lives only in client storage, which is the exact problem `/users/me/translation` was proposed to solve. **The fix is small and the route now exists**: add `enabled` to `AppWideLanguage` and a nullable `enabled` to the conversation override, alongside `language`. Doing it before the mobile client is written against these routes costs a migration; doing it after costs a contract change.
+
+The consent gate the proposal also described (`translation` scope) remains unbuildable — consent management is still entirely absent (§1).
+
 ### 5.6 `POST /webhooks/anchor` acknowledged every real delivery without processing it
 
 **Recorded 2026-09-04, from the fix that landed on 2026-09-03** (`fix(webhooks): process real Anchor deliveries`). Anchor's real webhooks arrive as `{ id, type, attributes, relationships }` at the top level; its test probes wrap the same object under `data`. The handler read everything from `payload.data`, so a real delivery produced no `type`, hit the unknown-type guard, and returned `200` without doing anything. The commit message reports the event inbox confirming it: **only wrapped test probes were ever recorded.**
@@ -385,6 +401,31 @@ Two properties worth recording:
 
 The interaction to watch is cross-service: the admin API's per-user reconciliation compares a user's wallet balance against the balance on *their own* Anchor account, which sweeping empties. See `admin-api-rfc.md` §3.10 — the two commits landed within half an hour of each other in different repositories.
 
+### 5.8 The self view now carries `email`, and it is absent rather than null (2026-09-16)
+
+`feat(auth): return the user's email when they have one` adds an optional `email` to `PublicUser`, the shape behind `GET /auth/me`, `POST /auth/otp/verify` and `POST /auth/pin`. **No operation was added or removed** — the surface stays at 137 — so the route-level audit sees nothing; `openapi.yaml`'s `User` schema was updated in place.
+
+The one thing a client author has to know: **the key is omitted when there is no email, not set to `null`.** Every other optional field on this schema (`first_name`, `last_name`, `path`) is nullable, so `email` is the sole field on the self view where `'email' in user` and `user.email !== null` disagree. An empty stored value is folded into "none", so a blank string can never arrive as a value. Chat-only accounts routinely have no email, making the absent case the common one rather than an edge.
+
+The choice itself is defensible — one less state to tell apart — but it is an inconsistency inside a single schema, and this API's main virtue so far has been that its conventions do not have exceptions. Worth either widening to the other blanks or narrowing this one, rather than leaving one field with its own rule.
+
+---
+
+### 5.9 Reporting a conversation now carries evidence and a block, and the client has not caught up (2026-09-17)
+
+`feat(chat): carry disclosed messages and an optional block on a report` widens `POST /conversations/{id}/report` and the `conversation.report` socket command. **No operation was added or removed** — the surface stays at 137 — so the route-level audit sees nothing; `openapi.yaml`'s `ReportConversationRequest` was updated in place and a `ReportedMessage` schema added.
+
+The body was `{ reason? }`. It is now `{ reason?, messages: ReportedMessage[] (≤20, default []), blockContact: boolean (default false) }`. Both new fields default, so **every existing caller keeps working unchanged** — which is the only reason this is a widening rather than a break.
+
+**This is the consumer half of Option B in `admin-api-rfc.md` §5.1, and it does not weaken E2EE.** The messages arrive as plaintext the reporter can already read on their own device and chose to hand over; nothing is decrypted server-side, and nothing is captured from a conversation nobody reported. Four implementation choices do the load-bearing work:
+
+- **Report, evidence and block commit in one transaction.** A block that outlived a failed report would leave someone silently muted with nothing written down to explain why; a report whose evidence half-landed is worse than one with none. The block is written inline rather than through `UsersService.block` specifically so it can share that transaction, with the same idempotent guard — so reporting the same person twice does not fail on a block that already exists.
+- **`message_count` is stored on the report, not derived from the rows.** A message deleted later cannot quietly change what the reporter consented to disclose.
+- **Ordinal is the submitted position, not `sentAt`.** `sentAt` is optional and several messages can share one, so it cannot order an exchange a moderator has to read.
+- **`blockContact` on a group is refused (`block_requires_direct`)**, not guessed at and not silently dropped. There is no single contact to block, and ignoring the toggle would leave the reporter believing they had blocked someone they had not. Note the consequence for a client author: the *whole report* is rejected, so a group report must not send the flag at all rather than sending `true` and ignoring the error.
+
+**The gap worth naming: the Flutter client has not shipped its half.** As of 2026-09-18 `chat_service.dart` still posts `data: {"reason": reason}` — no `messages`, no `blockContact` — on `main` and on the unmerged `BVA-I239` branch alike. The board item for the client side (`BVA-I254`, "Update Report Sheet, Add Message Count, Build Confirmation") is in REVIEW/QA. So the server accepts up to 20 disclosed messages, the admin queue is built to display them, and every report filed by today's app arrives with `message_count: 0` and an empty `messages` array. The capability exists end-to-end on the server and nowhere on the device that is supposed to originate the consent.
+
 ---
 
 ## 6. Implemented surface
@@ -408,7 +449,7 @@ Auth: 🔓 public · 🔑 access token · 🔐 access + step-up token.
 | | POST | `/auth/otp/request` | 🔓 | ✅ Cooldown enforced |
 | | POST | `/auth/otp/verify` | 🔓 | ✅ Returns token pair + user; redeems invite code |
 | | POST | `/auth/refresh` | 🔓 | ✅ Rotating; old session revoked |
-| | GET | `/auth/me` | 🔑 | ✅ |
+| | GET | `/auth/me` | 🔑 | ✅ `email` present only when set — key absent, not null (§5.8) |
 | | POST | `/auth/logout` | 🔑 | ✅ Idempotent |
 | | POST | `/auth/pin` | 🔑 | ✅ `currentPin` required to change |
 | | POST | `/auth/pin/verify` | 🔑 | ✅ Does not mint step-up |
@@ -520,7 +561,7 @@ Escrow mechanics themselves are sound: a 24-hour hold scheduled through BullMQ, 
 | | POST | `/conversations/{id}/archive` | 🔑 | ✅ |
 | | POST | `/conversations/{id}/clear` | 🔑 | ✅ **New.** Per-user `cleared_seq` watermark; not undone by new messages |
 | | POST | `/conversations/{id}/mute` | 🔑 | ✅ `null` unmutes; omitted mutes forever |
-| | POST | `/conversations/{id}/report` | 🔑 | ✅ Metadata only — E2EE precludes content review |
+| | POST | `/conversations/{id}/report` | 🔑 | 🟡 **Widened 2026-09-17.** Takes `messages` (≤20, reporter-disclosed plaintext) + `blockContact`. No server-side decryption — see §5.9 |
 | | GET | `/conversations/{id}/media` | 🔑 | ✅ |
 | | GET | `/conversations/{id}/messages` | 🔑 | ✅ Seq-cursored |
 | | POST | `/conversations/{id}/messages` | 🔑 | ✅ |
@@ -536,7 +577,13 @@ Escrow mechanics themselves are sound: a 24-hour hold scheduled through BullMQ, 
 | | POST | `/calls/{id}/end` | 🔑 | ✅ |
 | | POST | `/attachments/upload-url` | 🔑 | ✅ |
 | | POST | `/attachments/{id}/finalize` | 🔑 | ✅ Size enforced from the stored object |
-| | POST | `/translate` | 🔑 | 🔴 **Stub engine — returns the input unchanged.** Also stateless; no preference, languages or batch. See §5.5 |
+| | POST | `/translate` | 🔑 | 🔴 **Stub engine — returns the input unchanged.** Unchanged on 2026-09-10: `TranslateModule` still binds `TRANSLATE_PORT` to `StubTranslateAdapter`. See §5.5 |
+| | GET | `/translate/languages` | 🔑 | ✅ **New 2026-09-10.** Five languages, hardcoded in `device-language.ts`. **`POST /translate` is not validated against this list** — its `to` still accepts any 2–10 character string |
+| | GET | `/translate/preferences` | 🔑 | ✅ **New.** App-wide language. Falls back to `Accept-Language` / `?deviceLanguage` without persisting the derivation; `source` and `is_explicit` say which it was |
+| | PUT | `/translate/preferences` | 🔑 | ✅ **New.** Leaves per-conversation overrides untouched — separate column, separate table |
+| | GET | `/translate/preferences/conversations/{conversationId}` | 🔑 | ✅ **New.** Returns `override`, `app_wide` and `source`, so precedence needs no client-side rule. 403 if the caller is not a current participant |
+| | PUT | `/translate/preferences/conversations/{conversationId}` | 🔑 | ✅ **New.** `language: null` clears the override — a required, explicit value, so an empty body is a 400 |
+| | DELETE | `/translate/preferences/conversations/{conversationId}` | 🔑 | ✅ **New.** Identical to `PUT … null`; returns the resulting state rather than 204 |
 | | POST | `/notifications/token` | 🔑 | ✅ |
 | | DELETE | `/notifications/token` | 🔑 | ✅ Body-based, not path-based |
 | | GET | `/notifications/preferences` | 🔑 | ✅ |
@@ -563,11 +610,13 @@ Escrow mechanics themselves are sound: a 24-hour hold scheduled through BullMQ, 
 
 Typing and presence being WS-only is correct — they are ephemeral. `sync.bootstrap` having no REST equivalent is a genuine hole: a client that cannot open a socket has no single call to establish initial state.
 
+**Parity was maintained on 2026-09-17** when reporting widened: `conversation.report` took the same `messages` / `blockContact` fields in the same commit as the REST route, by sharing one `reportFields` object between the two Zod schemas rather than copying it. That is the right shape for a dual-transport API and the first time in this file the two have been widened together (§5.9). It also caused the day's production incident — see `suggestions.md` — because `sentAt: z.coerce.date()` is a type the new Swagger version could not render.
+
 ---
 
 ## 7. Proposed surface
 
-All 50 operations below live in [`openapi.proposed.yaml`](./openapi.proposed.yaml) with full schemas, alongside the 3 live-endpoint modifications described in §7.1. Each conforms to the existing conventions: `/api/v1` prefix, standard envelope, snake_case responses, camelCase Zod-validated request bodies, `JwtAuthGuard` by default, `StepUpGuard` on anything that moves money or is irreversible.
+All 35 operations below live in [`openapi.proposed.yaml`](./openapi.proposed.yaml) with full schemas, alongside the 3 live-endpoint modifications described in §7.1 — 38 operations in the file. Each conforms to the existing conventions: `/api/v1` prefix, standard envelope, snake_case responses, camelCase Zod-validated request bodies, `JwtAuthGuard` by default, `StepUpGuard` on anything that moves money or is irreversible.
 
 ### 7.1 FX (3) — closes §4.1
 
@@ -659,17 +708,23 @@ Requires: a `cards` table, a `card_issuance` value on `provider_capability`, and
 
 Session listing is a projection of the existing `sessions` table — no new storage.
 
-### 7.7 Translation (5)
+### 7.7 Translation (1)
 
 | Method | Path | Auth |
 |---|---|---|
-| GET | `/translate/languages` | 🔑 |
 | POST | `/translate/batch` | 🔑 |
-| GET | `/users/me/translation` | 🔑 |
-| PATCH | `/users/me/translation` | 🔑 |
-| PATCH | `/conversations/{id}/translation` | 🔑 |
 
 Batch reports failures **per item** rather than failing the batch, so the PRD's fallback ("original message still shown, with a clear notice") stays renderable row by row.
+
+**Four of this section's five operations shipped on 2026-09-10**, and none of them shipped at the path proposed here:
+
+| Was proposed | Shipped as |
+|---|---|
+| `GET /translate/languages` | `GET /translate/languages` — same path, different shape: an object `{ languages: [{ value, label }] }`, not a bare array, and no detection flag |
+| `GET`/`PATCH /users/me/translation` | `GET`/`PUT /translate/preferences` |
+| `PATCH /conversations/{id}/translation` | `GET`/`PUT`/`DELETE /translate/preferences/conversations/{conversationId}` |
+
+The shipped surface is better than what was proposed on precedence and on clearing an override, and **short of it on one thing that matters: there is no on/off flag.** See §5.5a. `POST /translate/batch` is the only survivor, and it is probably obsolete for the on-device design.
 
 ### 7.8 Attachments, platform, support (6)
 

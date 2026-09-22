@@ -2401,9 +2401,24 @@ paths:
       operationId: reportConversation
       summary: Report a conversation
       description: |
-        Records a report with an optional reason. Because chat is genuinely
-        end-to-end encrypted, the server cannot inspect message content — the
-        report is metadata only. Mirrors `conversation.report`.
+        Records a report with an optional reason, the recent messages the
+        reporter chose to disclose, and optionally a block of the other party in
+        the same action. Mirrors `conversation.report`.
+
+        The server still cannot inspect a conversation: chat is genuinely
+        end-to-end encrypted and nothing is decrypted server-side. Any message
+        content on a report arrives in `messages`, as plaintext the reporter can
+        already read on their own device and chose to hand over. Nothing is
+        captured from a conversation nobody reported.
+
+        The report, its disclosed messages and the block commit in one
+        transaction. `messages` order is the submitted order, which is what a
+        moderator reads — `sentAt` is optional and several messages may share
+        one.
+
+        `blockContact` is refused on a group (`block_requires_direct`): there is
+        no single contact to block, and ignoring the toggle would leave the
+        reporter believing they had blocked someone they had not.
       requestBody:
         required: false
         content:
@@ -2423,6 +2438,7 @@ paths:
                         type: object
                         properties:
                           reported: { type: boolean, example: true }
+        '400': { $ref: '#/components/responses/BadRequest' }
 
   /conversations/{id}/media:
     parameters:
@@ -2949,6 +2965,162 @@ paths:
                       data: { $ref: '#/components/schemas/Translation' }
         '400': { $ref: '#/components/responses/BadRequest' }
 
+  /translate/languages:
+    get:
+      tags: [Translate]
+      operationId: listTranslateLanguages
+      summary: Supported translation languages
+      description: |
+        The five languages Beevia offers, with display labels, in the order a
+        picker should show them. Each `value` is exactly what
+        `PUT /translate/preferences` and
+        `PUT /translate/preferences/conversations/{conversationId}` accept.
+
+        **This is a product list, not a provider capability list.** It is the
+        `SUPPORTED_LANGUAGES` constant in
+        `src/translate/preferences/device-language.ts` — no translation engine is
+        queried, and the set does not change at runtime. It is also unrelated to
+        `POST /translate`, whose `to` field still accepts any 2–10 character
+        string and is not validated against this list.
+      responses:
+        '200':
+          description: Supported languages.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/SupportedLanguages' }
+
+  /translate/preferences:
+    get:
+      tags: [Translate]
+      operationId: getAppWideTranslationLanguage
+      summary: My app-wide translation language
+      description: |
+        The language to translate into by default, across every conversation
+        without its own override.
+
+        Until the user picks one, this is **derived from the device's OS
+        language** rather than left empty: `Accept-Language` is read, or the
+        `deviceLanguage` query parameter when a client would rather be explicit
+        than trust its HTTP stack — the query parameter wins when both are sent.
+        A regional variant collapses to what Beevia offers (`es-MX` → `es`,
+        `en-AU` → `en-US`), and a language Beevia does not offer at all falls
+        back to English (US). An `Accept-Language` list is walked in quality
+        order, so a device's second choice is honoured before the fallback.
+
+        **Reading this never persists the derivation.** `source` says where the
+        answer came from and `is_explicit` is true only for a language the user
+        actually chose, so a picker can show "English (US)" without claiming the
+        user selected it — and a later OS language change is still honoured.
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguageHeader'
+        - $ref: '#/components/parameters/DeviceLanguageQuery'
+      responses:
+        '200':
+          description: The caller's effective app-wide language.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/AppWideLanguage' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Translate]
+      operationId: setAppWideTranslationLanguage
+      summary: Set my app-wide translation language
+      description: |
+        Records an explicit choice — the response comes back with
+        `source: user` and `is_explicit: true`.
+
+        **Existing per-conversation overrides are untouched.** The app-wide
+        setting is a column on the user and an override is a row in its own
+        table, so this is the default those overrides fall back to, not a reset
+        of them.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SetAppWideLanguageRequest' }
+      responses:
+        '200':
+          description: Language set.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/AppWideLanguage' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /translate/preferences/conversations/{conversationId}:
+    parameters:
+      - $ref: '#/components/parameters/ConversationIdPath'
+    get:
+      tags: [Translate]
+      operationId: getConversationTranslationLanguage
+      summary: A conversation's translation language
+      description: |
+        The effective language for one thread, with the precedence made visible
+        rather than left for the client to recompute: `override` is the
+        per-conversation choice (`null` when the thread follows the app-wide
+        setting), `app_wide` is what it would fall back to, and `source` says
+        which one won.
+
+        The caller must be a current participant — a conversation they have left
+        is a `403`, not an empty result.
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguageHeader'
+        - $ref: '#/components/parameters/DeviceLanguageQuery'
+      responses:
+        '200': { $ref: '#/components/responses/ConversationLanguageOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Translate]
+      operationId: setConversationTranslationLanguage
+      summary: Set a conversation's translation language
+      description: |
+        Overrides the app-wide setting for this conversation only.
+
+        Send `language: null` to clear the override and follow the app-wide
+        setting again — `null` is a real value rather than an omission, so a
+        client that means "stop overriding" can say so. An empty body is a
+        `400`, not a clear. `DELETE` on the same path is the identical
+        operation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SetConversationLanguageRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/ConversationLanguageOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    delete:
+      tags: [Translate]
+      operationId: clearConversationTranslationLanguage
+      summary: Clear a conversation's override
+      description: |
+        Identical to `PUT` with `language: null` — the conversation follows the
+        app-wide setting again. Returns the resulting state rather than `204`,
+        so a client does not need a follow-up read to render the row it just
+        changed.
+      responses:
+        '200': { $ref: '#/components/responses/ConversationLanguageOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
   /notifications/token:
     post:
       tags: [Notifications]
@@ -3177,6 +3349,30 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
+    ConversationIdPath:
+      name: conversationId
+      in: path
+      required: true
+      description: Conversation id. Rejected as a `400` before any lookup if it is not a UUID.
+      schema: { type: string, format: uuid }
+    AcceptLanguageHeader:
+      name: Accept-Language
+      in: header
+      required: false
+      description: |
+        The device's OS language, used only to derive a default for a user who
+        has not chosen one. Never persisted. A full quality-ordered list is
+        accepted and walked in order.
+      schema: { type: string, example: 'fr-CA,fr;q=0.9,en;q=0.5' }
+    DeviceLanguageQuery:
+      name: deviceLanguage
+      in: query
+      required: false
+      description: |
+        The device's OS language as an explicit parameter, for a client that
+        would rather not rely on its HTTP stack sending `Accept-Language`. Wins
+        over the header when both are present. Never persisted.
+      schema: { type: string, example: es-MX }
     DeviceIdHeader:
       name: X-Device-Id
       in: header
@@ -3327,6 +3523,16 @@ components:
               - type: object
                 properties:
                   data: { $ref: '#/components/schemas/Conversation' }
+    ConversationLanguageOk:
+      description: The conversation's effective translation language, with its precedence.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/ConversationLanguage' }
     Forbidden:
       description: Authenticated but not permitted for this resource.
       content:
@@ -4308,6 +4514,37 @@ components:
       type: object
       properties:
         reason: { type: string, maxLength: 2000, example: spam }
+        messages:
+          type: array
+          maxItems: 20
+          default: []
+          description: |
+            Messages the reporter chose to disclose, in the order they should be
+            read. The cap is the rule rather than the four values the client
+            sheet offers (5 / 10 / 15 / 20), so the client can change the set
+            without a server change.
+          items: { $ref: '#/components/schemas/ReportedMessage' }
+        blockContact:
+          type: boolean
+          default: false
+          description: |
+            Also block the other party. Direct conversations only — a group is
+            rejected with `block_requires_direct`.
+
+    ReportedMessage:
+      type: object
+      description: |
+        One disclosed message. Plaintext, supplied by the reporter from their own
+        device; the server does not decrypt anything.
+      required: [body]
+      properties:
+        messageId:
+          type: string
+          format: uuid
+          description: The original message, for correlation. Optional — a client may not have it.
+        senderUserId: { type: string, format: uuid }
+        body: { type: string, minLength: 1, maxLength: 4000, example: 'send me your card details' }
+        sentAt: { type: string, format: date-time }
 
     RequestMoneyRequest:
       type: object
@@ -4613,6 +4850,101 @@ components:
         from: { type: string, example: fr }
         to: { type: string, example: en }
 
+    # --- Translation language preferences ------------------------------------
+    # `TranslationLanguage` is a closed set on the server: the five values below
+    # are the only ones the preference routes accept. `POST /translate` is NOT
+    # constrained by it.
+
+    TranslationLanguage:
+      type: string
+      enum: [en-US, en-GB, zh, es, fr]
+      description: One of the values from `GET /translate/languages`.
+      example: fr
+
+    SupportedLanguage:
+      type: object
+      required: [value, label]
+      properties:
+        value: { $ref: '#/components/schemas/TranslationLanguage' }
+        label: { type: string, example: French }
+
+    SupportedLanguages:
+      type: object
+      required: [languages]
+      description: |
+        Wrapped in an object rather than returned as a bare array, so the payload
+        has somewhere to grow.
+      properties:
+        languages:
+          type: array
+          description: In picker order — English (US), English (UK), Chinese (Mandarin), Spanish, French.
+          items: { $ref: '#/components/schemas/SupportedLanguage' }
+
+    LanguageSource:
+      type: string
+      enum: [conversation, user, device, fallback]
+      description: |
+        Where an effective language came from, so a client can tell a real choice
+        from a guess:
+
+        * `conversation` — a per-conversation override.
+        * `user` — the caller's explicit app-wide setting.
+        * `device` — derived from the device's OS language, which Beevia offers.
+        * `fallback` — the device asked for a language Beevia does not offer, or
+          reported nothing at all; the answer is English (US).
+
+    AppWideLanguage:
+      type: object
+      required: [language, source, is_explicit]
+      properties:
+        language: { $ref: '#/components/schemas/TranslationLanguage' }
+        source: { $ref: '#/components/schemas/LanguageSource' }
+        is_explicit:
+          type: boolean
+          description: |
+            True only when the user actually chose this language, i.e. `source`
+            is `user`. A picker should render a language as *selected* only when
+            this is true — everything else is a derived default.
+
+    ConversationLanguage:
+      type: object
+      required: [conversation_id, language, source, override, app_wide]
+      properties:
+        conversation_id: { type: string, format: uuid }
+        language:
+          allOf:
+            - $ref: '#/components/schemas/TranslationLanguage'
+          description: What this conversation should be translated into — the override when there is one, otherwise the app-wide language.
+        source: { $ref: '#/components/schemas/LanguageSource' }
+        override:
+          type: [string, 'null']
+          enum: [en-US, en-GB, zh, es, fr, null]
+          description: The per-conversation choice. `null` means the conversation follows the app-wide setting.
+        app_wide:
+          allOf:
+            - $ref: '#/components/schemas/AppWideLanguage'
+          description: What this conversation would fall back to. Kept in the payload so the precedence is legible without a second request.
+
+    SetAppWideLanguageRequest:
+      type: object
+      required: [language]
+      properties:
+        language: { $ref: '#/components/schemas/TranslationLanguage' }
+
+    SetConversationLanguageRequest:
+      type: object
+      required: [language]
+      properties:
+        language:
+          type: [string, 'null']
+          enum: [en-US, en-GB, zh, es, fr, null]
+          description: |
+            The language for this conversation only. `null` clears the override
+            so the conversation follows the app-wide setting again — it is a
+            required, explicit value, so an omitted `language` is a `400` rather
+            than a silent clear.
+          example: fr
+
     UpdateConversationRequest:
       type: object
       minProperties: 1
@@ -4667,6 +4999,15 @@ components:
         phone: { $ref: '#/components/schemas/Phone' }
         country_code: { type: string, example: NG }
         phone_verified: { type: boolean }
+        email:
+          type: string
+          format: email
+          description: >-
+            Present only when the account has one. The key is ABSENT rather than
+            `null` when there is no email — unlike the other optional fields
+            here, which are nullable — so a client must test for the key, not
+            for a null value. An empty stored value is treated as none and never
+            surfaces as a blank string. Chat-only accounts routinely have none.
         first_name: { type: [string, 'null'] }
         last_name: { type: [string, 'null'] }
         path:
