@@ -1834,6 +1834,11 @@ components:
 
     LedgerEntry:
       type: object
+      description: |
+        One row of a wallet statement. The server projects these fields
+        explicitly rather than returning the stored row, so `metadata` — which
+        holds bank codes, rail counterparty references and provider payment ids
+        — is never published.
       properties:
         id: { type: string, format: uuid }
         wallet_id: { type: string, format: uuid }
@@ -1841,6 +1846,32 @@ components:
         amount: { $ref: '#/components/schemas/Money' }
         balance_after: { $ref: '#/components/schemas/Money' }
         created_at: { type: string, format: date-time }
+        type:
+          type: string
+          description: The parent ledger transaction's type (transfer, withdrawal, deposit, fee, escrow, card, reversal, adjustment).
+        status: { type: string }
+        reference: { type: [string, 'null'] }
+        description: { type: [string, 'null'] }
+        name:
+          type: string
+          description: |
+            The title to show the row under — `Transfer to Bola Ahmed`,
+            `Withdrawal to …`, `Card top-up` — rendered in the locale resolved
+            for the request, with the counterparty's name interpolated as
+            stored. The title is relative to the wallet being read: one transfer
+            reads as *Transfer to* on the sender's statement and *Transfer from*
+            on the recipient's. When the counterparty can no longer be named,
+            the sentence is completed with a generic stand-in rather than left
+            with an empty slot.
+          examples: ['Transfer to Bola Ahmed']
+        counterparty_name:
+          type: [string, 'null']
+          description: |
+            That counterparty on its own, for a client laying the row out
+            itself. `null` when there is nobody to name — a self-funded top-up,
+            a fee, or a peer whose account has since been deleted.
+          examples: ['Bola Ahmed']
+      required: [id, wallet_id, direction, amount, balance_after, created_at, type, status, name]
 
     Money:
       type: string
@@ -1894,7 +1925,7 @@ components:
     Phone:
       type: string
       pattern: '^\+[1-9]\d{6,14}$'
-      description: E.164.
+      description: E.164. Always the canonical form on the way out.
       example: '+2348012345678'
 
     PayRequestRequest:

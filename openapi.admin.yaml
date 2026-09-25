@@ -1193,6 +1193,11 @@ paths:
         `direction` is relative to the row's own user: `credit` = in,
         `debit` = out.
 
+        **Each row carries `name`**, the title it is shown under, plus
+        `counterparty_name`. The title is read from the side of the wallet the
+        entry hits, so the two legs of one transfer read as *to* and *from*
+        under their respective users.
+
         **`dateFrom` / `dateTo` bound the entry's `created_at`, and they narrow
         the count as well as the rows** — so `pagination.total` under a date
         filter is the total *for that range*, not the platform total. Both are
@@ -1238,7 +1243,9 @@ paths:
 
         `currency` is resolved per wallet, so a multi-currency statement stays
         readable; `direction` is relative to the user (`credit` = in,
-        `debit` = out).
+        `debit` = out). Each row also carries `name`, the title it is shown
+        under, plus `counterparty_name` — the two legs of one transfer read as
+        *to* and *from* under their respective users.
 
         A user with no wallets returns an empty page (`total: 0`,
         `total_pages: 1`) rather than a `404` — the account exists, it simply
@@ -2479,11 +2486,28 @@ components:
         status: { type: string }
         reference: { type: [string, 'null'] }
         description: { type: [string, 'null'] }
+        name:
+          type: string
+          description: |
+            The title the row is shown under — `Transfer to Bola Ahmed`,
+            `Withdrawal to …`, `Card top-up`. Read from the side of the wallet
+            the entry hits, so the two legs of one transfer read as *to* and
+            *from* under their own users. Always plain English: the console is
+            staff-facing and has no locale to render into, unlike the consumer
+            API's equivalent field.
+          examples: ['Transfer to Bola Ahmed']
+        counterparty_name:
+          type: [string, 'null']
+          description: |
+            That party on its own, or `null` when there is nobody to name — a
+            self-funded top-up, a fee, or a peer whose account has since been
+            deleted.
+          examples: ['Bola Ahmed']
         currency:
           type: string
           description: 'ISO code of the wallet''s currency, or `—` when it cannot be resolved.'
           examples: ['NGN']
-      required: [id, date, type, direction, amount, balance_after, status, currency]
+      required: [id, date, type, direction, amount, balance_after, status, name, currency]
 
     GlobalTransactionRow:
       allOf:

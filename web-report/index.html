@@ -34,7 +34,7 @@
       <span class="topbar__wordmark">Beevia</span>
     </div>
     <nav class="topbar__nav label" aria-label="Report">
-      <a href="2026-09-22.html">Latest frame</a>
+      <a href="2026-09-25.html">Latest frame</a>
     </nav>
 </div>
 
@@ -43,9 +43,9 @@
     <div class="field__rail field__rail--l">
       <dl>
         <dt>Frames held</dt>
-        <dd>34</dd>
+        <dd>37</dd>
         <dt>Latest</dt>
-        <dd>2026-09-22 · the dashboard is finished — the phone is the missing half</dd>
+        <dd>2026-09-25 · nineteen bugs, one developer, no reviewer</dd>
       </dl>
     </div>
 
@@ -55,7 +55,7 @@
       </div>
       <div class="field__meta num">
         <span>Beevia project status</span>
-        <span>2026-08-05 &rarr; 2026-09-22</span>
+        <span>2026-08-05 &rarr; 2026-09-25</span>
         <span>Newest first</span>
       </div>
     </div>
@@ -74,26 +74,77 @@
 <section class="mvp" aria-label="MVP readiness estimate">
   <div class="mvp__head">
     <span class="label">MVP readiness &mdash; estimate</span>
-    <span class="mvp__pct num">&asymp;62%</span>
-    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 21 days past</span>
+    <span class="mvp__pct num">&asymp;67%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 24 days past</span>
   </div>
-  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 62 percent built, up 0.18 of a point from the previous edition. Only admin oversight moved, from 0.92 to 0.95, because the Module 4 dashboard landed in beevia-admin wired to the live API. Two translation items entering review moved nothing, because unmerged work does not score.">
-    <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.9"><i style="width:90%"></i></span>
-    <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.8"><i style="width:80%"></i></span>
-    <span class="mvp__seg" style="flex:7" title="Message translation — 0.30"><i style="width:30%"></i></span>
-    <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.9"><i style="width:90%"></i></span>
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged from the previous edition. No capability score moved today. E2EE messaging 0.90, voice and video calling 0.80, message translation 0.60, local KYC 0.90, multi-currency wallets 0.85, send-request-receive 0.95, virtual cards 0.80, admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero.">
+    <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.90"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.80"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:7" title="Message translation — 0.60"><i style="width:60%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.90"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
-    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.75"><i style="width:75%"></i></span>
-    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.90"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.85"><i style="width:85%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.95"><i style="width:95%"></i></span>
     <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
-    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0.70"><i style="width:70%"></i></span>
+    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0.80"><i style="width:80%"></i></span>
     <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
-    <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.95"><i style="width:95%"></i></span>
+    <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.97"><i style="width:97%"></i></span>
   </div>
-  <p class="mvp__read"><strong>61.70, up 0.18.</strong> One line changed: admin oversight 0.92 &rarr; 0.95, on named evidence &mdash; the Module 4 dashboard landed in <code>beevia-admin</code> (<code>c1b0aeb</code>) calling all six <code>/admin/chats</code> operations against the live API, and the admin API's counts fix (<code>b4c545e</code>) made the numbers it shows correct. Two translation items entering REVIEW/QA move nothing: both l10n branches are unmerged, and board status never scores. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 22 Sep 2026 &mdash; <a href="2026-09-22.html#mvp-method">method and capability table</a>.</p>
+  <p class="mvp__read"><strong>66.72, unchanged &mdash; and two evidence lines were corrected rather than re-scored.</strong> The window's engineering was substantial: a duplicate-account defect closed, inbox ordering fixed, a seven-week dependency branch merged. None of it adds a capability. <strong>Correction:</strong> <code>GET /translate/languages</code> is <em>implemented</em>, not proposed &mdash; it shipped 22 Sep and the last two editions listed it as a blocker in error. Translation stays 0.60 regardless, because the blocker was never the endpoint list: <code>translate.module.ts:23</code> still binds <code>StubTranslateAdapter</code> and the shipped client translates on-device, bypassing the server. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 25 Sep 2026 &mdash; <a href="2026-09-25.html#mvp-method">method and capability table</a>.</p>
 </section>
 
 <main class="frames">
+
+  <a class="frame" href="2026-09-25.html">
+    <span class="frame__idx num">37</span>
+    <span>
+      <span class="frame__date">25 Sep 2026</span>
+      <span class="frame__sum"><strong>A third QA batch of 19 items landed in one hour, and the review queue is now 38 of 68 leaves &mdash; 56% of the board waiting on a reviewer who has never existed.</strong> All 19 were filed by board administration in 57 minutes, and 18 went to one person. The backend meanwhile replaced a hand-rolled E.164 regex with a phone library, closing a real <strong>duplicate-account defect</strong> &mdash; the old pattern accepted <code>+23408089421407</code> and <code>+2348089421407</code> as different people &mdash; and changed <strong>nine operations' contracts with zero route changes</strong>, the third consecutive cycle the route-level audit was structurally blind. The client turns out to be validating itself against a <strong>vendored spec 27 operations stale</strong>, which is the mechanical reason <code>BVA-I262</code> cannot be finished. <strong>Three claims in recent editions were wrong and are corrected</strong>, chief among them "the project has never accepted an item": it has, once, on 16 September.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:0"></i></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>0901 &middot; closed 22 Sep &middot; no successor</span></div>
+      <div><span>MVP est</span><span>&asymp;67% &middot; &Delta; 0.00</span></div>
+      <div><span>0901 in review</span><span>38 of 68 leaves &middot; oldest 16.9 d</span></div>
+      <div><span>Queue median</span><span>backend 7.4 d &middot; mobile 0.9 d</span></div>
+      <div><span>Contracts changed</span><span>9 ops &middot; route drift 0</span></div>
+      <div><span>API surface</span><span>137 / 49 &middot; drift 0</span></div>
+    </span>
+  </a>
+
+  <a class="frame" href="2026-09-24.html">
+    <span class="frame__idx num">36</span>
+    <span>
+      <span class="frame__date">24 Sep 2026</span>
+      <span class="frame__sum"><strong>The backend shipped the server half of a QA bug the same morning the board marked that bug blocked &mdash; and the board never noticed.</strong> <code>beevia-api</code> and <code>beevia-admin-api</code> both merged <code>feat/transaction-names</code> at 12:41&nbsp;UTC: every wallet-statement row now carries <code>name</code> ("Transfer to Bola Ahmed") and <code>counterparty_name</code>, localised into the caller's language on the consumer side. That is precisely <code>BVA-I262</code>, <em>"Recipient Name Missing From Transactions List"</em>, which went to BLOCKED at 11:29 and In progress at 13:30 &mdash; 49 minutes after the fix merged, with no comment recording it. <strong>No route changed, so the audit reports both services clean</strong> while four response contracts changed underneath it; both implemented specs were corrected by hand, and a fifty-day-old Postman finding closed itself in the same commit. The review queue is now visibly <strong>two queues</strong>: the backend's 16 items sit at a median 12.0 days, the mobile half at 2.4. <strong>Every open work item on the board belongs to one person</strong>, Done is flat at 6 of 49 for a sixth edition, and there is still no successor to a sprint that ended on Tuesday.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:0"></i></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>0901 &middot; closed 22 Sep &middot; no successor</span></div>
+      <div><span>MVP est</span><span>&asymp;67% &middot; &Delta; 0.00</span></div>
+      <div><span>0901 in review</span><span>25 of 49 leaves &middot; oldest 15.9 d</span></div>
+      <div><span>Queue median</span><span>backend 12.0 d &middot; mobile 2.4 d</span></div>
+      <div><span>Contracts changed</span><span>4 ops &middot; route drift 0</span></div>
+      <div><span>API surface</span><span>137 / 49 &middot; drift 0</span></div>
+    </span>
+  </a>
+
+  <a class="frame" href="2026-09-23.html">
+    <span class="frame__idx num">35</span>
+    <span>
+      <span class="frame__date">23 Sep 2026</span>
+      <span class="frame__sum"><strong>Seven weeks of mobile work landed on <code>main</code> in one merge &mdash; the biggest product day this project has recorded, on a board that closed yesterday.</strong> PR #35 brought the entire wallet feature module onto <code>beevia-mobile</code>: wallet home, balances, transaction history, p2p and external bank transfers, virtual-card request, notifications, localisation in four languages and the report-sheet client change. <strong>Three findings this report has carried for weeks closed at once</strong> &mdash; the chat money buttons now call the payments API (<code>POST /payments/transfer</code>, plus <code>payment.request/accept/decline/cancel</code> over the socket, matching the server gateway exactly), <code>lib/l10n</code> exists on <code>main</code>, and <code>reportConversation</code> now sends the disclosed messages so Module 4 moderators see evidence instead of an empty list. The MVP estimate moves <strong>&asymp;62% &rarr; &asymp;67%</strong>, its largest jump. <strong>But sprint 0901 and 0901-admin both closed on 22 September with no successor</strong>, and the team spent today working inside an expired sprint that grew by another 12 QA bugs to 49 leaves &mdash; 19 of them bugs, where five days ago there were none. Also: translation shipped <em>on-device</em>, bypassing the specified <code>/translate</code> endpoints, and the owner's own wallet-test fixes are stranded on <code>BVA-I239</code>, one keystroke from the <code>BVA-1239</code> that merged.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:0"></i></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>0901 &middot; closed 22 Sep &middot; no successor</span></div>
+      <div><span>MVP est</span><span>&asymp;67% &middot; &Delta; +5.02</span></div>
+      <div><span>0901 in review</span><span>22 of 49 leaves &middot; oldest 14.9 d</span></div>
+      <div><span>Landed today</span><span>23 mobile commits &middot; 7 weeks</span></div>
+      <div><span>Mobile since a commit</span><span>0.0 d</span></div>
+      <div><span>API surface</span><span>137 / 49 &middot; drift 0</span></div>
+    </span>
+  </a>
 
   <a class="frame" href="2026-09-22.html">
     <span class="frame__idx num">34</span>
@@ -676,7 +727,7 @@
 <footer class="foot">
   <span class="barcode barcode--lg" aria-hidden="true"></span>
   <span>Frames are written by the <code>beevia-refresh</code> skill alongside the Markdown in <code>project-status/</code>.</span>
-  <span><a href="2026-09-22.html">Latest</a></span>
+  <span><a href="2026-09-25.html">Latest</a></span>
 </footer>
 
 <script src="ui.js"></script>

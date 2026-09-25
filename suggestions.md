@@ -80,6 +80,8 @@ The code emits `PaginationMeta` (`src/database/dals/dal.types.ts:39`) snake_case
 
 A client author working from the collection will write `meta.page` and `meta.pages` and get `undefined`. The collection is the artifact most likely to be trusted by someone integrating, so stale examples there cost more than stale prose.
 
+**Resolved 2026-09-24.** Both saved examples now carry the real `PaginationMeta` shape, updated in the same commit that added transaction row titles (`beevia-api` `4d81f9f`). The `GET /wallets/transactions` example was also widened from one row to five, one per title form. `openapi.yaml`'s `TransactionPageOk` note, which pointed here, has been corrected. This is §5.3's hand-maintenance policy working — but note it took fifty days and only happened because the same commit had another reason to touch the collection.
+
 ### 1.5 `POST /devices` documents 200 but returns 201
 
 `src/devices/devices.controller.ts:40` combines `@HttpCode(HttpStatus.CREATED)` with `@ApiOkResponse(...)`. The generated OpenAPI document claims `200`; the route returns `201`. Use `@ApiCreatedResponse`.
@@ -180,9 +182,11 @@ Suggested: return the created wallet as `data`, and let the client refetch the l
 
 ### 3.6 `recipientPhone` and `payerPhone` are validated more loosely than every other phone field
 
-`src/payments/dto/payments.dto.ts` validates them as `z.string().trim().min(6).max(20)`, while `auth.dto.ts`, `invites.dto.ts` and `users.dto.ts` all use the strict E.164 regex `^\+[1-9]\d{6,14}$`.
+`src/payments/dto/payments.dto.ts` validates them as `z.string().trim().min(6).max(20)`, while every other phone input in the service now goes through `src/common/phone.util.ts`.
 
-Money-moving routes are the *last* place that should have the loosest input validation. `"abc123"` passes the schema and fails later in lookup. Reuse the shared E.164 validator — ideally hoisted into `src/common/` since it is currently copy-pasted into three DTO files.
+Money-moving routes are the *last* place that should have the loosest input validation. `"abc123"` passes the schema and fails later in lookup. The original ask was to reuse a shared E.164 validator, ideally hoisted into `src/common/`.
+
+**Escalated 2026-09-25 — the gap widened rather than closed.** §5.2's consolidation landed on 24 September and `payments.dto.ts` was not part of it: it still declares its own local `const phone = z.string().trim().min(6).max(20)` and imports nothing from `phone.util.ts`. So `/payments/send` and `/payments/request` are now the only two endpoints in `beevia-api` that will accept a phone number nobody has checked is dialable — and, more to the point, the only two that do **not** get the trunk-prefix repair. A payer who types `08089421407` where every other screen in the app would have resolved it now fails, or worse, matches nothing and is treated as a non-user. The fix is one import and one deleted line; the spec records the looseness on both fields so a client is not misled in the meantime.
 
 ### 3.7 There is no API versioning mechanism
 
@@ -276,9 +280,15 @@ Options, roughly in order of effort:
 
 Any of the three removes an entire class of silent documentation drift.
 
-### 5.2 The E.164 regex is copy-pasted into three DTO files
+### 5.2 ~~The E.164 regex is copy-pasted into three DTO files~~ — **resolved 2026-09-24**
 
-`^\+[1-9]\d{6,14}$` appears in `auth.dto.ts`, `invites.dto.ts` and `users.dto.ts`, with a fourth, looser variant in `payments.dto.ts` (see §3.6). Hoist a shared `phoneSchema` into `src/common/`.
+`^\+[1-9]\d{6,14}$` appeared in `auth.dto.ts`, `invites.dto.ts` and `users.dto.ts`, with a fourth, looser variant in `payments.dto.ts` (see §3.6). The ask was to hoist a shared `phoneSchema` into `src/common/`.
+
+**Done, and for a better reason than tidiness.** `feat/contact-sync-normalisation` (merged 24 Sep) replaced the regex with `libphonenumber-js` behind `src/common/phone.util.ts`. Verified at `origin/main`: the string `[1-9]\d{6,14}` now occurs in exactly one file, and that occurrence is the doc comment explaining why the regex was retired.
+
+The retirement note is worth reading, because the regex was not merely duplicated — it was **wrong in a way that created duplicate accounts**. `^\+[1-9]\d{6,14}$` accepts `+23408089421407`: a Nigerian number pasted on in national form, trunk `0` and all. E.164 requires that `0` to be dropped, so the same person typing their number the two obvious ways produced two distinct strings, and a unique index stored both happily. Knowing which leading digits are a trunk prefix, and which countries keep theirs, is exactly the knowledge a phone library holds and a regex cannot.
+
+**§3.6 is the remaining half** — `payments.dto.ts` was not migrated, so the money-moving routes are now the *only* phone inputs in the service that are not parsed.
 
 ### 5.3 The Postman collection is maintained by hand
 
@@ -501,6 +511,18 @@ That matters more than the security workflows on their own: branch protection (�
 
 Order: add a build/lint workflow to `beevia-admin` first (it is the prerequisite for everything else), then copy `secrets-scan.yml`, `supply-chain-guard.yml` **and now `semgrep.yml`** into both `beevia-admin` and `beevia-mobile`. All are reusable-workflow callers or short YAML files, and none of them needs org access — which makes them the part of the security push that is *not* blocked and is therefore the part worth doing next.
 
+**Updated 2026-09-24 — the three backend workflows became one, in two of the three repos.** `beevia-api` and `beevia-admin-api` replaced `secrets-scan.yml`, `semgrep.yml` and `supply-chain-guard.yml` with a single `code-scan.yml` that calls `Drumbell-Technologies/.github/.github/workflows/code-scan.yml@main` with `secrets: inherit`. The workflow inventory now reads:
+
+| Repo | `.github/workflows` | `dependabot.yml` |
+|---|---|---|
+| `beevia-api` | `code-scan` · `pr` · `release` · `test` | ✅ |
+| `beevia-admin-api` | `ci` · `code-scan` · `deploy` · `postman-sync` · `sync` | ❌ |
+| `beevia-db-schema` | `ci` · `release` · `secrets-scan` · `semgrep` · `supply-chain-guard` · `sync` | ❌ |
+| `beevia-mobile` | `flutter-ci` · `main` · `pr` | ✅ |
+| **`beevia-admin`** | **still no `.github` directory** | ❌ |
+
+Two things follow. **The consolidation is a genuine improvement to the part it covers:** detection now lives in the org `.github` repo, so a rule change reaches every caller on its next run instead of needing a copy edited in each repo, and the secrets scan went from weekly to daily. **But it makes the gap harder to see, not smaller.** `beevia-db-schema` is now the odd repo out with three ageing standalone copies, and the recommendation below is now cheaper than when it was written — copying one four-line `code-scan.yml` caller into `beevia-mobile` and `beevia-admin` replaces copying three files each. Nothing about the org-permissions wall changed, and neither front-end repo gained a workflow today.
+
 `beevia-mobile` also still carries **nine unmerged Dependabot branches**, the oldest from 11 August (38 days). `BVA-I271` ("check and fix any vulnerabilities already found") was moved to REVIEW/QA on 18 Sep against the three backend repos; the nine open dependency bumps in the repo with the largest attack surface and the least CI are untouched by it. Merging or closing those nine is the cheapest unblocked security work available, and it requires no permissions anybody lacks.
 
 ### 5.9 The backend's own Postman pass found a spec error §5.4 could not, and a "package update" deleted the integration docs (2026-09-22)
@@ -511,6 +533,21 @@ Two findings from the 18–21 September commits, both of the "label says one thi
 
 **2. `081441c chore: package update` (`beevia-api`, 18 Sep) deleted `docs/` in full.** Five files, 1,719 lines: `mobile-integration-handoff.md`, `chat-websocket-integration.md`, `encryption-model.md`, `calls-integration.md` and `tier-upgrade-integration.md`. The commit message says nothing about it, the diff also rewrites `package.json` and the lockfile, and nothing at `origin/main` replaces them — `README.md` and `deploy/README.md` are the only Markdown left. This is §5.7's pattern at a larger scale: the deletion may well be intended (the Postman collection is now the richer reference for the admin service), but `encryption-model.md` and `mobile-integration-handoff.md` were the consumer API's only written account of the E2EE contract and of what the Flutter client has to send — exactly what `BVA-I254` (the client half of the report flow) needs. Either restore them, move them somewhere named, or say in a commit that they were retired and why. They are recoverable with `git show 081441c^:docs/<file>`.
 
+### 5.10 The client checks its contract against a vendored copy of the spec that is 27 operations stale (2026-09-25)
+
+`beevia-mobile` carries its own copy of the consumer spec at `api-docs/openapi.yaml`, and `test/mock/spec_contract_test.dart` checks the mock server against **that file**, not against the spec this workspace maintains. The copy was last touched on 21 September (`eeaa2dc`).
+
+Diffed against `openapi.yaml` at `origin/main` today, the vendored copy is missing **27 of 137 operations**, including every one of the thirteen `/cards/*` routes, all three `/topups` routes, `/wallets/banks`, `/wallets/resolve-account`, both `/wallets/transfers` reads, `GET /translate/languages` and the three per-conversation translation-preference routes. Its `LedgerEntry` also predates the transaction-naming work, so it has neither `name` nor `counterparty_name`.
+
+Two consequences, and the second is the expensive one:
+
+1. **The contract test passes while the client is coded against a seven-day-old API.** It is not a weak test — it has a `nowDeclared` guard that fails when an allowlisted drift entry reappears in the spec — but every check it makes is relative to a file that no longer describes the service.
+
+2. **It produced a wrong claim in a merged PR.** `Deps updates 2026-09-22` (#36, merged 24 Sep) added `/wallets/banks`, `/wallets/resolve-account` and `/cards` to a `knownSpecDrift` allowlist on the stated grounds that they "aren't yet declared in openapi.yaml". All three **are** declared, and have been for weeks — they are absent only from the vendored copy. So three endpoints that the canonical spec describes are now on a list that suppresses drift warnings about them.
+
+This is the same class as §5.4, one layer out: §5.4 asks the server to prove its spec matches its code, and this asks the client to read the spec the server publishes. The cheap fix is to stop vendoring — fetch `openapi.yaml` from the API repo in CI, or make `api-docs/openapi.yaml` a checked sync with a job that fails when it falls behind. The expensive version of not fixing it is a client written against endpoints and fields that the server has already moved past, which is precisely what `BVA-I262` is: the mobile half of a bug whose server half shipped on 24 September, against a vendored contract that does not contain the two fields the fix added.
+
+
 ## 8. Suggested order
 
 1. ~~**§7.6** — delete or rebase the eight `beevia-admin-api` branches that still carry the payload.~~ **Done 2026-09-09**: seven deleted, one merged, and a full-ref sweep across all five repos finds the payload nowhere. What is left of §7 is items 2 and 3 below, which are the two nobody outside the team can verify.
@@ -520,6 +557,8 @@ Two findings from the 18–21 September commits, both of the "label says one thi
 3b. **§7.7 continued** — copy `secrets-scan.yml`, `supply-chain-guard.yml` and `semgrep.yml` into `beevia-mobile`, and merge or close its nine stale Dependabot branches. Promoted on 2026-09-18 because it is the largest piece of security work that needs **no** org permission, in the repo with the least CI coverage.
 
 3c. **§5.8** — extend the new `openapi-schema.spec.ts` to diff the generated document against the committed `openapi.yaml`. Promoted because the expensive half now exists: a green pipeline shipped an unbootable release on 18 September, the fix built the document in a test to stop it recurring, and turning that into §5.4's drift check is a few more lines in a file that is already there.
+
+3d. **§5.10** — stop vendoring the spec in `beevia-mobile`, or add a CI job that fails when `api-docs/openapi.yaml` falls behind the API repo's. Grouped with 3c because they are the same instrument pointed in opposite directions, and because the client copy is currently 27 operations behind — including every field the open `BVA-I262` fix needs.
 
 4. **§4.7** — re-apply module scoping when a generated report is read, not only when it is generated. Cheapest now, and the only entry on this list that is a live access-control gap in shipped code. **Unchanged on 2026-09-18** — `reports.service.ts:133` re-verified at `origin/main`; ninth consecutive edition.
 5. **§1.1** — malformed UUID → 500. Small fix, trivially reachable, currently generates false 500s in monitoring.

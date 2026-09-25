@@ -426,6 +426,21 @@ The body was `{ reason? }`. It is now `{ reason?, messages: ReportedMessage[] (�
 
 **The gap worth naming: the Flutter client has not shipped its half.** As of 2026-09-18 `chat_service.dart` still posts `data: {"reason": reason}` — no `messages`, no `blockContact` — on `main` and on the unmerged `BVA-I239` branch alike. The board item for the client side (`BVA-I254`, "Update Report Sheet, Add Message Count, Build Confirmation") is in REVIEW/QA. So the server accepts up to 20 disclosed messages, the admin queue is built to display them, and every report filed by today's app arrives with `message_count: 0` and an empty `messages` array. The capability exists end-to-end on the server and nowhere on the device that is supposed to originate the consent.
 
+### 5.10 Phone numbers are now parsed rather than pattern-matched, and the inbox gained ordering rules (2026-09-25)
+
+Two merges on 24 September — `feat/contact-sync-normalisation` (#56) and the two inbox fixes (#53, #54) — changed the contract of **nine operations without adding, removing or renaming one**. The surface stays at 137, so the route-level audit reports `beevia-api` clean; `openapi.yaml` was updated in place. Third consecutive cycle in which the most consequential change was invisible to a route diff (`suggestions.md` §5.4).
+
+**1. A phone may now be typed the way people actually type it.** `POST /auth/register`, `/auth/otp/request`, `/auth/otp/verify`, `/auth/login`, `/users/lookup` and `/contacts/sync` previously required strict E.164. They now accept a local/national form (`08089421407`) alongside `+2348012345678`, and each grew an optional `countryCode` region hint; where it is omitted the caller's own account country is used. Normalisation happens in the schema, at object level, so a handler never sees an unnormalised number. A new `TypedPhone` schema models the input; responses continue to return the canonical `Phone`.
+
+This is a data-integrity fix, not a convenience feature. The retired regex `^\+[1-9]\d{6,14}$` accepted `+23408089421407` — a national-format number with its trunk `0` pasted after the country code — which E.164 says is the same person as `+2348089421407`. A unique index on the string stored both. `src/common/phone.util.ts` now delegates to `libphonenumber-js` and repairs that specific shape explicitly. See `suggestions.md` §5.2, closed by this change.
+
+**The one route left out is the one that moves money.** `payments.dto.ts` still declares its own `z.string().trim().min(6).max(20)` and imports nothing from `phone.util.ts`, so `POST /payments/send` and `POST /payments/request` are now the only phone inputs in the service that are neither validated nor normalised — and a payer who types a local number there gets no resolution. Both fields carry the looseness as a `description` in `openapi.yaml` so no client is misled. `suggestions.md` §3.6, escalated.
+
+**2. `GET /conversations` has listing rules that were never written down.** A direct conversation is now listed only once a message has been sent in it — creating one does not put it in the inbox — while groups are listed from the moment the caller is added. A client must therefore navigate off the create response rather than waiting for the list to catch up. Rows are ordered by a new `last_message_at`, and `last_message` is `null` in three distinct cases: the previewed message was deleted for everyone, the caller deleted it for themselves, or it sits at or below the caller's `cleared_seq`. `last_message_at` deliberately survives that deletion so a row keeps its place rather than falling to the bottom of the inbox.
+
+**3. Three response fields the server had always sent were missing from the spec.** `last_message_at` is new; `hidden_at` and `cleared_seq` are not — `conversations.service.ts` has been returning both on every conversation row, and `openapi.yaml`'s `Conversation` schema never listed them. All three are now documented. A client that generated its models from the spec has never had access to the clear-chat watermark the API was already sending it.
+
+
 ---
 
 ## 6. Implemented surface

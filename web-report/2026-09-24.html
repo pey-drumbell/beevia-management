@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beevia — Project Status — 24 Sep 2026</title>
+<meta name="description" content="The backend shipped the server half of a QA bug the same morning the board marked it blocked — and a clean audit missed four changed response contracts.">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!--
+  DIRECTION CONTRACT · seed 6c4a0ed0 (carried forward unchanged)
+  THESIS: A status report whose subject is the disagreement between its sources.
+  STORY: Today the disagreement is at its sharpest and smallest. beevia-api and
+  beevia-admin-api merged feat/transaction-names at 12:41 UTC — every statement
+  row now carries `name` and `counterparty_name`, which is exactly QA bug
+  BVA-I262, "Recipient Name Missing From Transactions List". The board recorded
+  that bug going to BLOCKED at 11:29 and In progress at 13:30, and recorded the
+  fix not at all. The route inventory changed by zero, so the audit reported
+  both services clean while four response bodies changed
+  underneath it. The closing turn: the backend's most productive day in a
+  fortnight, invisible to the board, inside a sprint that ended on Tuesday.
+-->
+
+<div class="topbar">
+    <div class="topbar__mark">
+      <span class="barcode" aria-hidden="true"></span>
+      <span class="topbar__wordmark">Beevia</span>
+    </div>
+    <nav class="topbar__nav label" aria-label="Report">
+      <a href="index.html">Archive</a>
+      <a href="#overview">Overview</a>
+      <a href="#s1"><span>The sprint</span></a>
+      <a href="#s3"><span>What shipped</span></a>
+      <a href="#method">Method</a>
+    </nav>
+</div>
+
+<header class="masthead">
+  <div class="field">
+    <div class="field__rail field__rail--l">
+      <dl>
+        <dt>Sprints open</dt>
+        <dd>none &middot; third edition</dd>
+        <dt>0901 leaves Done</dt>
+        <dd>6 of 49 &middot; sixth edition flat</dd>
+        <dt>Route drift</dt>
+        <dd>0 &middot; contracts changed 4</dd>
+        <dt>Window</dt>
+        <dd>0.9 day &middot; Wed &rarr; Thu</dd>
+      </dl>
+    </div>
+
+    <div class="field__stage">
+      <div class="field__title">
+        <h1>Project<br>Status</h1>
+      </div>
+      <div class="field__meta num">
+        <span>2026-09-24</span>
+        <span>0901 &middot; 0901-admin &middot; both closed</span>
+        <span>3&ndash;22 Sep</span>
+        <span>The fix shipped; the board marked it blocked</span>
+      </div>
+    </div>
+
+    <div class="field__rail field__rail--r">
+      <dl>
+        <dt>0901 in review</dt>
+        <dd>25 of 49 leaves &middot; oldest 15.9 d</dd>
+        <dt>Queue median, backend / mobile</dt>
+        <dd>12.0 d &middot; 2.4 d</dd>
+        <dt>Open WIP, all one person</dt>
+        <dd>12 of 12 leaves</dd>
+        <dt>Estimated</dt>
+        <dd>0 / 58 &middot; 0 / 12</dd>
+      </dl>
+    </div>
+  </div>
+</header>
+
+<section class="mvp" aria-label="MVP readiness estimate">
+  <div class="mvp__head">
+    <span class="label">MVP readiness &mdash; estimate</span>
+    <span class="mvp__pct num">&asymp;67%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 23 days past</span>
+  </div>
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged from the previous edition. No capability score moved today. E2EE messaging 0.90, voice and video calling 0.80, message translation 0.60, local KYC 0.90, multi-currency wallets 0.85, send-request-receive 0.95, virtual cards 0.80, admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero.">
+    <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.90"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.80"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:7" title="Message translation — 0.60"><i style="width:60%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.90"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
+    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.85"><i style="width:85%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.95"><i style="width:95%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
+    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0.80"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
+    <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.97"><i style="width:97%"></i></span>
+  </div>
+  <p class="mvp__read"><strong>66.72, unchanged &mdash; and the flat line is a deliberate call, not an idle day.</strong> Today's merge was real engineering across three repositories, but the rubric asks whether a <em>capability</em> exists, and a better title on an existing statement row does not add one. Two lines were re-examined and held: translation stays 0.60 because the new <code>src/i18n/locales/</code> catalogue is response localisation, not message translation &mdash; <code>StubTranslateAdapter</code> is still bound; multi-currency wallets stays 0.85 because <code>activeNgn()</code> is still there at <code>payment.service.ts:506</code>. A flat edition straight after the largest move ever recorded is the expected shape: PR&nbsp;#35 released seven weeks of reservoir at once, and there is none left. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. <a href="#mvp-method">Method and capability table</a>.</p>
+</section>
+
+<div class="shell">
+  <nav class="contents label" aria-label="Contents">
+    Contents
+    <ol>
+      <li><a href="#overview"><span>00</span> Quick overview</a></li>
+      <li><a href="#s1"><span>01</span> Sprint 0901</a></li>
+      <li><a href="#s2b"><span>02</span> Admin board</a></li>
+      <li><a href="#s3"><span>03</span> Spec &amp; drift</a></li>
+      <li><a href="#s4"><span>04</span> PRD gap</a></li>
+      <li><a href="#s5"><span>05</span> Team detail</a></li>
+      <li><a href="#s6"><span>06</span> Recommendations</a></li>
+      <li><a href="#s7"><span>07</span> This week</a></li>
+      <li><a href="#method"><span>&mdash;</span> Method</a></li>
+    </ol>
+  </nav>
+
+  <main class="doc">
+
+    <section class="sec" id="overview">
+      <div class="sec__h"><span class="sec__n">00</span><h2>Quick overview</h2></div>
+
+<div class="invert" style="margin-bottom:var(--s-6)"><p class="lede"><strong>The backend shipped the server half of a QA bug the same morning the board marked that bug blocked &mdash; and the board never noticed.</strong> <code>beevia-api</code> and <code>beevia-admin-api</code> both merged <code>feat/transaction-names</code> at 12:41&nbsp;UTC: every wallet-statement row now carries <code>name</code> ("Transfer to Bola Ahmed") and <code>counterparty_name</code>, localised into the caller's language on the consumer side. That is precisely <code>BVA-I262</code>, <em>"Recipient Name Missing From Transactions List"</em> &mdash; which sat in REVIEW/QA overnight, was moved to BLOCKED at 11:29, and to In progress at 13:30, 49 minutes after the fix merged. <strong>No route changed, so the audit reports both services clean</strong>; the contract changed underneath it, and both implemented specs needed editing by hand. Meanwhile the review queue grew again to 25, Done is flat at 6 for a sixth edition, and there is still no open sprint on either board.</p></div>
+
+<p><strong>On yesterday's edition &mdash; no factual correction, but one framing needs replacing.</strong> The 23 Sep report treated <code>origin/BVA-I239</code>'s three commits as work at risk of being <em>lost</em> to the <code>BVA-1239</code>/<code>BVA-I239</code> name collision, and recommended rescuing them. That reading is now wrong: the branch is <strong>live, not stranded</strong>. Its owner merged <code>main</code> into it at 16:26&nbsp;UTC on 23 Sep &mdash; after PR&nbsp;#35 landed &mdash; and then added seven more commits that evening. It is <strong>11 commits and 30 files ahead of <code>main</code></strong> today, not 3. The recommendation changes from "cherry-pick before it is lost" to "this is an active branch; decide when it merges." Related: <code>origin/BVA-I242</code>, named yesterday as the rival l10n branch, <strong>has been deleted</strong> &mdash; the collision hazard is half retired.</p>
+
+<div class="tbl-wrap">
+  <table>
+    <thead><tr><th scope="col">Measure</th><th scope="col" class="r">23 Sep</th><th scope="col" class="r">24 Sep</th><th scope="col" class="r">&Delta; (0.9 day)</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Commits merged to <code>main</code>, all five repos, in window</th><td class="r">24</td><td class="r hi"><strong>8</strong> (2 api, 2 admin-api, 4 db-schema)</td><td class="r">&minus;16</td></tr>
+      <tr><th scope="row">Board transitions, all three boards, in window</th><td class="r">35 entries / 14 status changes</td><td class="r hi"><strong>19 entries / 17 status changes</strong></td><td class="r">+3 status</td></tr>
+      <tr><th scope="row">Items added to sprint 0901</th><td class="r">12</td><td class="r hi"><strong>0</strong></td><td class="r">&minus;12</td></tr>
+      <tr><th scope="row">API surface (consumer / admin)</th><td class="r">137 / 49</td><td class="r">137 / 49</td><td class="r hi"><strong>0</strong></td></tr>
+      <tr><th scope="row">Proposed operations (consumer / admin)</th><td class="r">38 / 18</td><td class="r">38 / 18</td><td class="r">0</td></tr>
+      <tr><th scope="row">Spec drift vs <code>origin/main</code> (route level)</th><td class="r">0</td><td class="r"><strong>0</strong></td><td class="r">0</td></tr>
+      <tr><th scope="row"><strong>Response-contract changes needing a hand spec edit</strong></th><td class="r">0</td><td class="r hi"><strong>2 schemas, 4 operations</strong></td><td class="r hi"><strong>+2</strong></td></tr>
+      <tr><th scope="row">Sprint 0901 leaves, total</th><td class="r">49</td><td class="r">49</td><td class="r">0</td></tr>
+      <tr><th scope="row">Sprint 0901 leaves To do</th><td class="r">12</td><td class="r hi"><strong>6</strong></td><td class="r hi"><strong>&minus;6</strong></td></tr>
+      <tr><th scope="row">Sprint 0901 leaves In progress</th><td class="r">4</td><td class="r hi"><strong>8</strong></td><td class="r hi"><strong>+4</strong></td></tr>
+      <tr><th scope="row">Sprint 0901 leaves BLOCKED</th><td class="r">5</td><td class="r">4</td><td class="r">&minus;1</td></tr>
+      <tr><th scope="row">Sprint 0901 leaves REVIEW/QA</th><td class="r">22</td><td class="r hi"><strong>25</strong></td><td class="r hi"><strong>+3</strong></td></tr>
+      <tr><th scope="row">Sprint 0901 leaves Done</th><td class="r">6</td><td class="r">6</td><td class="r hi"><strong>0 &mdash; sixth edition flat</strong></td></tr>
+      <tr><th scope="row">Review-queue median age (0901)</th><td class="r">7.2 d</td><td class="r hi"><strong>6.4 d</strong></td><td class="r">&minus;0.8 &mdash; dilution again (&sect;1.3)</td></tr>
+      <tr><th scope="row">Oldest item in the queue</th><td class="r">14.9 d</td><td class="r hi"><strong>15.9 d</strong></td><td class="r">+1.0</td></tr>
+      <tr><th scope="row"><code>beevia-api</code> / <code>beevia-admin-api</code> days since a commit</th><td class="r">4.8 / 2.0</td><td class="r hi"><strong>0.0 / 0.0</strong></td><td class="r hi"><strong>&minus;4.8 / &minus;2.0</strong></td></tr>
+      <tr><th scope="row"><code>beevia-db-schema</code> days since a commit</th><td class="r">4.8</td><td class="r hi"><strong>0.1</strong></td><td class="r">&minus;4.7</td></tr>
+      <tr><th scope="row"><code>beevia-mobile</code> days since a commit</th><td class="r">0.0</td><td class="r">1.0</td><td class="r">+1.0</td></tr>
+      <tr><th scope="row"><code>beevia-admin</code> days since a commit</th><td class="r">0.9</td><td class="r">1.9</td><td class="r">+1.0</td></tr>
+      <tr><th scope="row">Admin board: days since <em>any</em> activity</th><td class="r">9.0</td><td class="r hi"><strong>9.9</strong></td><td class="r">+0.9</td></tr>
+      <tr><th scope="row">Ayomikun commits (7d, both identities, merged, non-merge)</th><td class="r">21</td><td class="r hi"><strong>25</strong></td><td class="r">rolling window</td></tr>
+      <tr><th scope="row">David commits (7d, merged to <code>main</code>)</th><td class="r">4</td><td class="r">3</td><td class="r">rolling window</td></tr>
+      <tr><th scope="row">Promise commits (7d, merged)</th><td class="r">2</td><td class="r">2</td><td class="r">0</td></tr>
+      <tr><th scope="row"><code>origin/BVA-I239</code> commits not on <code>main</code></th><td class="r">3</td><td class="r hi"><strong>11</strong></td><td class="r hi"><strong>+8</strong></td></tr>
+      <tr><th scope="row">Estimation points set (0901 / 0901-admin / 08-01)</th><td class="r">0 / 58 &middot; 0 / 12 &middot; 0 / 64</td><td class="r">0 / 58 &middot; 0 / 12 &middot; 0 / 64</td><td class="r">0</td></tr>
+      <tr><th scope="row"><strong>Sprints open on either board</strong></th><td class="r">0</td><td class="r hi"><strong>0</strong></td><td class="r">0</td></tr>
+      <tr><th scope="row">MVP readiness (estimate)</th><td class="r">&asymp;67% (66.72)</td><td class="r hi"><strong>&asymp;67% (66.72)</strong></td><td class="r hi"><strong>0.00</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p><strong>Team, at a glance:</strong></p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+    <thead><tr><th scope="col">Person</th><th scope="col">Owns</th><th scope="col">Board leaves</th><th scope="col" class="r">Submissions (7d)</th><th scope="col">Median cycle</th><th scope="col">Open WIP</th><th scope="col" class="r">Commits (7d)</th><th scope="col">Flag</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Ayomikun Araoye</th><td>backend + admin API</td><td class="hi"><strong>16 on 0901 in REVIEW/QA</strong> (15 solely his &mdash; all of them) &middot; 3 on 0901-admin &middot; co-owns 4 In progress/BLOCKED bugs</td><td class="r">10</td><td>1.48 d (n=6)</td><td class="hi"><strong>0</strong> solely-owned &middot; 1 on 0901-admin (<code>BVA-I8</code>, 9.9 d) &middot; co-owns 4 bugs</td><td class="r hi"><strong>25</strong></td><td class="hi"><strong>Highest commit count recorded, and still nothing of his has ever been reviewed.</strong> His queue's median age is <strong>12.0 d</strong> against David's 2.4 &mdash; the queue is not one queue, it is his</td></tr>
+      <tr><th scope="row">David Samuel</th><td>mobile</td><td class="hi"><strong>30 on 0901</strong> &mdash; 10 REVIEW/QA, 8 In progress, 4 BLOCKED, 6 To do, 2 Done</td><td class="r">11</td><td>0.96 d (n=9)</td><td class="hi"><strong>12</strong> (8 In progress + 4 BLOCKED) &mdash; every open WIP item on the board is his</td><td class="r">3</td><td><strong>All 6 board actions today were his own</strong>, second edition running. But zero mobile commits in 24&nbsp;h while 12 items are open against him</td></tr>
+      <tr><th scope="row">Philip Chidera</th><td>design</td><td>5 on 0901 &mdash; 4 Done, <strong>1 In progress</strong> (<code>BVA-I274</code>)</td><td class="r">0</td><td>&mdash;</td><td>1 (<code>BVA-I274</code>, 0.0 d)</td><td class="r">&mdash;</td><td class="hi"><strong>First non-Done item in five editions.</strong> Yesterday's recommendation #6 was actioned within 80 minutes of the report &mdash; but only for the branding item, not the eight Figma-mismatch bugs</td></tr>
+      <tr><th scope="row">Promise Udo</th><td>admin dashboard</td><td>4 on 0901-admin &mdash; 3 Done, 1 In progress</td><td class="r">0</td><td>&mdash;</td><td>1 (<code>BVA-I9</code>, 9.9 d)</td><td class="r">2</td><td>Tenth day with no admin-board movement and no <code>beevia-admin</code> commit since 22 Sep. The board exists; nobody is using it</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p><strong>The two questions for standup:</strong> (1) <strong><code>BVA-I262</code>'s server half merged at 12:41 &mdash; does David know?</strong> The item was moved to In progress at 13:30 without a comment, and the client work is the only thing left on it. (2) <strong>Sprint 0902 &mdash; third edition asking.</strong> Zoho still lists only <code>0901, 08-01, 0702, 0701</code> and <code>0901-admin</code>; 43 of 49 leaves are open inside a container that expired two days ago.</p>
+
+<p><strong>The three things worth knowing:</strong></p>
+<div class="stack">
+  <div class="finding"><div class="finding__n num">1</div><div><p><strong>This is the failure mode <code>suggestions.md</code> &sect;5.4 predicted, caught in the act.</strong> Today's merge added no route, so the inventory diff reported both services clean. It nevertheless changed the response body of four endpoints: two consumer (<code>GET /wallets/transactions</code>, <code>GET /wallets/{walletId}/transactions</code>) and two admin (<code>GET /admin/transactions</code>, <code>GET /admin/transactions/users/{userId}</code>). The consumer rows also stopped being the raw DAL row and became an explicit projection &mdash; a real security improvement, because <code>metadata</code> (bank codes, rail counterparty references, provider payment ids) had been travelling on the history row and is now excluded by name. Both implemented specs were corrected by hand this cycle. <strong>A generated-and-diffed spec would have caught all of it automatically; the audit structurally cannot.</strong></p></div></div>
+  <div class="finding"><div class="finding__n num">2</div><div><p><strong>The review queue is now two queues, and only one of them is stuck.</strong> 25 items, median 6.4 days &mdash; but split by owner, David's 10 items have a median age of 2.4 days while Ayomikun's 16 have a median of <strong>12.0 days</strong> and an oldest of 15.9. The headline median has fallen for two editions running purely because David keeps adding fresh items to it; the backend half has not moved at all. Three items left REVIEW/QA today &mdash; the first to leave on any board in the project's history &mdash; and <strong>none of them left by being accepted.</strong> <code>BVA-I262</code> went to BLOCKED and then back to In progress; the queue has still never produced a single acceptance.</p></div></div>
+  <div class="finding"><div class="finding__n num">3</div><div><p><strong>Every open work item on the board belongs to one person.</strong> All 8 In progress and all 4 BLOCKED leaves are David's (four co-assigned to Ayomikun, one to Philip). Ayomikun has 25 commits in seven days and zero solely-owned items that are not waiting for a reviewer; his four co-assignments are the backend work behind David's blocked bugs, and they are still not items anyone can schedule. That is yesterday's recommendation #5, unactioned.</p></div></div>
+</div>
+
+<p><strong>If you read nothing else:</strong> the backend had its most productive day in a fortnight and fixed a live QA bug, the board recorded none of it, and the sprint it all happened in ended on Tuesday.</p>
+    </section>
+
+    <section class="sec" id="s1">
+      <div class="sec__h"><span class="sec__n">01</span><h2>Sprint 0901 &mdash; closed 22 Sep, still the working board</h2></div>
+
+<h3>1.1 State</h3>
+<p><strong>58 items &mdash; 49 leaves, 9 parent Stories.</strong> No items added or removed today: the first edition since 18 September with no scope change. The movement is entirely internal.</p>
+
+<div class="tbl-wrap">
+  <table>
+    <thead><tr><th scope="col">Status</th><th scope="col" class="r">23 Sep</th><th scope="col" class="r">24 Sep</th><th scope="col" class="r">&Delta;</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">REVIEW/QA</th><td class="r">22</td><td class="r hi"><strong>25</strong></td><td class="r">+3</td></tr>
+      <tr><th scope="row">In progress</th><td class="r">4</td><td class="r hi"><strong>8</strong></td><td class="r">+4</td></tr>
+      <tr><th scope="row">BLOCKED</th><td class="r">5</td><td class="r">4</td><td class="r">&minus;1</td></tr>
+      <tr><th scope="row">To do</th><td class="r">12</td><td class="r hi"><strong>6</strong></td><td class="r">&minus;6</td></tr>
+      <tr><th scope="row">Done</th><td class="r">6</td><td class="r">6</td><td class="r hi"><strong>0</strong></td></tr>
+      <tr><th scope="row"><strong>Total leaves</strong></th><td class="r"><strong>49</strong></td><td class="r"><strong>49</strong></td><td class="r">0</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h3>1.2 Everything that moved, in order</h3>
+<p>Seventeen status changes across nine items. The two-day split is stark and worth reading as two separate events.</p>
+
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+    <thead><tr><th scope="col">When (UTC)</th><th scope="col">Item</th><th scope="col">Move</th><th scope="col">Actor</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">23 Sep 15:53</th><td><code>BVA-I276</code></td><td>description edited</td><td>board administration</td></tr>
+      <tr><th scope="row">23 Sep 16:05</th><td><code>BVA-I266</code></td><td>BLOCKED &rarr; REVIEW/QA</td><td>board administration</td></tr>
+      <tr><th scope="row">23 Sep 16:23&ndash;16:24</th><td><code>BVA-I262</code></td><td>In progress &rarr; REVIEW/QA &rarr; BLOCKED &rarr; REVIEW/QA</td><td>board administration</td></tr>
+      <tr><th scope="row">23 Sep 16:24</th><td><code>BVA-I267</code></td><td>In progress &rarr; REVIEW/QA</td><td>board administration</td></tr>
+      <tr><th scope="row">23 Sep 16:24</th><td><code>BVA-I261</code></td><td>In progress &rarr; REVIEW/QA</td><td>board administration</td></tr>
+      <tr><th scope="row">23 Sep 16:24</th><td><code>BVA-I274</code></td><td>To do &rarr; BLOCKED, <strong>owner set to Philip Chidera + David Samuel</strong></td><td>board administration</td></tr>
+      <tr><th scope="row">23 Sep 16:26</th><td><code>BVA-I276</code></td><td>To do &rarr; In progress</td><td>board administration</td></tr>
+      <tr><th scope="row">23 Sep 16:29</th><td><code>BVA-I278</code></td><td>To do &rarr; In progress</td><td>board administration</td></tr>
+      <tr><th scope="row">23 Sep 16:29</th><td><code>BVA-I281</code></td><td>To do &rarr; REVIEW/QA &rarr; BLOCKED</td><td>board administration</td></tr>
+      <tr class="hi"><th scope="row"><strong>24 Sep 11:29</strong></th><td><code>BVA-I262</code></td><td><strong>REVIEW/QA &rarr; BLOCKED</strong></td><td><strong>David Samuel</strong></td></tr>
+      <tr><th scope="row">24 Sep 12:24</th><td><code>BVA-I282</code></td><td>To do &rarr; In progress</td><td>David Samuel</td></tr>
+      <tr><th scope="row">24 Sep 12:56</th><td><code>BVA-I284</code></td><td>To do &rarr; In progress</td><td>David Samuel</td></tr>
+      <tr><th scope="row">24 Sep 13:30</th><td><code>BVA-I281</code>, <code>BVA-I262</code>, <code>BVA-I274</code></td><td>BLOCKED &rarr; In progress (three items, same minute)</td><td>David Samuel</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p><strong>Thirteen of the nineteen entries are board administration, all inside 36 minutes on 23 September</strong>, and they are the triage pass that yesterday's report asked for. The six entries on 24 September are all David's own, continuing the pattern that started yesterday: he is now moving his own items, which he had never done before 23 September.</p>
+
+<p class="hi"><strong><code>BVA-I262</code> is the item to watch.</strong> Its path today was REVIEW/QA &rarr; BLOCKED (11:29) &rarr; In progress (13:30). The backend fix for it merged at <strong>12:41</strong>, between those two transitions. Nobody commented on the item, so the causal link is inference from timing &mdash; but the content match is exact (&sect;3).</p>
+
+<h3>1.3 The review queue &mdash; 25 items, and it is really two queues</h3>
+<p>Ages are the <code>actiontime</code> of each item's last transition into REVIEW/QA, from the activity sidecar.</p>
+
+<div class="tbl-wrap">
+  <table>
+    <thead><tr><th scope="col"></th><th scope="col" class="r">Items</th><th scope="col" class="r">Median age</th><th scope="col" class="r">Oldest</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Ayomikun Araoye</th><td class="r">16</td><td class="r hi"><strong>12.0 d</strong></td><td class="r">15.9 d</td></tr>
+      <tr><th scope="row">David Samuel</th><td class="r">10</td><td class="r hi"><strong>2.4 d</strong></td><td class="r">9.9 d</td></tr>
+      <tr><th scope="row"><strong>Whole queue</strong></th><td class="r"><strong>25</strong></td><td class="r"><strong>6.4 d</strong></td><td class="r"><strong>15.9 d</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+<p>(26 rows, 25 items &mdash; <code>BVA-I266</code> is co-assigned.)</p>
+
+<p>The headline median fell from 7.2 to 6.4 days for the second edition running, and both falls are <strong>dilution, not drainage</strong>: three fresh items entered, nothing was accepted. Ayomikun's half of the queue has a median almost exactly five times David's. The seven-item Notification block (<code>BVA-I246</code>&ndash;<code>BVA-I252</code>), submitted together on 8 September, is now <strong>15.9 days old</strong> and remains the oldest thing on the board.</p>
+
+<p><strong>Three items left REVIEW/QA today &mdash; a first for this project &mdash; and none of them left by review.</strong> <code>BVA-I262</code> was moved out by its own assignee and is now back in development. The acceptance count across all three boards, for the entire life of the project, is still zero.</p>
+
+<h3>1.4 A caveat on the three items that entered review</h3>
+<div class="note">
+  <p style="margin-bottom:0"><code>BVA-I261</code>, <code>BVA-I266</code> and <code>BVA-I267</code> were moved into REVIEW/QA by board administration on 23 September at 16:05&ndash;16:24. <strong>There has been no <code>beevia-mobile</code> commit since 13:58&nbsp;UTC that day</strong> (PR&nbsp;#35). Either their fixes were inside PR&nbsp;#35 &mdash; plausible, it merged 2.5 hours earlier and carried seven weeks of work &mdash; or they were moved without a merge to review. This report cannot distinguish the two, and the items carry no comment. It is the recurrence of recommendation #2 from 22 September: <em>only move an item to REVIEW/QA when there is a merge to review.</em></p>
+</div>
+
+<h3>1.5 What is open</h3>
+<p>Twelve leaves are open (8 In progress, 4 BLOCKED) and <strong>all twelve are David's</strong>, four co-assigned to Ayomikun and one to Philip.</p>
+
+<div class="tbl-wrap">
+  <table>
+    <thead><tr><th scope="col">Item</th><th scope="col">Status</th><th scope="col" class="r">Age</th><th scope="col">Owners</th></tr></thead>
+    <tbody>
+      <tr><th scope="row"><code>BVA-I263</code></th><td>In progress</td><td class="r">1.1 d</td><td>David</td></tr>
+      <tr><th scope="row"><code>BVA-I276</code></th><td>In progress</td><td class="r">0.9 d</td><td>David</td></tr>
+      <tr><th scope="row"><code>BVA-I278</code></th><td>In progress</td><td class="r">0.9 d</td><td>David</td></tr>
+      <tr><th scope="row"><code>BVA-I282</code></th><td>In progress</td><td class="r">0.1 d</td><td>David</td></tr>
+      <tr><th scope="row"><code>BVA-I284</code></th><td>In progress</td><td class="r">0.0 d</td><td>David</td></tr>
+      <tr><th scope="row"><code>BVA-I262</code></th><td>In progress</td><td class="r">0.0 d</td><td>David, <strong>Ayomikun</strong></td></tr>
+      <tr><th scope="row"><code>BVA-I281</code></th><td>In progress</td><td class="r">0.0 d</td><td>David, <strong>Ayomikun</strong></td></tr>
+      <tr><th scope="row"><code>BVA-I274</code></th><td>In progress</td><td class="r">0.0 d</td><td><strong>Philip</strong>, David</td></tr>
+      <tr><th scope="row"><code>BVA-I260</code></th><td>BLOCKED</td><td class="r">1.1 d</td><td>David</td></tr>
+      <tr><th scope="row"><code>BVA-I275</code></th><td>BLOCKED</td><td class="r">1.1 d</td><td>David</td></tr>
+      <tr><th scope="row"><code>BVA-I279</code></th><td>BLOCKED</td><td class="r">1.1 d</td><td>David, <strong>Ayomikun</strong></td></tr>
+      <tr><th scope="row"><code>BVA-I280</code></th><td>BLOCKED</td><td class="r">1.1 d</td><td>David, <strong>Ayomikun</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>Nothing here is older than David's median cycle time of 0.96 days by more than a day, so nothing is yet "stuck" by the usual test. The four BLOCKED items have all been blocked for 1.1 days, and three of them (<code>I279</code>, <code>I280</code>, plus <code>I266</code> now in review) are blocked on backend work that exists only as a co-assignment.</p>
+    </section>
+
+    <section class="sec" id="s2b">
+      <div class="sec__h"><span class="sec__n">02</span><h2>Admin dashboard board &mdash; <code>0901-admin</code></h2></div>
+
+<p><strong>12 items: 8 leaves + 4 parent Stories. Unchanged in every respect.</strong></p>
+
+<div class="tbl-wrap">
+  <table>
+    <thead><tr><th scope="col">Item</th><th scope="col">Status</th><th scope="col">Owner</th></tr></thead>
+    <tbody>
+      <tr><th scope="row"><code>BVA-I5</code> &middot; <code>BVA-I11</code></th><td>Done</td><td>Ayomikun Araoye</td></tr>
+      <tr><th scope="row"><code>BVA-I6</code> &middot; <code>BVA-I12</code> &middot; <code>BVA-I15</code></th><td>Done</td><td>Promise Udo</td></tr>
+      <tr><th scope="row"><code>BVA-I14</code></th><td>Done</td><td>Unassigned</td></tr>
+      <tr><th scope="row"><code>BVA-I8</code> &mdash; Report Data Query</th><td class="hi"><strong>In progress, 9.9 d</strong></td><td>Ayomikun Araoye</td></tr>
+      <tr><th scope="row"><code>BVA-I9</code> &mdash; Report Content Display</th><td class="hi"><strong>In progress, 9.9 d</strong></td><td>Promise Udo</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p><strong>Last activity of any kind: 14 September 14:53&nbsp;UTC &mdash; 9.9 days ago.</strong> The board that was created to make this workstream visible has now been static for longer than it was ever active, and <code>beevia-admin</code> itself has no commit since 22 September. The blind spot this pipeline reported for eleven editions is no longer structural &mdash; the board exists, it has items, and Promise has a row &mdash; it is simply unused. Sprint 0901-admin closed 22 September with no successor, like the main board.</p>
+
+<p>Its counts are never added to the main sprint's.</p>
+    </section>
+
+    <section class="sec" id="s3">
+      <div class="sec__h"><span class="sec__n">03</span><h2>API surface and spec drift</h2></div>
+
+<p><strong>Audit: clean, exit 0.</strong> <code>beevia-api</code> code 137 / spec 137 &middot; <code>beevia-admin-api</code> code 49 / spec 49 &middot; proposed 38 / 18. Run against a <code>git archive</code> shadow of <code>origin/main</code> at <code>$BEEVIA_ROOT=/tmp/beevia-shadow</code>, because three working trees are still <code>diverged</code>.</p>
+
+<p class="hi"><strong>And that clean result is the finding.</strong> Today's merge changed four operations' response bodies without touching a single route.</p>
+
+<h3>3.1 <code>feat/transaction-names</code> &mdash; what actually changed</h3>
+<p>Merged 12:41&nbsp;UTC into both services (<code>beevia-api</code> <code>98d3eea</code>, <code>beevia-admin-api</code> <code>431277b</code>), with the supporting ledger metadata in <code>beevia-db-schema</code> (<code>41b31c2</code>, released as v0.0.36).</p>
+
+<p>Every statement row in both APIs now carries two new fields:</p>
+<ul>
+  <li><strong><code>name</code></strong> &mdash; the title to show the row under: <code>Transfer to Bola Ahmed</code>, <code>Withdrawal to …</code>, <code>Card top-up</code>, <code>Payment held</code>. Seventeen title forms across nine transaction types.</li>
+  <li><strong><code>counterparty_name</code></strong> &mdash; that party alone, or <code>null</code> when there is nobody to name (a self-funded top-up, a fee, or a peer whose account has been deleted).</li>
+</ul>
+
+<p>Three details that matter for anyone integrating:</p>
+<div class="stack">
+  <div class="finding"><div class="finding__n num">1</div><div><p><strong>The title is relative to the wallet being read.</strong> One peer transfer is <code>Transfer to Bola Ahmed</code> on the sender's statement and <code>Transfer from …</code> on the recipient's. The two legs of one transaction are deliberately not the same string.</p></div></div>
+  <div class="finding"><div class="finding__n num">2</div><div><p><strong>The consumer API localises it; the admin API does not.</strong> <code>beevia-api</code> renders through a new message catalogue (<code>src/i18n/locales/{en,es,fr,zh}.ts</code>) in the caller's locale &mdash; the user's saved translation language, else <code>Accept-Language</code>, resolved by a new <code>@CurrentLocale()</code> parameter decorator. <code>beevia-admin-api</code> deliberately mirrors the logic in plain English, because a staff console has no locale to render into. The two <code>transaction-name.ts</code> files are an intentional duplicate, and the code says so: <em>"If a transaction type is added, both copies want updating."</em></p></div></div>
+  <div class="finding"><div class="finding__n num">3</div><div><p><strong>The consumer rows stopped being the raw DAL row.</strong> They are now an explicit field projection. This is the substantive part: <code>metadata</code> &mdash; bank codes, the rail's own counterparty references, provider payment ids &mdash; had been riding along on the history row and is now excluded by name rather than by luck.</p></div></div>
+</div>
+
+<p class="hi"><strong>This is <code>BVA-I262</code>.</strong> The bug reads <em>"the transaction list screen should display the recipient's name for each transaction. Actual: the recipient name is not currently shown."</em> Ayomikun was added as its owner on 22 September; the server side of it merged today. The client side has not been written.</p>
+
+<h3>3.2 Spec files updated this cycle</h3>
+<div class="tbl-wrap">
+  <table>
+    <thead><tr><th scope="col">File</th><th scope="col">Change</th></tr></thead>
+    <tbody>
+      <tr><th scope="row"><code>openapi.yaml</code></th><td><code>LedgerEntry</code> rewritten to the explicit projection &mdash; added <code>type</code>, <code>status</code>, <code>reference</code>, <code>description</code>, <code>name</code>, <code>counterparty_name</code>, with a <code>required</code> list and a note that <code>metadata</code> is deliberately not published. <code>AcceptLanguageHeader</code> added to both transaction operations; both descriptions rewritten.</td></tr>
+      <tr><th scope="row"><code>openapi.admin.yaml</code></th><td><code>AdminTransactionRow</code> gains <code>name</code> and <code>counterparty_name</code> (plain English, no locale); both transaction operation descriptions rewritten. <code>GlobalTransactionRow</code> inherits via its existing <code>allOf</code>.</td></tr>
+      <tr><th scope="row"><code>suggestions.md</code></th><td><strong>&sect;1.4 marked resolved</strong> (below). &sect;7.7 updated with today's CI consolidation.</td></tr>
+    </tbody>
+  </table>
+</div>
+<p>No route was added, moved or deleted; the proposed files are untouched; no <code>x-beevia-*</code> marker was introduced. The audit re-ran clean after the edits.</p>
+
+<h3>3.3 A fifty-day-old finding closed itself</h3>
+<p><code>suggestions.md</code> &sect;1.4 &mdash; <em>"Postman pagination examples are stale"</em> &mdash; is <strong>resolved</strong>. The same commit that added row titles also fixed both saved examples to the real <code>PaginationMeta</code> shape (<code>current_page</code>, <code>total_pages</code>, <code>has_next_page</code>, <code>has_prev_page</code>) and widened the all-transactions example from one row to five, one per title form. A note in <code>openapi.yaml</code>'s <code>TransactionPageOk</code> that pointed at the stale examples has been corrected &mdash; it had become the wrong claim as of this morning.</p>
+<p>Worth being precise about why it closed: not because anyone worked the backlog, but because the same commit had another reason to open the file. That is &sect;5.3's hand-maintenance policy working, and also the reason it took fifty days.</p>
+
+<h3>3.4 CI consolidation in two of three backend repos</h3>
+<p><code>beevia-api</code> and <code>beevia-admin-api</code> replaced <code>secrets-scan.yml</code>, <code>semgrep.yml</code> and <code>supply-chain-guard.yml</code> with one <code>code-scan.yml</code> that calls the org's shared workflow with <code>secrets: inherit</code>. Detection now lives in <code>Drumbell-Technologies/.github</code>, so a rule change reaches every caller on its next run, and the secrets scan went from weekly to daily. Real improvement.</p>
+<p>Two qualifications: <code>beevia-db-schema</code> still carries the three standalone copies, so it is now the odd repo out; and <strong>neither front-end repo gained anything</strong> &mdash; <code>beevia-mobile</code> still has no security scanning and <code>beevia-admin</code> still has no <code>.github</code> directory at all. The consolidation does make yesterday's recommendation cheaper: one four-line file each, instead of three.</p>
+    </section>
+
+    <section class="sec" id="s4">
+      <div class="sec__h"><span class="sec__n">04</span><h2>PRD gap</h2></div>
+
+<p>No change. The four MVP gaps &mdash; international KYC tier, multi-currency/FX settlement, virtual cards beyond listing, and consent management &mdash; are where they were.</p>
+
+<p><code>PaymentService.activeNgn()</code> is re-verified present at <code>payment.service.ts:506</code>, called from lines 70, 128 and 288. While it exists, FX has not started, whatever else ships. <code>StubTranslateAdapter</code> is still bound at <code>translate.module.ts:23</code>.</p>
+
+<p>One observation on today's work: the i18n catalogue that landed (<code>en</code>, <code>es</code>, <code>fr</code>, <code>zh</code>) is <strong>response localisation, not message translation</strong>. It renders the API's own copy in the user's language. It is genuinely useful plumbing &mdash; and it is the first time the user's saved translation language has driven anything server-side &mdash; but it does not advance capability&nbsp;#3, which is about translating users' messages to each other. That remains on-device on the client, with the server adapter still a stub.</p>
+    </section>
+
+    <section class="sec" id="s5">
+      <div class="sec__h"><span class="sec__n">05</span><h2>Team performance &mdash; detail</h2></div>
+
+<p>All flow figures are from the activity sidecars (<code>actiontime</code> of the relevant transition), never from <code>Last Modified</code>. Commit counts are non-merge commits on <code>origin/main</code> in the last 7 days, summing each person's git identities.</p>
+
+<h3>5.1 Ayomikun Araoye &mdash; backend + admin API</h3>
+<p><strong>25 commits in 7 days</strong> (<code>beevia-api</code> 10 across both identities, <code>beevia-admin-api</code> 8, <code>beevia-db-schema</code> 7) &mdash; the highest count this report has recorded for anyone, and up from 21 yesterday. Today alone he shipped the transaction-naming feature across three repositories, including a database migration, a mirrored labelling module in two services, and 431 lines of new test code.</p>
+<p><strong>Sixteen of his items are in REVIEW/QA; fifteen of those are solely his; that is every solely-owned item he has.</strong> Their median age is 12.0 days and the oldest is 15.9. He has zero solely-owned items in progress on the main board, and one on the admin board (<code>BVA-I8</code>, In progress for 9.9 days).</p>
+<p>His median cycle time, In progress &rarr; REVIEW/QA, is 1.48 days (n=6). His four co-assignments (<code>BVA-I262</code>, <code>BVA-I279</code>, <code>BVA-I280</code>, <code>BVA-I281</code>) are the backend halves of David's blocked bugs and are not separately schedulable.</p>
+<p class="hi"><strong>This is a process finding, not a personal one</strong>: a developer who submits at this rate into a queue with no reviewer will accumulate exactly this profile, and nothing he can do changes it.</p>
+
+<h3>5.2 David Samuel &mdash; mobile</h3>
+<p><strong>11 submissions to REVIEW/QA in 7 days, median cycle 0.96 days (n=9)</strong> &mdash; the fastest on the board, though his sample includes several items that went To do &rarr; In progress &rarr; REVIEW/QA inside one triage session, which compresses the figure.</p>
+<p><strong>All six board actions in the window were his own</strong>, the second edition running in which he self-moves. <strong>He now holds every open item on the board</strong>: 8 In progress, 4 BLOCKED. Against that, <strong>zero mobile commits in the last 24 hours</strong> and 3 in 7 days. The gap is explainable &mdash; the twelve items opened against him are one to two days old and the seven-week merge landed yesterday &mdash; but it is the thing to watch tomorrow: twelve open items and a quiet repo is the shape that precedes a stall.</p>
+
+<h3>5.3 Philip Chidera &mdash; design</h3>
+<p><strong>First non-Done item in five editions.</strong> <code>BVA-I274</code> (App Logo and Branding) was assigned to him and David at 16:24&nbsp;UTC on 23 September &mdash; 80 minutes after yesterday's report asked for exactly that &mdash; and is now In progress.</p>
+<p>That resolves the narrow half of the request. The broader half is untouched: the eight "doesn't match Figma"-class bugs from the two QA batches are all still David's alone, including <code>BVA-I284</code> (search icon larger than spec), which he picked up himself today. Design-shaped work is still being done by the mobile developer.</p>
+
+<h3>5.4 Promise Udo &mdash; admin dashboard</h3>
+<p>2 commits in 7 days, both on 22 September (the wallets summary/detail integration, 939 lines with tests). No commit since. Four items on the admin board, one In progress for 9.9 days, and <strong>no board action by him anywhere, ever</strong> &mdash; every transition on the admin board was made by someone else.</p>
+<p>The reporting gap is closed: the board exists, he has a row, and his work is visible in <code>beevia-admin</code>. What remains is that nobody moves items on it, so the board's 9.9-day silence carries no information about whether the work is progressing.</p>
+
+<h3>5.5 Weekly submission trend (sprint 0901, transitions into REVIEW/QA)</h3>
+<div class="tbl-wrap">
+  <table>
+    <thead><tr><th scope="col">ISO week</th><th scope="col" class="r">Submissions</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">2026-W37</th><td class="r">8</td></tr>
+      <tr><th scope="row">2026-W38</th><td class="r">11</td></tr>
+      <tr><th scope="row">2026-W39 (partial)</th><td class="r">10</td></tr>
+    </tbody>
+  </table>
+</div>
+<p>Steady-to-rising input. <strong>Acceptances over the same three weeks: zero.</strong> When submission is steady and acceptance is zero, the bottleneck is not the developers &mdash; it is that no reviewing role is staffed, and this report has now said so in eight consecutive editions.</p>
+
+<h3>5.6 What this does not measure</h3>
+<div class="note">
+  <p><strong>No estimation points on any of 58 items</strong> (nor on 12, nor on 64). There is no workload normalisation, so item counts say nothing about who is carrying more. Fifteenth edition.</p>
+  <p><strong>Commit counts reward small commits; cycle times reward small items.</strong> Neither measures difficulty or quality, and today's comparison &mdash; 25 backend commits against 3 mobile ones &mdash; is not a statement about relative output.</p>
+  <p><strong>Co-assignment is counted for both owners</strong>, so per-person board counts sum to more than the board.</p>
+  <p style="margin-bottom:0"><strong>Nothing here measures correctness.</strong> No build, test or lint was run by this pipeline in any repository.</p>
+</div>
+    </section>
+
+    <section class="sec" id="s6">
+      <div class="sec__h"><span class="sec__n">06</span><h2>Previous recommendations &mdash; where they stand</h2></div>
+
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+    <thead><tr><th scope="col">Recommendation from 23 Sep</th><th scope="col">Status on 24 Sep</th></tr></thead>
+    <tbody>
+      <tr><th scope="row"><strong>1. Open sprint 0902 on both boards today, and decide the queue as you do it</strong></th><td>&#10060; <strong>Not done.</strong> Zoho still lists only <code>0901, 08-01, 0702, 0701</code> and <code>0901-admin</code>. Third edition with zero open sprints</td></tr>
+      <tr><th scope="row"><strong>2. Merge or cherry-pick <code>origin/BVA-I239</code>'s three commits; delete <code>BVA-I239</code>/<code>BVA-I242</code></strong></th><td class="hi">&#128993; <strong>Overtaken by events &mdash; and the premise was wrong.</strong> <code>BVA-I242</code> <strong>is deleted</strong> &#9989;. <code>BVA-I239</code> was not stranded: its owner merged <code>main</code> into it and added 7 more commits, so it is now 11 ahead. It needs a merge <em>decision</em>, not a rescue</td></tr>
+      <tr><th scope="row"><strong>3. Review something &mdash; 22 items, none ever accepted</strong></th><td>&#10060; <strong>Not done.</strong> The queue is 25. Three items left it today, none by acceptance; <code>BVA-I262</code> was sent back to development by its own assignee</td></tr>
+      <tr><th scope="row"><strong>4. Write down the translation decision; <code>BVA-I282</code> is a caching decision in the same note</strong></th><td>&#128993; <strong>Half-started, by accident.</strong> No decision record exists and <code>StubTranslateAdapter</code> is still bound. But <code>BVA-I282</code> (re-translates on every open) was picked up today and is In progress &mdash; the caching half is being coded before the decision is written</td></tr>
+      <tr><th scope="row"><strong>5. Give <code>BVA-I266</code>/<code>I279</code>/<code>I280</code> their own items and an owner</strong></th><td>&#10060; <strong>Not done.</strong> <code>I266</code> moved to REVIEW/QA, <code>I279</code>/<code>I280</code> are still BLOCKED, all three still co-assignments rather than schedulable backend items</td></tr>
+      <tr><th scope="row"><strong>6. Pull Philip onto the eight Figma bugs and <code>BVA-I274</code></strong></th><td>&#128993; <strong><code>BVA-I274</code> done within 80 minutes</strong> &#9989; &mdash; his first non-Done item in five editions. The eight Figma-mismatch bugs are still David's alone &#10060;</td></tr>
+      <tr><th scope="row"><strong>7. Put Promise's two commits on the admin board</strong></th><td>&#10060; <strong>Not done.</strong> The board is now 9.9 days static</td></tr>
+      <tr><th scope="row"><strong>8. Copy <code>code-scan.yml</code> into <code>beevia-mobile</code> and <code>beevia-admin</code>; close the nine Dependabot branches</strong></th><td>&#10060; <strong>Not done for the front ends</strong> &mdash; but the two backend APIs consolidated to <code>code-scan.yml</code> today (&sect;3.4), which makes the copy cheaper. The nine mobile Dependabot branches are still open; the owner's <code>BVA-I239</code> work addresses the same dependencies on a branch instead</td></tr>
+      <tr><th scope="row"><strong>9. Confirm branch protection / secret scanning / Dependabot in the GitHub UI</strong></th><td>&#10060; Not done, still unobservable from here. Sixth edition</td></tr>
+      <tr><th scope="row"><strong>10. Estimation points on sprint 0902 as it is created</strong></th><td>&#10060; Not done &mdash; there is still no sprint 0902</td></tr>
+      <tr><th scope="row"><strong>11. Carried: <code>openapi-schema.spec.ts</code>; <code>reports.service.ts</code> read-scoping; Module 4 decision record; <code>beevia-api/docs/</code></strong></th><td>&#10060; <strong>None done.</strong> <code>docs/</code> is still absent from <code>origin/main</code>; <code>beevia-admin-api/src/reports/</code> has no commit since 21 Sep; no schema-diff test exists. <strong>Item 1 escalates sharply</strong> &mdash; today is the clearest demonstration yet that it is needed (&sect;3.1)</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p><strong>One of eleven resolved outright, two partially.</strong> The resolved one (<code>BVA-I242</code> deleted) and both partials (<code>BVA-I274</code> assigned, <code>BVA-I282</code> picked up) all happened within 100 minutes of yesterday's report, during the same triage pass &mdash; after which the board went quiet for 19 hours.</p>
+    </section>
+
+    <section class="sec" id="s7">
+      <div class="sec__h"><span class="sec__n">07</span><h2>What I would do this week</h2></div>
+
+<div class="stack">
+  <div class="finding"><div class="finding__n num">1</div><div><p><strong>Tell David that <code>BVA-I262</code>'s server half is on <code>main</code>.</strong> It merged at 12:41 today; he moved the item to In progress at 13:30 with no comment. If that was coincidence rather than a response, he is about to write a client fix against an API he does not know changed. One comment on the item closes it. The same applies to anyone building the transaction list: <code>name</code> and <code>counterparty_name</code> are there now, localised, and the client should render <code>name</code> rather than composing its own string.</p></div></div>
+  <div class="finding"><div class="finding__n num">2</div><div><p><strong>Decide <code>origin/BVA-I239</code> &mdash; it is live work, not lost work.</strong> Eleven commits and 30 files ahead: the outstanding Dependabot updates applied wholesale, the Gradle-9/AGP fallout fixed over six commits, the wallet-test repairs, and mock-server wallet routes. This is the same dependency debt as recommendation #8's nine Dependabot branches, already solved on a branch. Merge it or say why not &mdash; but it should not spend another week diverging from a <code>main</code> that is now moving again.</p></div></div>
+  <div class="finding"><div class="finding__n num">3</div><div><p><strong>Open sprint 0902 on both boards.</strong> Third edition. 43 of 49 leaves are open inside an expired container, and the admin board has been static for ten days. Nothing else on this list can be scheduled until there is somewhere to schedule it.</p></div></div>
+  <div class="finding"><div class="finding__n num">4</div><div><p><strong>Review Ayomikun's sixteen.</strong> His half of the queue has a median age of 12.0 days against David's 2.4; the seven-item Notification block is 15.9 days old and was submitted in one sitting on 8 September. The project has never accepted an item. Until one is accepted, "REVIEW/QA" is a synonym for "finished and abandoned", and the falling headline median is actively misleading &mdash; it falls because David adds fresh items, not because anything drains.</p></div></div>
+  <div class="finding"><div class="finding__n num">5</div><div><p><strong>Generate the OpenAPI document in CI and diff it against the committed file.</strong> This is <code>suggestions.md</code> &sect;5.4 and it stops being a tidiness argument today: a merge changed four response bodies and the audit called both services clean. <code>beevia-api</code> and <code>beevia-admin-api</code> both already call <code>SwaggerModule.createDocument()</code> at boot. It is the only proposal on the list that closes the class rather than one instance of it.</p></div></div>
+  <div class="finding"><div class="finding__n num">6</div><div><p><strong>Give the three backend-blocked bugs their own items.</strong> <code>BVA-I266</code>, <code>BVA-I279</code>, <code>BVA-I280</code> &mdash; unchanged from yesterday. Ayomikun has 25 commits and zero schedulable in-progress work; three of his real tasks exist only as someone else's co-assignment.</p></div></div>
+  <div class="finding"><div class="finding__n num">7</div><div><p><strong>Pull Philip onto the eight Figma-mismatch bugs.</strong> <code>BVA-I274</code> proved the mechanism works and took 80 minutes. <code>BVA-I284</code> (search icon vs Figma spec) was picked up by the mobile developer today &mdash; that is design review being done by whoever is nearest.</p></div></div>
+  <div class="finding"><div class="finding__n num">8</div><div><p><strong>Copy <code>code-scan.yml</code> into <code>beevia-mobile</code> and <code>beevia-admin</code>, and bring <code>beevia-db-schema</code> onto it.</strong> Now a four-line file rather than three files (&sect;3.4). <code>beevia-admin</code> still has no CI of any kind.</p></div></div>
+  <div class="finding"><div class="finding__n num">9</div><div><p><strong>Estimation points on sprint 0902 as it is created.</strong> Sixteenth edition. Twenty-two QA bugs of wildly varying size are now the bulk of the board and there is no way to size any of them.</p></div></div>
+  <div class="finding"><div class="finding__n num">10</div><div><p><strong>Carried, unchanged:</strong> the <code>reports.service.ts</code> read-scoping fix (eleventh edition); the Module 4 A-then-B decision record; restoring or retiring <code>beevia-api/docs/</code>; and writing the translation decision down before <code>BVA-I282</code>'s caching work hard-codes the answer.</p></div></div>
+</div>
+    </section>
+
+    <section class="sec" id="method">
+      <div class="sec__h"><span class="sec__n">&mdash;</span><h2>Method and readiness rubric</h2></div>
+
+<p><strong>Pipeline.</strong> <code>beevia-refresh</code>: main board export (64 items, sprint 08-01, exit 0) &rarr; admin board export with <code>--sprint 0901-admin</code> (12 items, exit 0) &rarr; read-only scratch export of sprint 0901 to <code>/tmp/beevia-scratch/</code> (58 items, exit 0) &rarr; sprint-name discovery on both projects (confirming no successor sprint) &rarr; fast-forward sync (<strong>0 repos advanced; 2 already current, 3 refused as <code>diverged</code></strong>; exit 0) &rarr; audit against a <code>git archive</code> shadow of <code>origin/main</code> at <code>$BEEVIA_ROOT=/tmp/beevia-shadow</code> (clean, exit 0) &rarr; item-by-item diff of today's 0901 scratch export against the 23 Sep one &rarr; activity-sidecar sweep for the window &rarr; content reads of the merged transaction-naming, i18n and ledger-metadata paths across all three backend repos &rarr; spec edits &rarr; audit re-run (clean) &rarr; this report and its Markdown edition.</p>
+
+<p><strong>Flow figures come from the activity sidecars, never from <code>Last Modified</code>.</strong> Queue ages are the <code>actiontime</code> of each item's last transition into <code>REVIEW/QA</code>; cycle times are <code>In progress</code> &rarr; <code>REVIEW/QA</code> pairs; WIP ages are the entry into the current status.</p>
+
+<p><strong>Nothing was executed from any sub-repo.</strong> No <code>npm</code>, <code>node</code>, <code>flutter</code> or build step ran; no repository was reset, rebased or cleaned; no sub-repo file was edited; the sync's <code>--ff-only</code> limit was not overridden. Nothing was committed, pushed or deployed.</p>
+
+<p><strong>Files changed this cycle:</strong> <code>project-status/project-status-2026-09-24.md</code>, <code>web-report/2026-09-24.html</code>, <code>web-report/index.html</code>, <code>openapi.yaml</code>, <code>openapi.admin.yaml</code>, <code>suggestions.md</code>; new board exports for 24 Sep in <code>sprint-board-exports/</code> and <code>sprint-board-exports/admin/</code>. <strong>The proposed specs and the two RFCs needed no change</strong> &mdash; no route was added, removed or renamed, and no proposal shipped.</p>
+
+<h3>Degraded inputs</h3>
+<div class="note">
+  <p class="hi"><strong>No open sprint on either board.</strong> Sprint 0901 and 0901-admin both closed 22 September with no successor. Every sprint figure in this report describes an expired container that is still being worked in. Third edition.</p>
+  <p><strong>Three repositories remain unsynced</strong> &mdash; <code>beevia-api</code>, <code>beevia-admin-api</code>, <code>beevia-db-schema</code> still <code>diverged</code> (<code>ahead 1</code>, behind 40 / 34 / 27, up from 38 / 32 / 23 yesterday). Every backend code claim is made against <code>origin/main</code> via the shadow, never the working tree.</p>
+  <p><strong><code>ZOHO_SPRINT_FILTER</code> is still <code>08-01</code></strong>, so the in-repo main export is a frozen closed sprint (41 leaves, all Done, zero activity, and an audit delta of "no net change" that describes nothing). All sprint-0901 figures come from the scratch export. The filter cannot be corrected until a new sprint exists.</p>
+  <p><strong>The audit's own board section is therefore not usable this cycle</strong> &mdash; it reports the frozen 08-01 sprint. Its code-vs-spec sections are the parts relied on here.</p>
+  <p><strong>GitHub settings are unobservable.</strong> Branch protection, secret scanning, push protection and Dependabot alerts are reported from the board and commit messages only.</p>
+  <p><strong>Whether any CI run passed is unknowable from a clone.</strong></p>
+  <p><strong><code>Comments</code> bodies are unavailable</strong> from the Zoho API (<code>commentCount</code> only). No comment was added to any item in the window.</p>
+  <p><strong>The export's "no source key" warning fired on <code>Epic</code> again</strong> and is the known 50-row sampling artefact, not an OAuth scope gap. On sprint 0901 the column resolves for 22 of 49 leaves; the blanks are genuinely unassigned, mostly QA bugs.</p>
+  <p style="margin-bottom:0"><strong>Repository integrity was not hash-swept this cycle.</strong></p>
+</div>
+
+<p><strong>Window.</strong> 23 Sep 15:05 UTC &rarr; 24 Sep 13:30 UTC. All <code>actiontime</code> and board figures are UTC; <code>git log</code> was read with local timestamps converted where quoted.</p>
+<p><strong>A note on who appears here.</strong> Only people whose work is tracked have rows. Board administration is performed by a non-contributor whose transitions are reported without naming the actor.</p>
+
+<a id="mvp-method"></a>
+<h3>MVP readiness &mdash; &asymp;67% (estimate; 66.72, unchanged)</h3>
+<p><strong>Target 2026-09-01 (provisional) &middot; the target date passed twenty-three days ago.</strong> Weights frozen &mdash; <strong>no methodology change this edition.</strong> Scores measure build, not acceptance: the review queue has still accepted nothing.</p>
+<p><strong>No score moved today, and that is a deliberate call rather than an absence of work.</strong> Today's merge was real engineering across three repositories, but the rubric asks whether a <em>capability</em> exists, and a better title on an existing statement row does not add one. Two lines were re-examined and held.</p>
+
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+    <thead><tr><th scope="col">#</th><th scope="col">Capability</th><th scope="col" class="r">Weight</th><th scope="col" class="r">Score</th><th scope="col" class="r">&Delta;</th><th scope="col">Evidence</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">1</th><td>E2EE messaging</td><td class="r">15</td><td class="r">0.90</td><td class="r">0</td><td>No change to crypto, keys or sockets</td></tr>
+      <tr><th scope="row">2</th><td>Voice &amp; video calling</td><td class="r">8</td><td class="r">0.80</td><td class="r">0</td><td>No <code>/calls</code> change; <code>FCM_SERVICE_ACCOUNT</code> still optional and blank</td></tr>
+      <tr><th scope="row">3</th><td>Message translation</td><td class="r">7</td><td class="r">0.60</td><td class="r hi"><strong>0 &mdash; held, re-examined</strong></td><td class="hi">The new <code>src/i18n/locales/{en,es,fr,zh}.ts</code> catalogue is <strong>response localisation, not message translation</strong>: it renders the API's own copy in the user's saved language. Genuine progress on the language plumbing, and the first server-side use of the saved preference &mdash; but <code>translate.module.ts:23</code> still binds <code>StubTranslateAdapter</code>, and <code>/translate/batch</code> and <code>/translate/languages</code> are still proposed-only. Users' messages are still translated on-device or not at all</td></tr>
+      <tr><th scope="row">4</th><td>Local KYC tier (BVN)</td><td class="r">8</td><td class="r">0.90</td><td class="r">0</td><td>No API change</td></tr>
+      <tr><th scope="row">5</th><td>International KYC tier</td><td class="r">6</td><td class="r">0.00</td><td class="r">0</td><td>Proposed only</td></tr>
+      <tr><th scope="row">6</th><td>Multi-currency wallets</td><td class="r">12</td><td class="r">0.85</td><td class="r hi"><strong>0 &mdash; held, re-examined</strong></td><td class="hi">Statement rows gained titles and a locale, which improves an existing surface rather than adding currencies. <code>activeNgn()</code> re-verified at <code>payment.service.ts:506</code>, called from 70/128/288 &mdash; the server remains single-currency, which is the clause holding this line back</td></tr>
+      <tr><th scope="row">7</th><td>Send / request / receive in chat</td><td class="r">12</td><td class="r">0.95</td><td class="r">0</td><td>The held-back clause is "no REST read path for a single payment". A named counterparty on a <em>list</em> row is not that read path</td></tr>
+      <tr><th scope="row">8</th><td>Cross-currency FX settlement</td><td class="r">12</td><td class="r">0.00</td><td class="r">0</td><td><code>/fx/*</code> proposed only; <code>activeNgn()</code> confirmed present</td></tr>
+      <tr><th scope="row">9</th><td>Virtual cards</td><td class="r">10</td><td class="r">0.80</td><td class="r">0</td><td>No card endpoint wired since yesterday; <code>reveal</code>, <code>freeze</code>, <code>fund</code> and the rest still have no client constant</td></tr>
+      <tr><th scope="row">10</th><td>Consent management</td><td class="r">4</td><td class="r">0.00</td><td class="r">0</td><td>No endpoint, record or board item</td></tr>
+      <tr><th scope="row">11</th><td>Admin oversight</td><td class="r">6</td><td class="r">0.97</td><td class="r">0</td><td><code>beevia-admin-api</code> transaction rows gained titles, but the rubric line scores <strong>dashboard modules landed in <code>beevia-admin/src</code></strong> &mdash; and <code>beevia-admin</code> has no commit since 22 Sep</td></tr>
+      <tr><th scope="row"></th><td class="hi"><strong>Weighted total</strong></td><td class="r hi"><strong>100</strong></td><td class="r hi"><strong>66.72</strong></td><td class="r hi"><strong>0.00</strong></td><td class="hi"><strong>&asymp;67%</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>A flat edition immediately after the largest move ever recorded is the expected shape: PR&nbsp;#35 released seven weeks of accumulated build in one day, and there is no comparable reservoir left on a branch &mdash; except <code>BVA-I239</code>, which is dependency and build work rather than product surface and would not move a capability line if it merged tomorrow.</p>
+
+<h3>What this report cannot tell you</h3>
+<div class="note">
+  <p><strong>What the next sprint is called or when it starts.</strong> Nothing is open on either project.</p>
+  <p><strong>Whether <code>BVA-I262</code>'s In-progress move was a response to the merge</strong> or coincidence. The timing fits (49 minutes) and the content matches exactly, but no comment records it.</p>
+  <p><strong>Whether <code>BVA-I261</code>, <code>BVA-I266</code> and <code>BVA-I267</code> have merged code behind them</strong> (&sect;1.4). No mobile commit exists since PR&nbsp;#35; their fixes may or may not be inside it.</p>
+  <p><strong>Whether any of the transaction-naming code works.</strong> No <code>npm</code>, <code>node</code> or <code>flutter</code> command was run; nothing was built or executed. The 431 lines of new tests that came with it were not run by this pipeline.</p>
+  <p><strong>Whether branch protection, secret scanning and Dependabot are on</strong>, and on which repos &mdash; the <code>gh</code> token here gets <code>404</code> on every repo's rules endpoint. Sixth edition.</p>
+  <p><strong>Whether <code>origin/BVA-I239</code> is intended to merge</strong>, or is a private working branch. Its author is the project owner.</p>
+  <p><strong>Velocity for any of the three sprints</strong> &mdash; 0 of 58, 0 of 12, 0 of 64 items estimated.</p>
+  <p style="margin-bottom:0"><strong>Whether Philip is working untracked.</strong> He now has one item, which is one more signal than the last four editions had.</p>
+</div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="foot">
+  <span class="barcode barcode--lg" aria-hidden="true"></span>
+  <span>Beevia project status &middot; 2026-09-24 &middot; no open sprint &middot; the fix shipped, the board marked it blocked</span>
+  <span><a href="index.html">All frames</a></span>
+</footer>
+
+<script src="ui.js"></script>
+</body>
+</html>
