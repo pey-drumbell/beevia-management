@@ -34,7 +34,7 @@
       <span class="topbar__wordmark">Beevia</span>
     </div>
     <nav class="topbar__nav label" aria-label="Report">
-      <a href="2026-09-25.html">Latest frame</a>
+      <a href="2026-09-28.html">Latest frame</a>
     </nav>
 </div>
 
@@ -43,9 +43,9 @@
     <div class="field__rail field__rail--l">
       <dl>
         <dt>Frames held</dt>
-        <dd>37</dd>
+        <dd>38</dd>
         <dt>Latest</dt>
-        <dd>2026-09-25 · nineteen bugs, one developer, no reviewer</dd>
+        <dd>2026-09-28 · the queue is ahead of the code</dd>
       </dl>
     </div>
 
@@ -55,7 +55,7 @@
       </div>
       <div class="field__meta num">
         <span>Beevia project status</span>
-        <span>2026-08-05 &rarr; 2026-09-25</span>
+        <span>2026-08-05 &rarr; 2026-09-28</span>
         <span>Newest first</span>
       </div>
     </div>
@@ -73,27 +73,44 @@
 
 <section class="mvp" aria-label="MVP readiness estimate">
   <div class="mvp__head">
-    <span class="label">MVP readiness &mdash; estimate</span>
-    <span class="mvp__pct num">&asymp;67%</span>
-    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 24 days past</span>
+    <span class="mvp__label label">MVP readiness &mdash; estimate</span>
+    <span class="mvp__pct num">&asymp;66%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 27 days past</span>
   </div>
-  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged from the previous edition. No capability score moved today. E2EE messaging 0.90, voice and video calling 0.80, message translation 0.60, local KYC 0.90, multi-currency wallets 0.85, send-request-receive 0.95, virtual cards 0.80, admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero.">
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 66 percent built, down 1.2 points on a corrected score. Send-request-receive re-scored from 0.95 to 0.85 because the client's in-chat send bypasses escrow. E2EE messaging 0.90, voice and video calling 0.80, message translation 0.60, local KYC 0.90, multi-currency wallets 0.85, send-request-receive 0.85, virtual cards 0.80, admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero.">
     <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.90"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.80"><i style="width:80%"></i></span>
     <span class="mvp__seg" style="flex:7" title="Message translation — 0.60"><i style="width:60%"></i></span>
     <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.90"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
     <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.85"><i style="width:85%"></i></span>
-    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.95"><i style="width:95%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.85"><i style="width:85%"></i></span>
     <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
     <span class="mvp__seg" style="flex:10" title="Virtual cards — 0.80"><i style="width:80%"></i></span>
     <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
     <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.97"><i style="width:97%"></i></span>
   </div>
-  <p class="mvp__read"><strong>66.72, unchanged &mdash; and two evidence lines were corrected rather than re-scored.</strong> The window's engineering was substantial: a duplicate-account defect closed, inbox ordering fixed, a seven-week dependency branch merged. None of it adds a capability. <strong>Correction:</strong> <code>GET /translate/languages</code> is <em>implemented</em>, not proposed &mdash; it shipped 22 Sep and the last two editions listed it as a blocker in error. Translation stays 0.60 regardless, because the blocker was never the endpoint list: <code>translate.module.ts:23</code> still binds <code>StubTranslateAdapter</code> and the shipped client translates on-device, bypassing the server. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 25 Sep 2026 &mdash; <a href="2026-09-25.html#mvp-method">method and capability table</a>.</p>
+  <p class="mvp__read"><strong>65.52, down 1.20 &mdash; a correction, not a regression.</strong> Nothing was un-built. Send / request / receive was scored 0.95 on the reading that the client's use of <code>/payments/transfer</code> was expected; it is not. That endpoint settles instantly with no accept step, so the PRD's escrow for sends has never carried a real payment (zero of six on production, per <code>beevia-api</code> #57). Re-scored <strong>0.85</strong>; the client fix is on the unmerged <code>update-fixes</code> branch and the line returns toward 0.95 when it lands. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 28 Sep 2026 &mdash; <a href="2026-09-28.html#mvp-method">method and capability table</a>.</p>
 </section>
 
 <main class="frames">
+
+  <a class="frame" href="2026-09-28.html">
+    <span class="frame__idx num">38</span>
+    <span>
+      <span class="frame__date">28 Sep 2026</span>
+      <span class="frame__sum"><strong>The review queue swallowed the rest of the board over the weekend &mdash; 57 of 68 leaves, 84% &mdash; and the code behind it is on an unmerged branch.</strong> Twenty items entered REVIEW/QA between Friday and Saturday, most straight from To do, while <code>beevia-mobile</code> <code>main</code> took no commit; the fixes for <code>BVA-I287</code> and <code>BVA-I303</code> were committed to <code>update-fixes</code> on Sunday, <strong>a day after the items were submitted</strong>. The one backend merge, escrowed send over the socket (<code>beevia-api</code> #57), exposed what every previous edition missed: <strong>no real payment has ever used escrow</strong>, because the client's chat Send calls the instant-transfer endpoint. Capability #7 is re-scored 0.95 &rarr; 0.85 and the estimate falls to <strong>&asymp;66%</strong> &mdash; a correction, not a regression. The same unmerged branch adds a <strong>biometric step-up the server does not accept</strong> and should not accept as written. And <code>beevia-db-schema</code> <code>main</code> was <strong>force-pushed</strong>, dropping the <code>v0.0.38</code> release commit and orphaning its tag.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:0"></i></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>0901 &middot; closed 22 Sep &middot; no successor</span></div>
+      <div><span>MVP est</span><span>&asymp;66% &middot; &Delta; &minus;1.20 (correction)</span></div>
+      <div><span>0901 in review</span><span>57 of 68 leaves &middot; oldest 19.9 d</span></div>
+      <div><span>Queue median</span><span>backend 10.5 d &middot; mobile 3.6 d</span></div>
+      <div><span>Socket commands</span><span>38 &middot; +2 &middot; route drift 0</span></div>
+      <div><span>API surface</span><span>137 / 49 &middot; drift 0</span></div>
+    </span>
+  </a>
 
   <a class="frame" href="2026-09-25.html">
     <span class="frame__idx num">37</span>
@@ -727,7 +744,7 @@
 <footer class="foot">
   <span class="barcode barcode--lg" aria-hidden="true"></span>
   <span>Frames are written by the <code>beevia-refresh</code> skill alongside the Markdown in <code>project-status/</code>.</span>
-  <span><a href="2026-09-25.html">Latest</a></span>
+  <span><a href="2026-09-28.html">Latest</a></span>
 </footer>
 
 <script src="ui.js"></script>

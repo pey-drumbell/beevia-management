@@ -440,6 +440,20 @@ This is a data-integrity fix, not a convenience feature. The retired regex `^\+[
 
 **3. Three response fields the server had always sent were missing from the spec.** `last_message_at` is new; `hidden_at` and `cleared_seq` are not — `conversations.service.ts` has been returning both on every conversation row, and `openapi.yaml`'s `Conversation` schema never listed them. All three are now documented. A client that generated its models from the spec has never had access to the clear-chat watermark the API was already sending it.
 
+### 5.11 Escrowed send reaches the socket — and the client has been bypassing escrow (2026-09-28)
+
+`beevia-api` #57 (`feat/ws-payment-send`, merged 25 September) added two socket commands, `payment.step_up` and `payment.send` (§6.9). **No REST route was added, removed or renamed**, so the route-level audit is clean for the fourth consecutive cycle in which the day's most consequential change was not a route. `openapi.yaml` was updated in its prose only — the Transports section, `POST /auth/step-up` and `POST /payments/send` — because the file does not model socket commands.
+
+**1. The PIN gate now lives on the connection for socket spends.** ADR-0003's step-up token is an HTTP header; the gateway previously excluded every debiting command for that reason. The token is now presented once per socket and arms it until the token's *own* expiry — not refreshed by activity, not shared with a second connection. Verification moved into `TokenService.verifyStepUp`, which `StepUpGuard` also calls, so the header and socket paths cannot drift. This is a sound shape. One property to keep in mind: an armed socket may spend repeatedly until expiry (default 5 minutes), where the header path requires the token on every request — equivalent in practice while the TTL stays short.
+
+**2. The reason for the change is a product finding, not a transport one.** The commit records that all six sends on production went through `POST /payments/transfer`, which credits the recipient immediately with no accept step and no 24-hour return. That is the endpoint the mobile client's in-chat Send posts to (`wallet_service.dart`, `walletTransferUrl`). The escrowed path — the PRD's *Transfer Acceptance & Escrow* (§10.2; Flow 5; §11 Phase 3, "universal transfer acceptance and escrow mechanic") — has existed on the server since the payments module shipped and **has never been used by a real payment**. Previous revisions of this RFC and the status reports described the client's use of `/payments/transfer` as expected; it is not what the PRD asks a chat send to do.
+
+**3. The client work to use it exists, on an unmerged branch.** `beevia-mobile` `origin/update-fixes` (2 commits, 24 and 27 September) wires `payment.step_up` → `payment.send` from the chat send flow. Until it merges, `main` still bypasses escrow.
+
+**4. The new door inherits the one unparsed phone field.** `payment.send` reuses `sendMoneySchema`, whose `recipientPhone` is still `z.string().trim().min(6).max(20)` rather than `phone.util.ts` (§5.10). The socket command that finally exposes escrow to the client is therefore also the newest caller of the only un-normalised phone input in the service. `suggestions.md` §3.6.
+
+**5. The same client branch assumes a server feature that does not exist.** `update-fixes` posts `{ "method": "biometric" }` to `POST /auth/step-up` and edits its vendored `api-docs/openapi.yaml` to declare that body. The server's `stepUpSchema` is `z.object({ pin })`; the request fails validation. The client's mock server accepts it, so the client's contract test passes. See `suggestions.md` §5.11 — this is a design decision, not a missing line, because a step-up minted on a client's word that a biometric prompt succeeded carries no factor the server can verify.
+
 
 ---
 
@@ -562,6 +576,8 @@ Parallel ladder for `chat_only` users adopting banking. See §5.1 for why this s
 
 Escrow mechanics themselves are sound: a 24-hour hold scheduled through BullMQ, hold-before-write ordering so a rejected send leaves no payment row behind, idempotent expiry, and auto-return on decline or timeout.
 
+**But no production payment has used them.** Per the #57 commit (2026-09-25), all six sends on production went through `POST /payments/transfer` — the mobile client's in-chat Send posts there — and each completed in the same millisecond it was created. The PRD's *Transfer Acceptance & Escrow* feature (§10.2, MVP Phase 3) is built on the server and bypassed by the client. See §5.11.
+
 ### 6.8 Chat, Calls, Attachments, Translate, Notifications, Webhooks
 
 | | Method | Path | Auth | Status |
@@ -609,7 +625,9 @@ Escrow mechanics themselves are sound: a 24-hour hold scheduled through BullMQ, 
 
 ### 6.9 WebSocket surface
 
-30 client commands and 15 server events. Commands: `sync.bootstrap`, `sync.messages`, `number.lookup`, `conversation.{create,get,update,join,leave,archive,unarchive,mute,report,media}`, `conversation.members.{add,remove}`, `conversations.{list,bulk}`, `message.{send,backfill}`, `receipt.send`, `reaction.{add,remove}`, `call.{start,answer,decline,end}`, `typing.{start,stop}`, `presence.ping`, `ping`.
+**38 client commands** (re-counted from `@SubscribeMessage` on `origin/main`, 2026-09-28 — this line previously said 30 and had not been updated since before `conversation.clear`, `message.delete` and the six `payment.*` commands landed). Commands: `sync.bootstrap`, `sync.messages`, `number.lookup`, `conversation.{create,get,update,join,leave,archive,unarchive,mute,report,media,clear}`, `conversation.members.{add,remove}`, `conversations.{list,bulk}`, `message.{send,backfill,delete}`, `receipt.send`, `reaction.{add,remove}`, `call.{start,answer,decline,end}`, `typing.{start,stop}`, `presence.ping`, `ping`, `payment.{request,accept,decline,cancel,step_up,send}`.
+
+**`payment.step_up` and `payment.send` (2026-09-25, `beevia-api` #57).** Until this merge the gateway carried every money command *except* the ones that debit the caller, because the step-up credential is an HTTP header and a socket message has none. #57 moves the gate onto the connection: `payment.step_up { stepUpToken }` verifies the token `POST /auth/step-up` mints (same `TokenService.verifyStepUp` the header guard now calls — one implementation, not two) and records `stepUpUntil` on that socket, set to the token's own expiry and never extended. `payment.send` takes the `POST /payments/send` body and answers `step_up_required` until the socket is armed. The arming is per socket, so a second connection is not armed by the first. `payment.pay` does not exist; paying a request stays REST-only.
 
 **The transports are not at parity in either direction**, which is worth stating explicitly because both docs and the Postman collection imply they are:
 
@@ -621,7 +639,9 @@ Escrow mechanics themselves are sound: a 24-hour hold scheduled through BullMQ, 
 | Join / leave a room | — | ✅ |
 | Explicit unarchive command | via `{archived:false}` | ✅ dedicated |
 | Attachments | ✅ | — (binary never over WS, by design) |
-| Payments, wallets, KYC | ✅ | — |
+| Payments: send (escrow), request, accept, decline, cancel | ✅ | ✅ — send since 2026-09-25, armed per socket via `payment.step_up` |
+| Payments: pay a request, direct transfer | ✅ | — |
+| Wallets, KYC | ✅ | — |
 
 Typing and presence being WS-only is correct — they are ephemeral. `sync.bootstrap` having no REST equivalent is a genuine hole: a client that cannot open a socket has no single call to establish initial state.
 

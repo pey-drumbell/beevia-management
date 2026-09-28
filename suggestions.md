@@ -188,6 +188,8 @@ Money-moving routes are the *last* place that should have the loosest input vali
 
 **Escalated 2026-09-25 — the gap widened rather than closed.** §5.2's consolidation landed on 24 September and `payments.dto.ts` was not part of it: it still declares its own local `const phone = z.string().trim().min(6).max(20)` and imports nothing from `phone.util.ts`. So `/payments/send` and `/payments/request` are now the only two endpoints in `beevia-api` that will accept a phone number nobody has checked is dialable — and, more to the point, the only two that do **not** get the trunk-prefix repair. A payer who types `08089421407` where every other screen in the app would have resolved it now fails, or worse, matches nothing and is treated as a non-user. The fix is one import and one deleted line; the spec records the looseness on both fields so a client is not misled in the meantime.
 
+**Escalated again 2026-09-28 — a third caller now depends on it.** `beevia-api` #57 (25 Sep) exposed escrowed send over the socket as `payment.send`, reusing `sendMoneySchema` unchanged. That command is the one the unmerged mobile branch `update-fixes` now uses for every in-chat send, so once the branch merges, **every chat payment in the product will pass through the one phone field that is not parsed**. The fix is still one import and one deleted line.
+
 ### 3.7 There is no API versioning mechanism
 
 `app.setGlobalPrefix('api/v1')` hard-codes the version into a string prefix. Nest's `enableVersioning()` (URI or header) would let `v2` routes coexist with `v1` during a migration, which matters once a mobile app is in the field and cannot be force-upgraded. Not urgent pre-launch, but cheap to adopt now and expensive to retrofit later.
@@ -547,6 +549,18 @@ Two consequences, and the second is the expensive one:
 
 This is the same class as §5.4, one layer out: §5.4 asks the server to prove its spec matches its code, and this asks the client to read the spec the server publishes. The cheap fix is to stop vendoring — fetch `openapi.yaml` from the API repo in CI, or make `api-docs/openapi.yaml` a checked sync with a job that fails when it falls behind. The expensive version of not fixing it is a client written against endpoints and fields that the server has already moved past, which is precisely what `BVA-I262` is: the mobile half of a bug whose server half shipped on 24 September, against a vendored contract that does not contain the two fields the fix added.
 
+**Update 2026-09-28 — the vendored copy has now been edited in the other direction.** The unmerged `beevia-mobile` branch `update-fixes` still does not sync the 27 missing operations, but it *adds* something to `api-docs/openapi.yaml` that the server does not implement: a `{ method: biometric }` body on `POST /auth/step-up` (§5.11). The mock server was taught the same body. So the vendored spec is no longer only stale; it now declares server behaviour that does not exist, and the contract test certifies the client against it.
+
+### 5.11 The client asks for a biometric step-up the server does not offer — and should not offer in that shape (2026-09-28)
+
+`beevia-mobile` `origin/update-fixes` (unmerged; last commit 27 Sep) adds `WalletService.requestBiometricStepUpToken()`, which posts `{ "method": "biometric" }` to `POST /auth/step-up` after a local `local_auth` prompt succeeds. It is offered next to the PIN on five confirmation sheets — both chat money flows, bank transfer, virtual-card request and a wallet sheet — i.e. on every money-moving action the client has. Its doc comment says "the server accepts this only for a biometric-enabled, registered device".
+
+**The server accepts nothing of the kind.** `stepUpSchema` on `origin/main` is `z.object({ pin })`; there is no `method` field and no biometric path anywhere in `src/`. On the real API this request fails validation, so the biometric button will fail every time it is pressed outside mock mode. The client's mock server (`lib/mock/http/routes/auth_routes.dart`) *does* accept it, and the branch edits the vendored spec to match (§5.10), so no test in the client repo will notice.
+
+**The more important point is that it should not simply be added as written.** The PRD asks for "biometric or PIN confirmation on every financial action" (§11 Phase 3), so the requirement is real. But a request that says "the user passed a biometric prompt" is a claim the server cannot check: anyone holding an access token can send the same body. Minting a step-up token for it would reduce ADR-0003's PIN gate to "has a session", which is precisely the guarantee step-up exists to exceed. The standard shape is a **device-bound key**: at enrolment the device generates a keypair inside the secure enclave/keystore, gated by biometrics, and registers the public key; at step-up the server issues a nonce and the device returns a signature that the enclave only produces after a successful biometric prompt. The server verifies the signature against the registered key. That needs a small design decision and two endpoints, and it is worth making before the client ships a button that implies it already exists.
+
+Until then: either hide the biometric option outside mock mode, or keep the PIN as the only factor the client offers for step-up.
+
 
 ## 8. Suggested order
 
@@ -559,6 +573,8 @@ This is the same class as §5.4, one layer out: §5.4 asks the server to prove i
 3c. **§5.8** — extend the new `openapi-schema.spec.ts` to diff the generated document against the committed `openapi.yaml`. Promoted because the expensive half now exists: a green pipeline shipped an unbootable release on 18 September, the fix built the document in a test to stop it recurring, and turning that into §5.4's drift check is a few more lines in a file that is already there.
 
 3d. **§5.10** — stop vendoring the spec in `beevia-mobile`, or add a CI job that fails when `api-docs/openapi.yaml` falls behind the API repo's. Grouped with 3c because they are the same instrument pointed in opposite directions, and because the client copy is currently 27 operations behind — including every field the open `BVA-I262` fix needs.
+
+3e. **§5.11** — decide the biometric step-up design (device-bound key and signed nonce) before `beevia-mobile` `update-fixes` merges with a biometric button that the real API rejects. Added 2026-09-28. Paired with **§3.6**, which the same branch makes load-bearing: once it merges, every chat payment goes through the one unparsed phone field.
 
 4. **§4.7** — re-apply module scoping when a generated report is read, not only when it is generated. Cheapest now, and the only entry on this list that is a live access-control gap in shipped code. **Unchanged on 2026-09-18** — `reports.service.ts:133` re-verified at `origin/main`; ninth consecutive edition.
 5. **§1.1** — malformed UUID → 500. Small fix, trivially reachable, currently generates false 500s in monitoring.

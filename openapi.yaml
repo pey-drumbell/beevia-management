@@ -66,9 +66,17 @@ info:
 
     ## Transports
 
-    HTTP is the *fallback* transport for chat; the primary is Socket.IO (see
-    `beevia-api/docs/chat-websocket-integration.md`). Every REST chat route wraps
-    the same service the WebSocket gateway calls — never a parallel code path.
+    HTTP is the *fallback* transport for chat; the primary is Socket.IO. Every
+    REST chat route wraps the same service the WebSocket gateway calls — never a
+    parallel code path. The socket commands are not described in this file; the
+    gateway's own guide (`beevia-api/docs/chat-websocket-integration.md`) was
+    deleted from `main` on 2026-09-24, so the command inventory lives in
+    `api-rfc.md` §6.9 and the Postman collection.
+
+    Money-moving socket commands carry the step-up gate on the *connection*
+    rather than a header: `payment.step_up` presents a token minted by
+    `POST /auth/step-up` and arms that one socket until the token's own expiry;
+    `payment.send` refuses with `step_up_required` until it has been.
 
     ## Not in this file
 
@@ -389,7 +397,12 @@ paths:
       description: |
         Verifies the PIN and mints a short-lived step-up token (`JWT_STEP_UP_TTL`,
         default 5m). Send it as `X-Step-Up-Token` on financial and destructive
-        actions (ADR-0003).
+        actions (ADR-0003), or present it once over the socket with
+        `payment.step_up` to arm that connection for `payment.send` until the
+        token expires.
+
+        The PIN is the only accepted factor. There is no biometric variant of
+        this request: a body without `pin` fails validation.
       requestBody:
         required: true
         content:
@@ -2014,6 +2027,11 @@ paths:
         Holds the amount in escrow on the sender's ledger until the recipient
         accepts; auto-returns after 24h or on decline. Both parties must hold a
         wallet in the currency. Requires a step-up token.
+
+        The same service call is exposed over the socket as `payment.send`
+        (same body), gated by `payment.step_up` rather than the header. Send, over
+        either transport, is the only way to move money *with* the accept step —
+        `POST /payments/transfer` settles immediately and has none.
 
         The currency is fixed to NGN server-side (`PaymentService` resolves the
         NGN row unconditionally), so this is NGN → NGN only. A wider contract —
