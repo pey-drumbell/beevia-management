@@ -34,7 +34,7 @@
       <span class="topbar__wordmark">Beevia</span>
     </div>
     <nav class="topbar__nav label" aria-label="Report">
-      <a href="2026-09-28.html">Latest frame</a>
+      <a href="2026-09-29.html">Latest frame</a>
     </nav>
 </div>
 
@@ -43,9 +43,9 @@
     <div class="field__rail field__rail--l">
       <dl>
         <dt>Frames held</dt>
-        <dd>38</dd>
+        <dd>39</dd>
         <dt>Latest</dt>
-        <dd>2026-09-28 · the queue is ahead of the code</dd>
+        <dd>2026-09-29 · fixed on a branch, waiting in a queue</dd>
       </dl>
     </div>
 
@@ -55,7 +55,7 @@
       </div>
       <div class="field__meta num">
         <span>Beevia project status</span>
-        <span>2026-08-05 &rarr; 2026-09-28</span>
+        <span>2026-08-05 &rarr; 2026-09-29</span>
         <span>Newest first</span>
       </div>
     </div>
@@ -75,9 +75,9 @@
   <div class="mvp__head">
     <span class="mvp__label label">MVP readiness &mdash; estimate</span>
     <span class="mvp__pct num">&asymp;66%</span>
-    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 27 days past</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 28 days past</span>
   </div>
-  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 66 percent built, down 1.2 points on a corrected score. Send-request-receive re-scored from 0.95 to 0.85 because the client's in-chat send bypasses escrow. E2EE messaging 0.90, voice and video calling 0.80, message translation 0.60, local KYC 0.90, multi-currency wallets 0.85, send-request-receive 0.85, virtual cards 0.80, admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero.">
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 66 percent built, unchanged. No product code reached any main branch. E2EE messaging 0.90, voice and video calling 0.80, message translation 0.60, local KYC 0.90, multi-currency wallets 0.85, send-request-receive 0.85, virtual cards 0.80, admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero.">
     <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.90"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.80"><i style="width:80%"></i></span>
     <span class="mvp__seg" style="flex:7" title="Message translation — 0.60"><i style="width:60%"></i></span>
@@ -90,10 +90,27 @@
     <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
     <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.97"><i style="width:97%"></i></span>
   </div>
-  <p class="mvp__read"><strong>65.52, down 1.20 &mdash; a correction, not a regression.</strong> Nothing was un-built. Send / request / receive was scored 0.95 on the reading that the client's use of <code>/payments/transfer</code> was expected; it is not. That endpoint settles instantly with no accept step, so the PRD's escrow for sends has never carried a real payment (zero of six on production, per <code>beevia-api</code> #57). Re-scored <strong>0.85</strong>; the client fix is on the unmerged <code>update-fixes</code> branch and the line returns toward 0.95 when it lands. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 28 Sep 2026 &mdash; <a href="2026-09-28.html#mvp-method">method and capability table</a>.</p>
+  <p class="mvp__read"><strong>65.52, unchanged.</strong> No product code reached any <code>main</code>. The unmerged <code>update-fixes</code> branch would move send / request / receive back toward 0.95 by routing the chat Send through escrow, but a branch does not score. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 29 Sep 2026 &mdash; <a href="2026-09-29.html#mvp-method">method and capability table</a>.</p>
 </section>
 
 <main class="frames">
+
+  <a class="frame" href="2026-09-29.html">
+    <span class="frame__idx num">39</span>
+    <span>
+      <span class="frame__date">29 Sep 2026</span>
+      <span class="frame__sum"><strong>Fixes for four queued QA items now exist, all of them only on an unmerged branch.</strong> <code>update-fixes</code> gained a third commit with the end-to-end-encryption notice (<code>BVA-I292</code>) and an offline conversation list (<code>BVA-I294</code>), written about 72 hours after both items entered REVIEW/QA. The branch is now 90 files wide and <code>beevia-mobile</code> <code>main</code> has had no commit for 4.9 days. The board recorded one move all day. The queue holds 58 of 68 leaves, and nothing has left it since 24 September. The only backend merges were CI, and one of them (<code>beevia-api</code> #59) <strong>limits the security scan to pull requests</strong>, which is only safe if <code>main</code> requires one. Nobody has verified that. <strong>Correction:</strong> 27 of David's 42 submissions in the previous edition were board administration's moves, not 10.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:0"></i></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>0901 &middot; closed 22 Sep &middot; no successor</span></div>
+      <div><span>MVP est</span><span>&asymp;66% &middot; &Delta; 0.00</span></div>
+      <div><span>0901 in review</span><span>58 of 68 leaves &middot; oldest 20.9 d</span></div>
+      <div><span>Queue median</span><span>backend 11.5 d &middot; mobile 4.6 d</span></div>
+      <div><span>Fixed only on branch</span><span>&ge;4 queued items</span></div>
+      <div><span>API surface</span><span>137 / 49 &middot; drift 0</span></div>
+    </span>
+  </a>
 
   <a class="frame" href="2026-09-28.html">
     <span class="frame__idx num">38</span>
@@ -744,7 +761,7 @@
 <footer class="foot">
   <span class="barcode barcode--lg" aria-hidden="true"></span>
   <span>Frames are written by the <code>beevia-refresh</code> skill alongside the Markdown in <code>project-status/</code>.</span>
-  <span><a href="2026-09-28.html">Latest</a></span>
+  <span><a href="2026-09-29.html">Latest</a></span>
 </footer>
 
 <script src="ui.js"></script>
