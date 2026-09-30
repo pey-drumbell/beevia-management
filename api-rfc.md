@@ -454,6 +454,22 @@ This is a data-integrity fix, not a convenience feature. The retired regex `^\+[
 
 **5. The same client branch assumes a server feature that does not exist.** `update-fixes` posts `{ "method": "biometric" }` to `POST /auth/step-up` and edits its vendored `api-docs/openapi.yaml` to declare that body. The server's `stepUpSchema` is `z.object({ pin })`; the request fails validation. The client's mock server accepts it, so the client's contract test passes. See `suggestions.md` §5.11 — this is a design decision, not a missing line, because a step-up minted on a client's word that a biometric prompt succeeded carries no factor the server can verify.
 
+### 5.12 `X-Device-Id` is now required on six chat routes — and the client does not send it on two (2026-09-30)
+
+`beevia-api` #60 (`feat/require-device-id`, `f1d5a40`, merged 30 September 02:55 UTC) changed the contract of **six operations without adding, removing or renaming one**: `POST /conversations`, `GET /conversations`, `GET /conversations/{id}`, `GET` and `POST /conversations/{id}/messages`, and `POST /messages/{id}/receipts`. The surface stays at 137, so the route-level audit is clean for the fifth cycle running in which the most consequential change was not a route. `openapi.yaml` was updated in place: `DeviceIdHeader` is now `required: true`, the three reads that lacked it gained a `400`, and `MessageHistory` gained `unresolved`.
+
+**1. The change is right.** Without the header the server fell back to a message's own `ciphertext`, which is `null` for every 1:1 envelope send, so a request succeeded with rows nobody could decrypt and rendered as an empty chat. Success and total failure looked identical. A new `@DeviceId()` decorator now rejects a missing or blank header with `400 device_id_required`, and `sync` reports how many returned messages it could not resolve an envelope for (`unresolved`), logging when it is non-zero. The commit says plainly that this is deliberately strict: a caller with no registered device now gets a `400` from the conversation list.
+
+**2. The mobile client does not send the header on two of the six.** Checked at `beevia-mobile` `origin/main` and `origin/update-fixes`:
+
+| Route | `main` | `update-fixes` |
+|---|---|---|
+| `GET /conversations/{id}/messages` | sends it | sends it |
+| `GET /conversations` (the inbox) | **no header** | sends it when a device id is known (`edcadef`, 29 Sep) |
+| `POST /conversations` (start a chat) | **no header** | **no header** |
+
+Messages and receipts are sent over the socket, which carries `X-Device-Id` in its handshake. So once #60 is deployed, a `main` build's inbox fails with `400`, and **starting a new direct chat fails on both branches**. The client's mock server does not enforce the header, so no client test notices. The fix is one line in `chat_service.dart`'s `createConversation`, and merging `update-fixes` covers the inbox.
+
 
 ---
 

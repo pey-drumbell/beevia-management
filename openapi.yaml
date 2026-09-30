@@ -2274,6 +2274,7 @@ paths:
                       data:
                         type: array
                         items: { $ref: '#/components/schemas/Conversation' }
+        '400': { $ref: '#/components/responses/BadRequest' }
 
   /conversations/bulk:
     post:
@@ -2314,6 +2315,7 @@ paths:
         - $ref: '#/components/parameters/DeviceIdHeader'
       responses:
         '200': { $ref: '#/components/responses/ConversationOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
         '404': { $ref: '#/components/responses/NotFound' }
     patch:
       tags: [Chat (REST fallback)]
@@ -2512,8 +2514,12 @@ paths:
       operationId: getMessageHistory
       summary: Message history
       description: |
-        Seq-cursored history. Pass `X-Device-Id` so per-device ciphertext can be
-        resolved for the caller's device. Mirrors `sync.messages`.
+        Seq-cursored history. `X-Device-Id` is required so per-device ciphertext
+        can be resolved for the caller's device. `unresolved` counts returned
+        messages this device holds no envelope for (their `ciphertext` is
+        `null`); with the header mandatory, a non-zero count means the envelope
+        is genuinely absent rather than that the device was not named. Mirrors
+        `sync.messages`.
       parameters:
         - $ref: '#/components/parameters/DeviceIdHeader'
         - name: afterSeq
@@ -2536,6 +2542,7 @@ paths:
                   - type: object
                     properties:
                       data: { $ref: '#/components/schemas/MessageHistory' }
+        '400': { $ref: '#/components/responses/BadRequest' }
     post:
       tags: [Chat (REST fallback)]
       operationId: sendMessage
@@ -3418,8 +3425,14 @@ components:
     DeviceIdHeader:
       name: X-Device-Id
       in: header
-      required: false
-      description: The caller's device. Used to resolve per-device ciphertext and to attribute a sent message to a device.
+      required: true
+      description: |
+        The caller's device. Used to resolve per-device ciphertext and to
+        attribute a sent message or receipt to a device. **Required** on every
+        operation that references it: a missing or blank header is rejected with
+        `400` and `error: device_id_required` rather than answered with rows the
+        caller cannot decrypt. A caller with no registered device (e.g. mid
+        onboarding) therefore gets a `400` from these routes.
       schema: { type: string, format: uuid }
     InviteCode:
       name: code
@@ -4329,6 +4342,10 @@ components:
         messages:
           type: array
           items: { $ref: '#/components/schemas/Message' }
+        unresolved:
+          type: integer
+          minimum: 0
+          description: Returned messages this device holds no envelope for, so cannot decrypt.
         has_more: { type: boolean }
 
     Money:

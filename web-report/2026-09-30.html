@@ -1,0 +1,892 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beevia — Project Status — 30 Sep 2026</title>
+<meta name="description" content="Sprint 0901 closed by a 35-second bulk sweep, not by review; sprint 0902 opens; the backend now requires X-Device-Id, which mobile omits on new chats; db-schema now migrates production on any push to main.">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!--
+  DIRECTION CONTRACT · seed 6c4a0ed0 (carried forward unchanged)
+  THESIS: A status report whose subject is the disagreement between its sources.
+  STORY: The board went from 6 to 67 Done in 35 seconds, by a sweep, not a
+  review, and the sweep closed four items whose fixes are not on main. A new
+  sprint opened. Two overnight backend changes moved risk: a strict device
+  header the mobile client does not send on new chats, and a schema release
+  chain that migrates production on any push to main without CI.
+-->
+
+<div class="topbar">
+    <div class="topbar__mark">
+      <span class="barcode" aria-hidden="true"></span>
+      <span class="topbar__wordmark">Beevia</span>
+    </div>
+    <nav class="topbar__nav label" aria-label="Report">
+      <a href="index.html">Archive</a>
+      <a href="#overview">Overview</a>
+      <a href="#s1"><span>The sweep</span></a>
+      <a href="#s3"><span>What shipped</span></a>
+      <a href="#method">Method</a>
+    </nav>
+</div>
+
+<header class="masthead">
+  <div class="field">
+    <div class="field__rail field__rail--l">
+      <dl>
+        <dt>Sprints open</dt>
+        <dd>0902 &middot; 30 Sep &rarr; 15 Oct</dd>
+        <dt>0901 leaves Done</dt>
+        <dd>67 of 67 &middot; 61 in 35 s</dd>
+        <dt>Route drift</dt>
+        <dd>0 &middot; 6 contracts changed</dd>
+        <dt>Window</dt>
+        <dd>1.0 day &middot; Tue &rarr; Wed</dd>
+      </dl>
+    </div>
+
+    <div class="field__stage">
+      <div class="field__title">
+        <h1>Project<br>Status</h1>
+      </div>
+      <div class="field__meta num">
+        <span>2026-09-30</span>
+        <span>0902 open &middot; 0901 swept &middot; 0901-admin static</span>
+        <span>30 Sep&ndash;15 Oct</span>
+        <span>Closed, not reviewed</span>
+      </div>
+    </div>
+
+    <div class="field__rail field__rail--r">
+      <dl>
+        <dt>Queue at the sweep</dt>
+        <dd>57 items &middot; median 5.7 d &middot; oldest 21.7 d</dd>
+        <dt>Done, not on main</dt>
+        <dd>&ge;4 items</dd>
+        <dt>Mobile calls missing X-Device-Id</dt>
+        <dd>main 2 &middot; update-fixes 1</dd>
+        <dt>Estimated</dt>
+        <dd>0 / 11 &middot; 0 / 76 &middot; 0 / 12</dd>
+      </dl>
+    </div>
+  </div>
+</header>
+
+<section class="mvp" aria-label="MVP readiness estimate">
+  <div class="mvp__head">
+    <span class="mvp__label label">MVP readiness &mdash; estimate</span>
+    <span class="mvp__pct num">&asymp;66%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 29 days past</span>
+  </div>
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 66 percent built, unchanged. The sprint 0901 bulk close is board status and does not score. E2EE messaging 0.90, held pending deploy of the X-Device-Id change; voice and video calling 0.80, message translation 0.60, local KYC 0.90, multi-currency wallets 0.85, send-request-receive 0.85, virtual cards 0.80, admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero.">
+    <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.90"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.80"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:7" title="Message translation — 0.60"><i style="width:60%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.90"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
+    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.85"><i style="width:85%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.85"><i style="width:85%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
+    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0.80"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
+    <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.97"><i style="width:97%"></i></span>
+  </div>
+  <p class="mvp__read"><strong>65.52, unchanged.</strong> Sprint 0901 going from 6 to 67 Done is board status, and the strip does not read it. E2EE messaging is held at 0.90, but it will come down if <code>beevia-api</code> #60 is live and <code>main</code> still omits <code>X-Device-Id</code>. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. <a href="#mvp-method">Method and capability table</a>.</p>
+</section>
+
+<div class="shell">
+  <nav class="contents label" aria-label="Contents">
+    Contents
+    <ol>
+      <li><a href="#overview"><span>00</span> Quick overview</a></li>
+      <li><a href="#s1"><span>01</span> Sprint 0901: the sweep</a></li>
+      <li><a href="#s2"><span>02</span> Sprint 0902</a></li>
+      <li><a href="#s3"><span>03</span> API, spec drift and CI</a></li>
+      <li><a href="#s4"><span>04</span> Risks</a></li>
+      <li><a href="#s5"><span>05</span> PRD gap</a></li>
+      <li><a href="#s6"><span>06</span> Team performance</a></li>
+      <li><a href="#s7"><span>07</span> Previous recommendations</a></li>
+      <li><a href="#s8"><span>08</span> What I would do this week</a></li>
+      <li><a href="#admin"><span>&mdash;</span> Admin dashboard board</a></li>
+      <li><a href="#method"><span>&mdash;</span> Method</a></li>
+    </ol>
+  </nav>
+
+  <main class="doc">
+    <section class="sec" id="overview">
+      <div class="sec__h"><span class="sec__n">00</span><h2>Quick overview</h2></div>
+
+<div class="invert" style="margin-bottom:var(--s-6)"><p class="lede"><strong>Sprint 0901 was closed this morning by a bulk sweep, not by review.</strong> At 07:56 UTC board administration moved every open item to Done: 68 transitions (61 leaves and 7 parents) in 35 seconds. The sweep took in 57 items from REVIEW/QA, the two disputed items, the one item In progress and the one item still To do. <strong>It also closed the four QA items whose fixes are verifiably not on <code>main</code></strong>, so "Done" on this board does not mean "on <code>main</code>". Sprint <strong>0902</strong> opened at the same time, 30 Sep → 15 Oct, with 11 Stories. That ends six editions with no open sprint. The day's engineering changes were on the backend. <strong><code>beevia-api</code> #60 now rejects chat requests without <code>X-Device-Id</code></strong>, and the mobile client does not send that header when it starts a new chat, on <code>main</code> or on <code>update-fixes</code>. <strong><code>beevia-db-schema</code> #19 now publishes and migrates production on every push to <code>main</code>, without running CI first.</strong></p></div>
+<p><strong>Correction to the previous edition: read this first.</strong></p>
+<div class="stack">
+  <div class="finding"><div class="finding__n num">1</div><div><p><strong>The 29 Sep edition described <code>beevia-db-schema</code>'s pending branch <code>ci/pr-only-no-cron</code> as "also removes the schedule from its three standalone scan workflows" (§3.2, §4, <code>suggestions.md</code> §7.7). That missed its most consequential change.</strong> The same commit (<code>de06516</code>, unchanged since it was read on 29 Sep) rewired <strong>Release to trigger on every push to <code>main</code></strong>. It removed the gate that made Release wait for CI to pass, and it dropped CI's <code>paths-ignore</code> list. "Sync to server", which runs "Migrate the production database", still runs after every successful Release. The branch merged overnight as #19, so the chain on <code>main</code> is now <strong>push → publish → migrate production, with no test or scan in between</strong> (§3.2). Yesterday's recommendation, "keep a weekly scan and the <code>push</code> trigger", addressed the smaller half.</p></div></div>
+  <div class="finding"><div class="finding__n num">2</div><div><p><strong>The weekly submission trend (29 Sep §6.5: 9 / 15 / 44 / 1) counted parent Stories' transitions along with leaves.</strong> On leaves only, the figures are <strong>7 / 11 / 42 / 1</strong> (W37–W40). Part of the difference in W37 is <code>BVA-I251</code>, which left the sprint today. The conclusion does not change.</p></div></div>
+</div>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Metric</th>
+<th style="text-align: right;">29 Sep</th>
+<th style="text-align: right;">30 Sep</th>
+<th scope="col">Δ</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">Sprint 0901 items (leaves + parents)</th>
+<td style="text-align: right;">77 (68+9)</td>
+<td style="text-align: right;"><strong>76 (67+9)</strong></td>
+<td>−1 (<code>BVA-I251</code> left the sprint, §1.3)</td>
+</tr>
+<tr><th scope="row">Sprint 0901 leaves Done</th>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;"><strong>67 (all)</strong></td>
+<td><strong>+61, all in one 35-second sweep</strong></td>
+</tr>
+<tr><th scope="row">Sprint 0901 leaves REVIEW/QA</th>
+<td style="text-align: right;">58</td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td>−58 (57 → Done, 1 removed)</td>
+</tr>
+<tr><th scope="row">Sprint 0901 leaves To do / In progress / BLOCKED</th>
+<td style="text-align: right;">1 / 1 / 2</td>
+<td style="text-align: right;"><strong>0 / 0 / 0</strong></td>
+<td>all → Done in the sweep</td>
+</tr>
+<tr><th scope="row">Queue age at the sweep (57 items)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>median 5.7 d, oldest 21.7 d</strong></td>
+<td></td>
+</tr>
+<tr><th scope="row"><strong>Sprints open on the main board</strong></th>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><strong>1 (0902, 30 Sep → 15 Oct)</strong></td>
+<td><strong>first since 22 Sep</strong></td>
+</tr>
+<tr><th scope="row">Sprint 0902 items</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>11 Stories, all To do</strong></td>
+<td>9 David · 1 Ayomikun · 1 Philip</td>
+</tr>
+<tr><th scope="row">Admin board: open sprint / days since any activity</th>
+<td style="text-align: right;">none / 15.0</td>
+<td style="text-align: right;"><strong>none / 16.0</strong></td>
+<td>+1.0</td>
+</tr>
+<tr><th scope="row">API surface (consumer / admin)</th>
+<td style="text-align: right;">137 / 49</td>
+<td style="text-align: right;">137 / 49</td>
+<td>0</td>
+</tr>
+<tr><th scope="row">Proposed operations (consumer / admin)</th>
+<td style="text-align: right;">38 / 18</td>
+<td style="text-align: right;">38 / 18</td>
+<td>0</td>
+</tr>
+<tr><th scope="row">Spec drift vs <code>origin/main</code> (route level)</th>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td>contract change on 6 routes, fixed in place (§3.1)</td>
+</tr>
+<tr><th scope="row">Chat routes that now <strong>require</strong> <code>X-Device-Id</code></th>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><strong>6</strong></td>
+<td><code>beevia-api</code> #60</td>
+</tr>
+<tr><th scope="row">Mobile calls to those routes that omit it (<code>main</code> / <code>update-fixes</code>)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>2 / 1</strong></td>
+<td>inbox + new chat / new chat (§3.1)</td>
+</tr>
+<tr><th scope="row"><code>beevia-db-schema</code>: push to <code>main</code> → production migration without CI</th>
+<td style="text-align: right;">no</td>
+<td style="text-align: right;"><strong>yes</strong></td>
+<td>#19 (§3.2)</td>
+</tr>
+<tr><th scope="row"><code>update-fixes</code> vs <code>beevia-mobile</code> <code>main</code></th>
+<td style="text-align: right;">3 ahead · 90 files</td>
+<td style="text-align: right;"><strong>4 ahead · 100 files, +5,339 / −1,417</strong></td>
+<td>+1 commit (<code>edcadef</code>)</td>
+</tr>
+<tr><th scope="row"><code>beevia-mobile</code> days since a commit on <code>main</code> / any branch</th>
+<td style="text-align: right;">4.9 / 0.9</td>
+<td style="text-align: right;"><strong>5.9 / 0.8</strong></td>
+<td></td>
+</tr>
+<tr><th scope="row"><code>beevia-api</code> days since a product (non-CI) commit</th>
+<td style="text-align: right;">4.0</td>
+<td style="text-align: right;"><strong>0.5</strong></td>
+<td>#60, #61</td>
+</tr>
+<tr><th scope="row"><code>beevia-admin-api</code> days since a commit</th>
+<td style="text-align: right;">5.1</td>
+<td style="text-align: right;"><strong>6.1</strong></td>
+<td>CI branch still pending</td>
+</tr>
+<tr><th scope="row"><code>beevia-admin</code> days since a commit</th>
+<td style="text-align: right;">6.9</td>
+<td style="text-align: right;"><strong>7.9</strong></td>
+<td></td>
+</tr>
+<tr><th scope="row">Ayomikun commits (7d, both identities, <code>origin/main</code>, non-merge)</th>
+<td style="text-align: right;">29</td>
+<td style="text-align: right;"><strong>32</strong></td>
+<td>2 product, 0 CI new</td>
+</tr>
+<tr><th scope="row">David commits (7d): merged to <code>main</code> / on <code>update-fixes</code></th>
+<td style="text-align: right;">1 / 3</td>
+<td style="text-align: right;"><strong>0 / 4</strong></td>
+<td>rolling window</td>
+</tr>
+<tr><th scope="row">Promise commits (7d, merged)</th>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td>last 22 Sep</td>
+</tr>
+<tr><th scope="row">Estimation points set (0902 / 0901 / 0901-admin / 08-01)</th>
+<td style="text-align: right;">— · 0/77 · 0/12 · 0/64</td>
+<td style="text-align: right;"><strong>0/11</strong> · 0/76 · 0/12 · 0/64</td>
+<td>0902 opened unestimated</td>
+</tr>
+<tr><th scope="row">MVP readiness (estimate)</th>
+<td style="text-align: right;">≈66% (65.52)</td>
+<td style="text-align: right;"><strong>≈66% (65.52)</strong></td>
+<td>0 (a downgrade is pending on deploy, §5)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Team, at a glance:</strong></p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Person</th>
+<th scope="col">Owns</th>
+<th scope="col">Board leaves</th>
+<th style="text-align: right;">Submissions (7d)</th>
+<th scope="col">Median cycle</th>
+<th scope="col">Open WIP</th>
+<th style="text-align: right;">Commits (7d)</th>
+<th scope="col">Flag</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">Ayomikun Araoye</th>
+<td>backend + admin API</td>
+<td>0901: 20, all swept to Done · <strong>0902: 1</strong> (<code>BVA-I315</code>, To do) · 0901-admin: 3</td>
+<td style="text-align: right;">9 (4 own; 5 board administration)</td>
+<td>0.98 d (n=10)</td>
+<td>0 on 0901 · 1 on 0901-admin (<code>BVA-I8</code>, <strong>16.0 d</strong>)</td>
+<td style="text-align: right;"><strong>32</strong></td>
+<td>Shipped #60 (strict <code>X-Device-Id</code>, the right fix) and #61 (observability). #19 made a push to <code>main</code> migrate production without CI (§3.2)</td>
+</tr>
+<tr><th scope="row">David Samuel</th>
+<td>mobile</td>
+<td>0901: 48, all Done (46 by the sweep) · <strong>0902: 9, all To do</strong></td>
+<td style="text-align: right;">38 (11 own; 23 board administration; 4 Ayomikun)</td>
+<td>0.96 d (n=24)</td>
+<td>0 on 0901 · 9 queued on 0902</td>
+<td style="text-align: right;"><strong>0 merged · 4 unmerged</strong></td>
+<td><code>update-fixes</code> gained a fourth commit (44 files) and is now 100 files wide. Its QA items are marked Done but not on <code>main</code>. <code>createConversation</code> needs <code>X-Device-Id</code> (§3.1)</td>
+</tr>
+<tr><th scope="row">Philip Chidera</th>
+<td>design</td>
+<td>0901: 7, all Done · <strong>0902: 1</strong> (<code>BVA-I314</code>, Activity tab design)</td>
+<td style="text-align: right;">3 (1 own; 2 board administration)</td>
+<td>0.55 d (n=2)</td>
+<td>0</td>
+<td style="text-align: right;">n/a</td>
+<td>Their design item gates both the Activity backend and the Activity screen on 0902</td>
+</tr>
+<tr><th scope="row">Promise Udo</th>
+<td>admin dashboard</td>
+<td>0901-admin: 4 (3 Done, 1 In progress)</td>
+<td style="text-align: right;">0</td>
+<td>n/a</td>
+<td>1 (<code>BVA-I9</code>, <strong>16.0 d</strong>)</td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td><code>beevia-admin</code> <strong>7.9 days</strong> without a commit. The admin board got no new sprint today</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>The two questions for standup:</strong> (1) <strong>Is <code>beevia-api</code> #60 deployed, and who adds <code>X-Device-Id</code> to <code>createConversation</code>?</strong> Once it is live, every mobile build, including <code>update-fixes</code>, gets <code>400</code> when starting a new chat, and a <code>main</code> build also gets <code>400</code> on the inbox. (2) <strong>What does "Done" on 0901 mean for the four items whose fixes are only on <code>update-fixes</code>?</strong> If the answer is "the fix exists somewhere", say so on 0902, and put merging that branch on it as an item.</p>
+<p><strong>The three things worth knowing:</strong></p>
+<div class="stack">
+  <div class="finding"><div class="finding__n num">1</div><div><p><strong>0901's Done column is a close, not an acceptance.</strong> The sweep ran from 07:56:19 to 07:56:53 UTC and was done by board administration. It left no comment and no per-item note. It moved <code>BVA-I260</code> and <code>BVA-I275</code> to Done from BLOCKED. Both are the items where David argued on 23 Sep that the reported behaviour is intended, and nobody replied. If Done means "argument accepted", one line on each item would say so. It also closed <code>BVA-I277</code> from In progress. That item's request for a screenshot is still unanswered. It closed <code>BVA-I297</code> from To do, never started. And it closed <code>BVA-I287</code>, <code>BVA-I292</code>, <code>BVA-I294</code> and <code>BVA-I303</code>, whose fixes are verifiably <strong>only</strong> on <code>update-fixes</code>. This is the same kind of event as the 3 Sep close of sprint 08-01. It clears the board, but it tells a reader nothing about what was built. <strong>Excluding the two bulk sweeps, no item on any board has ever been accepted by someone other than the person who submitted it.</strong> Twelve editions have now said that no reviewing role is staffed.</p></div></div>
+  <div class="finding"><div class="finding__n num">2</div><div><p><strong>The backend fixed a silent failure, and the fix moves the failure to the client.</strong> Without a device id, the six chat routes used to return rows nobody could decrypt, which looked like an empty chat. <code>beevia-api</code> #60 now rejects that request with <code>400 device_id_required</code>. That is correct, and the commit warns the client team explicitly. But the mobile client's <code>POST /conversations</code> sends no device header on either branch. <code>GET /conversations</code> sends it only on <code>update-fixes</code> (<code>edcadef</code>, 29 Sep 18:12 UTC, committed 8 h 40 min before #60). The client's mock server does not enforce the header, so no client test will catch this. <code>openapi.yaml</code> is updated (§3.1).</p></div></div>
+  <div class="finding"><div class="finding__n num">3</div><div><p><strong>Sprint 0902 is a real plan, and one item in it cannot be built as written.</strong> It has 11 Stories: seven for push notifications, which is the client half of a server surface that exists (<code>/notifications/*</code>), plus a UI-audit fix and a three-part <strong>Activity tab</strong> (design, backend and screen). The backend item, <code>BVA-I315</code>, asks one endpoint for each row's <em>"last message text"</em> preview and for search across <em>"message/payment content"</em>. Under end-to-end encryption the server holds only ciphertext, so it can produce neither. Message previews and message-text search have to happen on the device, as the inbox already does. Fix the acceptance criteria before work starts, not in review. The Activity feed is also absent from the PRD and from both specs.</p></div></div>
+</div>
+<p><strong>If you read nothing else:</strong> the board now shows 0901 fully Done, but that came from a 35-second close, not a review. Four of those items are still unfixed on <code>main</code>. Overnight, two backend changes shifted risk. #60 will make "start a chat" fail on every current mobile build once it deploys. #19 lets a push to <code>main</code> migrate production without a test. Both have one-line fixes.</p>
+    </section>
+
+    <section class="sec" id="s1">
+      <div class="sec__h"><span class="sec__n">01</span><h2>Sprint 0901: closed today</h2></div>
+
+<p><strong>76 items: 67 leaves + 9 parent Stories</strong>, all Done. All figures below are leaves unless stated.</p>
+<h3>1.1 Status distribution and movement</h3>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Status</th>
+<th style="text-align: right;">29 Sep</th>
+<th style="text-align: right;">30 Sep</th>
+<th style="text-align: right;">Δ</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">REVIEW/QA</th>
+<td style="text-align: right;">58</td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td style="text-align: right;">−58</td>
+</tr>
+<tr><th scope="row">To do</th>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td style="text-align: right;">−1</td>
+</tr>
+<tr><th scope="row">In progress</th>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td style="text-align: right;">−1</td>
+</tr>
+<tr><th scope="row">BLOCKED</th>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td style="text-align: right;">−2</td>
+</tr>
+<tr><th scope="row">Done</th>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;"><strong>67</strong></td>
+<td style="text-align: right;">+61</td>
+</tr>
+<tr><th scope="row"><strong>Total leaves</strong></th>
+<td style="text-align: right;"><strong>68</strong></td>
+<td style="text-align: right;"><strong>67</strong></td>
+<td style="text-align: right;">−1</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The audit's <code>SINCE</code> section, run against the 29 and 30 Sep scratch exports, reports <strong>57 left review, 61 newly Done, 0 entered review, scope −1</strong>.</p>
+<h3>1.2 The sweep</h3>
+<p><strong>Every board action in the window was part of it:</strong> 68 <code>Item Completed</code> entries between <strong>07:56:19 and 07:56:53 UTC</strong>, all by board administration. There were no comments, re-assignments or other status moves on sprint 0901.</p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">From</th>
+<th style="text-align: right;">Leaves</th>
+<th scope="col">Owners (owner rows)</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">REVIEW/QA</th>
+<td style="text-align: right;">57</td>
+<td>David 42 · Ayomikun 20 · Philip 3 (co-assignment counted for both)</td>
+</tr>
+<tr><th scope="row">BLOCKED</th>
+<td style="text-align: right;">2</td>
+<td><code>BVA-I260</code>, <code>BVA-I275</code> (David): disputed, no reply since 23 Sep</td>
+</tr>
+<tr><th scope="row">In progress</th>
+<td style="text-align: right;">1</td>
+<td><code>BVA-I277</code> (David): awaiting a screenshot since 23 Sep</td>
+</tr>
+<tr><th scope="row">To do</th>
+<td style="text-align: right;">1</td>
+<td><code>BVA-I297</code> (David): never started</td>
+</tr>
+<tr><th scope="row"><em>Parents</em></th>
+<td style="text-align: right;"><em>7</em></td>
+<td><em>REVIEW/QA → Done</em></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The 57 queue items had waited a median <strong>5.7 days</strong>. The oldest were the Notification block submitted on 8 Sep (<code>BVA-I246</code>–<code>I249</code>), at <strong>21.7 days</strong>.</p>
+<p><strong>What the sweep closed that is not on <code>main</code>:</strong> <code>BVA-I287</code> (Request Money button), <code>BVA-I303</code> (wallet spacing), <code>BVA-I292</code> (E2EE notice) and <code>BVA-I294</code> (offline conversation list). All four were verified in the 28–29 Sep editions to be fixed only on <code>update-fixes</code>, and none of those fixes has reached <code>main</code> since. The other queued items were not checked line by line (appendix).</p>
+<p><strong>Where 0901 stands in the project's history.</strong> Sprint 0901's Done column now reads: 61 closed in the sweep, 5 closed by Philip on 11 and 16 Sep, and 1 (<code>BVA-I268</code>) moved REVIEW/QA → Done by its own owner on 16 Sep. This is the second bulk close. The first was sprint 08-01's 46-item sweep on 3 Sep.</p>
+<h3>1.3 The item that left: <code>BVA-I251</code></h3>
+<p><code>BVA-I251</code> <em>Account &amp; Verification Status Notification Trigger</em> (Ayomikun, REVIEW/QA since 8 Sep) is no longer in sprint 0901, and it is not in 0902 either. Its destination cannot be seen from these exports: the backlog is not exported, and a deletion leaves no trace in the sprint sidecar. A client-side counterpart was created on 29 Sep as <code>BVA-I311</code> (<em>Account &amp; Verification Status Notification Handling</em>, David, 0902). So the backend item was most likely set aside rather than lost, but that is inference.</p>
+    </section>
+
+    <section class="sec" id="s2">
+      <div class="sec__h"><span class="sec__n">02</span><h2>Sprint 0902: opened today</h2></div>
+
+<p><strong>11 items, all Stories, no parents, all To do, 0 of 11 estimated, 0 with an epic.</strong> The sprint runs 30 Sep → 15 Oct. Board administration created all of them, eight on 29 Sep 15:05–15:59 UTC and three today 13:12–13:25 UTC. At 07:52–07:53 UTC today it assigned them and moved them into the sprint from the backlog.</p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Item</th>
+<th scope="col">Owner</th>
+<th scope="col">Theme</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row"><code>BVA-I306</code> Push Notification Client Integration &amp; Permission Flow</th>
+<td>David</td>
+<td>Push notifications (client)</td>
+</tr>
+<tr><th scope="row"><code>BVA-I307</code> Deep Link Routing &amp; Badge Count</th>
+<td>David</td>
+<td>〃</td>
+</tr>
+<tr><th scope="row"><code>BVA-I308</code> New Message Notification Handling</th>
+<td>David</td>
+<td>〃</td>
+</tr>
+<tr><th scope="row"><code>BVA-I309</code> CallKit &amp; ConnectionService Integration</th>
+<td>David</td>
+<td>〃</td>
+</tr>
+<tr><th scope="row"><code>BVA-I310</code> Money Notification Handling</th>
+<td>David</td>
+<td>〃</td>
+</tr>
+<tr><th scope="row"><code>BVA-I311</code> Account &amp; Verification Status Notification Handling</th>
+<td>David</td>
+<td>〃</td>
+</tr>
+<tr><th scope="row"><code>BVA-I313</code> Build and Implement Notification Settings Screen</th>
+<td>David</td>
+<td>〃</td>
+</tr>
+<tr><th scope="row"><code>BVA-I286</code> Mismatched UI element on User Profile screen</th>
+<td>David</td>
+<td>UI audit §1.3 (created 24 Sep)</td>
+</tr>
+<tr><th scope="row"><code>BVA-I314</code> Complete the Activity Tab Design</th>
+<td>Philip</td>
+<td>Activity tab</td>
+</tr>
+<tr><th scope="row"><code>BVA-I315</code> Activity Feed Backend (Combined Chats, Calls &amp; Payments)</th>
+<td>Ayomikun</td>
+<td>〃</td>
+</tr>
+<tr><th scope="row"><code>BVA-I316</code> Build the Activity Screen</th>
+<td>David</td>
+<td>〃</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Three things to read from it:</p>
+<ul>
+<li><strong>The notification work matches a server surface that already exists.</strong> <code>/notifications/token</code>, <code>/notifications/preferences</code> and <code>/notifications/test</code> are implemented. The descriptions say "the backend api already stores multiple tokens per user", which is correct. This is client catch-up, not new API.</li>
+<li><strong><code>BVA-I315</code> needs its acceptance criteria corrected before it starts.</strong> It asks the server for <em>"a type-appropriate preview (last message text …)"</em> and search over <em>"message/payment content too"</em>. The server stores message bodies as per-device ciphertext and cannot read them. That is the product's E2EE guarantee, not a missing feature. The inbox already solves this: the server returns the ciphertext and the device decrypts it for the preview. A feed endpoint can return the same envelope, and name/payment search can stay server-side, while message-text search has to be local. Payments and calls are server-readable, so the rest of the item is buildable. The Activity feed appears in neither the PRD nor either spec, so it has no proposed contract to build against yet.</li>
+<li><strong>Nine of eleven items are David's</strong>, on top of an unmerged 100-file branch. With no estimation points, the board cannot say whether that is a sprint's worth of work. The item count alone does not say it is too much.</li>
+</ul>
+    </section>
+
+    <section class="sec" id="s3">
+      <div class="sec__h"><span class="sec__n">03</span><h2>API surface, spec drift and CI</h2></div>
+
+<p><strong>Audit: route level clean, spec health clean.</strong> <code>beevia-api</code> code 137 / spec 137 · <code>beevia-admin-api</code> code 49 / spec 49 · proposed 38 / 18 · no <code>x-beevia-*</code>. The audit ran against a <code>git archive</code> shadow of <code>origin/main</code> at <code>$BEEVIA_ROOT=/tmp/beevia-shadow-2026-09-30</code>, and again after today's spec edit. The in-repo audit reports its usual 21 phantom lines (6 consumer + 15 admin) from the three <code>diverged</code> working trees. They were not acted on.</p>
+<h3>3.1 What merged, and the contract change the route audit cannot see</h3>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Repo</th>
+<th scope="col">PR</th>
+<th scope="col">Merged (UTC)</th>
+<th scope="col">Change</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row"><code>beevia-api</code></th>
+<td><strong>#60</strong> <code>feat/require-device-id</code> (<code>f1d5a40</code>)</td>
+<td>Wed 30 Sep 02:55</td>
+<td><code>X-Device-Id</code> <strong>required</strong> on 6 routes; <code>400 device_id_required</code>; history returns <code>unresolved</code></td>
+</tr>
+<tr><th scope="row"><code>beevia-api</code></th>
+<td>#61 <code>feat/nestjs-observe</code> (<code>9e4c811</code>)</td>
+<td>Wed 30 Sep 03:21</td>
+<td>Adds <code>@nestjs/observe</code> ^0.3.3 APM alongside the Axiom/OTel pipeline; credentials via <code>OBSERVE_APP_KEY</code>/<code>SECRET</code></td>
+</tr>
+<tr><th scope="row"><code>beevia-db-schema</code></th>
+<td><strong>#19</strong> <code>ci/pr-only-no-cron</code> (<code>de06516</code>)</td>
+<td>Wed 30 Sep 02:14</td>
+<td>CI and scans on PR only; <strong>Release on every push to <code>main</code>, ungated</strong> (§3.2)</td>
+</tr>
+<tr><th scope="row"><code>beevia-db-schema</code></th>
+<td>— <code>be14bc3</code> (bot)</td>
+<td>Wed 30 Sep 02:15</td>
+<td><code>chore(release): v0.0.38</code>, triggered by #19</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>#60 is the day's consequential change, and it adds no route.</strong> The six affected routes are <code>POST</code>/<code>GET /conversations</code>, <code>GET /conversations/{id}</code>, <code>GET</code>/<code>POST /conversations/{id}/messages</code> and <code>POST /messages/{id}/receipts</code>. They used to fall back to a message's own <code>ciphertext</code> when no device was named. That field is <code>null</code> for every 1:1 envelope send, so the response was an unreadable page that looked like an empty chat. A new <code>@DeviceId()</code> decorator now rejects a missing or blank header. It is the right call, and the commit message warns the client team plainly.</p>
+<p><strong>The mobile client, checked at both heads:</strong></p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Route</th>
+<th scope="col"><code>main</code></th>
+<th scope="col"><code>update-fixes</code></th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row"><code>GET /conversations/{id}/messages</code></th>
+<td>sends the header</td>
+<td>sends the header</td>
+</tr>
+<tr><th scope="row"><code>GET /conversations</code> (inbox)</th>
+<td><strong>omits it</strong></td>
+<td>sends it when a device id is known</td>
+</tr>
+<tr><th scope="row"><code>POST /conversations</code> (start a chat)</th>
+<td><strong>omits it</strong></td>
+<td><strong>omits it</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Messages and receipts go over the socket, whose handshake carries the header. Once #60 is deployed, starting a new direct chat fails on every current build. A <code>main</code> build's inbox fails too. <code>lib/mock</code> does not enforce the header, so the client's tests will not show it. Whether #60 is deployed yet cannot be seen from here.</p>
+<p><strong>Spec updated in place</strong> (<code>openapi.yaml</code>): <code>DeviceIdHeader</code> is now <code>required: true</code> and documents <code>device_id_required</code>. <code>listConversations</code>, <code>getConversation</code> and <code>getMessageHistory</code> gained their <code>400</code>. <code>MessageHistory</code> gained <code>unresolved</code>. <code>api-rfc.md</code> has a new §5.12 on the change and the client gap. This is the fifth consecutive cycle in which the most consequential change was invisible to a route-level diff (<code>suggestions.md</code> §5.4).</p>
+<p><strong>#61</strong> is additive. Both telemetry pipelines run, and the SDK is inert while its keys are unset. Two small points are worth keeping in view. It is a 0.x third-party SDK that instruments controllers and guards. And the server holds no message plaintext, so the spans it can export are metadata, but they include metadata about who messages whom. Neither point is a finding today.</p>
+<h3>3.2 <code>beevia-db-schema</code>: a push to <code>main</code> now migrates production without running CI</h3>
+<p>Before #19: push to <code>main</code> → <strong>CI</strong> (tests, filtered by <code>paths-ignore</code>) → <strong>Release</strong> only if CI succeeded → <strong>Sync to server</strong> (migrate production).
+After #19: push to <code>main</code> → <strong>Release</strong> (publish) → <strong>Sync to server</strong>. CI runs on pull requests only.</p>
+<p>The new comment in <code>release.yml</code> gives the premise: <em>"CI is a required check, so anything on main has already passed it."</em> That is branch protection (<code>suggestions.md</code> §7.1), which has never been verifiable from here. On 28 Sep this repository's <code>main</code> took a forced update, which shows a change <em>can</em> reach it without a pull request. Previously a push like that still had to pass CI before it could migrate anything. Now it does not. The effect is already visible in a harmless form: #19 changed only <code>.github/**</code>, which the old filter would have excluded, and it still produced a release 41 seconds later.</p>
+<p>Recommendation (<code>suggestions.md</code> §7.7, updated today): <strong>have Release run CI's verify job itself before publishing.</strong> Alternatively, confirm in the GitHub UI that <code>main</code> requires a PR, requires the check and blocks force-push, and write the confirmation down. <strong><code>beevia-admin-api</code>'s pending branch makes the same change to its deploy chain</strong> (<code>66737d7</code>: <em>"trigger the deploy chain from push"</em>), and it should get the same fix before it merges.</p>
+<p><strong>Release state, resolved by accident.</strong> <code>main</code>'s <code>package.json</code> is now 0.0.38, which matches the registry. The release step already skips a publish when the version exists. Tag <code>v0.0.38</code> still points at <code>e285f10</code>, which is on no branch, but its tree differs from <code>main</code>'s only under <code>.github/</code>. The 29 Sep question of what the tag should point at is now low-stakes.</p>
+<p><strong>Reflog sweep:</strong> no forced update in any of the five repos in this window.</p>
+<h3>3.3 Spec and document changes this cycle</h3>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">File</th>
+<th scope="col">Change</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row"><code>openapi.yaml</code></th>
+<td><code>DeviceIdHeader</code> required and documented; <code>400</code> on <code>listConversations</code>, <code>getConversation</code>, <code>getMessageHistory</code>; <code>MessageHistory.unresolved</code></td>
+</tr>
+<tr><th scope="row"><code>api-rfc.md</code></th>
+<td><strong>New §5.12:</strong> <code>X-Device-Id</code> now required on six chat routes, with the client-coverage table</td>
+</tr>
+<tr><th scope="row"><code>suggestions.md</code></th>
+<td><strong>§7.7:</strong> 2026-09-30 update on db-schema's ungated release → production migration, and the same change pending for <code>beevia-admin-api</code>. <strong>§8 item 3b:</strong> updated</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>No route or proposed operation moved. <code>openapi.proposed.yaml</code>, <code>openapi.admin*.yaml</code> and <code>admin-api-rfc.md</code> are unchanged.</p>
+    </section>
+
+    <section class="sec" id="s4">
+      <div class="sec__h"><span class="sec__n">04</span><h2>Risks</h2></div>
+
+<ul>
+<li><strong>"Start a chat" breaks on deploy</strong> (§3.1). This affects every mobile build, <code>main</code> and <code>update-fixes</code>, the moment #60 is live. The fix is one header in <code>createConversation</code>. <strong>New today.</strong></li>
+<li><strong>A push to <code>beevia-db-schema</code> <code>main</code> migrates production with no CI</strong> (§3.2). <strong>New today.</strong> The same change is pending for <code>beevia-admin-api</code>'s deploy chain.</li>
+<li><strong>The board says Done for work that is not on <code>main</code></strong> (§1.2). At least four items are affected. Any 0902 planning or release note built on 0901's Done column inherits this.</li>
+<li><strong><code>update-fixes</code> keeps growing</strong>: 4 ahead, 100 files, +5,339 / −1,417. The biometric step-up is still at <code>wallet_service.dart:78</code>, and the server still accepts <code>{ pin }</code> only (<code>auth.dto.ts:77</code>). <code>suggestions.md</code> §5.11.</li>
+<li><strong><code>payments.dto.ts:5</code> phone field</strong> is still <code>z.string().trim().min(6).max(20)</code>, the input to every escrowed chat send once <code>update-fixes</code> merges.</li>
+<li><strong><code>BVA-I315</code> is specified against E2EE</strong> (§2). It is cheap to fix now and expensive after build.</li>
+<li><strong>The admin workstream is silent:</strong> 7.9 days with no repo commit, 16.0 days with no board activity, and no successor sprint.</li>
+<li><strong>Three diverged local working trees</strong> (<code>beevia-api</code> behind 65, <code>beevia-admin-api</code> 34, <code>beevia-db-schema</code> 47, each 1 ahead).</li>
+</ul>
+    </section>
+
+    <section class="sec" id="s5">
+      <div class="sec__h"><span class="sec__n">05</span><h2>PRD gap</h2></div>
+
+<p>No product code on any <code>main</code> moved a capability. The four structural gaps are where they were: the international KYC tier, multi-currency/FX settlement, virtual cards beyond what is wired, and consent management.</p>
+<p>Re-verified at <code>origin/main</code>: <code>PaymentService.activeNgn()</code> at <code>payment.service.ts:506</code>, called from lines 70, 128 and 288. <code>StubTranslateAdapter</code> is still bound at <code>translate.module.ts:23</code>. The client's chat Send on <code>main</code> still posts <code>/payments/transfer</code>, which bypasses escrow.</p>
+<p><strong>A downgrade is pending, conditional on deploy.</strong> Capability #1 (E2EE messaging) is scored on screens that are <em>wired to the real API</em>. Once #60 is live, <code>main</code>'s inbox and new-chat calls are rejected by that API. The score is held at 0.90 today because whether #60 is deployed cannot be seen from here, and because <code>update-fixes</code> repairs the inbox. If #60 is live and neither fix has reached <code>main</code> by the next edition, #1 should come down.</p>
+    </section>
+
+    <section class="sec" id="s6">
+      <div class="sec__h"><span class="sec__n">06</span><h2>Team performance: detail</h2></div>
+
+<p>All flow figures come from the activity sidecars (the <code>actiontime</code> of the relevant transition), never from <code>Last Modified</code>. Commit counts are non-merge commits on <code>origin/main</code> from 23 Sep 14:03 to 30 Sep 14:03 UTC, summing each person's git identities. Bot commits are excluded. David's unmerged branch commits are shown separately. <strong>The 0901 sweep is not a submission and is not counted as anyone's output.</strong></p>
+<h3>6.1 Ayomikun Araoye: backend + admin API</h3>
+<p><strong>32 commits in 7 days</strong>: <code>beevia-api</code> 17 (<code>Phoenixdadhev</code> 15, <code>Ayomikun Araoye</code> 2), <code>beevia-db-schema</code> 14 (13 + 1), <code>beevia-admin-api</code> 1. The two new commits are product work. #60 is a careful fix to a failure that looked like success, with tests (<code>device-id.decorator.spec.ts</code>, a new <code>sync</code> spec block). #61 is observability. Their CI change in <code>beevia-db-schema</code> (#19) is §3.2's risk. Its reasoning is sound for work that arrives by pull request. The gap is the unverified premise, not the engineering.</p>
+<p>On the board, all 20 of their 0901 leaves were closed by the sweep. <code>BVA-I251</code> left the sprint. They have one 0902 item (<code>BVA-I315</code>), whose acceptance criteria need the E2EE correction in §2 before they start. <code>BVA-I8</code> has been In progress on the admin board for 16.0 days. Submissions in 7 days: 9 (4 own moves, 5 by board administration). Median cycle time: 0.98 d (n=10).</p>
+<h3>6.2 David Samuel: mobile</h3>
+<p><strong>38 submissions to REVIEW/QA in 7 days (owner rows): 11 own moves, 23 by board administration, 4 by Ayomikun on co-owned items.</strong> Median cycle time 0.96 d (n=24). All 48 of their 0901 leaves are now Done, 46 of them by the sweep.</p>
+<p><strong>Commits: 0 merged to <code>main</code> in the window, 4 on <code>update-fixes</code>.</strong> The newest is <code>edcadef</code> (29 Sep 18:12 UTC, "all the fixes and improvements", 44 files, +1,488 / −404). It adds an outbox for messages sent offline, with tests. It also adds a minimised-call banner, wallet-provider changes, and the <code>X-Device-Id</code> header on the inbox fetch, written before the server began requiring it. None of it has been checked item by item against the board. The branch now holds real, board-requested work across chat, calls and wallet. The ask is unchanged, and it is about <em>where</em> the work is, not effort: merge it (without the biometric option), and add <code>X-Device-Id</code> to <code>createConversation</code> on the way.</p>
+<p>They own 9 of 11 items on 0902.</p>
+<h3>6.3 Philip Chidera: design</h3>
+<p>Philip had no board action in the window. All 7 of their 0901 leaves are Done. They own <code>BVA-I314</code> (Activity tab design) on 0902, which both <code>BVA-I315</code> and <code>BVA-I316</code> depend on. That makes it the sprint's first dependency. No commits, because design work does not land in these repositories.</p>
+<h3>6.4 Promise Udo: admin dashboard</h3>
+<p><strong>No commit in the 7-day window.</strong> The last was <code>0b41e35</code> on 22 Sep, <strong>7.9 days</strong> ago. The admin board has had no activity for 16.0 days, and <code>BVA-I9</code> has been In progress for all of it. The main board opened a new sprint today. The admin board did not. <strong>Absence of data is not absence of work.</strong> <code>beevia-admin</code> has no branch except <code>main</code>, so local work would be invisible here. The question from 28 Sep is still unanswered, and it now has a natural moment: whether the admin workstream gets a 0902 of its own.</p>
+<h3>6.5 Weekly submission trend (sprint 0901 leaves, transitions into REVIEW/QA)</h3>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">ISO week</th>
+<th style="text-align: right;">Submissions</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">2026-W37</th>
+<td style="text-align: right;">7</td>
+</tr>
+<tr><th scope="row">2026-W38</th>
+<td style="text-align: right;">11</td>
+</tr>
+<tr><th scope="row">2026-W39</th>
+<td style="text-align: right;"><strong>42</strong></td>
+</tr>
+<tr><th scope="row">2026-W40 (from Mon 28 Sep)</th>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Across the sprint, acceptances by someone other than the submitter numbered <strong>zero</strong>, apart from today's bulk close. See correction 2 for the change of basis from the 29 Sep table.</p>
+<h3>6.6 What this does not measure</h3>
+<ul>
+<li><strong>No estimation points on any item on any board</strong>, including the 11 on the new sprint. Item counts say nothing about who is carrying more. This is the nineteenth edition to say so.</li>
+<li><strong>"Submitted" counts any transition into REVIEW/QA, by anyone</strong>, and credits it to the item's owner. For David, 23 of 38 were board administration's moves.</li>
+<li><strong>The sweep is not throughput.</strong> 61 items became Done in 35 seconds. Neither the "Done" count nor the jump from 6 to 67 measures delivery.</li>
+<li><strong>Commit counts reward small commits, and cycle times reward small items.</strong> <code>edcadef</code> alone is 44 files.</li>
+<li><strong>Co-assignment is counted for both owners.</strong></li>
+<li><strong>Nothing here measures correctness.</strong> No build, test or lint ran in any repository.</li>
+</ul>
+    </section>
+
+    <section class="sec" id="s7">
+      <div class="sec__h"><span class="sec__n">07</span><h2>Previous recommendations: where they stand</h2></div>
+
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Recommendation from 29 Sep</th>
+<th scope="col">Status on 30 Sep</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row"><strong>1. Merge <code>update-fixes</code> today, after taking out the biometric option</strong></th>
+<td>❌ <strong>Not merged; grew again</strong> (4 ahead, 100 files). The biometric option is still at <code>wallet_service.dart:78</code></td>
+</tr>
+<tr><th scope="row"><strong>2. Keep a weekly scan and the <code>push</code> trigger before the other CI branches merge</strong></th>
+<td>❌ <strong>Went the other way.</strong> <code>beevia-db-schema</code> #19 merged as written, and it did more than drop the scan (correction 1, §3.2). <code>beevia-admin-api</code>'s branch is still pending</td>
+</tr>
+<tr><th scope="row"><strong>3. Write down what REVIEW/QA means</strong></th>
+<td>❌ <strong>Not done, and now more urgent.</strong> The queue was emptied by a sweep rather than a definition. 0902 starts with the same ambiguity</td>
+</tr>
+<tr><th scope="row"><strong>4. Name a reviewer</strong></th>
+<td>❌ <strong>Not done.</strong> 0901 closed without review. Twelfth edition</td>
+</tr>
+<tr><th scope="row"><strong>5. Bring <code>payments.dto.ts</code> onto <code>phone.util.ts</code></strong></th>
+<td>❌ <strong>Not done.</strong> Line 5 unchanged</td>
+</tr>
+<tr><th scope="row"><strong>6. Reply on <code>BVA-I260</code>, <code>BVA-I275</code> and <code>BVA-I277</code></strong></th>
+<td>◐ <strong>Closed without a reply.</strong> All three are Done via the sweep, and none carries a comment. If Done means "argument accepted", one line on each item would say so</td>
+</tr>
+<tr><th scope="row"><strong>7. Open sprint 0902 on both boards</strong></th>
+<td>◐ <strong>Half done.</strong> The main board's 0902 opened today (11 items). The admin board has no successor to <code>0901-admin</code></td>
+</tr>
+<tr><th scope="row"><strong>8. Ask about the admin workstream</strong></th>
+<td>❔ <strong>No visible answer.</strong> Repo silent 7.9 d, board 16.0 d</td>
+</tr>
+<tr><th scope="row"><strong>9. Decide what <code>v0.0.38</code> should point at</strong></th>
+<td>◐ <strong>Overtaken.</strong> <code>main</code> re-bumped to 0.0.38 via #19's release run. The tag still points at <code>e285f10</code>, whose tree differs only under <code>.github/</code></td>
+</tr>
+<tr><th scope="row"><strong>10. Carried: OpenAPI generation diffed in CI; <code>code-scan.yml</code> into <code>beevia-mobile</code>/<code>beevia-admin</code>; <code>reports.service.ts</code> read-scoping; Module 4 decision record; <code>beevia-api/docs/</code>; translation decision; stop vendoring the client spec; estimation points on 0902</strong></th>
+<td>❌ <strong>None done.</strong> 0902 opened with 0 of 11 estimated. <code>beevia-admin</code> still has no <code>.github/</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Two of ten moved, both partially, and both through board administration</strong> (0902 opened; the tag question overtaken). No engineering recommendation was acted on.</p>
+    </section>
+
+    <section class="sec" id="s8">
+      <div class="sec__h"><span class="sec__n">08</span><h2>What I would do this week</h2></div>
+
+<div class="stack">
+  <div class="finding"><div class="finding__n num">1</div><div><p><strong>Add <code>X-Device-Id</code> to <code>createConversation</code> in <code>beevia-mobile</code></strong>, on <code>update-fixes</code> or directly on <code>main</code>, before #60 is deployed. If it is already deployed, do it today. It is one header, and without it no build can start a chat. Also consider having the mock server enforce the header, so the client's tests see what the real API does.</p></div></div>
+  <div class="finding"><div class="finding__n num">2</div><div><p><strong>Merge <code>update-fixes</code>, without the biometric option.</strong> It now fixes the inbox for #60 as well as the four items 0901 marked Done. Add it to 0902 as an item, so the board shows it.</p></div></div>
+  <div class="finding"><div class="finding__n num">3</div><div><p><strong>Gate <code>beevia-db-schema</code>'s Release on the verify job</strong> (§3.2; <code>suggestions.md</code> §7.7). Make the same change to <code>beevia-admin-api</code>'s pending branch before it merges. Neither needs org access.</p></div></div>
+  <div class="finding"><div class="finding__n num">4</div><div><p><strong>Correct <code>BVA-I315</code>'s acceptance criteria for E2EE</strong> before work starts. Return ciphertext previews for the device to decrypt, keep message-text search on the device, and write a proposed contract for the feed endpoint.</p></div></div>
+  <div class="finding"><div class="finding__n num">5</div><div><p><strong>Decide what REVIEW/QA and Done mean on 0902</strong>, with someone named to move items out of review. 0901 ended with the whole board reviewed by nobody.</p></div></div>
+  <div class="finding"><div class="finding__n num">6</div><div><p><strong>Say what Done means for <code>BVA-I260</code>, <code>BVA-I275</code> and <code>BVA-I277</code>.</strong> That is three one-line comments.</p></div></div>
+  <div class="finding"><div class="finding__n num">7</div><div><p><strong>Open the admin board's next sprint</strong>, or say in one line that the admin workstream is paused.</p></div></div>
+  <div class="finding"><div class="finding__n num">8</div><div><p><strong>Estimate 0902.</strong> It is 11 items and one sitting, while the sprint is one day old.</p></div></div>
+  <div class="finding"><div class="finding__n num">9</div><div><p><strong>Bring <code>payments.dto.ts</code> onto <code>phone.util.ts</code></strong> before item 2 lands.</p></div></div>
+  <div class="finding"><div class="finding__n num">10</div><div><p><strong>Carried, unchanged:</strong> OpenAPI generation diffed in CI; <code>code-scan.yml</code> into <code>beevia-mobile</code>/<code>beevia-admin</code>; the <code>reports.service.ts</code> read-scoping fix; the Module 4 decision record; restoring or retiring <code>beevia-api/docs/</code>; writing the translation decision down; stopping the vendored client spec.</p></div></div>
+</div>
+    </section>
+
+    <section class="sec" id="admin">
+      <div class="sec__h"><span class="sec__n">&mdash;</span><h2>Admin dashboard board</h2></div>
+
+<p><code>0901-admin</code> still has 12 items (8 leaves + 4 parents: 6 Done, 2 In progress). It is closed, and nothing on it has changed since <strong>14 Sep 14:53 UTC, 16.0 days ago</strong>. <code>BVA-I8</code> (<em>Report Data Query</em>, Ayomikun) and <code>BVA-I9</code> (<em>Report Content Display</em>, Promise) have both been In progress for all 16 days. <strong>Zoho lists no successor sprint for this project</strong>, unlike the main board, which opened 0902 today. <code>beevia-admin</code> has gone 7.9 days without a commit and <code>beevia-admin-api</code>'s <code>main</code> 6.1 days. These figures are never added to the main board's.</p>
+    </section>
+
+    <section class="sec" id="method">
+      <div class="sec__h"><span class="sec__n">&mdash;</span><h2>Appendix: method and readiness rubric</h2></div>
+
+<p><strong>Sources.</strong> <code>sprint-board-exports/beevia-sprint-board-2026-09-30.csv</code> + <code>beevia-activity-2026-09-30.json</code> (64 items, sprint 08-01, frozen); <code>sprint-board-exports/admin/beevia-admin-sprint-board-2026-09-30.csv</code> + its activity sidecar (12 items, sprint 0901-admin); read-only scratch exports of sprint 0901 (<strong>76 items</strong>) and sprint <strong>0902 (11 items)</strong>, each with its sidecar, in <code>/tmp/beevia-scratch/</code> and <code>/tmp/beevia-scratch/0902/</code>. All five repos were read at <code>origin/main</code>: <code>beevia-admin</code> and <code>beevia-mobile</code> in the working tree, and <code>beevia-api</code>, <code>beevia-admin-api</code> and <code>beevia-db-schema</code> through a <code>git archive</code> shadow because their working trees are still <code>diverged</code>. The unmerged branches <code>beevia-mobile</code> <code>origin/update-fixes</code> and <code>beevia-admin-api</code> <code>origin/ci/node-26-only</code> were read too.</p>
+<p><a id="mvp-method"></a></p>
+<h3>MVP readiness: ≈66% (estimate; 65.52, unchanged)</h3>
+<p><strong>Target 2026-09-01 (provisional). The target date passed twenty-nine days ago.</strong> Weights are frozen, and <strong>this edition makes no methodology change.</strong> Scores measure build, not acceptance. Today's board sweep is exactly the kind of acceptance signal the rubric ignores.</p>
+<p><strong>No score moved.</strong> #60 changes how E2EE messaging fails, not what exists. The one score at risk is #1, and it is held pending deploy (§5).</p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">#</th>
+<th scope="col">Capability</th>
+<th style="text-align: right;">Weight</th>
+<th style="text-align: right;">Score</th>
+<th style="text-align: right;">Δ</th>
+<th scope="col">Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">1</th>
+<td>E2EE messaging</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">0.90</td>
+<td style="text-align: right;">0</td>
+<td>#60 makes the device header mandatory. <strong><code>main</code>'s inbox and new-chat calls omit it</strong>, so the score is held pending deploy (§5). The E2EE notice exists only on <code>update-fixes</code></td>
+</tr>
+<tr><th scope="row">2</th>
+<td>Voice &amp; video calling</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">0.80</td>
+<td style="text-align: right;">0</td>
+<td>No <code>/calls</code> change. Call-audio routing and the minimised-call banner are on <code>update-fixes</code> only</td>
+</tr>
+<tr><th scope="row">3</th>
+<td>Message translation</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">0.60</td>
+<td style="text-align: right;">0</td>
+<td><code>translate.module.ts:23</code> still binds <code>StubTranslateAdapter</code></td>
+</tr>
+<tr><th scope="row">4</th>
+<td>Local KYC tier (BVN)</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">0.90</td>
+<td style="text-align: right;">0</td>
+<td>No <code>/kyc</code> or <code>/upgrade</code> change</td>
+</tr>
+<tr><th scope="row">5</th>
+<td>International KYC tier</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0</td>
+<td>Proposed only</td>
+</tr>
+<tr><th scope="row">6</th>
+<td>Multi-currency wallets</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.85</td>
+<td style="text-align: right;">0</td>
+<td><code>activeNgn()</code> at <code>payment.service.ts:506</code>, called from 70/128/288</td>
+</tr>
+<tr><th scope="row">7</th>
+<td>Send / request / receive in chat</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.85</td>
+<td style="text-align: right;">0</td>
+<td>Chat Send on <code>main</code> still posts <code>/payments/transfer</code> (no escrow). The escrowed <code>payment.send</code> path is on <code>update-fixes</code> only</td>
+</tr>
+<tr><th scope="row">8</th>
+<td>Cross-currency FX settlement</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0</td>
+<td><code>/fx/*</code> proposed only</td>
+</tr>
+<tr><th scope="row">9</th>
+<td>Virtual cards</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">0.80</td>
+<td style="text-align: right;">0</td>
+<td>No card change on <code>main</code></td>
+</tr>
+<tr><th scope="row">10</th>
+<td>Consent management</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0</td>
+<td>No endpoint, record or board item</td>
+</tr>
+<tr><th scope="row">11</th>
+<td>Admin oversight</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0.97</td>
+<td style="text-align: right;">0</td>
+<td>No <code>beevia-admin</code> commit since 22 Sep. No <code>beevia-admin-api</code> <code>main</code> commit since 24 Sep</td>
+</tr>
+<tr><th scope="row"></th>
+<td><strong>Weighted total</strong></td>
+<td style="text-align: right;"><strong>100</strong></td>
+<td style="text-align: right;"><strong>65.52</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td><strong>≈66%</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3>What this report cannot tell you</h3>
+<ul>
+<li><strong>Whether <code>beevia-api</code> #60 is deployed.</strong> Everything in §3.1 about client failures applies from the moment it is.</li>
+<li><strong>Whether a direct push to any backend <code>main</code> is possible.</strong> Branch protection cannot be seen from a clone. §3.2 is a risk, not a finding of exposure.</li>
+<li><strong>Whether the 53 swept queue items not individually checked are fixed on <code>main</code>.</strong> Four are verifiably not. The rest were not checked line by line, and no build ran.</li>
+<li><strong>Where <code>BVA-I251</code> went.</strong> The backlog is not exported.</li>
+<li><strong>Whether any CI or release run passed</strong>, or whether "Sync to server" ran after <code>be14bc3</code>.</li>
+<li><strong>Whether <code>update-fixes</code> builds or passes its tests.</strong></li>
+<li><strong>Velocity for any sprint.</strong> Nothing on any board is estimated (0 of 11, 0 of 76, 0 of 12, 0 of 64).</li>
+</ul>
+<h3>Method</h3>
+<p><strong>Pipeline.</strong> The <code>beevia-refresh</code> steps ran in this order:</p>
+<ol>
+<li>Sprint-name discovery on both projects (<code>--sprint __nonexistent__ --dry-run</code>). <strong>Beevia now lists <code>0902</code>.</strong> The admin project still lists only <code>0901-admin</code>.</li>
+<li>Main board export: 64 items, sprint 08-01, exit 0.</li>
+<li>Admin board export with <code>--sprint 0901-admin</code>: 12 items, exit 0.</li>
+<li>Read-only scratch exports: sprint <strong>0902</strong> to <code>/tmp/beevia-scratch/0902/</code> (11 items, exit 0) and sprint 0901 to <code>/tmp/beevia-scratch/</code> (76 items, exit 0).</li>
+<li>Fast-forward sync: 0 repos advanced, 2 already current, 3 refused as <code>diverged</code>. Then <code>git fetch</code> of all five, read-only.</li>
+<li>Reflog sweep of all five repos for forced updates. None were found in the window.</li>
+<li>Audit against a <code>git archive</code> shadow of <code>origin/main</code> at <code>$BEEVIA_ROOT=/tmp/beevia-shadow-2026-09-30</code>: route level and spec health clean. It was re-run with the 29 and 30 Sep 0901 scratch exports copied in, for the <code>SINCE</code> delta, and again after the spec edit.</li>
+<li>Activity-sidecar sweep of the window across 0901, 0902 and 0901-admin: status transitions, comments, and completions matched on all three Zoho action names (<code>Updated the status</code>, <code>Item Completed</code>, <code>Item Reopened</code>).</li>
+<li>Content reads: <code>beevia-api</code> #60 and #61 diffs. Mobile <code>X-Device-Id</code> coverage via <code>git grep</code> at <code>origin/main</code> and <code>origin/update-fixes</code>. <code>update-fixes</code> <code>edcadef</code> (stat and the <code>chat_service.dart</code> diff). <code>beevia-db-schema</code> #19 and <code>sync.yml</code>. <code>beevia-admin-api</code>'s pending branch.</li>
+<li>Edits to <code>openapi.yaml</code>, <code>api-rfc.md</code> and <code>suggestions.md</code>, then this report and its web edition.</li>
+</ol>
+<p><strong>Flow figures come from the activity sidecars, never from <code>Last Modified</code>.</strong> Queue ages at the sweep are measured from each item's last transition into <code>REVIEW/QA</code> to its <code>Item Completed</code> entry. Cycle times are <code>In progress</code> → <code>REVIEW/QA</code> pairs.</p>
+<p><strong>A note on who appears here.</strong> Only people whose work is tracked have rows. Board administration is done by a non-contributor, whose transitions are reported without naming the actor.</p>
+<p><strong>Nothing was executed from any sub-repo.</strong> No <code>npm</code>, <code>node</code>, <code>flutter</code> or build step ran. No repository was reset, rebased or cleaned, and no sub-repo file was edited. The sync's <code>--ff-only</code> limit was not overridden. Beyond the sync and <code>fetch</code>, the only git operations were <code>git archive</code> and read-only <code>log</code>/<code>diff</code>/<code>grep</code>/<code>show</code>. Nothing was committed, pushed or deployed.</p>
+<p><strong>Files changed this cycle:</strong> this report, <code>web-report/2026-09-30.html</code>, <code>web-report/index.html</code>, <code>openapi.yaml</code>, <code>api-rfc.md</code> and <code>suggestions.md</code>, plus new board exports for 30 Sep in <code>sprint-board-exports/</code> and <code>sprint-board-exports/admin/</code>.</p>
+<p><strong>Degraded inputs.</strong></p>
+<ul>
+<li><strong><code>ZOHO_SPRINT_FILTER</code> is still <code>08-01</code></strong>, so the in-repo main export is a frozen closed sprint (41 leaves, all Done). Sprint 0901 and 0902 figures come from the scratch exports. <strong>Now that 0902 exists, moving the filter to <code>0902</code> would make the in-repo export useful again</strong>, and it would give the next edition a day-over-day diff of the live sprint.</li>
+<li><strong>Three repositories remain unsynced.</strong> <code>beevia-api</code>, <code>beevia-admin-api</code> and <code>beevia-db-schema</code> are <code>diverged</code>, each 1 ahead. Every backend claim is made against <code>origin/main</code> through the shadow.</li>
+<li><strong>GitHub settings, CI results and deploy state cannot be seen from here.</strong></li>
+<li><strong>The export's "no source key" warning fired on <code>Epic</code></strong> (and on <code>Parent Id</code> for 0902). This is the known sampling artefact. On 0901 the column resolves (<code>Language</code> 18, <code>Notification</code> 6, <code>security</code> 5; 47 blank). On 0902 all 11 are genuinely unassigned, and none has a parent.</li>
+</ul>
+<p><strong>Window.</strong> 29 Sep 14:05 UTC → 30 Sep 14:03 UTC. All <code>actiontime</code> and board figures are in UTC. <code>git log</code> timestamps were converted from their local offsets.</p>
+    </section>
+
+  </main>
+</div>
+
+<footer class="foot">
+  <span class="barcode barcode--lg" aria-hidden="true"></span>
+  <span>Beevia project status &middot; 2026-09-30 &middot; 0902 open &middot; closed, not reviewed</span>
+  <span><a href="index.html">All frames</a></span>
+</footer>
+
+<script src="ui.js"></script>
+</body>
+</html>
