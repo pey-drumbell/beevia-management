@@ -576,6 +576,26 @@ This is the same class as §5.4, one layer out: §5.4 asks the server to prove i
 
 Until then: either hide the biometric option outside mock mode, or keep the PIN as the only factor the client offers for step-up.
 
+**Update 2026-10-01: it is on `main` now.** `update-fixes` merged as `beevia-mobile` PR #42 (`d51e3d1`, 30 Sep 15:45 UTC). `requestBiometricStepUpToken()` is at `wallet_service.dart:78` on `main`, and the server's `stepUpSchema` is still `z.object({ pin })` (`auth.dto.ts:77`). Every biometric press on a money sheet will fail against the real API, including the new escrowed chat send. The PIN path works. Hiding the biometric option outside mock mode is still the one-line interim fix.
+
+### 5.12 A merge to `beevia-mobile` `main` committed unresolved conflict markers, and `pubspec.yaml` no longer parses (2026-10-01)
+
+`update-fixes` was brought up to date with `main` by `21e042e` ("resolved some conflicts", 30 Sep 15:43 UTC) and merged as PR #42 77 seconds later. That commit left raw `<<<<<<< HEAD` / `=======` / `>>>>>>>` blocks in three files that are now on `main`:
+
+| File | Conflict blocks | Effect |
+|---|---:|---|
+| `pubspec.yaml` | 1 (lines 41–66) | Not valid YAML. `flutter pub get` fails, so nothing builds or tests on any platform |
+| `pubspec.lock` | 5 | Not valid YAML |
+| `ios/Runner.xcodeproj/project.pbxproj` | 11 | Xcode cannot open the project |
+
+The `pubspec.yaml` hunk is a real choice, not noise. `HEAD` (the branch) holds the old dependency floors plus `local_auth`, which the biometric step-up needs. The other side is the 24 Sep dependency upgrade (#36: `permission_handler` 13, `flutter_secure_storage` 11, `file_picker` 13, `google_mlkit_*` 0.15, `flutter_contacts` ^2.3.1), which lacks `local_auth`. Picking either side wholesale loses something: the upgrade, or a dependency the merged code imports.
+
+The repository's own CI runs `flutter pub get` first (`.github/workflows/flutter-ci.yml`) and would have failed in seconds. The merge landed 77 seconds after the last commit, so either the check is not required or nobody waited for it. CI results are not visible from this workspace (the token gets `404` on the org's Actions API), so which of the two cannot be confirmed here. This is the client-side twin of §7.1: a required status check on `main` would have refused the merge.
+
+The `android/app/.cxx/**/configure_fingerprint.bin` files have carried conflict markers since July. They are build artefacts that should not be tracked at all. They are a separate, older hygiene issue and do not affect builds.
+
+**Fix:** resolve the three files on `main` (keep #36's versions and add `local_auth`), then make the Flutter CI check required on `main`. Add `android/app/.cxx/` to `.gitignore` while there.
+
 
 ## 8. Suggested order
 
@@ -590,6 +610,9 @@ Until then: either hide the biometric option outside mock mode, or keep the PIN 
 3d. **§5.10** — stop vendoring the spec in `beevia-mobile`, or add a CI job that fails when `api-docs/openapi.yaml` falls behind the API repo's. Grouped with 3c because they are the same instrument pointed in opposite directions, and because the client copy is currently 27 operations behind — including every field the open `BVA-I262` fix needs.
 
 3e. **§5.11** — decide the biometric step-up design (device-bound key and signed nonce) before `beevia-mobile` `update-fixes` merges with a biometric button that the real API rejects. Added 2026-09-28. Paired with **§3.6**, which the same branch makes load-bearing: once it merges, every chat payment goes through the one unparsed phone field.
+   **2026-10-01:** it merged with the button in (PR #42). Hide the biometric option outside mock mode now, and make the design decision separately. §3.6 is now load-bearing on `main`: every escrowed chat send passes through the unparsed phone field.
+
+3f. **§5.12** — resolve the conflict markers on `beevia-mobile` `main` and make Flutter CI a required check. Added 2026-10-01. It is first among the mobile items because until it is done, no one can build `main`.
 
 4. **§4.7** — re-apply module scoping when a generated report is read, not only when it is generated. Cheapest now, and the only entry on this list that is a live access-control gap in shipped code. **Unchanged on 2026-09-18** — `reports.service.ts:133` re-verified at `origin/main`; ninth consecutive edition.
 5. **§1.1** — malformed UUID → 500. Small fix, trivially reachable, currently generates false 500s in monitoring.
