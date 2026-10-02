@@ -34,7 +34,7 @@
       <span class="topbar__wordmark">Beevia</span>
     </div>
     <nav class="topbar__nav label" aria-label="Report">
-      <a href="2026-10-01.html">Latest frame</a>
+      <a href="2026-10-02.html">Latest frame</a>
     </nav>
 </div>
 
@@ -43,9 +43,9 @@
     <div class="field__rail field__rail--l">
       <dl>
         <dt>Frames held</dt>
-        <dd>41</dd>
+        <dd>42</dd>
         <dt>Latest</dt>
-        <dd>2026-10-01 · merged, not building</dd>
+        <dd>2026-10-02 · ungated, still not building</dd>
       </dl>
     </div>
 
@@ -55,7 +55,7 @@
       </div>
       <div class="field__meta num">
         <span>Beevia project status</span>
-        <span>2026-08-05 &rarr; 2026-10-01</span>
+        <span>2026-08-05 &rarr; 2026-10-02</span>
         <span>Newest first</span>
       </div>
     </div>
@@ -75,9 +75,9 @@
   <div class="mvp__head">
     <span class="mvp__label label">MVP readiness &mdash; estimate</span>
     <span class="mvp__pct num">&asymp;67%</span>
-    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 30 days past</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 31 days past</span>
   </div>
-  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, up 1.24 points. Send-request-receive rises to 0.92 because the chat send on main is now escrowed; voice and video calling rises to 0.85 as the call banner and audio routing reached main. E2EE messaging 0.90, held; message translation 0.60, local KYC 0.90, multi-currency wallets 0.85, virtual cards 0.80, admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not whether main currently compiles.">
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged. Nothing the rubric scores reached any main branch: the createConversation device-header fix is on an unmerged branch, and the biometric option the server rejects is still on main. E2EE messaging 0.90; voice and video calling 0.85; message translation 0.60; local KYC 0.90; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.80; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not whether main currently compiles.">
     <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.90"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.85"><i style="width:85%"></i></span>
     <span class="mvp__seg" style="flex:7" title="Message translation — 0.60"><i style="width:60%"></i></span>
@@ -90,10 +90,27 @@
     <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
     <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.97"><i style="width:97%"></i></span>
   </div>
-  <p class="mvp__read"><strong>66.76, up 1.24.</strong> The chat send on <code>main</code> is now escrowed (send/request/receive 0.85&rarr;0.92) and the call banner and audio routing reached <code>main</code> (calling 0.80&rarr;0.85), both via <code>beevia-mobile</code> PR #42. The strip scores built code, not whether it compiles: <code>main</code>'s <code>pubspec.yaml</code> currently carries conflict markers. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 1 Oct 2026 &mdash; <a href="2026-10-01.html#mvp-method">method and capability table</a>.</p>
+  <p class="mvp__read"><strong>66.76, unchanged.</strong> Nothing the rubric scores reached any <code>main</code>: the <code>createConversation</code> header fix sits on the unmerged <code>BVA-I317</code> branch, and the biometric option the server rejects is still on <code>main</code>. The Appearance work is outside the PRD and would not move the strip. Mobile <code>main</code> still carries conflict markers; the strip scores built code, not whether it compiles. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 2 Oct 2026 &mdash; <a href="2026-10-02.html#mvp-method">method and capability table</a>.</p>
 </section>
 
 <main class="frames">
+
+  <a class="frame" href="2026-10-02.html">
+    <span class="frame__idx num">42</span>
+    <span>
+      <span class="frame__date">2 Oct 2026</span>
+      <span class="frame__sum"><strong>All three backend repositories now reach production on any push to <code>main</code> without waiting for a test.</strong> <code>beevia-admin-api</code> #20 merged its ungated deploy chain unchanged, and <code>beevia-api</code> #62 and <code>beevia-db-schema</code> #20 moved production jobs off the broken self-hosted runner, which removes the reason <code>beevia-api</code> gave for dropping its gate. <strong>Correction:</strong> <code>beevia-api</code> has deployed without waiting for tests since 24 Sep (<code>bf2b27a</code>), which five editions missed. Mobile <code>main</code> is unbuildable for a second day. The <code>pubspec</code> fix and the <code>createConversation</code> header are on the <code>BVA-I317</code> theme branch, and <code>project.pbxproj</code> is still conflicted. The client stores Appearance preferences on the device, so the three preference-endpoint items have no caller. Three board transitions, all one click.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:0"></i></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>0902 &middot; day 3 &middot; 16 To do &middot; 5 In progress</span></div>
+      <div><span>MVP est</span><span>&asymp;67% &middot; &Delta; 0.00</span></div>
+      <div><span>Test-gated deploys</span><span>0 of 3 backend repos</span></div>
+      <div><span>Mobile main</span><span>3 files with conflict markers &middot; day 2</span></div>
+      <div><span>Fix on BVA-I317</span><span>pubspec + X-Device-Id &middot; unmerged</span></div>
+      <div><span>API surface</span><span>137 / 49 &middot; drift 0</span></div>
+    </span>
+  </a>
 
   <a class="frame" href="2026-10-01.html">
     <span class="frame__idx num">41</span>
@@ -795,7 +812,7 @@
 <footer class="foot">
   <span class="barcode barcode--lg" aria-hidden="true"></span>
   <span>Frames are written by the <code>beevia-refresh</code> skill alongside the Markdown in <code>project-status/</code>.</span>
-  <span><a href="2026-10-01.html">Latest</a></span>
+  <span><a href="2026-10-02.html">Latest</a></span>
 </footer>
 
 <script src="ui.js"></script>

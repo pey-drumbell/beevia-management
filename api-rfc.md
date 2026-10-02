@@ -470,6 +470,8 @@ This is a data-integrity fix, not a convenience feature. The retired regex `^\+[
 
 Messages and receipts are sent over the socket, which carries `X-Device-Id` in its handshake. So once #60 is deployed, a `main` build's inbox fails with `400`, and **starting a new direct chat fails on both branches**. The client's mock server does not enforce the header, so no client test notices. The fix is one line in `chat_service.dart`'s `createConversation`, and merging `update-fixes` covers the inbox.
 
+**Update 2026-10-02.** `update-fixes` merged as `beevia-mobile` PR #42 (30 Sep 15:45 UTC), so the inbox on `main` now sends the header when a device id is known (`chat_service.dart:34`). `createConversation` on `main` still sends none (`chat_service.dart:204–206`). A fix is on the unmerged `origin/BVA-I317` branch (`03a3035`, 2 Oct): it makes `deviceId` a required parameter on both `fetchConversations` and `createConversation`, and the provider resolves it before the call. One route of the six is still uncovered on `main`.
+
 
 ---
 

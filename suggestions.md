@@ -542,6 +542,15 @@ Two options, neither of which needs org access: **(a)** have Release run CI's `v
 
 **The same rewiring is waiting for `beevia-admin-api`.** Its pending branch `origin/ci/node-26-only` (`66737d7`, "check on pull requests only, and trigger the deploy chain from push") makes `sync.yml` ("Sync source") fire on any push to `main`, and Deploy still follows it. It rests on the same sentence: *"CI is a required status check, so a commit cannot reach main without it having passed."* Apply (a) there before it merges.
 
+**Updated 2026-10-02: all three backend repositories now reach production on a push to `main` with no test gate, and one of them has been that way since 24 Sep without this document saying so.**
+
+- **`beevia-admin-api`:** the branch above merged unchanged as #20 (`535da3d`, 1 Oct 15:56 UTC). `sync.yml` now fires on `push` to `main`, the `conclusion == 'success'` guard is gone, and Deploy follows Sync. CI runs on pull requests only, on Node 26 only. The scheduled and `push` code scans are gone too.
+- **`beevia-api` (correction):** `bf2b27a` ("ci: deploy without waiting on the test job", 24 Sep 21:49 UTC) removed `needs: test` from the `sync` job in `release.yml`. Since then `test` runs alongside sync and deploy, but nothing waits for it. The commit's own reason was *"Hosted runners cannot start jobs … Restore `needs: test` on sync once hosted runners are back."* The 30 Sep and 1 Oct updates above described `beevia-db-schema` as the ungated path and `beevia-admin-api` as pending, and implied `beevia-api` was gated. It was not.
+- **What changed on 1 Oct:** `beevia-api` #62 and `beevia-db-schema` #20 moved every remaining job, including the production `sync`/`deploy`/migrate jobs, from self-hosted runners to `ubuntu-latest`. Per their commit messages, the reason is that the self-hosted box's workspace became unwritable, and no self-hosted runner remains in the organisation. That removes the stated reason for `bf2b27a`. The deploy now runs on a hosted runner. If hosted runners can start the deploy, they can start the test job it should wait for, and if they cannot, nothing deploys either way. So restoring `needs: test` costs nothing. It was not restored in #62.
+- **The same commit messages record the production host's network posture:** *"the server restricts nothing by source — ufw inactive, iptables INPUT policy ACCEPT with no rules, no AllowUsers or Match in sshd_config."* That was checked to justify the move, and it is accurate as a reason the move works. It also means SSH on the production host accepts connections from anywhere. Moving deploys to GitHub's address ranges makes an IP allowlist harder, but not impossible (GitHub publishes them at `api.github.com/meta`). At minimum, confirm `PasswordAuthentication no` and add rate limiting (`fail2ban` or `ufw limit`). This document cannot see `sshd_config`. The quote above is the only evidence.
+
+The fix is the same as before, now in three places. In `beevia-api`, put back `needs: test` and the success condition on `sync`. In `beevia-db-schema` and `beevia-admin-api`, have the release/sync chain run the verify job itself before it touches production (option (a) above).
+
 ### 5.9 The backend's own Postman pass found a spec error §5.4 could not, and a "package update" deleted the integration docs (2026-09-22)
 
 Two findings from the 18–21 September commits, both of the "label says one thing, content does another" kind.
@@ -596,6 +605,8 @@ The `android/app/.cxx/**/configure_fingerprint.bin` files have carried conflict 
 
 **Fix:** resolve the three files on `main` (keep #36's versions and add `local_auth`), then make the Flutter CI check required on `main`. Add `android/app/.cxx/` to `.gitignore` while there.
 
+**Update 2026-10-02: two of the three files are fixed on a branch, not on `main`.** `origin/BVA-I317` (`03a3035` "local changes", `Davidtariq96`, 2 Oct 13:10 UTC, 1 ahead / 0 behind) resolves `pubspec.yaml` exactly as above: #36's versions plus `local_auth`. Both `pubspec.yaml` and `pubspec.lock` parse on it. **`ios/Runner.xcodeproj/project.pbxproj` still has all 11 conflict blocks on the branch**, so iOS stays broken even after it merges. The fix also shares a commit with the Appearance feature work (theme, chat background, text size) and an Android `compileSdk` 36 → 37 bump. So `main` stays unbuildable until the theme feature is ready, unless the manifest fix is landed on its own. The same commit also adds `X-Device-Id` to `createConversation`, which `beevia-api` #60 requires (`api-rfc.md` §5.12). `main` itself is unchanged since `d51e3d1` and still carries all three conflicted files.
+
 
 ## 8. Suggested order
 
@@ -613,6 +624,9 @@ The `android/app/.cxx/**/configure_fingerprint.bin` files have carried conflict 
    **2026-10-01:** it merged with the button in (PR #42). Hide the biometric option outside mock mode now, and make the design decision separately. §3.6 is now load-bearing on `main`: every escrowed chat send passes through the unparsed phone field.
 
 3f. **§5.12** — resolve the conflict markers on `beevia-mobile` `main` and make Flutter CI a required check. Added 2026-10-01. It is first among the mobile items because until it is done, no one can build `main`.
+   **2026-10-02:** `pubspec.yaml`/`pubspec.lock` are fixed on `origin/BVA-I317`, bundled with the theme feature. `project.pbxproj` is not fixed anywhere. Land the manifest fix and the `createConversation` header on their own rather than waiting for the feature.
+
+3g. **§7.7 (2026-10-02 update)** — restore `needs: test` on `beevia-api`'s `sync` job, and gate `beevia-db-schema` and `beevia-admin-api`'s production chains on a verify job. Added 2026-10-02. As of 1 Oct, all three backend repos reach production on any push to `main` with nothing waiting for a test. The stated reason for removing `beevia-api`'s gate (hosted runners unavailable) went away when #62 moved the deploy itself onto hosted runners.
 
 4. **§4.7** — re-apply module scoping when a generated report is read, not only when it is generated. Cheapest now, and the only entry on this list that is a live access-control gap in shipped code. **Unchanged on 2026-09-18** — `reports.service.ts:133` re-verified at `origin/main`; ninth consecutive edition.
 5. **§1.1** — malformed UUID → 500. Small fix, trivially reachable, currently generates false 500s in monitoring.
