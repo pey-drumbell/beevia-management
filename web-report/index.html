@@ -34,7 +34,7 @@
       <span class="topbar__wordmark">Beevia</span>
     </div>
     <nav class="topbar__nav label" aria-label="Report">
-      <a href="2026-10-02.html">Latest frame</a>
+      <a href="2026-10-05.html">Latest frame</a>
     </nav>
 </div>
 
@@ -43,9 +43,9 @@
     <div class="field__rail field__rail--l">
       <dl>
         <dt>Frames held</dt>
-        <dd>42</dd>
+        <dd>43</dd>
         <dt>Latest</dt>
-        <dd>2026-10-02 · ungated, still not building</dd>
+        <dd>2026-10-05 · nothing merged, nothing submitted</dd>
       </dl>
     </div>
 
@@ -55,7 +55,7 @@
       </div>
       <div class="field__meta num">
         <span>Beevia project status</span>
-        <span>2026-08-05 &rarr; 2026-10-02</span>
+        <span>2026-08-05 &rarr; 2026-10-05</span>
         <span>Newest first</span>
       </div>
     </div>
@@ -75,9 +75,9 @@
   <div class="mvp__head">
     <span class="mvp__label label">MVP readiness &mdash; estimate</span>
     <span class="mvp__pct num">&asymp;67%</span>
-    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 31 days past</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 34 days past</span>
   </div>
-  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged. Nothing the rubric scores reached any main branch: the createConversation device-header fix is on an unmerged branch, and the biometric option the server rejects is still on main. E2EE messaging 0.90; voice and video calling 0.85; message translation 0.60; local KYC 0.90; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.80; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not whether main currently compiles.">
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged. Nothing reached any main branch in three days: the createConversation device-header fix is still on an unmerged branch, and the biometric option the server rejects is still on main. E2EE messaging 0.90; voice and video calling 0.85; message translation 0.60; local KYC 0.90; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.80; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not whether main currently compiles.">
     <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.90"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.85"><i style="width:85%"></i></span>
     <span class="mvp__seg" style="flex:7" title="Message translation — 0.60"><i style="width:60%"></i></span>
@@ -90,10 +90,27 @@
     <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
     <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.97"><i style="width:97%"></i></span>
   </div>
-  <p class="mvp__read"><strong>66.76, unchanged.</strong> Nothing the rubric scores reached any <code>main</code>: the <code>createConversation</code> header fix sits on the unmerged <code>BVA-I317</code> branch, and the biometric option the server rejects is still on <code>main</code>. The Appearance work is outside the PRD and would not move the strip. Mobile <code>main</code> still carries conflict markers; the strip scores built code, not whether it compiles. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 2 Oct 2026 &mdash; <a href="2026-10-02.html#mvp-method">method and capability table</a>.</p>
+  <p class="mvp__read"><strong>66.76, unchanged.</strong> Nothing reached any <code>main</code> in three days. The <code>createConversation</code> header fix still sits on the unmerged <code>BVA-I317</code> branch, which today grew a 60-file theming commit that is outside the PRD, and the biometric option the server rejects is still on <code>main</code>. Mobile <code>main</code> carries conflict markers for a fifth day; the strip scores built code, not whether it compiles. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 5 Oct 2026 &mdash; <a href="2026-10-05.html#mvp-method">method and capability table</a>.</p>
 </section>
 
 <main class="frames">
+
+  <a class="frame" href="2026-10-05.html">
+    <span class="frame__idx num">43</span>
+    <span>
+      <span class="frame__date">5 Oct 2026</span>
+      <span class="frame__sum"><strong>Nothing reached any <code>main</code> branch in three days, so mobile <code>main</code> is unbuildable for a fifth day and every backend deploy is still ungated.</strong> The <code>pubspec</code> fix still rides the <code>BVA-I317</code> theme branch, which grew a 60-file token migration today and is now 87 files. <code>project.pbxproj</code> keeps 11 conflict blocks on both refs. No backend commit since 1 Oct. Nobody on any board has submitted anything to REVIEW/QA in seven days. <code>BVA-I310</code> gained a backend owner and needs payment reminders the server does not have. <strong>Correction:</strong> the branch's dark palette came from an existing Figma frame, so <code>BVA-I321</code> checks extrapolated values rather than arriving after the code.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:0"></i></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>0902 &middot; day 6 &middot; 13 To do &middot; 7 In progress &middot; 1 Done</span></div>
+      <div><span>MVP est</span><span>&asymp;67% &middot; &Delta; 0.00</span></div>
+      <div><span>Test-gated deploys</span><span>0 of 3 backend repos</span></div>
+      <div><span>Mobile main</span><span>3 files with conflict markers &middot; day 5</span></div>
+      <div><span>Fix on BVA-I317</span><span>pubspec + X-Device-Id &middot; unmerged &middot; 87 files</span></div>
+      <div><span>API surface</span><span>137 / 49 &middot; drift 0</span></div>
+    </span>
+  </a>
 
   <a class="frame" href="2026-10-02.html">
     <span class="frame__idx num">42</span>
