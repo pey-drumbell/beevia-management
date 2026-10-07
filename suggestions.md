@@ -607,6 +607,8 @@ The `android/app/.cxx/**/configure_fingerprint.bin` files have carried conflict 
 
 **Update 2026-10-02: two of the three files are fixed on a branch, not on `main`.** `origin/BVA-I317` (`03a3035` "local changes", `Davidtariq96`, 2 Oct 13:10 UTC, 1 ahead / 0 behind) resolves `pubspec.yaml` exactly as above: #36's versions plus `local_auth`. Both `pubspec.yaml` and `pubspec.lock` parse on it. **`ios/Runner.xcodeproj/project.pbxproj` still has all 11 conflict blocks on the branch**, so iOS stays broken even after it merges. The fix also shares a commit with the Appearance feature work (theme, chat background, text size) and an Android `compileSdk` 36 → 37 bump. So `main` stays unbuildable until the theme feature is ready, unless the manifest fix is landed on its own. The same commit also adds `X-Device-Id` to `createConversation`, which `beevia-api` #60 requires (`api-rfc.md` §5.12). `main` itself is unchanged since `d51e3d1` and still carries all three conflicted files.
 
+**Update 2026-10-07: resolved on `main`, by merging the feature rather than splitting the fix out.** `beevia-mobile` PR #43 (`01bcf2a`, 7 Oct 10:23 UTC, a true merge of `BVA-I317`) brought the whole branch in: the theme work, the `pubspec.yaml`/`pubspec.lock` resolution, and a new commit `1a1f39f` ("notification configuration", 7 Oct 08:50 UTC) that adds Firebase and also resolves `ios/Runner.xcodeproj/project.pbxproj` (+11/−57). `origin/main` now has **zero** conflict markers outside `android/app/.cxx/`, and `pubspec.yaml` and `pubspec.lock` both parse (`local_auth` and #36's versions present). Whether it *builds* is still unverified here: no `flutter` command ran, and CI results are not visible to this workspace. The second half of the fix — making Flutter CI a required check on `main` — cannot be confirmed either. `android/app/.cxx/` is still tracked.
+
 
 ## 8. Suggested order
 
@@ -625,6 +627,7 @@ The `android/app/.cxx/**/configure_fingerprint.bin` files have carried conflict 
 
 3f. **§5.12** — resolve the conflict markers on `beevia-mobile` `main` and make Flutter CI a required check. Added 2026-10-01. It is first among the mobile items because until it is done, no one can build `main`.
    **2026-10-02:** `pubspec.yaml`/`pubspec.lock` are fixed on `origin/BVA-I317`, bundled with the theme feature. `project.pbxproj` is not fixed anywhere. Land the manifest fix and the `createConversation` header on their own rather than waiting for the feature.
+   **2026-10-07:** markers resolved on `main` via PR #43, which merged the whole feature branch (§5.12 update). What remains: make Flutter CI a required check on `main`, and untrack `android/app/.cxx/`.
 
 3g. **§7.7 (2026-10-02 update)** — restore `needs: test` on `beevia-api`'s `sync` job, and gate `beevia-db-schema` and `beevia-admin-api`'s production chains on a verify job. Added 2026-10-02. As of 1 Oct, all three backend repos reach production on any push to `main` with nothing waiting for a test. The stated reason for removing `beevia-api`'s gate (hosted runners unavailable) went away when #62 moved the deploy itself onto hosted runners.
 

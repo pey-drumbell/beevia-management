@@ -472,6 +472,8 @@ Messages and receipts are sent over the socket, which carries `X-Device-Id` in i
 
 **Update 2026-10-02.** `update-fixes` merged as `beevia-mobile` PR #42 (30 Sep 15:45 UTC), so the inbox on `main` now sends the header when a device id is known (`chat_service.dart:34`). `createConversation` on `main` still sends none (`chat_service.dart:204–206`). A fix is on the unmerged `origin/BVA-I317` branch (`03a3035`, 2 Oct): it makes `deviceId` a required parameter on both `fetchConversations` and `createConversation`, and the provider resolves it before the call. One route of the six is still uncovered on `main`.
 
+**Update 2026-10-07: closed on the client.** `BVA-I317` merged as `beevia-mobile` PR #43 (7 Oct 10:23 UTC). On `origin/main`, `createConversation` now takes a required `deviceId` and sends `X-Device-Id` (`chat_service.dart:212`), as do the inbox (`:34`) and the message-history fetch (`:69`); the socket handshake carries it too (`socket_manager.dart:76`). All six routes #60 guards are now covered by `main`. The mock server still does not enforce the header, so a regression would not be caught by the client's tests.
+
 
 ---
 
