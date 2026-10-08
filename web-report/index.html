@@ -34,7 +34,7 @@
       <span class="topbar__wordmark">Beevia</span>
     </div>
     <nav class="topbar__nav label" aria-label="Report">
-      <a href="2026-10-07.html">Latest frame</a>
+      <a href="2026-10-08.html">Latest frame</a>
     </nav>
 </div>
 
@@ -43,9 +43,9 @@
     <div class="field__rail field__rail--l">
       <dl>
         <dt>Frames held</dt>
-        <dd>45</dd>
+        <dd>46</dd>
         <dt>Latest</dt>
-        <dd>2026-10-07 · mobile main repaired by merge</dd>
+        <dd>2026-10-08 · push on main, WIP 4 → 10</dd>
       </dl>
     </div>
 
@@ -55,7 +55,7 @@
       </div>
       <div class="field__meta num">
         <span>Beevia project status</span>
-        <span>2026-08-05 &rarr; 2026-10-07</span>
+        <span>2026-08-05 &rarr; 2026-10-08</span>
         <span>Newest first</span>
       </div>
     </div>
@@ -75,9 +75,9 @@
   <div class="mvp__head">
     <span class="mvp__label label">MVP readiness &mdash; estimate</span>
     <span class="mvp__pct num">&asymp;67%</span>
-    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 36 days past</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 37 days past</span>
   </div>
-  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged. Mobile pull request 43 merged the BVA-I317 branch, which removes the conflict markers from main and makes every chat route send the device header; that closes gaps rather than adding a rubric capability. The biometric option the server rejects is still on main. E2EE messaging 0.90; voice and video calling 0.85; message translation 0.60; local KYC 0.90; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.80; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged. Mobile pull request 44 adds push-notification registration, which the rubric does not score as a capability; the backend changed dependency versions only. The biometric option the server rejects is still on main. E2EE messaging 0.90; voice and video calling 0.85; message translation 0.60; local KYC 0.90; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.80; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
     <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.90"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.85"><i style="width:85%"></i></span>
     <span class="mvp__seg" style="flex:7" title="Message translation — 0.60"><i style="width:60%"></i></span>
@@ -90,10 +90,27 @@
     <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
     <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.97"><i style="width:97%"></i></span>
   </div>
-  <p class="mvp__read"><strong>66.76, unchanged.</strong> Mobile PR #43 merged <code>BVA-I317</code> whole: <code>main</code> has no conflict markers and <code>createConversation</code> now sends <code>X-Device-Id</code>. Both close gaps that were holding scores, not new capability; the Appearance and Firebase work sit outside the rubric. The biometric option the server rejects is still on <code>main</code>. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 7 Oct 2026 &mdash; <a href="2026-10-07.html#mvp-method">method and capability table</a>.</p>
+  <p class="mvp__read"><strong>66.76, unchanged.</strong> Mobile PR #44 registers the app for push notifications against the existing <code>/notifications/token</code> contract. Push is outside the rubric&rsquo;s eleven capabilities, and the backend changed dependency versions only. The biometric option the server rejects is still on <code>main</code>. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 8 Oct 2026 &mdash; <a href="2026-10-08.html#mvp-method">method and capability table</a>.</p>
 </section>
 
 <main class="frames">
+
+  <a class="frame" href="2026-10-08.html">
+    <span class="frame__idx num">46</span>
+    <span>
+      <span class="frame__date">8 Oct 2026</span>
+      <span class="frame__sum"><strong>Push notifications reached mobile <code>main</code>, and the team moved its own board items for the first time in ten days. In-progress work jumped from 4 to 10 leaves at the midpoint, with nothing estimated.</strong> PR #44 completes <code>BVA-I306</code> against the existing <code>/notifications/token</code> contract, but its item is still In progress, and every tap opens Home because the push payload was undocumented (now in <code>api-rfc.md</code> &sect;5.13). The Firebase config was only partly untracked. Nothing left REVIEW/QA. A backend dependency refresh went through all three ungated pipelines: <code>beevia-api</code>&rsquo;s build break was caught on its branch, and <code>beevia-db-schema</code>&rsquo;s Release has not completed. No correction this edition.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:0"></i></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>0902 &middot; day 9 &middot; 4 To do &middot; 10 In progress &middot; 6 QA &middot; 1 Done</span></div>
+      <div><span>MVP est</span><span>&asymp;67% &middot; &Delta; 0.00</span></div>
+      <div><span>Test-gated deploys</span><span>0 of 3 backend repos</span></div>
+      <div><span>Mobile main</span><span>PR #44 &middot; push token registered</span></div>
+      <div><span>Board actions</span><span>10 &middot; all by David or Ayomikun &middot; 0 left QA</span></div>
+      <div><span>API surface</span><span>137 / 49 &middot; drift 0</span></div>
+    </span>
+  </a>
 
   <a class="frame" href="2026-10-07.html">
     <span class="frame__idx num">45</span>
@@ -863,7 +880,7 @@
 <footer class="foot">
   <span class="barcode barcode--lg" aria-hidden="true"></span>
   <span>Frames are written by the <code>beevia-refresh</code> skill alongside the Markdown in <code>project-status/</code>.</span>
-  <span><a href="2026-10-07.html">Latest</a></span>
+  <span><a href="2026-10-08.html">Latest</a></span>
 </footer>
 
 <script src="ui.js"></script>

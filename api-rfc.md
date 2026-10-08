@@ -474,6 +474,27 @@ Messages and receipts are sent over the socket, which carries `X-Device-Id` in i
 
 **Update 2026-10-07: closed on the client.** `BVA-I317` merged as `beevia-mobile` PR #43 (7 Oct 10:23 UTC). On `origin/main`, `createConversation` now takes a required `deviceId` and sends `X-Device-Id` (`chat_service.dart:212`), as do the inbox (`:34`) and the message-history fetch (`:69`); the socket handshake carries it too (`socket_manager.dart:76`). All six routes #60 guards are now covered by `main`. The mock server still does not enforce the header, so a regression would not be caught by the client's tests.
 
+### 5.13 Push payloads are implemented but not documented, so the client opens Home on every tap (2026-10-08)
+
+`beevia-mobile` PR #44 (`BVA-I306`, merged 8 Oct 10:38 UTC) wires the client to the push surface: FCM permission on first Home load, `POST /notifications/token` on every socket connect and on token refresh, and `DELETE /notifications/token` on logout. Both request bodies match `RegisterTokenRequest` and `ClearTokenRequest` exactly. On a tap, though, the client always opens Home. Its own comment says why: *"A push payload's `data` shape isn't documented anywhere in `api-docs/openapi.yaml`, so this deliberately doesn't try to deep-link."*
+
+That is accurate. OpenAPI describes HTTP operations, and the push `data` map is not one, so it appears in neither spec. The server has a stable shape (`notification.service.ts`, `PushMessage.data` is `Record<string, string>`):
+
+| `data.kind` | Other `data` keys | Preference category | Sent from |
+|---|---|---|---|
+| `chat.message` | `conversationId`, `messageId`, `type`, `senderUserId` | `messages` | `messages.service.ts`, `contact-change.service.ts` |
+| `call.incoming` | `callId`, `conversationId`, `callKind` (`audio`/`video`) | `voiceCalls` / `videoCalls` | `calls.service.ts` |
+| `payment.update` | `paymentId`, `event` (`received`, `transferred`, `accepted`, `declined`, `requested`, `paid`, `cancelled`, `returned`) | `moneyReceived` / `moneySent` / `moneyRequests` by event | `payment.service.ts` |
+| `security.alert` | none | `securityAlerts` | `devices.service.ts` |
+| `system.test` | none | `productUpdates` | `POST /notifications/test` |
+
+Every push also carries a visible `notification` block. Chat pushes are content-free (*"New message"*), as E2EE requires. The transport is FCM only when `FCM_SERVICE_ACCOUNT` is set, and the stub otherwise. Whether production sets it cannot be seen from here. A second, older module (`messaging/push`, CH-19 wake-ups) is still hard-wired to `StubPushAdapter`.
+
+Two gaps follow for sprint 0902:
+
+- **`BVA-I307` (deep links) needs this table, not new server work.** It should be written down where the client reads its contract. That could be a `PushData` schema under `components` in `openapi.yaml`, which is valid OpenAPI without a path, or a page in `beevia-api/docs/`.
+- **`BVA-I310`'s reminders have no `event` value.** The item asks for a pending-transfer reminder at +12 h and −1 h. No such event exists, and nothing schedules one. `returned` covers the auto-refund.
+
 
 ---
 

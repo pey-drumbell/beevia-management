@@ -551,6 +551,14 @@ Two options, neither of which needs org access: **(a)** have Release run CI's `v
 
 The fix is the same as before, now in three places. In `beevia-api`, put back `needs: test` and the success condition on `sync`. In `beevia-db-schema` and `beevia-admin-api`, have the release/sync chain run the verify job itself before it touches production (option (a) above).
 
+**Updated 2026-10-08: the first dependency refresh through the ungated pipelines.** On 8 Oct, `package-update` PRs merged in all three backend repos: `beevia-admin-api` #21 (07:53 UTC, 3 min after its commit), `beevia-db-schema` #21 (07:58 UTC, 5 min) and `beevia-api` #63 (12:31 UTC). Each one only changes `package.json` and `pnpm-lock.yaml`. There are two major bumps, `dotenv` 17→18 (api, db-schema) and `unplugin-swc` 1→2 (all three), and `beevia-admin-api` moves from `beevia-db-schema` 0.0.36 to 0.0.39. Three observations:
+
+- **`beevia-api` broke on the branch, and the break was caught before merge.** `5343364` explains that the bump installed two `socket.io` copies and `tsc` failed (TS2416/TS2345/TS2741). It pins `socket.io` to exactly `4.8.3` to match `@nestjs/platform-socket.io`. This is the PR-time check doing its job. It also shows what a direct push to `main` would have deployed.
+- **`beevia-db-schema`'s Release did not complete.** Release bumps and tags a patch version on every push, and on 1 Oct the bump commit followed the merge within a minute. Six hours after #21 there is no `v0.0.40` tag and no bump commit on `main`. Sync only runs after a *successful* Release, so production was probably not migrated. Whether Release failed at build or at publish, and whether a package was published, cannot be seen from here.
+- **Nothing gates deploys yet.** `beevia-api`'s `sync` still has no `needs: test`.
+
+**`beevia-mobile` now has `code-scan.yml`** (`64637f1`, via PR #44), the same org reusable-workflow caller as `beevia-api` and `beevia-admin-api`. That closes the mobile half of 3b in §8. `beevia-admin` still has no `.github` directory.
+
 ### 5.9 The backend's own Postman pass found a spec error §5.4 could not, and a "package update" deleted the integration docs (2026-09-22)
 
 Two findings from the 18–21 September commits, both of the "label says one thing, content does another" kind.
@@ -609,6 +617,17 @@ The `android/app/.cxx/**/configure_fingerprint.bin` files have carried conflict 
 
 **Update 2026-10-07: resolved on `main`, by merging the feature rather than splitting the fix out.** `beevia-mobile` PR #43 (`01bcf2a`, 7 Oct 10:23 UTC, a true merge of `BVA-I317`) brought the whole branch in: the theme work, the `pubspec.yaml`/`pubspec.lock` resolution, and a new commit `1a1f39f` ("notification configuration", 7 Oct 08:50 UTC) that adds Firebase and also resolves `ios/Runner.xcodeproj/project.pbxproj` (+11/−57). `origin/main` now has **zero** conflict markers outside `android/app/.cxx/`, and `pubspec.yaml` and `pubspec.lock` both parse (`local_auth` and #36's versions present). Whether it *builds* is still unverified here: no `flutter` command ran, and CI results are not visible to this workspace. The second half of the fix — making Flutter CI a required check on `main` — cannot be confirmed either. `android/app/.cxx/` is still tracked.
 
+**Update 2026-10-08: CI exists. Whether it is required is still unknown.** `beevia-mobile` already runs `flutter-ci.yml` (test, then Android release, Android mock and iOS builds) from `pr.yml` on every pull request and from `main.yml` on every push to `main`. PR #44 adds a step to all four jobs that writes the now-untracked Firebase config from three repository secrets (`FIREBASE_OPTIONS_DART`, `GOOGLE_SERVICES_JSON`, `GOOGLE_SERVICE_INFO_PLIST`). If a secret is missing, the step writes an empty file and the job fails to compile. So the run on PR #44 is the first real test of the secrets. Making the check *required* is the part that still cannot be confirmed from here.
+
+### 5.13 The Firebase config was untracked, but not all of it, and it is still in history (2026-10-08)
+
+`1a1f39f` (7 Oct) committed `lib/firebase_options.dart`, `android/app/google-services.json` and `ios/GoogleService-Info.plist`. A day later, `69770ff` (8 Oct, in PR #44) deleted the first two, added all four Firebase config paths to `.gitignore` with the note *"contains API keys"*, and moved CI to write them from secrets. Two loose ends remain:
+
+- **`ios/GoogleService-Info.plist` is still tracked on `main`, and it holds an `API_KEY`.** The new `.gitignore` entry is `ios/Runner/GoogleService-Info.plist`, which is a different path. Whether Xcode uses the copy at `ios/` is unclear, since CI writes `ios/Runner/`. Either way, it is the one config file the commit meant to remove and did not.
+- **Untracking does not remove anything from history.** All three files are reachable at `1a1f39f` on `main`.
+
+Firebase client API keys are designed to ship inside the app, so this is not a credential leak in the §7.5 sense. The protection is key restriction. In Google Cloud, restrict each key to its Android package and signing SHA-1 and its iOS bundle ID, and limit it to the Firebase APIs the app uses. Then `git rm --cached ios/GoogleService-Info.plist`. A history rewrite is not worth it for restricted client keys.
+
 
 ## 8. Suggested order
 
@@ -617,6 +636,7 @@ The `android/app/.cxx/**/configure_fingerprint.bin` files have carried conflict 
 3. **§7.5** — rotate every credential reachable from the affected workstation and CI, if that has not already happened.
 3a. **§7.7** — give `beevia-admin` a CI workflow at all. Listed here rather than further down because it is the prerequisite for items 2 and 3 having any effect on that repo, and because "add the two security workflows" — the ask carried for several editions — cannot be done meaningfully until there is a `.github/` to put them in.
 3b. **§7.7 continued** — copy `secrets-scan.yml`, `supply-chain-guard.yml` and `semgrep.yml` into `beevia-mobile`, and merge or close its nine stale Dependabot branches. Promoted on 2026-09-18 because it is the largest piece of security work that needs **no** org permission, in the repo with the least CI coverage. **2026-09-29:** before the pending CI branches on `beevia-admin-api` and `beevia-db-schema` merge, keep a weekly scheduled scan and the `push` trigger on `main` (§7.7, last update). `beevia-api` has already dropped both. **2026-09-30:** `beevia-db-schema`'s branch merged as #19 and went further. Release, and therefore the production migration, now triggers on any push to `main` with no CI gate. Make Release run the verify job before publishing (§7.7, 2026-09-30 update).
+   **2026-10-08:** `code-scan.yml` is now in `beevia-mobile` (PR #44). `beevia-admin` still has no `.github` directory.
 
 3c. **§5.8** — extend the new `openapi-schema.spec.ts` to diff the generated document against the committed `openapi.yaml`. Promoted because the expensive half now exists: a green pipeline shipped an unbootable release on 18 September, the fix built the document in a test to stop it recurring, and turning that into §5.4's drift check is a few more lines in a file that is already there.
 
@@ -628,6 +648,9 @@ The `android/app/.cxx/**/configure_fingerprint.bin` files have carried conflict 
 3f. **§5.12** — resolve the conflict markers on `beevia-mobile` `main` and make Flutter CI a required check. Added 2026-10-01. It is first among the mobile items because until it is done, no one can build `main`.
    **2026-10-02:** `pubspec.yaml`/`pubspec.lock` are fixed on `origin/BVA-I317`, bundled with the theme feature. `project.pbxproj` is not fixed anywhere. Land the manifest fix and the `createConversation` header on their own rather than waiting for the feature.
    **2026-10-07:** markers resolved on `main` via PR #43, which merged the whole feature branch (§5.12 update). What remains: make Flutter CI a required check on `main`, and untrack `android/app/.cxx/`.
+   **2026-10-08:** Flutter CI already runs on every PR and every push to `main`, and PR #44 makes it depend on three Firebase secrets. Making it a *required* check is still unverified.
+
+3h. **§5.13** — restrict the Firebase API keys (Android package + SHA-1, iOS bundle ID), then untrack `ios/GoogleService-Info.plist`, which the 8 Oct `.gitignore` change missed. Added 2026-10-08.
 
 3g. **§7.7 (2026-10-02 update)** — restore `needs: test` on `beevia-api`'s `sync` job, and gate `beevia-db-schema` and `beevia-admin-api`'s production chains on a verify job. Added 2026-10-02. As of 1 Oct, all three backend repos reach production on any push to `main` with nothing waiting for a test. The stated reason for removing `beevia-api`'s gate (hosted runners unavailable) went away when #62 moved the deploy itself onto hosted runners.
 
