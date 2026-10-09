@@ -139,6 +139,8 @@ tags:
     description: One-shot translation proxy. Nothing is stored.
   - name: Notifications
     description: Push token binding and category preferences.
+  - name: Activity
+    description: The Activity tab — one feed of chats, calls and payments, and its badge count.
   - name: Support
     description: Disputes and escalation. Entirely proposed.
   - name: Webhooks
@@ -3170,6 +3172,92 @@ paths:
         '400': { $ref: '#/components/responses/BadRequest' }
         '403': { $ref: '#/components/responses/Forbidden' }
 
+  /activity:
+    get:
+      tags: [Activity]
+      operationId: listActivity
+      summary: Unified activity feed
+      description: |
+        Recent chats, calls and payments in one list, newest first. A chat is
+        ordered by its last message, a call by when it was placed, a payment by
+        when it was created, so an accepted payment does not jump the list days
+        later.
+
+        `filter` only narrows which sources are queried; it does not change
+        `unattended_count`. `search` matches the counterpart's name and a
+        payment note. **Message text is not searchable**: it is end-to-end
+        encrypted, so searching chat content is the client's job on its own
+        plaintext. A chat row's `last_message` carries ciphertext resolved for
+        the device in `X-Device-Id`, exactly as in `GET /conversations`.
+
+        **Pagination is keyset, not pages.** Send back `next_cursor` as
+        `cursor`; a `null` `next_cursor` means the end. A cursor that does not
+        decode is rejected with `400` and `error: invalid_cursor`.
+
+        `requires_attention` is true for an unread incoming message, a missed
+        incoming call not yet seen (the thread's read mark clears it), money
+        sent to the caller still awaiting accept/decline, and a request
+        addressed to the caller still awaiting payment. It is always false for
+        anything the caller did. A direct transfer lands already completed, so
+        it appears without the flag.
+
+        `unattended_count` spans all three sources, not just this page, and
+        ignores `filter` and `search`. It powers the bottom-nav badge.
+      parameters:
+        - $ref: '#/components/parameters/DeviceIdHeader'
+        - name: filter
+          in: query
+          schema: { type: string, enum: [all, chats, calls, payments], default: all }
+        - name: search
+          in: query
+          schema: { type: string, minLength: 1, maxLength: 100 }
+        - name: cursor
+          in: query
+          description: Opaque keyset cursor from a previous page's `next_cursor`.
+          schema: { type: string, minLength: 1, maxLength: 200 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+      responses:
+        '200':
+          description: One page of the feed.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/ActivityFeed' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /activity/unattended-count:
+    get:
+      tags: [Activity]
+      operationId: getUnattendedActivityCount
+      summary: Unattended activity count
+      description: |
+        Just the badge number, for refreshing it without re-fetching the feed.
+        Same value as `unattended_count` on the feed response. Takes no
+        `X-Device-Id`.
+      responses:
+        '200':
+          description: The count.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [count]
+                        properties:
+                          count: { type: integer, minimum: 0 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
   /notifications/token:
     post:
       tags: [Notifications]
@@ -3433,6 +3521,11 @@ components:
         `400` and `error: device_id_required` rather than answered with rows the
         caller cannot decrypt. A caller with no registered device (e.g. mid
         onboarding) therefore gets a `400` from these routes.
+
+        A value that is present but not a UUID is rejected with `400` and
+        `error: device_id_invalid` (since 2026-10-09; it previously reached the
+        database as a cast error and returned `500`). It is deliberately not
+        treated as "no device".
       schema: { type: string, format: uuid }
     InviteCode:
       name: code
@@ -3819,6 +3912,85 @@ components:
             properties:
               messageId: { type: string, format: uuid }
               ciphertext: { type: string, maxLength: 64000 }
+
+    ActivityFeed:
+      type: object
+      required: [items, next_cursor, unattended_count]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ActivityItem' }
+        next_cursor:
+          type: [string, 'null']
+          description: Pass back as `cursor` for the next page; `null` means the end.
+        unattended_count:
+          type: integer
+          minimum: 0
+          description: Every item needing attention across all three sources, regardless of `filter`, `search` or page.
+
+    ActivityItem:
+      type: object
+      description: One row of the feed. Everything the row renders is here, so a page costs no further round trips.
+      required: [id, type, activity_at, requires_attention, conversation_id, counterpart, title, avatar_url, preview]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The source row's id (conversation, call or payment). Unique within a `type`, not across types.
+        type: { type: string, enum: [chat, call, payment] }
+        activity_at: { type: string, format: date-time, description: The sort key. }
+        requires_attention: { type: boolean }
+        conversation_id:
+          type: [string, 'null']
+          format: uuid
+          description: Where tapping the row goes. `null` for a payment made outside a chat.
+        counterpart:
+          description: The other party. `null` for a group, where `title` stands in.
+          oneOf:
+            - $ref: '#/components/schemas/PublicProfile'
+            - type: 'null'
+        title: { type: [string, 'null'], description: Group name, or `null` when `counterpart` carries the identity. }
+        avatar_url: { type: [string, 'null'], format: uri }
+        preview:
+          oneOf:
+            - $ref: '#/components/schemas/ActivityChatPreview'
+            - $ref: '#/components/schemas/ActivityCallPreview'
+            - $ref: '#/components/schemas/ActivityPaymentPreview'
+          discriminator: { propertyName: kind }
+
+    ActivityChatPreview:
+      type: object
+      required: [kind, last_message, unread_count]
+      properties:
+        kind: { type: string, const: chat }
+        last_message:
+          description: '`null` when deleted, cleared, or this device holds no envelope for it.'
+          oneOf:
+            - $ref: '#/components/schemas/Message'
+            - type: 'null'
+        unread_count: { type: integer, minimum: 0 }
+
+    ActivityCallPreview:
+      type: object
+      required: [kind, call_kind, status, direction, duration_seconds]
+      properties:
+        kind: { type: string, const: call }
+        call_kind: { type: string, enum: [audio, video] }
+        status: { type: string, description: 'The call''s status, as on `Call.status`.' }
+        direction: { type: string, enum: [incoming, outgoing], description: '`incoming` means the other party started it.' }
+        duration_seconds: { type: [integer, 'null'], description: '`null` while ringing, or if the call never connected.' }
+
+    ActivityPaymentPreview:
+      type: object
+      required: [kind, payment_type, status, amount, currency_code, direction, note]
+      properties:
+        kind: { type: string, const: payment }
+        payment_type: { type: string, enum: [send, request] }
+        status: { type: string, description: 'The payment''s status, as on `Payment.status`.' }
+        amount: { type: string, description: Major-unit decimal string, as stored. }
+        currency_code: { type: string }
+        direction: { type: string, enum: [incoming, outgoing] }
+        note: { type: [string, 'null'] }
 
     Bank:
       type: object

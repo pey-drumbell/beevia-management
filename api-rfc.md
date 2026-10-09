@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft — for review · **updated 2026-08-05** |
 | **Scope** | The complete HTTP surface of `beevia-api` (the consumer API): what exists today, and what the PRD requires that does not exist yet |
-| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, **137 operations** · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, **38 operations** (35 net-new + 3 live-endpoint modifications) · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
+| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, **139 operations** · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, **38 operations** (35 net-new + 3 live-endpoint modifications) · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
 | **Sibling RFC** | [`admin-api-rfc.md`](./admin-api-rfc.md) — the `beevia-admin-api` back-office service |
 | **Sources** | `beevia-api/src/**/*.controller.ts`, `beevia-api/src/**/dto/*.ts`, `beevia-db-schema/src/schema/*`, `beevia-api/postman/Beevia.postman_collection.json`, `Beevia_PRD.pdf` |
 | **Base path** | `/api/v1` (global prefix set in `src/main.ts`; `/i/:code` is explicitly excluded) |
@@ -169,9 +169,10 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | Upload | 5 | 0 | Public, permanent objects — distinct from Attachments (encrypted, presigned-only) |
 | Translate | **7** | **1** | **+6 (2026-09-10):** the language-preference surface — `GET /translate/languages`, plus app-wide and per-conversation preferences with precedence. **−4 proposed:** `/translate/languages` moved, and all three proposed preference operations shipped under `/translate/preferences` instead. Only `/translate/batch` is left proposed, and it is probably obsolete (§5.5a). The engine itself is still a stub (§5.5) |
 | Notifications | 5 | 0 | Complete |
+| **Activity** | **2** | 0 | **New 2026-10-08.** Unified chats/calls/payments feed with keyset pagination, plus its badge count. Chat previews are per-device ciphertext, not server-read text (§5.14) |
 | Support | **0** | 4 | Does not exist. Includes `POST /payments/{id}/dispute`, listed under §7.2 but tagged Support |
 | Webhooks | **4** | 1 | **+1:** `POST /webhooks/paystack` for card top-ups. Card issuer callback still missing |
-| **Total** | **137** | **35** | +3 live-endpoint modifications = 38 operations in the proposed file |
+| **Total** | **139** | **35** | +3 live-endpoint modifications = 38 operations in the proposed file |
 
 ---
 
@@ -495,6 +496,20 @@ Two gaps follow for sprint 0902:
 - **`BVA-I307` (deep links) needs this table, not new server work.** It should be written down where the client reads its contract. That could be a `PushData` schema under `components` in `openapi.yaml`, which is valid OpenAPI without a path, or a page in `beevia-api/docs/`.
 - **`BVA-I310`'s reminders have no `event` value.** The item asks for a pending-transfer reminder at +12 h and −1 h. No such event exists, and nothing schedules one. `returned` covers the auto-refund.
 
+**Update 2026-10-09.** Both points moved on the server. `beevia-api` #65 (8 Oct) adds **`payment.update` with `event: reminder`**: two nudges inside the 24 h hold, at half the TTL and one hour before it ends, to whoever still has to act. They ride the escrow-expiry queue and stay silent once the payment is resolved. The two pushes are byte-identical; the stage reaches only the dedupe key. The preference category depends on the payment, not the event: `moneyReceived` for a send awaiting acceptance, `moneyRequests` for an unpaid request. #64 narrows new-message suppression from "user has any socket" to "user has *this* conversation's room joined", which was the cause of missed message pushes for a backgrounded app. #68 restores `beevia-api/docs/money-in-chat.md` with a push section listing every payment event, its recipient and its switch. That is the first place in the service repo where the client can read part of this contract. The `chat.message` and `call.incoming` keys are still documented only in the table above. The client handles none of the new event yet: every tap still opens Home.
+
+
+### 5.14 The Activity feed shows how to preview E2EE content without reading it (2026-10-09)
+
+`beevia-api` #66 (`feat/activity-feed`, merged 8 Oct 15:57 UTC) adds `GET /activity` and `GET /activity/unattended-count` for sprint 0902's `BVA-I315`. The feed merges conversations, calls and payments, newest first. Each row carries everything it renders: the counterpart (`PublicProfile`), a typed preview, `requires_attention` and a `conversation_id` to navigate to.
+
+Three design choices are worth recording:
+
+- **The chat preview is ciphertext for the calling device**, resolved through `X-Device-Id` exactly as `GET /conversations` does. The ticket asked for "last message text". The 6–8 Oct status reports read that as server-side plaintext, which E2EE rules out. The implementation meets it without the server reading anything: the client decrypts the preview it already holds keys for. `search` matches only the counterpart's name and a payment note, and the operation description says so.
+- **Keyset pagination, not pages.** The feed merges three sources, so an offset would skip rows as activity arrives. `next_cursor` is an opaque `base64url(timestamp|id)`. A cursor that does not decode is a `400 invalid_cursor`. This is the first keyset-paginated list in the API; §2.7 still describes page/limit as the convention.
+- **`unattended_count` ignores `filter`, `search` and the page.** It drives the bottom-nav badge and has its own cheap route.
+
+Production showed the first defect within a day. A literal `{{device_id}}` (an unresolved Postman variable) reached the uuid cast and returned `500`. #69 (9 Oct) now rejects any non-UUID `X-Device-Id` with `400 device_id_invalid`, separate from `device_id_required`. That applies to all seven routes that take the header, not just the feed. `openapi.yaml`'s `DeviceIdHeader` was updated in place. No client calls either route yet. `beevia-mobile` has no Activity screen on `main`, and `BVA-I316` is In progress.
 
 ---
 
@@ -619,7 +634,7 @@ Escrow mechanics themselves are sound: a 24-hour hold scheduled through BullMQ, 
 
 **But no production payment has used them.** Per the #57 commit (2026-09-25), all six sends on production went through `POST /payments/transfer` — the mobile client's in-chat Send posts there — and each completed in the same millisecond it was created. The PRD's *Transfer Acceptance & Escrow* feature (§10.2, MVP Phase 3) is built on the server and bypassed by the client. See §5.11.
 
-### 6.8 Chat, Calls, Attachments, Translate, Notifications, Webhooks
+### 6.8 Chat, Calls, Attachments, Translate, Notifications, Activity, Webhooks
 
 | | Method | Path | Auth | Status |
 |---|---|---|---|---|
@@ -661,6 +676,8 @@ Escrow mechanics themselves are sound: a 24-hour hold scheduled through BullMQ, 
 | | GET | `/notifications/preferences` | 🔑 | ✅ |
 | | PATCH | `/notifications/preferences` | 🔑 | ✅ |
 | | POST | `/notifications/test` | 🔑 | ✅ |
+| | GET | `/activity` | 🔑 | ✅ **New 2026-10-08.** Unified feed, keyset `cursor`, `filter`, `search` (names and payment notes only). Requires `X-Device-Id` (§5.14) |
+| | GET | `/activity/unattended-count` | 🔑 | ✅ **New 2026-10-08.** Badge number only; same value as the feed's `unattended_count` |
 | | POST | `/webhooks/anchor` | 🔓 | ✅ HMAC over raw body; deduped. **Processed no real delivery until 2026-09-03** — envelope mismatch, see §5.6. Now also syncs card lifecycle events |
 | | POST | `/webhooks/livekit` | 🔓 | ✅ JWT in `Authorization` |
 
