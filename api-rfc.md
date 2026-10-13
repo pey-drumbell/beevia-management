@@ -511,6 +511,23 @@ Three design choices are worth recording:
 
 Production showed the first defect within a day. A literal `{{device_id}}` (an unresolved Postman variable) reached the uuid cast and returned `500`. #69 (9 Oct) now rejects any non-UUID `X-Device-Id` with `400 device_id_invalid`, separate from `device_id_required`. That applies to all seven routes that take the header, not just the feed. `openapi.yaml`'s `DeviceIdHeader` was updated in place. No client calls either route yet. `beevia-mobile` has no Activity screen on `main`, and `BVA-I316` is In progress.
 
+**Update 2026-10-13.** The client side exists on the unmerged `origin/BVA-I316` branch (`2aba47a`, 12 Oct). `ActivityService` calls `GET /activity` with `X-Device-Id` and `cursor`/`limit`, and its model reads the documented `ActivityFeed`/`ActivityItem` fields. Two differences from the contract are worth knowing. **`filter` and `search` run on the client** over pages already loaded, so a search cannot find anything older than the last page fetched. The server supports both parameters. **The unattended badge comes from the feed response,** not from `GET /activity/unattended-count`, so the badge refreshes only when the feed does.
+
+### 5.15 CallKit needs a push the server cannot send, and a second token slot the device row does not have (2026-10-13)
+
+`beevia-mobile` `origin/BVA-I316` (`500cdc6`, 13 Oct 14:02 UTC, sprint 0902 `BVA-I309`) adds `flutter_callkit_incoming` and an iOS `PKPushRegistry`. Its `AppDelegate.swift` comment states the server contract it needs: incoming calls arrive as a raw **APNs VoIP push** (`apns-push-type: voip`, topic `<bundle-id>.voip`), shaped like `CallKitParams`, because *"FCM cannot deliver the `voip` push type"*. The client registers the PushKit token through the existing route: `POST /notifications/token` with `pushProvider: 'voip'`, for the same `deviceId` as its FCM token.
+
+The server has neither half:
+
+- **There is no VoIP sender.** `beevia-api` sends every push through `FcmPushAdapter`, which ignores the provider argument (`_provider`). `call.incoming` goes out as an ordinary FCM message. Nothing in `src/` mentions APNs, PushKit or `voip`.
+- **A device has one push-token slot.** `registerToken()` calls `devices.setPushToken(id, token, provider)`, which overwrites `push_token` and `push_provider` on the device row. The second registration therefore replaces the first. On an iPhone, the FCM token and the VoIP token would take turns in one column. Whenever the VoIP token holds it, the FCM adapter sends every message, payment and security push to a VoIP token, and FCM rejects it.
+
+That is a regression waiting on a merge. Before `BVA-I316` lands, the client should stop registering the VoIP token, or the server needs (a) a token per `(device, provider)` and (b) an APNs VoIP transport for `call.incoming`. Option (b) needs the APNs auth key in the backend, which FCM does not.
+
+**Android does not match the server's payload either.** On Android, the branch rings from the FCM background handler. It expects a *data-only* message with `data.type == 'call.incoming'` and snake_case keys (`call_id`, `conversation_id`, `kind`, `initiator_user_id`, `caller_name`). `notifyIncomingCall()` (`notification.service.ts:125`) sends something different. It puts the discriminator in `data.kind`, uses camelCase keys (`callId`, `conversationId`, `callKind`), and includes a visible `notification` block, which makes FCM show its own banner rather than run the handler. As written, the native incoming-call screen never appears on either platform. The plain "Incoming call" banner still does. The §5.13 table is the server's actual contract. One side should adopt the other's keys before `BVA-I309` is reviewed.
+
+The same branch also points the chat-background picker (`BVA-I324`) at **`PUT /users/me/appearance/chat-background`, which does not exist.** Its own `TODO(backend)` says the call 404s and is swallowed, and the setting stays on the device. Sprint 0902's `BVA-I325` (*Chat Background Preference Storage*, backend) was moved to REVIEW/QA on 12 Oct with no server change behind it. `GET`/`PATCH /users/me/settings` already exists for user preferences. Extending it would serve `I319`, `I325` and `I328` with no new route. Nothing is added to `openapi.proposed.yaml`, because appearance is outside the PRD.
+
 ---
 
 ## 6. Implemented surface

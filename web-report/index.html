@@ -34,7 +34,7 @@
       <span class="topbar__wordmark">Beevia</span>
     </div>
     <nav class="topbar__nav label" aria-label="Report">
-      <a href="2026-10-09.html">Latest frame</a>
+      <a href="2026-10-13.html">Latest frame</a>
     </nav>
 </div>
 
@@ -43,9 +43,9 @@
     <div class="field__rail field__rail--l">
       <dl>
         <dt>Frames held</dt>
-        <dd>47</dd>
+        <dd>48</dd>
         <dt>Latest</dt>
-        <dd>2026-10-09 · server half shipped, QA 6 → 10</dd>
+        <dd>2026-10-13 · QA 10 → 15, client on a branch</dd>
       </dl>
     </div>
 
@@ -55,7 +55,7 @@
       </div>
       <div class="field__meta num">
         <span>Beevia project status</span>
-        <span>2026-08-05 &rarr; 2026-10-09</span>
+        <span>2026-08-05 &rarr; 2026-10-13</span>
         <span>Newest first</span>
       </div>
     </div>
@@ -75,9 +75,9 @@
   <div class="mvp__head">
     <span class="mvp__label label">MVP readiness &mdash; estimate</span>
     <span class="mvp__pct num">&asymp;67%</span>
-    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 38 days past</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 42 days past</span>
   </div>
-  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged. The backend shipped the Activity feed, payment reminders and a message-push fix; the feed is not one of the rubric's capabilities, and the reminders are server-only with no client handling. The biometric option the server rejects is still on main. E2EE messaging 0.90; voice and video calling 0.85; message translation 0.60; local KYC 0.90; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.80; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged. The backend fixed long-standing database error handling, which is correctness, not a capability. The client Activity screen and CallKit are on an unmerged branch, so they do not score. The biometric option the server rejects is still on main. E2EE messaging 0.90; voice and video calling 0.85; message translation 0.60; local KYC 0.90; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.80; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
     <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.90"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.85"><i style="width:85%"></i></span>
     <span class="mvp__seg" style="flex:7" title="Message translation — 0.60"><i style="width:60%"></i></span>
@@ -90,10 +90,27 @@
     <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
     <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.97"><i style="width:97%"></i></span>
   </div>
-  <p class="mvp__read"><strong>66.76, unchanged.</strong> The backend shipped the Activity feed (#66), pending-payment reminders (#65) and a fix for dropped message pushes (#64). The feed is not one of the rubric&rsquo;s eleven capabilities. The reminders serve line 7 but have no client handling yet. The biometric option the server rejects is still on <code>main</code>. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 9 Oct 2026 &mdash; <a href="2026-10-09.html#mvp-method">method and capability table</a>.</p>
+  <p class="mvp__read"><strong>66.76, unchanged.</strong> <code>beevia-api</code> #70 fixed Postgres error handling that had never worked. That is correctness, which the rubric does not score. The client Activity screen and CallKit are on an unmerged branch, and CallKit cannot yet ring against the server. The biometric option the server rejects is still on <code>main</code>. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 13 Oct 2026 &mdash; <a href="2026-10-13.html#mvp-method">method and capability table</a>.</p>
 </section>
 
 <main class="frames">
+
+  <a class="frame" href="2026-10-13.html">
+    <span class="frame__idx num">48</span>
+    <span>
+      <span class="frame__date">13 Oct 2026</span>
+      <span class="frame__sum"><strong>Two days before 0902 ends, 15 of its 21 leaves wait in review, none in To do, and nothing has left review. No sprint exists after Thursday.</strong> The client Activity screen, wired to the live <code>/activity</code> feed, and the chat background reached review with their code still on the unmerged <code>origin/BVA-I316</code>. The same branch adds CallKit. Its VoIP token would overwrite an iPhone&rsquo;s FCM token in the server&rsquo;s single push slot, and its Android call-push keys do not match the server&rsquo;s (<code>api-rfc.md</code> &sect;5.15). <code>beevia-api</code> #70 fixed a defect as old as the project: unique-constraint handlers never fired, duplicates returned <code>500</code>, and failed-query logs carried bound values. <strong>Correction:</strong> <code>suggestions.md</code> &sect;1.1 had described those Postgres mappings as working.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:0"></i></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>0902 &middot; day 14 &middot; 0 To do &middot; 4 In progress &middot; 15 QA &middot; 1 Blocked &middot; 1 Done</span></div>
+      <div><span>MVP est</span><span>&asymp;67% &middot; &Delta; 0.00</span></div>
+      <div><span>Test-gated deploys</span><span>0 of 3 backend repos</span></div>
+      <div><span>beevia-api main</span><span>#70 &middot; Postgres errors behind Drizzle</span></div>
+      <div><span>Board actions</span><span>11 &middot; 5 board administration, 3 Ayomikun, 3 David &middot; 0 left QA</span></div>
+      <div><span>API surface</span><span>139 / 49 &middot; drift 0</span></div>
+    </span>
+  </a>
 
   <a class="frame" href="2026-10-09.html">
     <span class="frame__idx num">47</span>
@@ -897,7 +914,7 @@
 <footer class="foot">
   <span class="barcode barcode--lg" aria-hidden="true"></span>
   <span>Frames are written by the <code>beevia-refresh</code> skill alongside the Markdown in <code>project-status/</code>.</span>
-  <span><a href="2026-10-09.html">Latest</a></span>
+  <span><a href="2026-10-13.html">Latest</a></span>
 </footer>
 
 <script src="ui.js"></script>

@@ -50,6 +50,8 @@ Two independent fixes, both worth applying:
 
 The second matters more than the first: it also protects query parameters and future routes.
 
+**Update 2026-10-13.** Until #70 (12 Oct), fix 2 would not have worked. Drizzle wraps the driver error, so `mapPostgresError()` never saw any SQLSTATE (§1.6). It now reads the `cause` chain, so mapping `22P02` is one `case` in `all-exceptions.filter.ts`. Path parameters are still unvalidated, and `22P02` is still unmapped.
+
 ### 1.2 `OTP_ECHO` is guarded by a comment, not by code
 
 `src/common/env.ts` documents `OTP_ECHO` as *"MUST be off (unset) in real production"*, and `SLACK_OTP_CHANNEL` carries the same warning. Neither is enforced. There is no `.refine()` or `.superRefine()` tying either to `NODE_ENV`.
@@ -85,6 +87,18 @@ A client author working from the collection will write `meta.page` and `meta.pag
 ### 1.5 `POST /devices` documents 200 but returns 201
 
 `src/devices/devices.controller.ts:40` combines `@HttpCode(HttpStatus.CREATED)` with `@ApiOkResponse(...)`. The generated OpenAPI document claims `200`; the route returns `201`. Use `@ApiCreatedResponse`.
+
+### 1.6 ~~Every constraint-violation handler was dead code, and failed queries logged their bound values~~ — **resolved 2026-10-12** (#70)
+
+`drizzle-orm` has been `^0.45` since the project's first commit (26 Jun). Since 0.44, Drizzle wraps every failed query in `DrizzleQueryError` and keeps the node-postgres error, the one that carries the SQLSTATE `code`, in `.cause`. Both `isUniqueViolation()` and `AllExceptionsFilter.asPostgresError()` read `code` off the thrown object, so neither ever matched. Three consequences, all in place for the project's whole life:
+
+- **The 29 `isUniqueViolation()` call sites in 15 services never fired.** These include the duplicate-delivery paths of four webhook handlers (Paystack, Anchor, Entrust, LiveKit), the ledger, wallet provisioning, invites and reactions. Every race those branches were written for fell through to the generic error path instead.
+- **A uniqueness clash returned `500`, not the documented `409 unique_constraint_violation`.** `openapi.yaml`'s shared `Conflict` response was correct. The code did not honour it.
+- **Failed-query logs carried the query's bound parameters.** `DrizzleQueryError`'s message embeds every bound value, so phone numbers, account numbers and amounts reached the log sink, past `redactBody`.
+
+`beevia-api` #70 (`50a9217`, merged 12 Oct 16:11 UTC) adds `findPostgresError()`, which walks the `cause` chain (depth 5), and shares it between the filter and the services so the two cannot disagree. It checks `HttpException` first, so a deliberate exception wrapping a Postgres cause keeps its meaning. It also logs `Failed query: <sql> (N params withheld)` in place of the raw message, in the filter and in two queue processors. Tests were added for both.
+
+**Two things are left.** First, whatever reached the logs before 12 Oct is still there. Retention and access for the log sink are worth checking, as for any PII spill. Second, §1.1's suggested backstop, mapping `22P02` to `400`, would have silently failed for the same reason before #70. It now needs only one more `case`.
 
 ---
 
@@ -661,7 +675,7 @@ Firebase client API keys are designed to ship inside the app, so this is not a c
 3g. **§7.7 (2026-10-02 update)** — **2026-10-09:** a test failed on `beevia-api` `main` (#67) while the same commit deployed; see §7.7's 9 Oct update. Restore `needs: test` on `beevia-api`'s `sync` job, and gate `beevia-db-schema` and `beevia-admin-api`'s production chains on a verify job. Added 2026-10-02. As of 1 Oct, all three backend repos reach production on any push to `main` with nothing waiting for a test. The stated reason for removing `beevia-api`'s gate (hosted runners unavailable) went away when #62 moved the deploy itself onto hosted runners.
 
 4. **§4.7** — re-apply module scoping when a generated report is read, not only when it is generated. Cheapest now, and the only entry on this list that is a live access-control gap in shipped code. **Unchanged on 2026-09-18** — `reports.service.ts:133` re-verified at `origin/main`; ninth consecutive edition.
-5. **§1.1** — malformed UUID → 500. Small fix, trivially reachable, currently generates false 500s in monitoring. **2026-10-09:** it happened in production on `GET /activity` through the `X-Device-Id` header, and #69 fixed that one header (`400 device_id_invalid`) on all seven routes that read it. Path parameters still have no `ParseUUIDPipe`.
+5. **§1.1** — malformed UUID → 500. Small fix, trivially reachable, currently generates false 500s in monitoring. **2026-10-09:** it happened in production on `GET /activity` through the `X-Device-Id` header, and #69 fixed that one header (`400 device_id_invalid`) on all seven routes that read it. Path parameters still have no `ParseUUIDPipe`. **2026-10-13:** #70 makes the `22P02` backstop a one-`case` change; before it, the mapping could not have matched (§1.6).
 6. **§1.2** — enforce `OTP_ECHO` off in production at startup.
 7. **§4.1** — rate limiting, especially PIN verification and `GET /keys/{userId}`.
 8. **§7.2** — review config files as executable code; add a size/length check in CI.
