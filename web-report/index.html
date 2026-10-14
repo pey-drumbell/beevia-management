@@ -34,7 +34,7 @@
       <span class="topbar__wordmark">Beevia</span>
     </div>
     <nav class="topbar__nav label" aria-label="Report">
-      <a href="2026-10-13.html">Latest frame</a>
+      <a href="2026-10-14.html">Latest frame</a>
     </nav>
 </div>
 
@@ -43,9 +43,9 @@
     <div class="field__rail field__rail--l">
       <dl>
         <dt>Frames held</dt>
-        <dd>48</dd>
+        <dd>49</dd>
         <dt>Latest</dt>
-        <dd>2026-10-13 · QA 10 → 15, client on a branch</dd>
+        <dd>2026-10-14 · board silent, #71 off-board</dd>
       </dl>
     </div>
 
@@ -55,7 +55,7 @@
       </div>
       <div class="field__meta num">
         <span>Beevia project status</span>
-        <span>2026-08-05 &rarr; 2026-10-13</span>
+        <span>2026-08-05 &rarr; 2026-10-14</span>
         <span>Newest first</span>
       </div>
     </div>
@@ -75,9 +75,9 @@
   <div class="mvp__head">
     <span class="mvp__label label">MVP readiness &mdash; estimate</span>
     <span class="mvp__pct num">&asymp;67%</span>
-    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 42 days past</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 43 days past</span>
   </div>
-  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged. The backend fixed long-standing database error handling, which is correctness, not a capability. The client Activity screen and CallKit are on an unmerged branch, so they do not score. The biometric option the server rejects is still on main. E2EE messaging 0.90; voice and video calling 0.85; message translation 0.60; local KYC 0.90; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.80; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged. beevia-api #71 adds wallet-movement notifications to existing top-up, payout and card flows; notifications are not a rubric capability. The notification settings screen found on mobile main since July is not a rubric line either. E2EE messaging 0.90; voice and video calling 0.85; message translation 0.60; local KYC 0.90; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.80; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
     <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.90"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.85"><i style="width:85%"></i></span>
     <span class="mvp__seg" style="flex:7" title="Message translation — 0.60"><i style="width:60%"></i></span>
@@ -90,10 +90,27 @@
     <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
     <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.97"><i style="width:97%"></i></span>
   </div>
-  <p class="mvp__read"><strong>66.76, unchanged.</strong> <code>beevia-api</code> #70 fixed Postgres error handling that had never worked. That is correctness, which the rubric does not score. The client Activity screen and CallKit are on an unmerged branch, and CallKit cannot yet ring against the server. The biometric option the server rejects is still on <code>main</code>. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 13 Oct 2026 &mdash; <a href="2026-10-13.html#mvp-method">method and capability table</a>.</p>
+  <p class="mvp__read"><strong>66.76, unchanged.</strong> <code>beevia-api</code> #71 adds wallet-movement pushes to existing top-up, payout and card flows. Notifications are not a rubric capability, and neither is the settings screen this edition found on mobile <code>main</code>. The biometric option the server rejects is still on <code>main</code>. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 14 Oct 2026 &mdash; <a href="2026-10-14.html#mvp-method">method and capability table</a>.</p>
 </section>
 
 <main class="frames">
+
+  <a class="frame" href="2026-10-14.html">
+    <span class="frame__idx num">49</span>
+    <span>
+      <span class="frame__date">14 Oct 2026</span>
+      <span class="frame__sum"><strong>Nothing moved on any board in 24 hours, and sprint 0902 ends tomorrow with 15 of 21 leaves in review, none reviewed, and no sprint after it.</strong> The work went into code. <code>beevia-api</code> #71 gives the <code>walletActivity</code> switch its first nine pushes: top-ups, inbound deposits, payouts and card loads, each sent once and a failure notice only after the money is back. The switch is off by default, and no board item tracks the work. <strong>Corrections:</strong> the <code>BVA-I313</code> notification settings screen, called missing for three editions, has been on mobile <code>main</code> since July and is wired to the server. <code>openapi.yaml</code>&rsquo;s preferences schema had been wrong since 5 Aug and is now fixed.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:0"></i></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>0902 &middot; day 15 &middot; 0 To do &middot; 4 In progress &middot; 15 QA &middot; 1 Blocked &middot; 1 Done</span></div>
+      <div><span>MVP est</span><span>&asymp;67% &middot; &Delta; 0.00</span></div>
+      <div><span>Test-gated deploys</span><span>0 of 3 backend repos</span></div>
+      <div><span>beevia-api main</span><span>#71 &middot; wallet-movement pushes, off by default</span></div>
+      <div><span>Board actions</span><span>0 on any board &middot; 0 left QA</span></div>
+      <div><span>API surface</span><span>139 / 49 &middot; drift 0 &middot; 1 schema fixed</span></div>
+    </span>
+  </a>
 
   <a class="frame" href="2026-10-13.html">
     <span class="frame__idx num">48</span>

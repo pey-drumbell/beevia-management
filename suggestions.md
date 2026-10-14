@@ -347,6 +347,8 @@ Two cheap CI guards are worth adding alongside:
 
   Two must be **excluded** from that assertion — `SendMoneyRequest` and `RequestMoneyRequest` differ *by design*, since the proposed file carries their widened target form. Keep the exclusion list in the check itself, next to the `MODIFICATIONS TO LIVE ENDPOINTS` allowlist, so both shrink together as those endpoints ship.
 
+**Update 2026-10-14 — another contract miss, seventy days long.** `openapi.yaml`'s `NotificationPreferences` described five categories (`chat`, `calls`, `payments`, `security`, `system`). That was the server's 11 Jul shape. It was replaced on 4 Aug by fourteen different fields (`notifications.dto.ts`, `PreferencesView`), the day before the spec was written, and `PATCH` used the response schema for its camelCase body. It surfaced only because `beevia-api` #71 made `walletActivity` matter. Corrected by hand today (`api-rfc.md` §5.13). The `@ApiPropertyOptional` decorators on `UpdatePreferencesDto` already carry the right fields, so a generated document would have shown it on day one.
+
 ### 5.5 Test coverage is uneven in a predictable way
 
 Unit specs sit next to almost every service, and integration specs exist for the ledger, payments, attachments, devices, chat DALs and account deletion. E2E specs cover messaging, chat groups, chat flow and the queue.

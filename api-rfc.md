@@ -498,6 +498,16 @@ Two gaps follow for sprint 0902:
 
 **Update 2026-10-09.** Both points moved on the server. `beevia-api` #65 (8 Oct) adds **`payment.update` with `event: reminder`**: two nudges inside the 24 h hold, at half the TTL and one hour before it ends, to whoever still has to act. They ride the escrow-expiry queue and stay silent once the payment is resolved. The two pushes are byte-identical; the stage reaches only the dedupe key. The preference category depends on the payment, not the event: `moneyReceived` for a send awaiting acceptance, `moneyRequests` for an unpaid request. #64 narrows new-message suppression from "user has any socket" to "user has *this* conversation's room joined", which was the cause of missed message pushes for a backgrounded app. #68 restores `beevia-api/docs/money-in-chat.md` with a push section listing every payment event, its recipient and its switch. That is the first place in the service repo where the client can read part of this contract. The `chat.message` and `call.incoming` keys are still documented only in the table above. The client handles none of the new event yet: every tap still opens Home.
 
+**Update 2026-10-14.** `beevia-api` #71 (`feat/wallet-activity-notifications`, merged 13 Oct 17:43 UTC) adds a sixth kind:
+
+| `data.kind` | Other `data` keys | Preference category | Sent from |
+|---|---|---|---|
+| `wallet.update` | `event` (`topupSucceeded`, `topupFailed`, `depositReceived`, `withdrawalCompleted`, `withdrawalFailed`, `cardFunded`, `cardFundingFailed`, `cardWithdrawn`, `cardWithdrawalFailed`), `reference` | `walletActivity` | `topup.service.ts`, `anchor-webhook.service.ts`, `bank-transfer.service.ts`, `card-funding.service.ts` |
+
+The hooks sit where the webhook, the client's status poll and the reconciliation sweep converge, behind each row's existing terminal-state guard, and the push dedupe key is `reference:event`. A failure push ("the money is back in your wallet") is sent only when the ledger reversal succeeded. **`walletActivity` is off by default**, so a user who never opens the settings screen gets none of the nine, including a failed payout. That is a product decision worth making explicitly. Note also that the `amount` string is `NGN 2500.00` (`toFixed(2)`), not the `NGN 2,500.00` the code comment shows.
+
+**Correction (2026-10-14): `NotificationPreferences` in `openapi.yaml` had been wrong since 5 Aug.** It listed five categories (`chat`, `calls`, `payments`, `security`, `system`) that the server dropped on 4 Aug, the day before the spec was written. The real contract is nine categories plus tone and feedback settings: camelCase on `PATCH`, snake_case in the response. The route-level audit cannot see a schema mismatch, so it stayed clean throughout. The spec now carries `NotificationPreferences` (response) and `UpdateNotificationPreferencesRequest` (request). `beevia-mobile` was never affected: its settings screen (`lib/features/settings/screens/notifications/notifications.dart`, on `main` since July) sends and reads exactly the server's fields.
+
 
 ### 5.14 The Activity feed shows how to preview E2EE content without reading it (2026-10-09)
 

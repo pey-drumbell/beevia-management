@@ -3314,12 +3314,12 @@ paths:
       tags: [Notifications]
       operationId: updateNotificationPreferences
       summary: Toggle notification categories
-      description: Partial update — send only the categories being changed. At least one is required.
+      description: Partial update — send only the settings being changed. At least one is required. Returns the full set.
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/NotificationPreferences' }
+            schema: { $ref: '#/components/schemas/UpdateNotificationPreferencesRequest' }
       responses:
         '200': { $ref: '#/components/responses/NotificationPreferencesOk' }
         '400': { $ref: '#/components/responses/BadRequest' }
@@ -4538,12 +4538,28 @@ components:
 
     NotificationPreferences:
       type: object
+      description: |
+        Nine push categories plus tone and feedback settings
+        (`notification-settings.service.ts` `PreferencesView`). A user who has
+        never saved gets the column defaults: every category on except
+        `wallet_activity`, `keyboard_sounds` off, `vibration` on.
       properties:
-        chat: { type: boolean }
-        calls: { type: boolean }
-        payments: { type: boolean }
-        security: { type: boolean }
-        system: { type: boolean }
+        messages: { type: boolean, description: 'New-message pushes (`chat.message`).' }
+        voice_calls: { type: boolean, description: 'Incoming voice-call pushes.' }
+        video_calls: { type: boolean, description: 'Incoming video-call pushes.' }
+        money_received: { type: boolean, description: Someone sent you money. }
+        money_sent: { type: boolean, description: 'Updates on money you sent — accepted, declined, auto-returned.' }
+        money_requests: { type: boolean, description: 'Money requests: asked of you, or yours paid / cancelled.' }
+        wallet_activity:
+          type: boolean
+          description: 'Top-ups, inbound deposits, payouts and card loads (`wallet.update` pushes). **Off by default.**'
+        notification_sound: { type: string, example: chime }
+        call_ringtone: { type: string, example: copenhagen }
+        message_tone: { type: string, example: paper }
+        vibration: { type: boolean }
+        keyboard_sounds: { type: boolean }
+        security_alerts: { type: boolean, description: 'Security / new-device alerts (`security.alert`).' }
+        product_updates: { type: boolean, description: 'Product announcements; also gates `POST /notifications/test`.' }
 
     OneTimePrekey:
       type: object
@@ -5242,6 +5258,25 @@ components:
       properties:
         displayName: { type: string, minLength: 1, maxLength: 255 }
         avatarUrl: { type: string, format: uri, maxLength: 2048 }
+
+    UpdateNotificationPreferencesRequest:
+      type: object
+      minProperties: 1
+      properties:
+        messages: { type: boolean }
+        voiceCalls: { type: boolean }
+        videoCalls: { type: boolean }
+        moneyReceived: { type: boolean }
+        moneySent: { type: boolean }
+        moneyRequests: { type: boolean }
+        walletActivity: { type: boolean }
+        notificationSound: { type: string, minLength: 1, maxLength: 64 }
+        callRingtone: { type: string, minLength: 1, maxLength: 64 }
+        messageTone: { type: string, minLength: 1, maxLength: 64 }
+        vibration: { type: boolean }
+        keyboardSounds: { type: boolean }
+        securityAlerts: { type: boolean }
+        productUpdates: { type: boolean }
 
     UpdateSettingsRequest:
       type: object
