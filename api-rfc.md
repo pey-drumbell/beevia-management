@@ -510,6 +510,14 @@ The hooks sit where the webhook, the client's status poll and the reconciliation
 
 **Update 2026-10-15: the client routes taps by `data.kind` on a branch.** `origin/BVA-I316` `d507fe4` (unmerged; sprint 0902 `BVA-I307`) replaces "always open Home" with a switch on the table above. `chat.message` opens the conversation named by `conversationId`, refetching the list once if it is not loaded. `payment.update` and `wallet.update` open Home on the Wallet tab. `security.alert` opens Settings, and anything else opens Home. Foreground pushes now carry their `data` as the local notification's payload, so those taps route too. The keys it reads match the server's exactly. It does not use `paymentId`, `event` or `reference`, so a payment push lands on the wallet rather than on that payment. On `main`, every tap still opens Home.
 
+**Update 2026-10-16.** `beevia-api` #72 (`fix/call-push-reliability-and-end-signal`, merged 15 Oct 15:46 UTC) adds a seventh kind and changes when `call.incoming` is sent:
+
+| `data.kind` | Other `data` keys | Preference category | Sent from |
+|---|---|---|---|
+| `call.ended` | `callId`, `conversationId`, `callKind`, `status` (`ended`, `declined`, `missed`) | **none**: sent even when `voiceCalls`/`videoCalls` is off | `calls.service.ts` (`decline`, `end`, `endFromProviderEvent`) |
+
+`call.ended` is the first **silent** push: no `notification` block, so `FcmPushAdapter` sends it with `contentAvailable` on iOS (still at `apns-priority: 10`) and nothing is displayed. It goes to every member of the conversation, including whoever ended the call. `call.incoming` is no longer gated on `isUserOnline`, so a member with a live socket now gets the socket event **and** the push. The push dedupe keys are now `<callId>:incoming` and `<callId>:ended`. `beevia-api/docs/mobile-chat-integration.md` now documents both call pushes, so the `call.incoming` keys are no longer recorded only in this table. The client consequences are in §5.15.
+
 
 ### 5.14 The Activity feed shows how to preview E2EE content without reading it (2026-10-09)
 
@@ -545,6 +553,14 @@ The same branch also points the chat-background picker (`BVA-I324`) at **`PUT /u
 - **The VoIP token registration is unchanged.** `call_kit_manager.dart:80` still registers `pushProvider: 'voip'` for the FCM device id, so merging the branch as it stands would still overwrite iPhones' FCM token. Nothing on the server has changed either: one token per device, no APNs sender.
 - **The native call screen shows "Beevia" as the caller.** The server puts `initiatorName` only in the visible `notification.body`, not in `data`. The client falls back to the app name. Adding `callerName` (and optionally `initiatorUserId`) to `call.incoming`'s `data` is a two-line server change.
 - **The push still carries a visible `notification` block.** The branch's own comment now says FCM displays such pushes "without any app code running". Whether the background handler also runs, giving a banner *and* a ringing screen, or only the banner, depends on device state and cannot be told from the code. A data-only `call.incoming` would remove the ambiguity, at the cost of no banner where the handler fails.
+
+**Update 2026-10-16: the server now always rings and sends a silent teardown; no client branch handles the teardown, and `main` shows a duplicate banner.** `beevia-api` #72 (15 Oct) fixes two real faults. A backgrounded app keeps its socket, so the old `!isUserOnline` gate dropped exactly the ring the app most needed. And nothing told an off-socket device that a call had ended. The server change is sound. Three client consequences follow:
+
+- **On `beevia-mobile` `main`, a call received with the app open now produces two things**: the in-app ringing screen from the socket, and a local "Incoming audio call / *name* is calling…" banner. `_showForegroundNotification` displays every foreground push that has a `notification` block, and before #72 a user with a live socket never received this one. Nothing removes the banner when the call ends, and `main` registers no tap handler for local notifications. The server's own doc asks the client to "dedupe on `callId`"; `main` does not. If #72 is deployed (it ships on push, §7.7 of `suggestions.md`), this is live for every user on the current build.
+- **`origin/BVA-I316` already copes with the always-on ring.** Its foreground handler swallows `call.incoming` on iOS and, on Android, skips the native screen when the socket's ring is already on screen (`_alreadyHandling`). The server emits the socket event before it queues the push, so the socket normally wins.
+- **No branch handles `call.ended`.** On `main` and on `BVA-I316` the foreground handler ignores a push without a `notification` block, and the background handler acts only on `call.incoming`. The native ringing screen on Android is dismissed only by the socket's `call.update`, or by its own 30-second timeout. The fix is small: in both handlers, on `data.kind == 'call.ended'`, call `FlutterCallkitIncoming.endCall(callId)` (`CallKitManager.endNativeCall`).
+
+Unchanged by #72: the VoIP token registration on `BVA-I316` (`call_kit_manager.dart:80`), one token slot per device, no APNs sender, and no caller name in `call.incoming`'s `data`. The adapter sends silent pushes at `apns-priority: 10`. Apple's documentation asks for priority 5 on content-available-only pushes, so iOS may throttle or drop them. That cannot be tested from here, and no iOS code consumes `call.ended` yet.
 
 ---
 

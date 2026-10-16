@@ -2724,7 +2724,10 @@ paths:
       description: |
         Creates a call session and returns a join token for the SFU. Media never
         transits this API. Mirrors `call.start`; peers are notified via the
-        `call.incoming` socket event and push.
+        `call.incoming` socket event **and** a push, sent even to members who
+        have a live socket (both carry `callId`; the client should ignore
+        whichever arrives second). The push honours the `voice_calls` /
+        `video_calls` switch.
       requestBody:
         required: true
         content:
@@ -2785,7 +2788,11 @@ paths:
       tags: [Calls]
       operationId: declineCall
       summary: Decline a call
-      description: Mirrors `call.decline`.
+      description: |
+        Mirrors `call.decline`. Besides the socket broadcast, every member
+        (including the member who declined) gets a silent `call.ended` push
+        with `status: declined`, so a backgrounded device can dismiss its
+        ringing UI. That push ignores the call preference switches.
       responses:
         '200': { $ref: '#/components/responses/CallOk' }
         '404': { $ref: '#/components/responses/NotFound' }
@@ -2797,7 +2804,12 @@ paths:
       tags: [Calls]
       operationId: endCall
       summary: End a call
-      description: Either party may end. Duration and outcome are logged to the conversation. Mirrors `call.end`.
+      description: |
+        Either party may end. Duration and outcome are logged to the conversation. Mirrors `call.end`.
+        Besides the socket broadcast, every member (including whoever ended it)
+        gets a silent `call.ended` push (`status`: `ended`, or `missed` for a
+        call that was still ringing), which ignores the call preference
+        switches. The SFU's `room_finished` event sends the same push.
       responses:
         '200': { $ref: '#/components/responses/CallOk' }
         '404': { $ref: '#/components/responses/NotFound' }
@@ -4545,8 +4557,8 @@ components:
         `wallet_activity`, `keyboard_sounds` off, `vibration` on.
       properties:
         messages: { type: boolean, description: 'New-message pushes (`chat.message`).' }
-        voice_calls: { type: boolean, description: 'Incoming voice-call pushes.' }
-        video_calls: { type: boolean, description: 'Incoming video-call pushes.' }
+        voice_calls: { type: boolean, description: 'Incoming voice-call pushes. The silent `call.ended` teardown push is sent regardless.' }
+        video_calls: { type: boolean, description: 'Incoming video-call pushes. The silent `call.ended` teardown push is sent regardless.' }
         money_received: { type: boolean, description: Someone sent you money. }
         money_sent: { type: boolean, description: 'Updates on money you sent — accepted, declined, auto-returned.' }
         money_requests: { type: boolean, description: 'Money requests: asked of you, or yours paid / cancelled.' }
