@@ -34,7 +34,7 @@
       <span class="topbar__wordmark">Beevia</span>
     </div>
     <nav class="topbar__nav label" aria-label="Report">
-      <a href="2026-10-16.html">Latest frame</a>
+      <a href="2026-10-19.html">Latest frame</a>
     </nav>
 </div>
 
@@ -43,9 +43,9 @@
     <div class="field__rail field__rail--l">
       <dl>
         <dt>Frames held</dt>
-        <dd>51</dd>
+        <dd>52</dd>
         <dt>Latest</dt>
-        <dd>2026-10-16 · 0902 ended unreviewed, #72 call pushes</dd>
+        <dd>2026-10-19 · static weekend, PR #49 open with call blockers</dd>
       </dl>
     </div>
 
@@ -55,7 +55,7 @@
       </div>
       <div class="field__meta num">
         <span>Beevia project status</span>
-        <span>2026-08-05 &rarr; 2026-10-16</span>
+        <span>2026-08-05 &rarr; 2026-10-19</span>
         <span>Newest first</span>
       </div>
     </div>
@@ -75,9 +75,9 @@
   <div class="mvp__head">
     <span class="mvp__label label">MVP readiness &mdash; estimate</span>
     <span class="mvp__pct num">&asymp;67%</span>
-    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 45 days past</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 48 days past</span>
   </div>
-  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged. beevia-api #72 makes call ringing more reliable and adds a silent teardown push, but adds no missing capability; CallKit is still on the unmerged BVA-I316 branch. E2EE messaging 0.90; voice and video calling 0.85; message translation 0.60; local KYC 0.90; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.80; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged. No main branch moved in any repository; the only new code is on the unmerged BVA-I316 branch, and the rubric scores main. E2EE messaging 0.90; voice and video calling 0.85; message translation 0.60; local KYC 0.90; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.80; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
     <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.90"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.85"><i style="width:85%"></i></span>
     <span class="mvp__seg" style="flex:7" title="Message translation — 0.60"><i style="width:60%"></i></span>
@@ -90,10 +90,27 @@
     <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
     <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.97"><i style="width:97%"></i></span>
   </div>
-  <p class="mvp__read"><strong>66.76, unchanged.</strong> <code>beevia-api</code> #72 makes the server ring backgrounded apps and adds a silent <code>call.ended</code> teardown: a reliability fix, not a new capability, and no client handles the teardown yet. CallKit is still on the unmerged <code>BVA-I316</code> branch. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 16 Oct 2026 &mdash; <a href="2026-10-16.html#mvp-method">method and capability table</a>.</p>
+  <p class="mvp__read"><strong>66.76, unchanged.</strong> No <code>main</code> moved in any repository over the three days. Today&rsquo;s two <code>BVA-I316</code> commits are chat polish on a branch, and the rubric scores <code>main</code>. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 19 Oct 2026 &mdash; <a href="2026-10-19.html#mvp-method">method and capability table</a>.</p>
 </section>
 
 <main class="frames">
+
+  <a class="frame" href="2026-10-19.html">
+    <span class="frame__idx num">52</span>
+    <span>
+      <span class="frame__date">19 Oct 2026</span>
+      <span class="frame__sum"><strong>Nothing moved on any board over the weekend and no <code>main</code> moved in any repository; 0902 is four days past its end with 18 of 21 leaves in review, no close and no <code>0903</code>.</strong> The only new work is two commits on the unmerged <code>BVA-I316</code>, now open as PR #49: dark-mode fixes, saved contact names, bulk unarchive, new icons and an untracked iOS Firebase file. Neither call blocker was touched, and a hard-coded white tint blanks the light-mode mic icon.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:0"></i></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>0902 &middot; 4 days past end &middot; 0 To do &middot; 1 In progress &middot; 18 QA &middot; 1 Blocked &middot; 1 Done</span></div>
+      <div><span>MVP est</span><span>&asymp;67% &middot; &Delta; 0.00</span></div>
+      <div><span>Test-gated deploys</span><span>0 of 3 backend repos</span></div>
+      <div><span>Mobile branch</span><span>PR #49 (BVA-I316) &middot; VoIP clash + call.ended open</span></div>
+      <div><span>Board actions</span><span>0 in 3 days &middot; 0 left QA</span></div>
+      <div><span>API surface</span><span>139 / 49 &middot; drift 0 &middot; no main moved</span></div>
+    </span>
+  </a>
 
   <a class="frame" href="2026-10-16.html">
     <span class="frame__idx num">51</span>
@@ -965,7 +982,7 @@
 <footer class="foot">
   <span class="barcode barcode--lg" aria-hidden="true"></span>
   <span>Frames are written by the <code>beevia-refresh</code> skill alongside the Markdown in <code>project-status/</code>.</span>
-  <span><a href="2026-10-16.html">Latest</a></span>
+  <span><a href="2026-10-19.html">Latest</a></span>
 </footer>
 
 <script src="ui.js"></script>
