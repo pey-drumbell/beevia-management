@@ -650,6 +650,8 @@ The `android/app/.cxx/**/configure_fingerprint.bin` files have carried conflict 
 
 Firebase client API keys are designed to ship inside the app, so this is not a credential leak in the §7.5 sense. The protection is key restriction. In Google Cloud, restrict each key to its Android package and signing SHA-1 and its iOS bundle ID, and limit it to the Firebase APIs the app uses. Then `git rm --cached ios/GoogleService-Info.plist`. A history rewrite is not worth it for restricted client keys.
 
+**Update 2026-10-20: half done.** `8b267ed` (`git rm --cached ios/GoogleService-Info.plist`, plus that path in `.gitignore`) reached `main` through PR #49 on 19 Oct. No Firebase config file is tracked on `main` now. The file is still reachable in history at `1a1f39f`, and whether the keys have been restricted cannot be seen from here. Key restriction is still the part that protects anything.
+
 
 ## 8. Suggested order
 

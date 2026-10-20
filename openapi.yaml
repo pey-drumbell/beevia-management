@@ -2727,7 +2727,10 @@ paths:
         `call.incoming` socket event **and** a push, sent even to members who
         have a live socket (both carry `callId`; the client should ignore
         whichever arrives second). The push honours the `voice_calls` /
-        `video_calls` switch.
+        `video_calls` switch. It is **silent** (data-only, no `notification`
+        block, so the OS shows no banner) and carries `callerName` and
+        `callerAvatar` (empty string when the caller has no picture) so the
+        client can draw its own incoming-call screen without a round trip.
       requestBody:
         required: true
         content:
@@ -2793,6 +2796,8 @@ paths:
         (including the member who declined) gets a silent `call.ended` push
         with `status: declined`, so a backgrounded device can dismiss its
         ringing UI. That push ignores the call preference switches.
+        A `call_event` message is also posted into the conversation, as for
+        `endCall`.
       responses:
         '200': { $ref: '#/components/responses/CallOk' }
         '404': { $ref: '#/components/responses/NotFound' }
@@ -2805,7 +2810,15 @@ paths:
       operationId: endCall
       summary: End a call
       description: |
-        Either party may end. Duration and outcome are logged to the conversation. Mirrors `call.end`.
+        Either party may end. Mirrors `call.end`. Duration and outcome are
+        logged to the conversation as a `call_event` message: `ciphertext` is
+        `null`, `ref_id` and `client_id` are the call id (so a replayed
+        teardown writes it once), and `content_meta` carries `kind:
+        call_event`, `callId`, `callKind`, `status` (`ended`, `declined`,
+        `missed`), `initiatorUserId` and `durationSeconds` (`null` if the call
+        never connected). It carries facts, not wording; each side phrases it
+        ("Missed call" / "No answer"). It also becomes the conversation's last
+        message.
         Besides the socket broadcast, every member (including whoever ended it)
         gets a silent `call.ended` push (`status`: `ended`, or `missed` for a
         call that was still ringing), which ignores the call preference
@@ -3213,6 +3226,13 @@ paths:
         anything the caller did. A direct transfer lands already completed, so
         it appears without the flag.
 
+        **Live updates.** The server emits `activity.updated` to the user's own
+        socket room whenever a chat, call or payment the feed draws on changes.
+        It carries `changedType` (`chat`, `call`, `payment`) and the recomputed
+        `unattendedCount`, never the row itself: update the badge from the
+        event and re-read this feed when the tab is open. Sent only to users
+        with a live socket.
+
         `unattended_count` spans all three sources, not just this page, and
         ignores `filter` and `search`. It powers the bottom-nav badge.
       parameters:
@@ -3252,7 +3272,8 @@ paths:
       description: |
         Just the badge number, for refreshing it without re-fetching the feed.
         Same value as `unattended_count` on the feed response. Takes no
-        `X-Device-Id`.
+        `X-Device-Id`. The `activity.updated` socket event carries the same
+        number, so a connected client need not poll this.
       responses:
         '200':
           description: The count.
@@ -4510,7 +4531,7 @@ components:
         ref_id:
           type: [string, 'null']
           format: uuid
-          description: 'Cross-domain reference — e.g. the payment id behind a `payment_card` message.'
+          description: 'Cross-domain reference — e.g. the payment id behind a `payment_card` message, or the call id behind a `call_event` message.'
         client_id: { type: string, format: uuid, description: Client idempotency key. }
         sent_at: { type: string, format: date-time }
         edited_at: { type: [string, 'null'], format: date-time }

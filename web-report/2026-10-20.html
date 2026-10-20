@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beevia — Project Status — 20 Oct 2026</title>
+<meta name="description" content="PR #49 merged BVA-I316 to mobile main unchanged, with the VoIP token registration, no call.ended handler and a white-tinted light-mode mic. Two hours later beevia-api made the incoming-call push silent and added the caller name: Android now rings natively in the background, while a backgrounded iPhone gets nothing for a call and may lose pushes altogether. The server also writes call cards the client discards. No board moved; 0902 is five days past its end with 18 of 21 leaves in review.">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!--
+  DIRECTION CONTRACT · seed 6c4a0ed0 (carried forward unchanged)
+  THESIS: A status report whose subject is the disagreement between its sources.
+  STORY: The branch merges with its blockers in, the server goes silent on the one platform
+  that cannot hear it, and the board records none of it.
+-->
+
+<div class="topbar">
+    <div class="topbar__mark">
+      <span class="barcode" aria-hidden="true"></span>
+      <span class="topbar__wordmark">Beevia</span>
+    </div>
+    <nav class="topbar__nav label" aria-label="Report">
+      <a href="index.html">Archive</a>
+      <a href="#overview">Overview</a>
+      <a href="#s3"><span>Calls on main</span></a>
+      <a href="#s1"><span>Board</span></a>
+      <a href="#method">Method</a>
+    </nav>
+</div>
+
+<header class="masthead">
+  <div class="field">
+    <div class="field__rail field__rail--l">
+      <dl>
+        <dt>Sprints open</dt>
+        <dd>0902 &middot; 30 Sep &rarr; 15 Oct &middot; 5 days past end &middot; no successor</dd>
+        <dt>0902 leaves</dt>
+        <dd>0 To do &middot; 1 In progress &middot; 18 QA &middot; 1 Blocked &middot; 1 Done</dd>
+        <dt>Route drift</dt>
+        <dd>0 &middot; 139 / 49 &middot; 5 descriptions updated</dd>
+        <dt>Window</dt>
+        <dd>1.0 day &middot; Mon &rarr; Tue</dd>
+      </dl>
+    </div>
+
+    <div class="field__stage">
+      <div class="field__title">
+        <h1>Project<br>Status</h1>
+      </div>
+      <div class="field__meta num">
+        <span>2026-10-20</span>
+        <span>0902 ended &middot; 0901 static &middot; 0901-admin static</span>
+        <span>30 Sep&ndash;15 Oct</span>
+        <span>0 board actions &middot; PR #49 + api #73/#74 merged</span>
+      </div>
+    </div>
+
+    <div class="field__rail field__rail--r">
+      <dl>
+        <dt>Backend deploys gated on tests</dt>
+        <dd>0 of 3 &middot; #74 live a minute after merge</dd>
+        <dt>Mobile main (PR #49)</dt>
+        <dd>VoIP clash + no call.ended handler, now live</dd>
+        <dt>Backgrounded iPhone</dt>
+        <dd>no call alert since #74 (silent ring)</dd>
+        <dt>Into REVIEW/QA, 7 days</dt>
+        <dd>3 &middot; 2 by board administration &middot; 0 left</dd>
+      </dl>
+    </div>
+  </div>
+</header>
+
+<section class="mvp" aria-label="MVP readiness estimate">
+  <div class="mvp__head">
+    <span class="mvp__label label">MVP readiness &mdash; estimate</span>
+    <span class="mvp__pct num">&asymp;67%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 49 days past</span>
+  </div>
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged. CallKit reached main and Android now rings natively, but iOS lost its background call alert, so voice and video calling is held. E2EE messaging 0.90; voice and video calling 0.85; message translation 0.60; local KYC 0.90; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.80; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
+    <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.90"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.85"><i style="width:85%"></i></span>
+    <span class="mvp__seg" style="flex:7" title="Message translation — 0.60"><i style="width:60%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.90"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
+    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.85"><i style="width:85%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.92"><i style="width:92%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
+    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0.80"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
+    <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.97"><i style="width:97%"></i></span>
+  </div>
+  <p class="mvp__read"><strong>66.76, unchanged.</strong> CallKit is on <code>main</code> and Android now rings natively with the caller&rsquo;s name; the same day, a backgrounded iPhone lost its only call alert. Line 2 holds at 0.85 until the server can ring both platforms. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. <a href="#mvp-method">Method and capability table</a>.</p>
+</section>
+
+<div class="shell">
+  <nav class="contents label" aria-label="Contents">
+    Contents
+    <ol>
+      <li><a href="#overview"><span>00</span> Quick overview</a></li>
+      <li><a href="#s1"><span>01</span> Board movement</a></li>
+      <li><a href="#s2"><span>02</span> Sprint 0902, five days past its end</a></li>
+      <li><a href="#s3"><span>03</span> Code, API and drift</a></li>
+      <li><a href="#s4"><span>04</span> Risks</a></li>
+      <li><a href="#s5"><span>05</span> PRD gap</a></li>
+      <li><a href="#s6"><span>06</span> Team performance</a></li>
+      <li><a href="#s7"><span>07</span> Previous recommendations</a></li>
+      <li><a href="#s8"><span>08</span> What I would do this week</a></li>
+      <li><a href="#admin"><span>&mdash;</span> Admin dashboard board</a></li>
+      <li><a href="#method"><span>&mdash;</span> Method</a></li>
+    </ol>
+  </nav>
+
+  <main class="doc">
+    <section class="sec" id="overview">
+      <div class="sec__h"><span class="sec__n">00</span><h2>Quick overview</h2></div>
+
+<div class="invert" style="margin-bottom:var(--s-6)"><p class="lede"><strong>The two call defects this report has flagged since 13 Oct are now on mobile <code>main</code>. PR #49 merged <code>BVA-I316</code> unchanged at 14:30 UTC yesterday, 28 minutes after the last edition's cut-off. Two hours later <code>beevia-api</code> made the incoming-call push silent. On iOS, that removes the only alert a backgrounded iPhone used to get for a call.</strong> Read together, the code says a backgrounded or killed iPhone on a build from <code>main</code> now gets nothing for an incoming call, and may stop getting pushes of any kind once the VoIP token overwrites its FCM token. That is a code reading; nothing was built or run. On Android the same server change completes the native ring path, with the caller's name. Nothing moved on any board: 0902 is five days past its end with 18 of 21 leaves in review.</p></div>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Metric</th>
+<th style="text-align: right;">19 Oct</th>
+<th style="text-align: right;">20 Oct</th>
+<th scope="col">Δ</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">Sprint 0902 items (leaves + parents)</th>
+<td style="text-align: right;">25 (21+4)</td>
+<td style="text-align: right;">25 (21+4)</td>
+<td>0</td>
+</tr>
+<tr><th scope="row">Sprint 0902 leaves To do / In progress / REVIEW/QA / BLOCKED / Done</th>
+<td style="text-align: right;">0 / 1 / 18 / 1 / 1</td>
+<td style="text-align: right;"><strong>0 / 1 / 18 / 1 / 1</strong></td>
+<td>none. The 0902 sidecar is byte-identical to 19 Oct's</td>
+</tr>
+<tr><th scope="row">Board actions in the window (all boards)</th>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td>last action 15 Oct 16:05 UTC, <strong>4.9 days</strong> ago</td>
+</tr>
+<tr><th scope="row">Transitions into REVIEW/QA, last 7 days (leaves)</th>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;"><strong>3</strong></td>
+<td>1 by the leaf's owner (<code>I286</code>), <strong>2 by board administration</strong> (<code>I307</code>, <code>I313</code>). Five 12 Oct moves left the window</td>
+</tr>
+<tr><th scope="row">Owners' last submission of their <em>own</em> leaf</th>
+<td style="text-align: right;">14 Oct 16:01 UTC (David, <code>I286</code>)</td>
+<td style="text-align: right;">14 Oct 16:01 UTC (David, <code>I286</code>)</td>
+<td><strong>5.9 days</strong> ago</td>
+</tr>
+<tr><th scope="row">Items that left REVIEW/QA in the window</th>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td>nothing has left review since 0902 opened 20.6 days ago, apart from the two bulk sweeps on older sprints</td>
+</tr>
+<tr><th scope="row">0902 leaves in REVIEW/QA whose code is not (fully) on <code>main</code></th>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;"><strong>2</strong></td>
+<td>PR #49 brought <code>I307</code>, <code>I316</code> and <code>I324</code>'s client code to <code>main</code>. Left: <code>I325</code> (no server code anywhere) and <code>I286</code> (rename still missing)</td>
+</tr>
+<tr><th scope="row">Call defects from §3 now live on mobile <code>main</code></th>
+<td style="text-align: right;">0 (branch only)</td>
+<td style="text-align: right;"><strong>3</strong></td>
+<td>VoIP token registration, no <code>call.ended</code> handler, white-tinted light-mode mic</td>
+</tr>
+<tr><th scope="row">Backend repos that deploy or migrate production on push with no test gate</th>
+<td style="text-align: right;">3 of 3</td>
+<td style="text-align: right;"><strong>3 of 3</strong></td>
+<td>#73 and #74 went out that way</td>
+</tr>
+<tr><th scope="row">API surface (consumer / admin)</th>
+<td style="text-align: right;">139 / 49</td>
+<td style="text-align: right;">139 / 49</td>
+<td>0</td>
+</tr>
+<tr><th scope="row">Proposed operations (consumer / admin)</th>
+<td style="text-align: right;">38 / 18</td>
+<td style="text-align: right;">38 / 18</td>
+<td>0</td>
+</tr>
+<tr><th scope="row">Spec drift vs <code>origin/main</code> (route level)</th>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td>5 call/activity operation descriptions updated in place (§3.4)</td>
+</tr>
+<tr><th scope="row"><code>beevia-mobile</code> days since a commit on <code>main</code></th>
+<td style="text-align: right;">11.1</td>
+<td style="text-align: right;"><strong>1.0</strong></td>
+<td>PR #49 merge, 19 Oct 14:30 UTC</td>
+</tr>
+<tr><th scope="row"><code>beevia-api</code> / <code>beevia-admin-api</code> / <code>beevia-db-schema</code> days since a commit</th>
+<td style="text-align: right;">3.9 / 11.3 / 10.1</td>
+<td style="text-align: right;"><strong>0.9 / 12.3 / 11.1</strong></td>
+<td><code>beevia-api</code> #73 and #74, 19 Oct; ring-expiry PR open since this morning (#75, re-pushed as #76)</td>
+</tr>
+<tr><th scope="row"><code>beevia-admin</code> days since a commit</th>
+<td style="text-align: right;">26.9</td>
+<td style="text-align: right;"><strong>27.9</strong></td>
+<td></td>
+</tr>
+<tr><th scope="row">Admin board: open sprint / days since any activity</th>
+<td style="text-align: right;">none / 35.0</td>
+<td style="text-align: right;"><strong>none / 36.0</strong></td>
+<td></td>
+</tr>
+<tr><th scope="row">Successor sprint to 0902 in Zoho</th>
+<td style="text-align: right;">none</td>
+<td style="text-align: right;"><strong>none</strong></td>
+<td></td>
+</tr>
+<tr><th scope="row">Estimation points set (0902 / 0901 / 0901-admin / 08-01)</th>
+<td style="text-align: right;">0/25 · 0/76 · 0/12 · 0/64</td>
+<td style="text-align: right;">0/25 · 0/76 · 0/12 · 0/64</td>
+<td></td>
+</tr>
+<tr><th scope="row">MVP readiness (estimate)</th>
+<td style="text-align: right;">≈67% (66.76)</td>
+<td style="text-align: right;"><strong>≈67% (66.76)</strong></td>
+<td>0. Line 2 held: Android gained, iOS lost (appendix)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>No correction to 19 Oct.</strong> Its two forward-looking risks both came true within three hours of its cut-off: PR #49 merged as it stood, and the server work it asked for (<code>callerName</code>) shipped together with a change it did not foresee (the silent ring).</p>
+<p><strong>Team, at a glance:</strong></p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Person</th>
+<th scope="col">Owns</th>
+<th scope="col">Board leaves</th>
+<th style="text-align: right;">Submissions (7d)</th>
+<th scope="col">Median cycle</th>
+<th scope="col">Open WIP</th>
+<th style="text-align: right;">Commits (7d)</th>
+<th scope="col">Flag</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">Ayomikun Araoye</th>
+<td>backend + admin API</td>
+<td><strong>0902: 6, all in REVIEW/QA</strong> · 0901-admin: 1 In progress</td>
+<td style="text-align: right;"><strong>0</strong> (<code>I325</code>, 12 Oct, left the window)</td>
+<td>0.99 d (n=16)</td>
+<td>none on 0902 · <code>BVA-I8</code> on 0901-admin (<strong>36.0 d</strong>)</td>
+<td style="text-align: right;"><strong>8</strong> (all <code>beevia-api</code>)</td>
+<td>#73/#74 shipped yesterday, #76 (ex-#75) open today. None has a board item. The silent ring needs an iOS answer (§3.2)</td>
+</tr>
+<tr><th scope="row">David Samuel</th>
+<td>mobile</td>
+<td><strong>0902: 15</strong> (13 REVIEW/QA, 1 In progress, 1 BLOCKED)</td>
+<td style="text-align: right;">3 (<strong>1 own</strong>, <strong>2 by board administration</strong>)</td>
+<td>0.99 d (n=36)</td>
+<td><code>I309</code> (<strong>8.0 d</strong>, past their median)</td>
+<td style="text-align: right;"><strong>3 on <code>main</code></strong> (via PR #49) · 0 unmerged</td>
+<td><code>I309</code>'s code is now on <code>main</code>, with the VoIP registration and without the <code>call.ended</code> handler</td>
+</tr>
+<tr><th scope="row">Philip Chidera</th>
+<td>design</td>
+<td><strong>0902: 2</strong>: <code>BVA-I314</code> Done, <code>BVA-I321</code> REVIEW/QA</td>
+<td style="text-align: right;">0</td>
+<td>0.99 d (n=3)</td>
+<td>none</td>
+<td style="text-align: right;">n/a</td>
+<td>No board action since 2 Oct (18.0 d)</td>
+</tr>
+<tr><th scope="row">Promise Udo</th>
+<td>admin dashboard</td>
+<td>0901-admin: 4 (3 Done, 1 In progress)</td>
+<td style="text-align: right;">0</td>
+<td>n/a</td>
+<td><code>BVA-I9</code> (<strong>36.0 d</strong>)</td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td><code>beevia-admin</code> <strong>27.9 days</strong> without a commit. No admin sprint</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>The three questions for standup:</strong> (1) <strong>Is any iPhone running a build from today's <code>main</code>?</strong> If so, the VoIP registration is probably pruning its push token, and a one-line client change (stop calling <code>syncVoipTokenIfAvailable</code>) should go out before anything else (§3.2). (2) <strong>What should a backgrounded iPhone get for a call?</strong> Since #74 the answer is nothing. Either the server grows an APNs VoIP sender with a second token slot, or <code>call.incoming</code> carries an iOS-only alert until it does. (3) <strong>Who reviews 0902, and is there a 0903?</strong> The review step has taken nothing since 30 Sep. PR #49's merge moved three more review items' code onto <code>main</code>, so most of the queue is now checkable.</p>
+<p><strong>The three things worth knowing:</strong></p>
+<div class="stack">
+  <div class="finding"><div class="finding__n num">1</div><div><p><strong>PR #49 merged exactly as the last edition described it.</strong> The merge commit <code>31a77e8</code> (19 Oct 14:30 UTC) has the same tree as the branch tip <code>8b267ed</code>, so nothing was changed at merge time. The good half: <code>main</code> now has the Activity screen (<code>I316</code>), push tap routing (<code>I307</code>), chat-background application (<code>I324</code>), CallKit (<code>I309</code>) and the dark-mode fixes for <code>I322</code>. The iOS Firebase plist is untracked, and the foreground duplicate call banner is gone. The other half: <code>main</code> now registers the PushKit token with <code>pushProvider: 'voip'</code> on every socket connect (<code>call_kit_manager.dart:80</code>) and handles no <code>call.ended</code> push. The light-mode mic is drawn with <code>color: Colors.white</code> (<code>chat_widgets.dart:1103</code>), which by the last edition's reading blanks it to a white square. Who reviewed the PR is not visible from git.</p></div></div>
+  <div class="finding"><div class="finding__n num">2</div><div><p><strong>The server shipped three things the client does not consume yet.</strong> <code>beevia-api</code> #74 (19 Oct 16:51 UTC) makes <code>call.incoming</code> data-only and adds <code>callerName</code>/<code>callerAvatar</code>. The client already reads both, so the "caller shows as Beevia" gap is closed. On Android, the data-only ring now reaches the background handler. On iOS, both handlers ignore <code>call.incoming</code>, so the change removes the banner and leaves nothing. #74 also writes a <code>call_event</code> message into the conversation when a call ends, but the client drops any message with no ciphertext except a payment card. The result: a finished call moves its chat to the top of the inbox with the old preview, and no card appears. #73 adds an <code>activity.updated</code> socket event that nothing on the client subscribes to, and routes payment rows to their chat (the fix for "money requests don't appear on Activity"). PR #75, opened this morning and re-pushed unchanged as #76 at 14:07 UTC, expires rings nobody ended. Its message reports 16 production calls stuck <code>ringing</code> since 23 Sep and says #74 has been live since 19 Oct 16:52 UTC.</p></div></div>
+  <div class="finding"><div class="finding__n num">3</div><div><p><strong>The board is now five days static, and the 7-day submission count has fallen to 3.</strong> That fall is the window sliding past 12 Oct, not a new event. Two of the three were board administration's moves. The last owner submission is 5.9 days old, and nothing has left review on 0902 in 20.6 days. Meanwhile 26 files of server work (#73–#75) and a 94-file mobile merge happened with no board item and no board movement. <strong>The board has stopped describing the work.</strong> The review step, not the developers, is still the bottleneck.</p></div></div>
+</div>
+<p><strong>If you read nothing else:</strong> the iOS half of calling went backwards yesterday. CallKit's VoIP registration reached <code>main</code>, and the server's ring went silent with no VoIP sender behind it. Android went forwards. The fix is small on both sides (§8, items 1–3), and no board item tracks any of it.</p>
+    </section>
+
+    <section class="sec" id="s1">
+      <div class="sec__h"><span class="sec__n">01</span><h2>Board movement</h2></div>
+
+<h3>1.1 Sprint 0902</h3>
+<p><strong>25 items: 21 leaves + 4 parents.</strong> All figures are leaves unless stated. Against the 19 Oct scratch export, <strong>no row changed</strong> (only the preamble's <code>Date</code> line differs), and the activity sidecar is byte-identical (<code>cmp</code>).</p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Status</th>
+<th style="text-align: right;">19 Oct</th>
+<th style="text-align: right;">20 Oct</th>
+<th style="text-align: right;">Δ</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">To do</th>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr><th scope="row">In progress</th>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr><th scope="row">REVIEW/QA</th>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr><th scope="row">BLOCKED</th>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr><th scope="row">Done</th>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr><th scope="row"><strong>Total leaves</strong></th>
+<td style="text-align: right;"><strong>21</strong></td>
+<td style="text-align: right;"><strong>21</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>No status change, comment, reopen, completion or re-assignment on any board in the window. <code>BVA-I309</code> (CallKit) has been In progress for 8.0 days. Its code reached <code>main</code> yesterday, so the item's status no longer reflects where the code is. <code>BVA-I311</code> has been BLOCKED since 9 Oct with no comment.</p>
+<h3>1.2 Sprint 0901, 0901-admin and 08-01</h3>
+<p>All three are static. The 08-01 and 0901-admin sidecars are byte-identical to 19 Oct's. 0901 was not re-exported. The 19 Oct copy (last entry the 30 Sep sweep, 67 leaves Done, no reopens) is reused for cycle times. The audit's <code>SINCE</code> block compares two identical 08-01 exports and correctly reports no change.</p>
+    </section>
+
+    <section class="sec" id="s2">
+      <div class="sec__h"><span class="sec__n">02</span><h2>Sprint 0902, five days past its end</h2></div>
+
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Block</th>
+<th style="text-align: right;">Leaves</th>
+<th scope="col">State</th>
+<th scope="col">Code</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">Push notifications (<code>BVA-I306</code>–<code>I313</code>)</th>
+<td style="text-align: right;">8</td>
+<td>6 REVIEW/QA (<code>I306</code>, <code>I307</code>, <code>I308</code>, <code>I310</code>, <code>I312</code>, <code>I313</code>), 1 In progress (<code>I309</code>), 1 BLOCKED (<code>I311</code>)</td>
+<td><strong>All on <code>main</code> now.</strong> <code>I307</code>'s routing came with PR #49. <code>I309</code> (CallKit) is on <code>main</code> with the VoIP registration and no <code>call.ended</code> handling</td>
+</tr>
+<tr><th scope="row">Activity tab (<code>BVA-I314</code>–<code>I316</code>)</th>
+<td style="text-align: right;">3</td>
+<td>design Done, backend <code>I315</code> REVIEW/QA, screen <code>I316</code> REVIEW/QA</td>
+<td>Feed (#66) and screen (PR #49) both on <code>main</code>. Server gained <code>activity.updated</code> (#73); the screen does not subscribe</td>
+</tr>
+<tr><th scope="row">Appearance (<code>BVA-I318</code>–<code>I329</code>)</th>
+<td style="text-align: right;">9</td>
+<td>all 9 REVIEW/QA</td>
+<td>All client code on <code>main</code>. <code>I322</code>'s fixes landed with a hard-coded white mic tint. <code>I319</code>, <code>I325</code>, <code>I328</code> still have no server code, and <code>I324</code>'s save call still goes to a route that does not exist</td>
+</tr>
+<tr><th scope="row">Carried bug <code>BVA-I286</code></th>
+<td style="text-align: right;">1</td>
+<td>REVIEW/QA since 14 Oct</td>
+<td>Partly on <code>main</code>: the "Transactions History" rename is still not on any branch</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Two review items do not have their code (fully) on <code>main</code>, down from five.</strong> A reviewer can now check the rest of the queue against <code>main</code> directly. <code>I322</code> should go back for the one-line mic fix. A close by bulk sweep, as 0901 had on 30 Sep, would still mark <code>I325</code> and <code>I286</code> Done.</p>
+    </section>
+
+    <section class="sec" id="s3">
+      <div class="sec__h"><span class="sec__n">03</span><h2>Code, API surface and spec drift</h2></div>
+
+<p><strong>Audit: clean at route level.</strong> Against a <code>git archive</code> shadow of <code>origin/main</code> (<code>$BEEVIA_ROOT=/tmp/beevia-shadow-2026-10-20</code>): <code>beevia-api</code> 139/139, <code>beevia-admin-api</code> 49/49, proposed 38/18, spec health clean, no <code>x-beevia-*</code>. Clean again after this cycle's spec edits. The in-repo audit reports its known phantom lines from the three <code>diverged</code> working trees (8 consumer + 15 admin "in spec, not in code"). They are an artefact of the stale working trees and were not acted on.</p>
+<p><strong>Two <code>main</code> branches moved.</strong> <code>beevia-mobile</code> <code>4f9c29f</code> → <code>31a77e8</code> (PR #49, 6 commits, 94 files, +4,383/−706). <code>beevia-api</code> <code>a7b2170</code> → <code>49c0683</code> (#73 <code>fa392e4</code> + <code>2646484</code>, #74 <code>f346459</code>, all by <code>Phoenixdadhev</code>, merged by <code>Ayomikun Araoye</code> at 16:31 and 16:51 UTC). <code>beevia-admin-api</code> (<code>c59460a</code>, 8 Oct), <code>beevia-db-schema</code> (<code>40ecf69</code>, v0.0.40, 9 Oct) and <code>beevia-admin</code> (<code>0b41e35</code>, 22 Sep) did not move. <strong>Open: <code>beevia-api</code> PR #76</strong> (<code>origin/fix/abandoned-ring-timeout</code>, <code>7200c55</code>, 20 Oct 14:07 UTC), 1 commit, 7 files. It replaces <strong>PR #75</strong> (<code>fix/expire-abandoned-rings</code>, <code>860443b</code>, 14:01 UTC). The tree and the commit message are identical, the old branch is deleted, and #75 has no merge ref. This was seen in the end-of-run recheck, and the rest of this report reads the one commit under either number.</p>
+<h3>3.1 What PR #49 put on mobile <code>main</code></h3>
+<p><code>origin/BVA-I316</code> and <code>origin/BVA-I306</code> are now fully contained in <code>main</code> (0 commits ahead). <code>git diff origin/BVA-I316 origin/main</code> is empty.</p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Landed</th>
+<th scope="col">Board item</th>
+<th scope="col">Note</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">Activity screen calling <code>GET /activity</code></th>
+<td><code>I316</code></td>
+<td>Filter/search run on the client over loaded pages; badge from the feed response (<code>api-rfc.md</code> §5.14)</td>
+</tr>
+<tr><th scope="row">Push tap routing by <code>data.kind</code></th>
+<td><code>I307</code></td>
+<td></td>
+</tr>
+<tr><th scope="row">CallKit, PushKit registration, Android native ring from FCM</th>
+<td><code>I309</code></td>
+<td>VoIP clash and missing <code>call.ended</code> handling (§3.2)</td>
+</tr>
+<tr><th scope="row">Chat background application</th>
+<td><code>I324</code></td>
+<td>Saves to <code>PUT /users/me/appearance/chat-background</code>, which 404s (<code>api_url.dart:53–57</code>, <code>TODO(backend)</code>)</td>
+</tr>
+<tr><th scope="row">Dark-mode text and cursor fixes; dark mic icon</th>
+<td><code>I322</code></td>
+<td><strong>Light-mode mic tinted white</strong> (<code>chat_widgets.dart:1099–1103</code>)</td>
+</tr>
+<tr><th scope="row">Saved contact names, bulk unarchive, new launcher icons</th>
+<td>none</td>
+<td>Off-board</td>
+</tr>
+<tr><th scope="row"><code>ios/GoogleService-Info.plist</code> untracked and git-ignored; code scan with <code>code-quality: false</code></th>
+<td>rec. 13</td>
+<td>No Firebase config file is tracked on <code>main</code> now. Still in history at <code>1a1f39f</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code>main</code> has no conflict markers in <code>pubspec.yaml</code>, <code>pubspec.lock</code> or <code>project.pbxproj</code>. The biometric step-up is unchanged (<code>wallet_service.dart:78</code>, against a PIN-only <code>stepUpSchema</code>).</p>
+<h3>3.2 Calls: the client and server changes, read together</h3>
+<p>Full detail in <code>api-rfc.md</code> §5.15 (2026-10-20 update). In short:</p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col"></th>
+<th scope="col">Android</th>
+<th scope="col">iOS</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">App in foreground</th>
+<td>Socket ring; native screen from the push unless the socket's ring is already up</td>
+<td>Socket ring</td>
+</tr>
+<tr><th scope="row">App backgrounded or killed</th>
+<td><strong>Native ring from the data-only push, now with the caller's name</strong> (#74 + PR #49)</td>
+<td><strong>Nothing.</strong> The banner went with #74. Both handlers act on <code>call.incoming</code> only on Android, and the server has no APNs VoIP sender</td>
+</tr>
+<tr><th scope="row">Ring dismissed when the call ends</th>
+<td>Socket <code>call.update</code>, or the plugin's 30 s <code>duration</code>, which then posts a "Missed Call" notification. <code>call.ended</code> push ignored</td>
+<td>Same; no iOS consumer</td>
+</tr>
+<tr><th scope="row">Push token</th>
+<td>FCM</td>
+<td><strong>FCM and VoIP tokens alternate in one slot.</strong> FCM rejects a PushKit token, and <code>invalid-argument</code>/<code>invalid-registration-token</code> are in <code>DEAD_TOKEN_CODES</code>, so the processor likely prunes the token (<code>notification.processor.ts:27–31</code>). The device would then get no pushes until FCM re-registers</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>All of this is a reading of the code. Listener order on socket connect, the FCM sync's <code>force: false</code> cache, and FCM's exact error code for a PushKit token decide the details, and none of them was tested. Whether any iPhone runs a build from <code>main</code> is not visible here.</p>
+<p><strong>PR #75/#76</strong> sweeps <code>ringing</code> calls older than 60 s every 15 s and runs each through the normal teardown. It fixes real server state: its message cites 16 calls stuck <code>ringing</code> and a LiveKit webhook that is not arriving. It is unlikely to fix the stacked call UIs that mobile reported on its own, for two reasons. The client's own ring times out at 30 s, before the server's 60–75 s, and the teardown arrives as the <code>call.ended</code> push no client consumes.</p>
+<h3>3.3 The standing checks</h3>
+<ul>
+<li><strong>VoIP token clash</strong> (<code>api-rfc.md</code> §5.15): <strong>now on <code>main</code>.</strong> The server is unchanged: one token per device, no APNs sender.</li>
+<li><strong><code>call.ended</code></strong>: <strong>unhandled on <code>main</code>.</strong></li>
+<li><strong>Duplicate call banner on mobile <code>main</code></strong>: <strong>closed.</strong> <code>_handleForegroundMessage</code> returns early for <code>call.incoming</code>, and #74 removed the <code>notification</code> block anyway.</li>
+<li><strong>Caller name on the native call screen</strong>: <strong>closed</strong> by #74, on the platform that can show it (Android).</li>
+<li><strong><code>apns-priority</code></strong>: silent pushes still go at <code>10</code> (<code>fcm.adapter.ts:124</code>). <code>call.incoming</code> is now one of them.</li>
+<li><strong>Pipelines:</strong> no workflow change on any backend <code>main</code>. <code>beevia-api</code>'s <code>release.yml</code> still says "Deliberately not <code>needs: test</code>". <code>beevia-db-schema</code> and <code>beevia-admin-api</code> have no <code>needs:</code>. #73/#74 deployed that way; #75's message says #74 was live from 16:52 UTC, a minute after merge.</li>
+<li><strong>Dependabot (mobile):</strong> the <code>pub-minor-and-patch</code> group was re-cut as <strong>PR #51</strong> (19 Oct 14:40 UTC, 10 updates). It still carries <code>flutter_local_notifications</code> ^19.5.0 → ^22.3.2, a three-major bump, and <code>livekit_client</code> 2.11 → 2.13. New PR #50 bumps the Gradle group (3 updates). The superseded group branches are gone. #45 (<code>local_auth</code> 3.0.2) and #47 (<code>cupertino_icons</code> 2.0.0) are unchanged.</li>
+<li><code>PaymentService.activeNgn()</code> and <code>StubTranslateAdapter</code> are unchanged. <code>22P02</code> is still unmapped. <code>messages.ref_id</code> is now queried by the Activity feed with no index (#73's TODO, a <code>beevia-db-schema</code> change).</li>
+</ul>
+<h3>3.4 Document changes this cycle</h3>
+<ul>
+<li><strong><code>openapi.yaml</code></strong>: five operation descriptions and one schema field updated in place, no operation added or removed: <code>startCall</code> (silent ring, <code>callerName</code>/<code>callerAvatar</code>), <code>declineCall</code> and <code>endCall</code> (the <code>call_event</code> message and its <code>content_meta</code>), <code>listActivity</code> and <code>getUnattendedActivityCount</code> (<code>activity.updated</code>), and <code>Message.ref_id</code> (call id for <code>call_event</code>). The <code>Message.type</code> enum already listed <code>call_event</code>. <code>ActivityItem.conversation_id</code> already described the behaviour #73 now implements.</li>
+<li><strong><code>api-rfc.md</code></strong>: §5.13's push table (<code>call.incoming</code> row), a 2026-10-20 update to §5.14 (Activity) and to §5.15 (calls).</li>
+<li><strong><code>suggestions.md</code></strong> §5.13: the plist is untracked on <code>main</code>; key restriction is still the open half.</li>
+<li><code>admin-api-rfc.md</code>, <code>openapi.proposed.yaml</code> and both admin specs: no change needed.</li>
+</ul>
+    </section>
+
+    <section class="sec" id="s4">
+      <div class="sec__h"><span class="sec__n">04</span><h2>Risks</h2></div>
+
+<ul>
+<li><strong>iPhones on a build from mobile <code>main</code> probably lose push delivery</strong>, because the VoIP token overwrites the FCM token in the device's one slot (§3.2). If any tester or store build carries <code>31a77e8</code>, this is the highest-priority item on the project.</li>
+<li><strong>A backgrounded iPhone gets no incoming-call alert at all since #74</strong>, independent of the client build.</li>
+<li><strong><code>call_event</code> cards are written and discarded.</strong> Every finished call reorders the inbox with a stale preview. Harmless but visible, and it gets worse with every call.</li>
+<li><strong>The light-mode mic renders as a blank square on <code>main</code></strong> (a code reading; no build ran).</li>
+<li><strong>0902 has been over for five days with no reviewer, no close and no successor.</strong> 18 leaves sit in review. A bulk sweep would mark <code>I325</code> and <code>I286</code> Done without their code.</li>
+<li><strong>Rings stuck in <code>ringing</code> on production</strong> (16, per #75/#76) until it merges. The LiveKit <code>room_finished</code> webhook is reported not to arrive, which also affects ordinary call teardown.</li>
+<li><strong>The board no longer describes the work.</strong> #71–#75 and PR #49's polish have no items; the board has not moved in 4.9 days.</li>
+<li><strong>A Dependabot group PR on mobile (#51) hides a three-major bump</strong> of the notifications plugin, the one the call path depends on.</li>
+<li><strong>Every backend repo still deploys or migrates production on push without a test gate.</strong> Yesterday's call change went live within a minute of merge.</li>
+<li><strong>Firebase keys are in history.</strong> Untracked on <code>main</code> now; restriction not visible.</li>
+<li>Carried, unchanged: wallet-failure notices off by default (undecided); possible pre-12 Oct PII in production logs (not visible); malformed path ids return <code>500</code> (<code>suggestions.md</code> §1.1); <code>BVA-I311</code> blocked 11 days with no comment; production SSH open to any address per the 1 Oct deploy commits (unverified); the biometric step-up on <code>main</code> fails against the real API (§5.11); the admin workstream silent (27.9 days without a <code>beevia-admin</code> commit, 36.0 without board activity); three diverged local working trees.</li>
+</ul>
+    </section>
+
+    <section class="sec" id="s5">
+      <div class="sec__h"><span class="sec__n">05</span><h2>PRD gap</h2></div>
+
+<p>Unchanged. The four structural gaps carry 32 of the rubric's 100 points: international KYC, multi-currency/FX settlement, consent management, and virtual cards beyond what is wired. No item on any sprint touches them. Yesterday's work was calling, the Activity feed and chat polish.</p>
+    </section>
+
+    <section class="sec" id="s6">
+      <div class="sec__h"><span class="sec__n">06</span><h2>Team performance: detail</h2></div>
+
+<p>All flow figures come from the activity sidecars (the <code>actiontime</code> of the relevant transition), never from <code>Last Modified</code>. The 7-day window is 13 Oct 14:04 → 20 Oct 14:04 UTC. Commit counts are non-merge commits on <code>origin/main</code> in that window, summing each person's git identities (<code>Phoenixdadhev</code> + <code>Ayomikun Araoye</code>; <code>Davidtariq96</code> + <code>David Samuel</code>), with bots excluded. Open-branch commits are listed separately. WIP ages run from each item's last entry into In progress. <strong>Submissions are split by who made the move.</strong> Co-assigned items count for both owners. Cycle times use 0901 and 0902.</p>
+<h3>6.1 Ayomikun Araoye: backend + admin API</h3>
+<p><strong>8 commits in 7 days, all in <code>beevia-api</code></strong>: #71 (wallet-activity pushes and package updates, 13 Oct), #72 (call pushes, 15 Oct), and yesterday's #73 (<code>activity.updated</code>, payment-row routing) and #74 (call cards, silent ring with caller name). One more is on the open PR #75 this morning. The commit messages are unusually explicit about production evidence (row counts, stuck calls, query timings), which is what made §3.2 checkable. <strong>Zero submissions in the window</strong>: <code>I325</code> (12 Oct) has left it, and all six of their 0902 leaves are in review. Median cycle <strong>0.99 d (n=16)</strong>. <code>BVA-I8</code> has been In progress on the closed admin board for 36.0 days. None of #71–#75 has a board item, and #74 responds to "two things the mobile client asked for" that are not on the board either. That is a process gap, not an individual one. The two things still open on the server side, a VoIP-capable push path for iOS and the <code>walletActivity</code> default, have no item, so neither is anyone's assigned work yet.</p>
+<h3>6.2 David Samuel: mobile</h3>
+<p><strong>3 commits on <code>main</code> in the window</strong> (<code>d507fe4</code>, <code>b2fc36f</code>, <code>8b267ed</code>, as <code>Davidtariq96</code>), landed through PR #49, merged under the <code>David Samuel</code> identity at 14:30 UTC yesterday. No unmerged branch work remains. No board action since 14 Oct 16:10 UTC. Of their three 7-day submissions, one was their own (<code>I286</code>) and <strong>two were board administration's</strong> (<code>I307</code>, <code>I313</code> on 15 Oct). Median cycle <strong>0.99 d (n=36)</strong>. WIP: <code>I309</code> (CallKit) for <strong>8.0 d</strong>, the oldest open item on 0902. Its code is now on <code>main</code>. The parts still missing (dropping the VoIP registration, a <code>call.ended</code> handler) are small, and the server's silent ring has made the iOS side a decision for both developers rather than a mobile task. Whether anyone reviewed PR #49 before it merged cannot be seen from git. That is a process question for the team, not a finding about the author.</p>
+<h3>6.3 Philip Chidera: design</h3>
+<p>No board action since 2 Oct 14:18 UTC, 18.0 days. <code>BVA-I321</code> is still in review, and open WIP is zero. Zero submissions and zero WIP is worth a question rather than an assumption: finished, waiting on review, or working off-board. The new launcher icons that reached <code>main</code> yesterday are a design-facing change with no design item. The open design questions are unchanged: whether <code>I313</code> matches the new design, and <code>I286</code>'s message button and username. #74 adds a new one: the wording of call cards ("Missed call" for the callee, "No answer" for the caller) is left to the client.</p>
+<h3>6.4 Promise Udo: admin dashboard</h3>
+<p><strong>No commit in the 7-day window.</strong> The last was <code>0b41e35</code> on 22 Sep, <strong>27.9 days</strong> ago. The admin board has had no activity for 36.0 days, and <code>BVA-I9</code> has been In progress for all of it. <strong>Absence of data is not absence of work.</strong> <code>beevia-admin</code> has only <code>main</code>, so local work would be invisible here.</p>
+<h3>6.5 Weekly submission trend (leaves, transitions into REVIEW/QA)</h3>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">ISO week</th>
+<th style="text-align: right;">0901</th>
+<th style="text-align: right;">0902</th>
+<th style="text-align: right;">by the leaf's owner</th>
+<th style="text-align: right;">by another team member</th>
+<th style="text-align: right;">by board administration</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">2026-W38</th>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+</tr>
+<tr><th scope="row">2026-W39</th>
+<td style="text-align: right;"><strong>42</strong></td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">(most by board administration; see 29 Sep edition)</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+</tr>
+<tr><th scope="row">2026-W40 (28 Sep → 4 Oct)</th>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr><th scope="row">2026-W41 (5 → 11 Oct)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>10</strong></td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr><th scope="row">2026-W42 (12 → 18 Oct)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>8</strong></td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;"><strong>5</strong></td>
+</tr>
+<tr><th scope="row">2026-W43 (from Mon 19 Oct, to 14:02 UTC Tue)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Acceptance on 0902 is still zero. Over twenty days, 18 leaves went into review and none came out. <strong>The review step, not the developers, is the bottleneck.</strong> This week the gap between the board and the code is wider than ever: two <code>main</code> branches took 113 files of work in one afternoon, and the board recorded nothing.</p>
+<h3>6.6 What this does not measure</h3>
+<ul>
+<li><strong>No estimation points on any item on any board.</strong> Item counts say nothing about who is carrying more.</li>
+<li><strong>Work outside the board.</strong> #71–#75, the contact-name, archive and icon work, and the <code>call_event</code> cards have no items.</li>
+<li><strong>Who moved an item is not whether it is done.</strong> Two review items lack their code on <code>main</code>, and one (<code>I322</code>) has a regression on it.</li>
+<li><strong>A merge is not a review.</strong> The merge commit records who pressed the button, not whether anyone read the diff.</li>
+<li><strong>Nothing here measures correctness.</strong> No build, test or lint ran in any repository. §3.2 and the mic finding are code readings.</li>
+</ul>
+    </section>
+
+    <section class="sec" id="s7">
+      <div class="sec__h"><span class="sec__n">07</span><h2>Previous recommendations: where they stand</h2></div>
+
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Recommendation from 19 Oct</th>
+<th scope="col">Status on 20 Oct</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row"><strong>1. Create 0903 and move <code>I309</code>/<code>I311</code> into it; do not sweep 0902; set <code>ZOHO_SPRINT_FILTER</code> to <code>0903</code></strong></th>
+<td>❌ <strong>Not done.</strong> No 0903, no sweep, no board action</td>
+</tr>
+<tr><th scope="row"><strong>2. Review 0902 against <code>main</code>; send <code>I307</code>/<code>I316</code>/<code>I324</code>/<code>I322</code> back until <code>BVA-I316</code> merges, <code>I286</code> until the rename lands; close <code>I319</code>/<code>I325</code>/<code>I328</code> with a note</strong></th>
+<td>◐ <strong>The condition changed, the action did not.</strong> <code>BVA-I316</code> merged, so <code>I307</code>/<code>I316</code>/<code>I324</code> can now be reviewed on <code>main</code>. Nothing left review</td>
+</tr>
+<tr><th scope="row"><strong>3. Before PR #49 merges: remove the VoIP registration, add a <code>call.ended</code> handler, drop the light-mode mic tint</strong></th>
+<td>❌ <strong>Overtaken.</strong> PR #49 merged 28 minutes after the edition with none of the three</td>
+</tr>
+<tr><th scope="row"><strong>4. Review PR #49 promptly once item 3 is in</strong></th>
+<td>◐ <strong>Merged without item 3.</strong> Whether it was reviewed is not visible</td>
+</tr>
+<tr><th scope="row"><strong>5. Patch <code>main</code>'s foreground push handler to skip <code>call.incoming</code></strong></th>
+<td>✅ <strong>Done by the merge.</strong> <code>main</code>'s handler now returns early for it; #74 also removed the banner</td>
+</tr>
+<tr><th scope="row"><strong>6. Add <code>callerName</code> to <code>call.incoming</code>'s <code>data</code>; check <code>apns-priority: 5</code> for silent pushes</strong></th>
+<td>◐ <strong>Half.</strong> <code>callerName</code> and <code>callerAvatar</code> shipped in #74. Silent pushes still go at priority 10, and there are now two of them</td>
+</tr>
+<tr><th scope="row"><strong>7. Give off-board work a board item</strong></th>
+<td>❌ <strong>Not done.</strong> #73, #74, #75 and PR #49's polish have none</td>
+</tr>
+<tr><th scope="row"><strong>8. Restrict the Firebase API keys</strong></th>
+<td>? <strong>Not visible.</strong> The plist is now untracked on <code>main</code> (PR #49)</td>
+</tr>
+<tr><th scope="row"><strong>9. Hold the Dependabot <code>pub-minor-and-patch</code> PR until <code>BVA-I316</code> lands</strong></th>
+<td>◐ <strong>Held, and the condition is met.</strong> Re-cut as #51 after the merge, still carrying <code>flutter_local_notifications</code> 19 → 22</td>
+</tr>
+<tr><th scope="row"><strong>10. Put <code>needs: test</code> back on <code>beevia-api</code>'s <code>sync</code>; verify jobs elsewhere</strong></th>
+<td>❌ <strong>Not done</strong></td>
+</tr>
+<tr><th scope="row"><strong>11. Decide the <code>walletActivity</code> default</strong></th>
+<td>❌ <strong>Not done</strong></td>
+</tr>
+<tr><th scope="row"><strong>12. Generate <code>openapi.yaml</code> from the running app and diff it in CI</strong></th>
+<td>❌ <strong>Not done</strong></td>
+</tr>
+<tr><th scope="row"><strong>13. Check the production logs for pre-12 Oct PII</strong></th>
+<td>? <strong>Not visible</strong></td>
+</tr>
+<tr><th scope="row"><strong>14. Map <code>22P02</code> to <code>400</code></strong></th>
+<td>❌ <strong>Not done</strong></td>
+</tr>
+<tr><th scope="row"><strong>15. Make Flutter CI a required check on mobile <code>main</code>; confirm the Firebase secrets</strong></th>
+<td>? <strong>Not visible</strong></td>
+</tr>
+<tr><th scope="row"><strong>16. Check the production host's SSH settings</strong></th>
+<td>? <strong>Not visible</strong></td>
+</tr>
+<tr><th scope="row"><strong>17. Hide the biometric option outside mock mode</strong></th>
+<td>❌ <strong>Not done</strong></td>
+</tr>
+<tr><th scope="row"><strong>18. Bring <code>payments.dto.ts</code> onto <code>phone.util.ts</code></strong></th>
+<td>❌ <strong>Not done</strong></td>
+</tr>
+<tr><th scope="row"><strong>19. Open the admin board's next sprint, or say it is paused</strong></th>
+<td>❌ <strong>Neither</strong></td>
+</tr>
+<tr><th scope="row"><strong>20. Carried items</strong></th>
+<td>❌ <strong>None moved</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>One done, four partly (two of them overtaken by the merge), the rest not done or not visible.</strong></p>
+    </section>
+
+    <section class="sec" id="s8">
+      <div class="sec__h"><span class="sec__n">08</span><h2>What I would do this week</h2></div>
+
+<ol>
+<li><strong>Stop the VoIP token registration on mobile <code>main</code> today.</strong> Remove the <code>addSocketConnectedListener(CallKitManager.syncVoipTokenIfAvailable)</code> line in <code>bootstrap.dart:111</code>, or make it a no-op, until the server can store and use a second token. If an iPhone build from <code>31a77e8</code> is already out, also force one FCM re-registration (<code>_registerToken(token, force: true)</code>) on the next launch.</li>
+<li><strong>Decide what a backgrounded iPhone gets for a call.</strong> The full answer is an APNs VoIP sender plus a <code>(device, provider)</code> token slot (<code>api-rfc.md</code> §5.15). Until that exists, send <code>call.incoming</code> with an APNs <code>alert</code> for iOS only, through the <code>apns.payload</code> block <code>FcmPushAdapter</code> already builds, and keep Android data-only.</li>
+<li><strong>Handle <code>call.ended</code> and <code>call_event</code> on the client.</strong> For <code>call.ended</code>, call <code>CallKitManager.endNativeCall(callId)</code> from both push handlers. For <code>call_event</code>, add a branch beside the <code>payment_card</code> one in <code>_decryptAndPersist</code>, plus a preview string in <code>_messagePreview</code>.</li>
+<li><strong>Merge #76 (the re-push of #75), and find out why <code>room_finished</code> is not arriving.</strong> The sweep is a safety net. The webhook is the normal teardown path for a dropped call.</li>
+<li><strong>Fix the light-mode mic</strong> (<code>chat_widgets.dart:1103</code>: tint only in dark mode, or drop it), and send <code>I322</code> back until then.</li>
+<li><strong>Create 0903 and move <code>I309</code> and <code>I311</code> into it.</strong> Do not close 0902 by sweep. Then set <code>ZOHO_SPRINT_FILTER</code> to <code>0903</code>.</li>
+<li><strong>Review 0902 against <code>main</code>.</strong> Accept what is there and works: <code>I306</code>, <code>I307</code>, <code>I308</code>, <code>I310</code>, <code>I312</code>, <code>I315</code>, <code>I316</code>, <code>I318</code>, <code>I321</code>, <code>I324</code> (client half), <code>I327</code>, <code>I329</code>, and <code>I313</code> once design has looked at it. Hold <code>I322</code> (item 5) and <code>I286</code> (rename). Close <code>I319</code>/<code>I325</code>/<code>I328</code> with a note, or open one backend item to extend <code>PATCH /users/me/settings</code>.</li>
+<li><strong>Give off-board work a board item:</strong> #71–#75, the iOS call decision (item 2), and PR #49's contact names, bulk unarchive and icons.</li>
+<li><strong>Subscribe the Activity screen to <code>activity.updated</code></strong> for the badge, and add the <code>messages.ref_id</code> partial index in <code>beevia-db-schema</code> before the table grows.</li>
+<li><strong>Split <code>flutter_local_notifications</code> 19 → 22 out of Dependabot PR #51</strong> and test it on its own; merge the rest of the group.</li>
+<li><strong>Send silent pushes at <code>apns-priority: 5</code></strong>, and test <code>call.ended</code> on an iPhone once item 3 is in.</li>
+<li><strong>Restrict the Firebase API keys.</strong> Untracking the plist does not protect keys already in history.</li>
+<li><strong>Put <code>needs: test</code> back on <code>beevia-api</code>'s <code>sync</code></strong>, and give db-schema's Release and admin-api's Sync a verify job (<code>suggestions.md</code> §7.7).</li>
+<li><strong>Decide the <code>walletActivity</code> default.</strong></li>
+<li><strong>Generate <code>openapi.yaml</code> from the running app and diff it in CI</strong> (<code>suggestions.md</code> §5.4).</li>
+<li><strong>Check the production logs for PII from before 12 Oct.</strong></li>
+<li><strong>Map <code>22P02</code> to <code>400</code></strong> (<code>suggestions.md</code> §1.1).</li>
+<li><strong>Make Flutter CI a required check on mobile <code>main</code></strong>, and confirm the Firebase secrets.</li>
+<li><strong>Check the production host's SSH settings.</strong></li>
+<li><strong>Hide the biometric option outside mock mode</strong> (<code>suggestions.md</code> §5.11), and <strong>bring <code>payments.dto.ts</code> onto <code>phone.util.ts</code></strong>.</li>
+<li><strong>Open the admin board's next sprint</strong>, or say in one line that the admin workstream is paused.</li>
+<li><strong>Carried, unchanged:</strong> comments on <code>BVA-I260</code>/<code>I275</code>/<code>I277</code>; <code>code-scan.yml</code> into <code>beevia-admin</code> (after it has any CI); the <code>reports.service.ts</code> read-scoping fix; the Module 4 decision record; restoring or retiring the five deleted <code>beevia-api</code> docs, <code>encryption-model.md</code> first; writing the translation decision down; stopping the vendored client spec; untracking <code>android/app/.cxx/</code>.</li>
+</ol>
+    </section>
+
+    <section class="sec" id="admin">
+      <div class="sec__h"><span class="sec__n">&mdash;</span><h2>Admin dashboard board</h2></div>
+
+<p><code>0901-admin</code> still has 12 items (8 leaves + 4 parents: 6 leaves Done, 2 In progress). It is closed, and nothing on it has changed since <strong>14 Sep 14:53 UTC, 36.0 days ago</strong>. Today's sidecar is byte-identical to 19 Oct's. <code>BVA-I8</code> (<em>Report Data Query</em>, Ayomikun) and <code>BVA-I9</code> (<em>Report Content Display</em>, Promise) have both been In progress for all 36 days. <strong>Zoho lists no successor sprint for this project.</strong> <code>beevia-admin</code> has gone 27.9 days without a commit, and <code>beevia-admin-api</code> 12.3. These figures are never added to the main board's.</p>
+    </section>
+
+    <section class="sec" id="method">
+      <div class="sec__h"><span class="sec__n">&mdash;</span><h2>Appendix: method and readiness rubric</h2></div>
+
+<p><strong>Sources.</strong> <code>sprint-board-exports/beevia-sprint-board-2026-10-20.csv</code> + <code>beevia-activity-2026-10-20.json</code> (64 items, sprint 08-01, frozen); <code>sprint-board-exports/admin/beevia-admin-sprint-board-2026-10-20.csv</code> + its activity sidecar (12 items, sprint 0901-admin); a read-only scratch export of sprint <strong>0902 (25 items)</strong> in <code>/tmp/beevia-scratch/0902/</code>, diffed against the 19 Oct file in the same folder; the 19 Oct scratch export of sprint <strong>0901 (76 items, closed and static)</strong> in <code>/tmp/beevia-scratch/0901/</code>, for cycle times. All five repos were read at <code>origin/main</code>, along with <code>beevia-api</code>'s open ring-expiry PR (#75, re-pushed as #76 during the run). <code>beevia-api</code>, <code>beevia-admin-api</code> and <code>beevia-db-schema</code> were read through a <code>git archive</code> shadow, because their working trees are still <code>diverged</code>.</p>
+<p><a id="mvp-method"></a></p>
+
+<h3>MVP readiness: ≈67% (estimate; 66.76, unchanged)</h3>
+<p><strong>Target 2026-09-01 (provisional). The target date passed forty-nine days ago.</strong> Weights are frozen, and <strong>this edition makes no methodology change.</strong> Scores measure build on <code>main</code>, not acceptance, and not correctness.</p>
+<p><strong>No score moved, and line 2 was a judgement call.</strong> PR #49 put CallKit on <code>main</code>. With #74, Android now has a complete native ring path: data-only push, matching keys, caller name, background handler. That is evidence for raising line 2. On the same day, iOS lost its only background call alert, and <code>main</code> gained a registration that probably breaks iPhone push delivery. That is evidence for lowering it. The standing rule is not to move line 2 for CallKit until the server can ring it on both platforms, so line 2 holds at 0.85. If item 1 of §8 is not done and an iOS build from <code>main</code> is in use, the next edition should consider lowering it. Nothing else that landed (Activity screen, chat background, contact names, <code>call_event</code> cards the client drops, <code>activity.updated</code>) maps to a rubric line beyond what is already scored.</p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">#</th>
+<th scope="col">Capability</th>
+<th style="text-align: right;">Weight</th>
+<th style="text-align: right;">Score</th>
+<th style="text-align: right;">Δ</th>
+<th scope="col">Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">1</th>
+<td>E2EE messaging</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">0.90</td>
+<td style="text-align: right;">0</td>
+<td>No crypto, key or socket change. <code>call_event</code> is plaintext by design (call facts are server-visible)</td>
+</tr>
+<tr><th scope="row">2</th>
+<td>Voice &amp; video calling</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">0.85</td>
+<td style="text-align: right;">0</td>
+<td>CallKit on <code>main</code> (PR #49); Android ring complete with #74; iOS background ring gone and VoIP token clash live. Held</td>
+</tr>
+<tr><th scope="row">3</th>
+<td>Message translation</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">0.60</td>
+<td style="text-align: right;">0</td>
+<td><code>translate.module.ts</code> still binds <code>StubTranslateAdapter</code></td>
+</tr>
+<tr><th scope="row">4</th>
+<td>Local KYC tier (BVN)</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">0.90</td>
+<td style="text-align: right;">0</td>
+<td>No <code>/kyc</code> or <code>/upgrade</code> change</td>
+</tr>
+<tr><th scope="row">5</th>
+<td>International KYC tier</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0</td>
+<td>Proposed only</td>
+</tr>
+<tr><th scope="row">6</th>
+<td>Multi-currency wallets</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.85</td>
+<td style="text-align: right;">0</td>
+<td><code>activeNgn()</code> unchanged</td>
+</tr>
+<tr><th scope="row">7</th>
+<td>Send / request / receive in chat</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.92</td>
+<td style="text-align: right;">0</td>
+<td>Payment rows now route to their chat in the feed (#73); biometric option still on <code>main</code></td>
+</tr>
+<tr><th scope="row">8</th>
+<td>Cross-currency FX settlement</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0</td>
+<td><code>/fx/*</code> proposed only</td>
+</tr>
+<tr><th scope="row">9</th>
+<td>Virtual cards</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">0.80</td>
+<td style="text-align: right;">0</td>
+<td>No change</td>
+</tr>
+<tr><th scope="row">10</th>
+<td>Consent management</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0</td>
+<td>No endpoint, record or board item</td>
+</tr>
+<tr><th scope="row">11</th>
+<td>Admin oversight</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0.97</td>
+<td style="text-align: right;">0</td>
+<td>No <code>beevia-admin</code> commit since 22 Sep</td>
+</tr>
+<tr><th scope="row"></th>
+<td><strong>Weighted total</strong></td>
+<td style="text-align: right;"><strong>100</strong></td>
+<td style="text-align: right;"><strong>66.76</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td><strong>≈67%</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3>What this report cannot tell you</h3>
+<ul>
+<li><strong>Whether iPhones are losing pushes.</strong> §3.2 follows from the code on both sides, but no device, build or production log was examined, and listener order and FCM's error code for a PushKit token were not tested.</li>
+<li><strong>Whether any build from mobile <code>main</code> is installed anywhere.</strong></li>
+<li><strong>Whether the light-mode mic renders as described.</strong> No build ran.</li>
+<li><strong>Whether PR #49 was reviewed</strong>, or whether branch protection requires CI on any <code>main</code>.</li>
+<li><strong>Whether #74 is deployed.</strong> #75's commit message says so (live from 19 Oct 16:52 UTC). That is the author's statement, not something visible here.</li>
+<li><strong>Why nothing moved on the board.</strong> No comment on any board records a reason.</li>
+<li><strong>Velocity for any sprint.</strong> Nothing on any board is estimated.</li>
+</ul>
+<h3>Method</h3>
+<p><strong>Pipeline.</strong> The <code>beevia-refresh</code> steps ran in this order:</p>
+<ol>
+<li>Sprint-name discovery on both projects (<code>--sprint __nonexistent__ --dry-run</code>). Beevia lists <code>0902, 0901, 08-01, 0702, 0701</code>. The admin project lists only <code>0901-admin</code>.</li>
+<li>Main board export (step 1a): 64 items, sprint 08-01, exit 0. Admin board export with <code>--sprint 0901-admin</code> (step 1b): 12 items, exit 0. Read-only scratch export of sprint <strong>0902</strong> to <code>/tmp/beevia-scratch/0902/</code> (25 items, <code>--modified --activity</code>, exit 0). All three finished by 14:02 UTC. 0901 was not re-exported; the 19 Oct scratch copy of the closed sprint was reused.</li>
+<li>Fast-forward sync (step 2), exit 1. <strong><code>beevia-mobile</code> fast-forwarded 7 commits on <code>main</code></strong> (<code>4f9c29f</code> → <code>31a77e8</code>, PR #49; no branch switch). <code>beevia-admin</code> was already current. <code>beevia-api</code>, <code>beevia-admin-api</code> and <code>beevia-db-schema</code> were refused as <code>diverged</code> (unchanged since 8 Sep).</li>
+<li>Audit (step 3) against a <code>git archive</code> shadow of <code>origin/main</code> at <code>$BEEVIA_ROOT=/tmp/beevia-shadow-2026-10-20</code>: clean, exit 0, before and after this cycle's spec edits. The in-repo audit was run too, for the board section (exit 1, the known phantom lines only). Both ran through <code>uv run --no-project --with pyyaml</code>.</li>
+<li>Board comparison: <code>cmp</code> of every sidecar against 19 Oct's (all identical), a CSV diff past the preamble (no differences). Flow analysis (<code>flow20.py</code>): cycle times, 7-day submissions split by actor, WIP ages, weekly trend, and a sweep for comments, reopens and completions (none in the window).</li>
+<li>Content checks. <code>git fetch --all --prune</code>, <code>for-each-ref</code> and <code>ls-remote</code> on every repo. In <code>beevia-mobile</code>: the merge's parents and tree against <code>origin/BVA-I316</code>, both push handlers, <code>call_kit_manager.dart</code> (VoIP sync, <code>showIncomingCallFromPushData</code>, <code>duration</code>), <code>bootstrap.dart</code>'s socket-connect listeners, the FCM token sync, <code>_decryptAndPersist</code> and the inbox preview path for messages with no ciphertext, the mic widget, <code>.gitignore</code> and the tracked Firebase files, conflict markers, and the Dependabot PR #50/#51 diffs. In <code>beevia-api</code>: the full diff <code>a7b2170..origin/main</code>, all three commit messages, <code>fcm.adapter.ts</code>'s APNs block and <code>DEAD_TOKEN_CODES</code>, <code>notification.processor.ts</code>'s pruning, <code>devices.setPushToken</code> call sites, <code>stepUpSchema</code>, and PR #75's commit and doc diff. In all three backend repos: the <code>needs:</code> lines of <code>release.yml</code> at <code>origin/main</code>, and the latest db-schema tag.</li>
+<li>Spec and RFC updates (§3.4).</li>
+<li>This report and its web edition.</li>
+<li>End-of-run recheck at 14:11 UTC: a fast re-export of 0902 (<code>--activity --no-descriptions</code>, exit 0) had a sidecar byte-identical to the first one. <code>ls-remote</code> showed every <code>main</code> at the commits read above. In <code>beevia-api</code> it showed one change: <code>fix/expire-abandoned-rings</code> (#75) was gone and <code>fix/abandoned-ring-timeout</code> (#76, <code>7200c55</code>, 14:07 UTC) carried the same tree. That is folded into §3. No new mobile PR appeared.</li>
+</ol>
+<p><strong>A note on who appears here.</strong> Only people whose work is tracked have rows. Board administration is done by a non-contributor, whose actions are reported without naming the actor.</p>
+<p><strong>Nothing was executed from any sub-repo.</strong> No <code>npm</code>, <code>node</code>, <code>flutter</code> or build step ran. No repository was reset, rebased or cleaned, and no sub-repo file was edited. The sync's <code>--ff-only</code> limit was not overridden. Beyond the sync's own <code>fetch</code> and fast-forward, the only git operations were <code>fetch</code>, <code>ls-remote</code>, <code>git archive</code>, and read-only <code>log</code>/<code>show</code>/<code>diff</code>/<code>grep</code>/<code>for-each-ref</code>/<code>rev-list</code>/<code>ls-tree</code>/<code>cat-file</code>. Nothing was committed, pushed or deployed.</p>
+<p><strong>Files changed this cycle:</strong> this report, <code>web-report/2026-10-20.html</code>, <code>web-report/index.html</code>, <code>openapi.yaml</code>, <code>api-rfc.md</code>, <code>suggestions.md</code>, plus new board exports for 20 Oct in <code>sprint-board-exports/</code> and <code>sprint-board-exports/admin/</code>.</p>
+<p><strong>Degraded inputs.</strong></p>
+<ul>
+<li><strong><code>ZOHO_SPRINT_FILTER</code> is still <code>08-01</code></strong>, so the in-repo main export is a frozen closed sprint, and the audit's <code>SINCE</code> block compares two identical snapshots. All 0902 figures come from the scratch export.</li>
+<li><strong>The default <code>python3</code> has no PyYAML</strong>, so <code>audit.py</code> exits 2 when run exactly as the skill documents. Both audits ran through <code>uv run --no-project --with pyyaml</code>.</li>
+<li><strong>Three repositories remain unsynced.</strong> <code>beevia-api</code>, <code>beevia-admin-api</code> and <code>beevia-db-schema</code> are <code>diverged</code>. Every backend claim is made against <code>origin/main</code> through the shadow.</li>
+<li><strong>GitHub PR metadata, reviews, settings, CI results and deploy state cannot be seen from here.</strong> PR numbers come from <code>refs/pull/*</code> and merge-commit messages.</li>
+<li><strong>The export's "no source key" warning fired on <code>Epic</code></strong> for all three exports. This is the known sampling artefact, not a scope gap.</li>
+</ul>
+<p><strong>Window.</strong> 19 Oct 14:02 UTC → 20 Oct 14:02 UTC. All <code>actiontime</code> and board figures are in UTC. <code>git log</code> timestamps were converted from their local offsets.</p>
+    </section>
+
+  </main>
+</div>
+
+<footer class="foot">
+  <span class="barcode barcode--lg" aria-hidden="true"></span>
+  <span>Beevia project status &middot; 2026-10-20 &middot; PR #49 merged &middot; silent ring</span>
+  <span><a href="index.html">All frames</a></span>
+</footer>
+
+<script src="ui.js"></script>
+</body>
+</html>
