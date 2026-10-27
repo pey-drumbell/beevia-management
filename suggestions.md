@@ -276,6 +276,16 @@ Two fixes, either sufficient: persist the generating admin's `viewableModules` o
 
 **The general shape is worth naming**, because it will recur: *authorisation applied when an artifact is produced is not authorisation applied when it is read.* Every export, cache, snapshot and emailed attachment in this system has the same structure.
 
+### 4.8 A statement PDF is encrypted with the account's phone number (2026-10-27)
+
+`POST /statements` (`src/statements/`, #84) emails a PDF encrypted with AES-256 (`pdfVersion: '1.7ext3'`), and the password is the user's registered phone number in E.164 form. The cipher is sound; the password is not a secret. Every contact who has the user's number can open the file, and anyone who gets the attachment can find the password offline. A Nigerian mobile number is `+234`, a known operator prefix and seven more digits: about 10^7 candidates per prefix, a few hundred million across all prefixes, with no rate limit on offline guessing.
+
+Options, cheapest first: say in the email and the app that the password is the phone number, so users can judge it (it may be an accepted bank convention); add a user-chosen statement password; or skip the attachment and send a short-lived, signed download link behind the app's own session. Whichever is chosen, write it down: this is the first path by which financial history leaves the app.
+
+### 4.9 Blocking now stops calls, but not money (2026-10-27)
+
+#83 made `CallsService.start` refuse a blocked direct pair (`403 blocked`), matching messages and conversation creation. Its commit says payments were "deliberately left alone for now". So a user who has been blocked can still `POST /payments/request` against the user who blocked them, which shows up in that user's Activity tab as needing attention. For harassment, an unwanted money request is the remaining channel. A `blocks.existsBetween` check in `PaymentService` for `request` (and, arguably, `send`, to stop unsolicited escrow holds) would close it. It needs a product decision on whether an incoming transfer from a blocked user should be refused or accepted silently.
+
 ---
 
 ## 5. Maintainability

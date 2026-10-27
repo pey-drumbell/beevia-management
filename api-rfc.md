@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft — for review · **updated 2026-08-05** |
 | **Scope** | The complete HTTP surface of `beevia-api` (the consumer API): what exists today, and what the PRD requires that does not exist yet |
-| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, **139 operations** · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, **38 operations** (35 net-new + 3 live-endpoint modifications) · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
+| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, **141 operations** · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, **38 operations** (35 net-new + 3 live-endpoint modifications) · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
 | **Sibling RFC** | [`admin-api-rfc.md`](./admin-api-rfc.md) — the `beevia-admin-api` back-office service |
 | **Sources** | `beevia-api/src/**/*.controller.ts`, `beevia-api/src/**/dto/*.ts`, `beevia-db-schema/src/schema/*`, `beevia-api/postman/Beevia.postman_collection.json`, `Beevia_PRD.pdf` |
 | **Base path** | `/api/v1` (global prefix set in `src/main.ts`; `/i/:code` is explicitly excluded) |
@@ -170,9 +170,10 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | Translate | **7** | **1** | **+6 (2026-09-10):** the language-preference surface — `GET /translate/languages`, plus app-wide and per-conversation preferences with precedence. **−4 proposed:** `/translate/languages` moved, and all three proposed preference operations shipped under `/translate/preferences` instead. Only `/translate/batch` is left proposed, and it is probably obsolete (§5.5a). The engine itself is still a stub (§5.5) |
 | Notifications | 5 | 0 | Complete |
 | **Activity** | **2** | 0 | **New 2026-10-08.** Unified chats/calls/payments feed with keyset pagination, plus its badge count. Chat previews are per-device ciphertext, not server-read text (§5.14) |
-| Support | **0** | 4 | Does not exist. Includes `POST /payments/{id}/dispute`, listed under §7.2 but tagged Support |
+| **Statements** | **2** | 0 | **New 2026-10-27.** `POST /statements` (202, emailed wallet or card statement, PDF password-protected) and `GET /statements` (request history). Not a PRD line item; see §5.16 |
+| Support | **0** | 4 | Does not exist. Includes `POST /payments/{id}/dispute`, listed under §7.2 but tagged Support. Sprint 1002 carries Help & Support items (FAQ, disputes, support chat) whose server half has no code on any branch yet (§5.16) |
 | Webhooks | **4** | 1 | **+1:** `POST /webhooks/paystack` for card top-ups. Card issuer callback still missing |
-| **Total** | **139** | **35** | +3 live-endpoint modifications = 38 operations in the proposed file |
+| **Total** | **141** | **35** | +3 live-endpoint modifications = 38 operations in the proposed file |
 
 ---
 
@@ -575,6 +576,27 @@ Unchanged by #72: the VoIP token registration on `BVA-I316` (`call_kit_manager.d
 
 The fix list is shorter than it looks. On the client: stop registering the VoIP token, or keep it in a separate slot, and handle `call.ended` and `call_event`. On the server: a per-provider token slot plus an APNs VoIP sender before iOS can ring in the background, and `apns-priority: 5` for content-available pushes.
 
+**Update 2026-10-27: the server side of this section is closed, and the client side is half closed.** Six `beevia-api` merges and one `beevia-db-schema` release between 20 and 24 Oct did the server half of the fix list above:
+
+- **A second token slot.** `beevia-db-schema` #22 (v0.0.41, 23 Oct) adds `devices.voip_token`. `registerToken()` now stores `pushProvider: 'voip'` there through `setVoipToken` and leaves the FCM pair alone (#81, 24 Oct). `clearPushToken` clears both, and dead-token pruning now clears only the token that died. **Correction to the 2026-10-20 update:** #81's message says production held 9 tokens, *all* `fcm`, none `voip`. So the FCM sync was winning the race for the one column, and the predicted push blackout on iPhones (the VoIP token overwriting and then being pruned) did not show up in production. What did happen is that the VoIP token was never stored.
+- **An APNs VoIP sender.** #79 (`314a71b`, 23 Oct) adds `ApnsVoipAdapter`, HTTP/2 straight to APNs with an ES256 provider token, `apns-id` = call id, `apns-expiration` 60 s, payload shaped like `CallKitParams` (with `initiatorUserId` in `extra`). It falls back to `StubVoipAdapter` when the four Apple settings are missing. #81 routes `notifyIncomingCall` to it: an iOS device with a VoIP token gets the VoIP ring *instead of* the FCM push; an iOS device without one still gets the FCM push. The commit states the credentials were validated against Apple (a signed request returned `BadDeviceToken` for a fake token). `call.ended` deliberately stays on FCM, since Apple restricts VoIP pushes to call setup.
+- **Silent pushes now go out as `apns-push-type: background` at priority 5** (#79, `1da8a3e`). Visible pushes stay `alert` at 10.
+- **Rings expire** (#76, merged 20 Oct 14:14 UTC): a call `ringing` for 60 s is ended through the normal teardown, every 15 s. `end`/`decline` on a finished call is a no-op.
+- **One live call per conversation** (#78, 23 Oct), prompted by five calls in 23 s from one double-tap. **Real names on rings and chat pushes** (#77, 21 Oct): `resolveDisplayName` falls back from display name to first + last to username; chat pushes are now titled with the sender's name.
+
+On the client, `beevia-mobile` `main` already had the iOS half: `AppDelegate.swift` registers a `PKPushRegistry` and hands the push to `flutter_callkit_incoming`, and `syncVoipTokenIfAvailable` registers the token on every socket connect (`bootstrap.dart:114`). That registration, the defect in the 2026-10-20 update, is now the correct call. PR #52 (`ccb4f63`, 22 Oct) renders `call_event` messages as call cards and inbox previews (`call_event_data.dart`, `conversation_provider.dart:426`), subscribes the Activity screen to `activity.updated`, falls back to the cached conversation list for a caller name, and drops the light-mode mic tint (`chat_widgets.dart:1108`).
+
+**Still open:** neither push handler consumes `call.ended`, so a native ring on a device without a live socket is dismissed only by the plugin's own timeout. The client does not yet handle `403 blocked` or `400 call_already_in_progress` from `POST /conversations/{id}/calls` specially. All of this is a code reading plus the commit messages' own production claims. No device was tested here.
+
+### 5.16 Statements, and blocks that now reach calls but not payments (2026-10-27)
+
+**`POST /statements` / `GET /statements`** (`beevia-api` #84, `efa2dd0`, 27 Oct; table `statement_requests` in `beevia-db-schema` #23, v0.0.42). A wallet or card statement for an inclusive UTC date range, built in a BullMQ job and **emailed**, never returned. Refusals happen before queueing: `no_transactions`, `period_too_large` (> 5,000 rows, refused rather than truncated), `email_required`, `rate_limited` (3 per rolling day, failures counted). Card lines are read live from Anchor and windowed server-side. The table is an audit record (period, scope, `delivered_to` snapshot, status), and the file is deliberately not stored. Sprint 1002's `BVA-I366` tracks it. The client half (`BVA-I365`) has no code on any `beevia-mobile` branch. Two design points are worth a decision (`suggestions.md` §4.8):
+
+- **The PDF password is the account's phone number.** A PDF encrypted with AES-256 is only as strong as its password, and a phone number is known to every contact and searchable by brute force from its country prefix.
+- **Delivery is by email only.** The statement leaves the E2EE product boundary by design. That is a product choice, but the PRD does not record it.
+
+**Block state** (`beevia-api` #83, `a2b843a`, 27 Oct). `ContactProfile.blocked` and each `Conversation.peers[].blocked` are now returned, **directional**: true only when the viewer did the blocking, so a block is never disclosed to the blocked user. `POST /conversations/{id}/calls` now refuses a blocked direct pair with `403 blocked`, as messaging and conversation creation already did. **Payments are deliberately untouched** ("Payments deliberately left alone for now"): a blocked user can still send money to, or request money from, the user who blocked them (`suggestions.md` §4.9).
+
 ---
 
 ## 6. Implemented surface
@@ -698,7 +720,7 @@ Escrow mechanics themselves are sound: a 24-hour hold scheduled through BullMQ, 
 
 **But no production payment has used them.** Per the #57 commit (2026-09-25), all six sends on production went through `POST /payments/transfer` — the mobile client's in-chat Send posts there — and each completed in the same millisecond it was created. The PRD's *Transfer Acceptance & Escrow* feature (§10.2, MVP Phase 3) is built on the server and bypassed by the client. See §5.11.
 
-### 6.8 Chat, Calls, Attachments, Translate, Notifications, Activity, Webhooks
+### 6.8 Chat, Calls, Attachments, Translate, Notifications, Activity, Statements, Webhooks
 
 | | Method | Path | Auth | Status |
 |---|---|---|---|---|
@@ -721,7 +743,7 @@ Escrow mechanics themselves are sound: a 24-hour hold scheduled through BullMQ, 
 | | POST | `/messages/{id}/receipts` | 🔑 | ✅ |
 | | POST | `/messages/{id}/reactions` | 🔑 | ✅ |
 | | DELETE | `/messages/{id}/reactions/{emoji}` | 🔑 | ✅ |
-| | POST | `/conversations/{id}/calls` | 🔑 | ✅ |
+| | POST | `/conversations/{id}/calls` | 🔑 | ✅ **One live call per conversation** (2026-10-23): a repeat tap returns your own call, the other side's live call is `400 call_already_in_progress`. A blocked direct pair gets `403 blocked` (2026-10-27) |
 | | GET | `/conversations/{id}/calls` | 🔑 | ✅ |
 | | POST | `/calls/{id}/answer` | 🔑 | ✅ |
 | | POST | `/calls/{id}/decline` | 🔑 | ✅ |
@@ -735,13 +757,15 @@ Escrow mechanics themselves are sound: a 24-hour hold scheduled through BullMQ, 
 | | GET | `/translate/preferences/conversations/{conversationId}` | 🔑 | ✅ **New.** Returns `override`, `app_wide` and `source`, so precedence needs no client-side rule. 403 if the caller is not a current participant |
 | | PUT | `/translate/preferences/conversations/{conversationId}` | 🔑 | ✅ **New.** `language: null` clears the override — a required, explicit value, so an empty body is a 400 |
 | | DELETE | `/translate/preferences/conversations/{conversationId}` | 🔑 | ✅ **New.** Identical to `PUT … null`; returns the resulting state rather than 204 |
-| | POST | `/notifications/token` | 🔑 | ✅ |
+| | POST | `/notifications/token` | 🔑 | ✅ `pushProvider: voip` now stored in its own column (2026-10-24, §5.15) |
 | | DELETE | `/notifications/token` | 🔑 | ✅ Body-based, not path-based |
 | | GET | `/notifications/preferences` | 🔑 | ✅ |
 | | PATCH | `/notifications/preferences` | 🔑 | ✅ |
 | | POST | `/notifications/test` | 🔑 | ✅ |
 | | GET | `/activity` | 🔑 | ✅ **New 2026-10-08.** Unified feed, keyset `cursor`, `filter`, `search` (names and payment notes only). Requires `X-Device-Id` (§5.14) |
 | | GET | `/activity/unattended-count` | 🔑 | ✅ **New 2026-10-08.** Badge number only; same value as the feed's `unattended_count` |
+| | POST | `/statements` | 🔑 | ✅ **New 2026-10-27.** `202`; generated and emailed in the background. PDF encrypted with the phone number (§5.16) |
+| | GET | `/statements` | 🔑 | ✅ **New 2026-10-27.** Last 50 requests, newest first; the audit record, not the file |
 | | POST | `/webhooks/anchor` | 🔓 | ✅ HMAC over raw body; deduped. **Processed no real delivery until 2026-09-03** — envelope mismatch, see §5.6. Now also syncs card lifecycle events |
 | | POST | `/webhooks/livekit` | 🔓 | ✅ JWT in `Authorization` |
 

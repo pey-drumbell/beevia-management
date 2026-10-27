@@ -34,7 +34,7 @@
       <span class="topbar__wordmark">Beevia</span>
     </div>
     <nav class="topbar__nav label" aria-label="Report">
-      <a href="2026-10-20.html">Latest frame</a>
+      <a href="2026-10-27.html">Latest frame</a>
     </nav>
 </div>
 
@@ -43,9 +43,9 @@
     <div class="field__rail field__rail--l">
       <dl>
         <dt>Frames held</dt>
-        <dd>53</dd>
+        <dd>54</dd>
         <dt>Latest</dt>
-        <dd>2026-10-20 · PR #49 merged with call blockers, server ring goes silent</dd>
+        <dd>2026-10-27 · iOS ring path fixed server-side; sprint 1002 opens, review column ahead of the code</dd>
       </dl>
     </div>
 
@@ -55,7 +55,7 @@
       </div>
       <div class="field__meta num">
         <span>Beevia project status</span>
-        <span>2026-08-05 &rarr; 2026-10-20</span>
+        <span>2026-08-05 &rarr; 2026-10-27</span>
         <span>Newest first</span>
       </div>
     </div>
@@ -75,11 +75,11 @@
   <div class="mvp__head">
     <span class="mvp__label label">MVP readiness &mdash; estimate</span>
     <span class="mvp__pct num">&asymp;67%</span>
-    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 49 days past</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 56 days past</span>
   </div>
-  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged. CallKit reached main and Android now rings natively, but iOS lost its background call alert, so voice and video calling is held. E2EE messaging 0.90; voice and video calling 0.85; message translation 0.60; local KYC 0.90; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.80; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, up 0.56 points. Voice and video calling rises from 0.85 to 0.92 now that the server can ring a closed iPhone over PushKit as well as Android. E2EE messaging 0.90; voice and video calling 0.92; message translation 0.60; local KYC 0.90; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.80; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
     <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.90"><i style="width:90%"></i></span>
-    <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.85"><i style="width:85%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.92"><i style="width:92%"></i></span>
     <span class="mvp__seg" style="flex:7" title="Message translation — 0.60"><i style="width:60%"></i></span>
     <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.90"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
@@ -90,10 +90,27 @@
     <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
     <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.97"><i style="width:97%"></i></span>
   </div>
-  <p class="mvp__read"><strong>66.76, unchanged.</strong> CallKit is on <code>main</code> and Android now rings natively with the caller&rsquo;s name; the same day, a backgrounded iPhone lost its only call alert. Line 2 holds at 0.85 until the server can ring both platforms. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 20 Oct 2026 &mdash; <a href="2026-10-20.html#mvp-method">method and capability table</a>.</p>
+  <p class="mvp__read"><strong>67.32, +0.56.</strong> Calling moves 0.85 &rarr; 0.92: a separate VoIP token and an APNs VoIP sender mean both platforms can now ring a closed app, on the code. It stops short of 0.95 because no client consumes the <code>call.ended</code> push. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 27 Oct 2026 &mdash; <a href="2026-10-27.html#mvp-method">method and capability table</a>.</p>
 </section>
 
 <main class="frames">
+
+  <a class="frame" href="2026-10-27.html">
+    <span class="frame__idx num">54</span>
+    <span>
+      <span class="frame__date">27 Oct 2026</span>
+      <span class="frame__sum"><strong>The iOS call defect led on 20 Oct was fixed on the server within four days: a separate VoIP token and an APNs VoIP sender let both platforms ring a closed app.</strong> The 20 Oct push-blackout prediction did not happen (production held only FCM tokens). 0902 was closed without review, and new sprint 1002 has 10 leaves in REVIEW/QA after six days, only one matching new code. Statements and block state shipped; spec at 141 operations.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:10"></i><u style="flex:33"></u></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>1002 &middot; day 7 of 16 &middot; 19 To do &middot; 13 In progress &middot; 10 QA &middot; 0 Blocked &middot; 1 Done</span></div>
+      <div><span>MVP est</span><span>&asymp;67% &middot; &Delta; +0.56</span></div>
+      <div><span>Test-gated deploys</span><span>0 of 3 backend repos</span></div>
+      <div><span>Calls</span><span>iOS PushKit ring end to end &middot; call.ended still unhandled</span></div>
+      <div><span>Board actions</span><span>31 leaf moves in 7 days &middot; 7 swept on 0902 &middot; 0 accepted</span></div>
+      <div><span>API surface</span><span>141 / 49 &middot; drift 2 &rarr; 0 &middot; statements added</span></div>
+    </span>
+  </a>
 
   <a class="frame" href="2026-10-20.html">
     <span class="frame__idx num">53</span>
@@ -999,7 +1016,7 @@
 <footer class="foot">
   <span class="barcode barcode--lg" aria-hidden="true"></span>
   <span>Frames are written by the <code>beevia-refresh</code> skill alongside the Markdown in <code>project-status/</code>.</span>
-  <span><a href="2026-10-20.html">Latest</a></span>
+  <span><a href="2026-10-27.html">Latest</a></span>
 </footer>
 
 <script src="ui.js"></script>

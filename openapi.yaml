@@ -123,7 +123,9 @@ tags:
   - name: Payments
     description: Peer-to-peer send/request with escrow acceptance.
   - name: Cards
-    description: Virtual card issuance and controls. Entirely proposed.
+    description: Virtual card issuance and controls.
+  - name: Statements
+    description: Emailed wallet and card statements, generated in the background.
   - name: Chat (REST fallback)
     description: Conversations, messages, receipts and reactions. Mirrors the WebSocket commands.
   - name: Calls
@@ -2020,6 +2022,81 @@ paths:
                         items: { $ref: '#/components/schemas/CardTransaction' }
         '404': { $ref: '#/components/responses/NotFound' }
 
+  /statements:
+    post:
+      tags: [Statements]
+      operationId: requestStatement
+      summary: Request a statement
+      description: |
+        Request a statement of wallet or card activity for a date range,
+        delivered to the email on the account. **The file is not returned
+        here.** Generation and delivery run in the background, so this returns
+        `202` as soon as the request is accepted; `GET /statements` shows how
+        it went.
+
+        **Scope.** `type` is `wallet` or `card`; send `walletId` for the first
+        and `cardId` for the second. Dates are `YYYY-MM-DD` and inclusive
+        calendar days in UTC, so 1–31 January covers everything on the 31st.
+        Card lines are read live from the card partner, which takes no date
+        range, so the window is applied server-side; a partner outage fails
+        the request rather than producing an empty statement.
+
+        **`pdf` is password-protected** (AES-256) with the account's
+        registered phone number in full international format, e.g.
+        `+2348012345678`. `csv` is not protected.
+
+        **Refused before anything is queued:** `no_transactions` (an empty
+        range is not mailed), `period_too_large` (more than 5,000
+        transactions; refused, not truncated), `email_required` (no verified
+        email to deliver to), `phone_required`, `end_before_start`,
+        `period_in_future`, `period_before_opening`, and `rate_limited` (three
+        per rolling day, failed ones included), all `400`. A wallet that is
+        not the caller's is `403 wallet_not_yours`; an unknown or foreign card
+        is `403 card_not_found`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RequestStatementRequest' }
+      responses:
+        '202':
+          description: Accepted. The statement is being generated and emailed.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/StatementAccepted' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    get:
+      tags: [Statements]
+      operationId: listStatements
+      summary: Statement history
+      description: |
+        The caller's statement requests, newest first, at most 50: what was
+        asked for, where it was sent, and whether it was delivered. This is
+        the audit record, not the file. Statements are not stored server-side
+        and cannot be re-downloaded.
+      responses:
+        '200':
+          description: Statement requests, newest first.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        maxItems: 50
+                        items: { $ref: '#/components/schemas/StatementRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
   /payments/send:
     post:
       tags: [Payments]
@@ -2728,9 +2805,27 @@ paths:
         have a live socket (both carry `callId`; the client should ignore
         whichever arrives second). The push honours the `voice_calls` /
         `video_calls` switch. It is **silent** (data-only, no `notification`
-        block, so the OS shows no banner) and carries `callerName` and
-        `callerAvatar` (empty string when the caller has no picture) so the
-        client can draw its own incoming-call screen without a round trip.
+        block, so the OS shows no banner; sent as `apns-push-type: background`
+        at priority 5) and carries `callerName` and `callerAvatar` (empty
+        string when the caller has no picture) so the client can draw its own
+        incoming-call screen without a round trip. `callerName` falls back
+        from display name to first + last name to username, then `Someone`.
+
+        **iOS rings over PushKit.** An iOS device that has registered a VoIP
+        token (`POST /notifications/token` with `pushProvider: voip`) gets an
+        APNs VoIP push instead of the FCM one, shaped for
+        `flutter_callkit_incoming` and carrying `initiatorUserId` in `extra`.
+        An iOS device with no VoIP token falls back to the FCM push.
+
+        **One live call per conversation.** If the caller already has a
+        ringing or active call here, that call is returned with a fresh join
+        token instead of a second one. If the *other* member's call is live,
+        the request fails with `400 call_already_in_progress`: answer it. A
+        ring older than the 60 s timeout no longer counts as live.
+
+        **Blocks apply.** In a direct conversation where either side has
+        blocked the other, the call is refused with `403 blocked`, as for
+        messages.
       requestBody:
         required: true
         content:
@@ -2823,6 +2918,12 @@ paths:
         gets a silent `call.ended` push (`status`: `ended`, or `missed` for a
         call that was still ringing), which ignores the call preference
         switches. The SFU's `room_finished` event sends the same push.
+
+        **Unanswered rings expire server-side.** A call still `ringing` after
+        60 s is ended by the server (checked every 15 s, so 60–75 s in) through
+        this same teardown: `call.update`, the `call.ended` push and the
+        `call_event` card, with `status: missed`. Ending or declining a call
+        that is already over is a no-op that returns it unchanged.
       responses:
         '200': { $ref: '#/components/responses/CallOk' }
         '404': { $ref: '#/components/responses/NotFound' }
@@ -3300,6 +3401,12 @@ paths:
         Binds (or updates) the push registration token for a device the caller
         owns. Kept separate from `POST /devices` because the routing token
         rotates independently of the E2EE key material.
+
+        An iOS device registers **two** tokens: its FCM token and, with
+        `pushProvider: voip`, its PushKit token. They are stored apart, so
+        neither overwrites the other. The VoIP token is used only to ring
+        incoming calls; everything else, including `call.ended`, goes over
+        FCM. `DELETE` clears both.
       requestBody:
         required: true
         content:
@@ -3315,7 +3422,12 @@ paths:
                   - $ref: '#/components/schemas/SuccessEnvelope'
                   - type: object
                     properties:
-                      data: { $ref: '#/components/schemas/Device' }
+                      data:
+                        type: object
+                        required: [device_id, registered]
+                        properties:
+                          device_id: { type: string, format: uuid }
+                          registered: { type: boolean, const: true }
         '400': { $ref: '#/components/responses/BadRequest' }
         '403': { $ref: '#/components/responses/Forbidden' }
     delete:
@@ -4049,6 +4161,40 @@ components:
         created_at: { type: string, format: date-time }
         completed_at: { type: [string, 'null'], format: date-time }
 
+    StatementAccepted:
+      type: object
+      description: What `POST /statements` returns once the request is queued.
+      required: [id, status, delivered_to, transaction_count]
+      properties:
+        id: { type: string, format: uuid }
+        status: { type: string, enum: [queued, generating, sent, failed] }
+        delivered_to: { type: string, format: email, description: The address the file will be sent to, as it stands now. }
+        transaction_count: { type: integer, minimum: 1, description: Transactions in the period. Never 0; an empty range is refused. }
+
+    StatementRequest:
+      type: object
+      description: |
+        One statement request, as stored. `delivered_to` is a snapshot: a
+        later email change does not rewrite where an old statement went.
+        `wallet_id` / `card_id` become `null` if the subject is deleted; the
+        record itself is kept.
+      properties:
+        id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        scope: { type: string, enum: [wallet, card] }
+        wallet_id: { type: [string, 'null'], format: uuid }
+        card_id: { type: [string, 'null'], format: uuid }
+        period_start: { type: string, format: date-time }
+        period_end: { type: string, format: date-time }
+        format: { type: string, enum: [pdf, csv] }
+        status: { type: string, enum: [queued, generating, sent, failed] }
+        delivered_to: { type: string }
+        row_count: { type: [integer, 'null'] }
+        error: { type: [string, 'null'], description: Why it failed, when `status` is `failed`. }
+        started_at: { type: [string, 'null'], format: date-time }
+        completed_at: { type: [string, 'null'], format: date-time }
+        created_at: { type: string, format: date-time }
+
     Card:
       type: object
       description: A virtual NGN card. The PAN is masked here — see `POST /cards/{cardId}/reveal`.
@@ -4289,7 +4435,18 @@ components:
           items: { type: string, format: uuid }
         peers:
           type: array
-          items: { $ref: '#/components/schemas/PublicProfile' }
+          description: |
+            The other members. Each carries `blocked`, **directional** like
+            `ContactProfile.blocked`: true only when the caller blocked that
+            peer. A blocked peer's thread stays in the inbox, flagged rather
+            than hidden, so history remains reachable.
+          items:
+            allOf:
+              - $ref: '#/components/schemas/PublicProfile'
+              - type: object
+                required: [blocked]
+                properties:
+                  blocked: { type: boolean }
 
     CreateConversationRequest:
       type: object
@@ -4755,6 +4912,13 @@ components:
               type: string
               format: date-time
               description: Account creation date; the client renders it as "July 2026".
+            blocked:
+              type: boolean
+              description: |
+                **Directional.** True only when the viewer has blocked this
+                user, so the screen can offer Unblock instead of Block. Never
+                true because they blocked the viewer: that would disclose the
+                block. Always false when viewing yourself.
             conversation_id:
               type: [string, 'null']
               format: uuid
@@ -4839,7 +5003,19 @@ components:
       properties:
         deviceId: { type: string, format: uuid }
         pushToken: { type: string, minLength: 1, maxLength: 4096 }
-        pushProvider: { type: string, maxLength: 64, default: fcm }
+        pushProvider: { type: string, maxLength: 64, default: fcm, description: '`fcm`, or `voip` for an iOS PushKit token, which is stored separately.' }
+
+    RequestStatementRequest:
+      type: object
+      required: [type, startDate, endDate]
+      description: Send `walletId` when `type` is `wallet`, `cardId` when it is `card`.
+      properties:
+        type: { type: string, enum: [wallet, card] }
+        walletId: { type: string, format: uuid }
+        cardId: { type: string, format: uuid }
+        startDate: { type: string, format: date, example: '2026-01-01' }
+        endDate: { type: string, format: date, example: '2026-01-31' }
+        format: { type: string, enum: [pdf, csv], default: pdf }
 
     ReportConversationRequest:
       type: object
