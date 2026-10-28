@@ -286,6 +286,15 @@ Options, cheapest first: say in the email and the app that the password is the p
 
 #83 made `CallsService.start` refuse a blocked direct pair (`403 blocked`), matching messages and conversation creation. Its commit says payments were "deliberately left alone for now". So a user who has been blocked can still `POST /payments/request` against the user who blocked them, which shows up in that user's Activity tab as needing attention. For harassment, an unwanted money request is the remaining channel. A `blocks.existsBetween` check in `PaymentService` for `request` (and, arguably, `send`, to stop unsolicited escrow holds) would close it. It needs a product decision on whether an incoming transfer from a blocked user should be refused or accepted silently.
 
+### 4.10 Help & Support: no admin can write the content, and search ignores the language fallback (2026-10-28)
+
+`beevia-api` #86, `beevia-admin-api` #23 and `beevia-db-schema` #25 shipped the FAQ end to end on 28 Oct. The work is careful: real-Postgres tests, `websearch_to_tsquery` instead of `to_tsquery`, drafts by default, and a `restrict` foreign key under the "category not empty" check. Four things remain:
+
+1. **No role holds `help_center`.** Migration `0040` adds the enum value and grants it to no one, and `PermissionGuard` has no super-admin bypass. Every `/admin/help/*` call returns `403` until someone with `roles_permissions:edit` grants it to a role. Without that grant, no FAQ content can be written, and the app's FAQ screen stays empty. Grant it to the content-owning role (and Super Admin) in a seed or migration, so a fresh environment does not depend on a manual click.
+2. **Search has no `en-US` fallback, but every read does.** `HelpService.runSearch` filters `faq_article_translations.locale = <caller's locale>`. Categories, questions and answers fall back to `en-US`. While only English content exists, **every search from a Spanish, French or Chinese phone returns nothing**, although the same articles are listed and readable. Search the caller's locale first, then `en-US` for any article with no row in that locale, de-duplicated by article.
+3. **Reorder does not check that the list is complete.** `assertCompleteOrder` checks that each id sent exists and is unique, not that every category (or every article in the category) was sent. A partial list renumbers those ids from 0 and leaves the rest in place, so two rows can share a position. The route text promises "Send **every** category id". Either enforce it (`existing.length === total`) or renumber the omitted rows after the ones sent.
+4. **Small contract slips.** `GET /help/categories/{slug}` computes `article_count` before dropping untitled articles, so it can exceed the list it returns. Both category and article misses report `article_not_found`. The admin route text says `category_id`, but the validator reads `categoryId` and ignores the snake-case key.
+
 ---
 
 ## 5. Maintainability
@@ -661,6 +670,22 @@ The `android/app/.cxx/**/configure_fingerprint.bin` files have carried conflict 
 Firebase client API keys are designed to ship inside the app, so this is not a credential leak in the §7.5 sense. The protection is key restriction. In Google Cloud, restrict each key to its Android package and signing SHA-1 and its iOS bundle ID, and limit it to the Firebase APIs the app uses. Then `git rm --cached ios/GoogleService-Info.plist`. A history rewrite is not worth it for restricted client keys.
 
 **Update 2026-10-20: half done.** `8b267ed` (`git rm --cached ios/GoogleService-Info.plist`, plus that path in `.gitignore`) reached `main` through PR #49 on 19 Oct. No Firebase config file is tracked on `main` now. The file is still reachable in history at `1a1f39f`, and whether the keys have been restricted cannot be seen from here. Key restriction is still the part that protects anything.
+
+
+### 5.14 The new wallet and card screens call five routes the server does not have (2026-10-28)
+
+`beevia-mobile` `origin/BVA-I353` (unmerged, pushed 28 Oct) adds the statement, manage-card, card-details, limits and wallet-details screens, and their service methods in `wallet_service.dart`. Compared with `beevia-api` `origin/main`:
+
+| Client call | Server | Result against the real API |
+|---|---|---|
+| `POST /wallets/statements`, `POST /cards/{id}/statements` with `start_date`, `end_date`, `format`, `email` | `POST /statements` with `type`, `walletId`/`cardId`, `startDate`, `endDate`, `format`; delivery is always to the account email | **404** |
+| `DELETE /cards/{id}` with `X-Step-Up-Token` | `POST /cards/{id}/terminate` with the **card PIN** in the body | **404** |
+| `POST /cards/{id}/reveal` with `X-Step-Up-Token`, no body | the **card PIN** in the body (`cardPinSchema`) | **400** |
+| `POST /cards/{id}/unfreeze` with `X-Step-Up-Token`, no body | the **card PIN** in the body | **400** |
+| `GET /wallets/limits` | proposed only (`openapi.proposed.yaml`) | **404** |
+| `POST /cards/{id}/freeze` | same | ✅ |
+
+The mock server was taught all seven routes in the same commit, and `spec_contract_test.dart` allowlists them with the comment *"limits and the card sub-routes are specified only in openapi.proposed.yaml so far; the statement routes are client placeholders with no spec at all yet."* Both halves of that comment are wrong. The card sub-routes are implemented, and the statement route shipped the day before (#84) under a different path and body. This is §5.10 again: the client's vendored spec does not contain `/statements`, `/cards/*` or the card-PIN model, so the contract test passes against an API that does not exist. Before merge: point the statement call at `POST /statements`, use the card-PIN sheet for reveal, unfreeze and terminate (the server deliberately gates them with the card's own PIN, not account step-up), and hide the limits screen until `GET /wallets/limits` ships.
 
 
 ## 8. Suggested order

@@ -143,6 +143,8 @@ tags:
     description: Push token binding and category preferences.
   - name: Activity
     description: The Activity tab — one feed of chats, calls and payments, and its badge count.
+  - name: Help & Support
+    description: FAQ categories, answers, search and the "Was this helpful?" vote. Content is managed in the admin API.
   - name: Support
     description: Disputes and escalation. Entirely proposed.
   - name: Webhooks
@@ -2097,6 +2099,175 @@ paths:
                         items: { $ref: '#/components/schemas/StatementRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
+  /help/categories:
+    get:
+      tags: [Help & Support]
+      operationId: listHelpCategories
+      summary: FAQ categories
+      description: |
+        The FAQs screen: published categories in display order, each with its
+        `icon`, title and how many **published** questions it holds. `icon` is
+        a **name**, not a URL; map it to a bundled asset so the list renders
+        offline. A category with no title in any language is left out.
+
+        Content is returned in the caller's resolved language (saved language,
+        then `Accept-Language`, then `en-US`), falling back to `en-US` where a
+        translation is missing.
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguageHeader'
+      responses:
+        '200':
+          description: Published categories, in display order.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/HelpCategory' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /help/categories/{slug}:
+    get:
+      tags: [Help & Support]
+      operationId: getHelpCategory
+      summary: Questions in a category
+      description: |
+        One published category and its published questions, in display order.
+        Titles only; fetch the answer with `GET /help/articles/{slug}`. Same
+        language fallback as `GET /help/categories`. An unknown, unpublished or
+        untitled category is `404 article_not_found` (the error code is shared
+        with the article routes).
+      parameters:
+        - $ref: '#/components/parameters/HelpSlug'
+        - $ref: '#/components/parameters/AcceptLanguageHeader'
+      responses:
+        '200':
+          description: The category and its questions.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/HelpCategoryDetail' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /help/search:
+    get:
+      tags: [Help & Support]
+      operationId: searchHelp
+      summary: Search the FAQs
+      description: |
+        Backs the "Search help" box. Postgres full-text search
+        (`websearch_to_tsquery`), ranked with the title weighted above the
+        body. `q` is taken as typed: punctuation, question marks and quoted
+        phrases are fine, and `or` between words widens the search. If the
+        strict search (every term) finds nothing, it is retried with the
+        terms OR'd, still ranked, so a whole typed question finds its answer.
+
+        Searches the caller's resolved language **only**, with no `en-US`
+        fallback, so one answer never appears once per locale. An article
+        not yet translated into that language is readable by slug but does not
+        appear in search results. Stemming uses the English dictionary for
+        every language.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string, minLength: 2, maxLength: 120 }
+          description: Whatever the user typed. Trimmed.
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+        - $ref: '#/components/parameters/AcceptLanguageHeader'
+      responses:
+        '200':
+          description: Matching answers, best first. Empty when nothing matches.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        maxItems: 50
+                        items: { $ref: '#/components/schemas/HelpSearchHit' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /help/articles/{slug}:
+    get:
+      tags: [Help & Support]
+      operationId: getHelpArticle
+      summary: An answer
+      description: |
+        The full answer. `body` is **Markdown** (headings and bullet lists)
+        and should be rendered natively, never as HTML. `helpful` is the
+        caller's own previous vote: `true`, `false`, or `null` if they have
+        not voted, so the Yes/No control can show what they chose. Same
+        language fallback as `GET /help/categories`. An unknown or unpublished
+        article, or one in an unpublished category, is `404 article_not_found`.
+      parameters:
+        - $ref: '#/components/parameters/HelpSlug'
+        - $ref: '#/components/parameters/AcceptLanguageHeader'
+      responses:
+        '200':
+          description: The answer.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/HelpArticle' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /help/articles/{slug}/feedback:
+    post:
+      tags: [Help & Support]
+      operationId: rateHelpArticle
+      summary: Was this helpful?
+      description: |
+        Records the caller's answer to "Was this helpful?". One vote per user
+        per article: sending it again changes the answer rather than counting
+        twice. An unknown or unpublished article is `404 article_not_found`.
+      parameters:
+        - $ref: '#/components/parameters/HelpSlug'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/HelpFeedbackRequest' }
+      responses:
+        '201':
+          description: Vote recorded (or changed).
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [helpful]
+                        properties:
+                          helpful: { type: boolean }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
   /payments/send:
     post:
       tags: [Payments]
@@ -3646,6 +3817,12 @@ components:
         has not chosen one. Never persisted. A full quality-ordered list is
         accepted and walked in order.
       schema: { type: string, example: 'fr-CA,fr;q=0.9,en;q=0.5' }
+    HelpSlug:
+      name: slug
+      in: path
+      required: true
+      description: Lowercase, hyphenated slug, e.g. `why-was-my-transfer-declined`. Slugs are stable deep links.
+      schema: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
     DeviceLanguageQuery:
       name: deviceLanguage
       in: query
@@ -4194,6 +4371,54 @@ components:
         started_at: { type: [string, 'null'], format: date-time }
         completed_at: { type: [string, 'null'], format: date-time }
         created_at: { type: string, format: date-time }
+
+    HelpCategory:
+      type: object
+      description: A row on the FAQs screen.
+      required: [slug, title, icon, article_count]
+      properties:
+        slug: { type: string }
+        title: { type: string, description: In the caller's language, else `en-US`. }
+        icon: { type: string, description: 'An icon **name** the client maps to its own asset, not a URL.' }
+        article_count: { type: integer, minimum: 0, description: Published questions only. }
+
+    HelpCategoryDetail:
+      allOf:
+        - $ref: '#/components/schemas/HelpCategory'
+        - type: object
+          required: [articles]
+          properties:
+            articles:
+              type: array
+              description: Published questions in display order, titles only.
+              items: { $ref: '#/components/schemas/HelpArticleSummary' }
+
+    HelpArticleSummary:
+      type: object
+      required: [slug, title]
+      properties:
+        slug: { type: string }
+        title: { type: string }
+
+    HelpArticle:
+      type: object
+      required: [slug, title, body, category_slug, category_title, helpful]
+      properties:
+        slug: { type: string }
+        title: { type: string }
+        body: { type: string, description: 'Markdown. Render natively, never as HTML.' }
+        category_slug: { type: string }
+        category_title: { type: string }
+        helpful: { type: [boolean, 'null'], description: "The caller's own vote; `null` if they have not voted." }
+
+    HelpSearchHit:
+      type: object
+      required: [slug, title, category_slug, excerpt]
+      properties:
+        slug: { type: string }
+        title: { type: string }
+        category_slug: { type: string }
+        excerpt: { type: string, description: A short plain-text snippet around the match. }
 
     Card:
       type: object
@@ -5016,6 +5241,12 @@ components:
         startDate: { type: string, format: date, example: '2026-01-01' }
         endDate: { type: string, format: date, example: '2026-01-31' }
         format: { type: string, enum: [pdf, csv], default: pdf }
+
+    HelpFeedbackRequest:
+      type: object
+      required: [helpful]
+      properties:
+        helpful: { type: boolean }
 
     ReportConversationRequest:
       type: object

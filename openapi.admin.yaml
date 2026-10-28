@@ -54,9 +54,9 @@ info:
     Every protected route declares `@RequirePermission(module, action)` and is
     checked by `PermissionGuard` against the caller's role.
 
-    * **Modules** (11): `dashboard`, `users`, `chats`, `wallets`, `transactions`,
+    * **Modules** (12): `dashboard`, `users`, `chats`, `wallets`, `transactions`,
       `kyc`, `reports`, `analytics`, `roles_permissions`, `admin_accounts`,
-      `system_settings`.
+      `system_settings`, `help_center`.
     * **Actions** (7): `view`, `create`, `edit`, `delete`, `approve`, `export`,
       `manage`.
     * `can_manage` on a module is a superset flag — it satisfies any action check
@@ -127,6 +127,12 @@ tags:
       Conversation metadata and the moderation queue. Chat is end-to-end
       encrypted, so nothing here exposes message content — see
       `admin-api-rfc.md` §5.1.
+  - name: Help & Support
+    description: |
+      FAQ content for the app's Help & Support screens: categories, answers,
+      their order and publish state. Read by the consumer API's `/help/*`
+      routes. All routes need the `help_center` module, which shipped with
+      db-schema v0.0.44 and is granted to **no role** by its migration.
   - name: Reports
     description: |
       The Reports screen — a catalogue of report types, asynchronous CSV
@@ -2000,6 +2006,375 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 
+  /admin/help/categories:
+    get:
+      tags: [Help & Support]
+      operationId: listHelpCategoriesAdmin
+      summary: List categories
+      description: |
+        Every category, drafts included, in the order users see them, with
+        `en-US` titles (`title` is `null` if the category has no `en-US`
+        title). `article_count` counts every article; `published_article_count`
+        only the published ones. A published category whose answers are all
+        drafts is empty in the app, and the two numbers together show that.
+      x-required-permission: 'help_center:view'
+      responses:
+        '200':
+          description: All categories, in display order.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/AdminHelpCategory' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Help & Support]
+      operationId: createHelpCategory
+      summary: Create a category
+      description: |
+        Adds a category at the **end** of the list. `icon` is a name the app
+        maps to its own asset, not a URL. New content is a **draft**
+        (`published: false`) unless `published` is sent; publishing and
+        unpublishing are both a `PATCH`. A slug already in use is
+        `409 slug_taken`.
+      x-required-permission: 'help_center:create'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateHelpCategoryRequest' }
+      responses:
+        '201':
+          description: Created.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/AdminHelpCategory' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: 'Slug already in use (`slug_taken`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /admin/help/categories/reorder:
+    post:
+      tags: [Help & Support]
+      operationId: reorderHelpCategories
+      summary: Reorder categories
+      description: |
+        The ids in the order they should appear, applied in one transaction
+        (position = index). Duplicate ids are `400 duplicate_ids`; an id that
+        does not exist is `400 unknown_category`, and nothing is applied.
+
+        The route's own description says to send **every** category id, but
+        the server does not check that the list is complete. A partial list
+        renumbers the ids sent from 0 and leaves the rest where they were, so
+        positions can collide (`suggestions.md` §4.10).
+      x-required-permission: 'help_center:edit'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/HelpReorderRequest' }
+      responses:
+        '201':
+          description: Reordered.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/HelpReorderResult' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/help/categories/{id}:
+    parameters:
+      - $ref: '#/components/parameters/HelpCategoryId'
+    patch:
+      tags: [Help & Support]
+      operationId: updateHelpCategory
+      summary: Edit or publish a category
+      description: |
+        Change the slug, icon, title (in `locale`, default `en-US`) or
+        publish state; send only what changes, and at least one of them.
+        `published: false` hides the category and everything in it without
+        deleting anything.
+      x-required-permission: 'help_center:edit'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateHelpCategoryRequest' }
+      responses:
+        '200':
+          description: The category as it now stands.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/AdminHelpCategory' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such category (`category_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '409':
+          description: 'Slug already in use (`slug_taken`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    delete:
+      tags: [Help & Support]
+      operationId: deleteHelpCategory
+      summary: Delete a category
+      description: |
+        Refused with `409 category_not_empty` while the category holds any
+        article, draft or published (the foreign key is `restrict` as well).
+        Unpublishing hides a category without losing anything.
+      x-required-permission: 'help_center:delete'
+      responses:
+        '200':
+          description: Deleted, with its translations.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/HelpDeleted' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such category (`category_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '409':
+          description: 'The category still holds articles (`category_not_empty`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /admin/help/categories/{id}/articles:
+    parameters:
+      - $ref: '#/components/parameters/HelpCategoryId'
+    get:
+      tags: [Help & Support]
+      operationId: listHelpArticlesAdmin
+      summary: List a category's articles
+      description: |
+        Every article in the category, drafts included, in display order,
+        with `en-US` titles only. Fetch one article for its body and votes.
+      x-required-permission: 'help_center:view'
+      responses:
+        '200':
+          description: The category's articles.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/AdminHelpArticle' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such category (`category_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /admin/help/categories/{id}/articles/reorder:
+    parameters:
+      - $ref: '#/components/parameters/HelpCategoryId'
+    post:
+      tags: [Help & Support]
+      operationId: reorderHelpArticles
+      summary: Reorder a category's articles
+      description: |
+        The category's article ids in display order, in one transaction. An id
+        from another category, or one that does not exist, is
+        `400 unknown_article`; duplicates are `400 duplicate_ids`. As with
+        categories, completeness is not checked (`suggestions.md` §4.10).
+      x-required-permission: 'help_center:edit'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/HelpReorderRequest' }
+      responses:
+        '201':
+          description: Reordered.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/HelpReorderResult' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such category (`category_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /admin/help/articles:
+    post:
+      tags: [Help & Support]
+      operationId: createHelpArticle
+      summary: Create an article
+      description: |
+        Adds an answer at the end of its category, as a **draft** unless
+        `published` is sent. `body` is Markdown and is rendered natively by
+        the app, never as HTML. Slugs are unique across all articles
+        (`409 slug_taken`).
+      x-required-permission: 'help_center:create'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateHelpArticleRequest' }
+      responses:
+        '201':
+          description: Created.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/AdminHelpArticleDetail' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such category (`category_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '409':
+          description: 'Slug already in use (`slug_taken`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /admin/help/articles/{id}:
+    parameters:
+      - $ref: '#/components/parameters/HelpArticleId'
+    get:
+      tags: [Help & Support]
+      operationId: getHelpArticleAdmin
+      summary: Get an article
+      description: |
+        The `en-US` title and Markdown body, plus reader votes: `helpful` and
+        `not_helpful` are counts, so an answer that is not working can be
+        found.
+      x-required-permission: 'help_center:view'
+      responses:
+        '200':
+          description: The article.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/AdminHelpArticleDetail' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such article (`article_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    patch:
+      tags: [Help & Support]
+      operationId: updateHelpArticle
+      summary: Edit, publish or move an article
+      description: |
+        Change the title or body (in `locale`, default `en-US`), slug, publish
+        state or category; send only what changes. A new `categoryId` moves the
+        article to the **end** of that category. Adding a language that has no
+        text yet needs both `title` and `body` (`400 translation_incomplete`).
+      x-required-permission: 'help_center:edit'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateHelpArticleRequest' }
+      responses:
+        '200':
+          description: The article as it now stands.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/AdminHelpArticleDetail' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such article or target category (`article_not_found`, `category_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '409':
+          description: 'Slug already in use (`slug_taken`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    delete:
+      tags: [Help & Support]
+      operationId: deleteHelpArticle
+      summary: Delete an article
+      description: |
+        Permanent. Its translations and reader votes are deleted with it
+        (cascade). Unpublishing hides an answer and keeps both.
+      x-required-permission: 'help_center:delete'
+      responses:
+        '200':
+          description: Deleted.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/HelpDeleted' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such article (`article_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
 # =============================================================================
 # Components
 # =============================================================================
@@ -2157,6 +2532,19 @@ components:
         returns an empty page rather than a `400`.
       schema: { type: string, examples: ['2026-09-30'] }
 
+    HelpCategoryId:
+      name: id
+      in: path
+      required: true
+      description: FAQ category id.
+      schema: { type: string, format: uuid }
+    HelpArticleId:
+      name: id
+      in: path
+      required: true
+      description: FAQ article id.
+      schema: { type: string, format: uuid }
+
   responses:
     BadRequest:
       description: 'Validation failure (`validation_error`) with a `details[]` array.'
@@ -2214,6 +2602,118 @@ components:
                     items: { $ref: '#/components/schemas/CaseNote' }
 
   schemas:
+
+    HelpLocale:
+      type: string
+      enum: [en-US, en-GB, zh, es, fr]
+      default: en-US
+      description: The language the text fields apply to.
+
+    HelpSlug:
+      type: string
+      minLength: 2
+      maxLength: 120
+      pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+      description: Lowercase words joined by hyphens. Slugs are the app's deep links.
+
+    AdminHelpCategory:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string }
+        icon: { type: string, description: An icon name, not a URL. }
+        title: { type: [string, 'null'], description: '`null` when there is no title in this locale.' }
+        position: { type: integer }
+        published: { type: boolean }
+        article_count: { type: integer, description: Every article, drafts included. }
+        published_article_count: { type: integer }
+        updated_at: { type: string, format: date-time }
+
+    AdminHelpArticle:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        category_id: { type: string, format: uuid }
+        slug: { type: string }
+        title: { type: [string, 'null'] }
+        position: { type: integer }
+        published: { type: boolean }
+        updated_at: { type: string, format: date-time }
+
+    AdminHelpArticleDetail:
+      allOf:
+        - $ref: '#/components/schemas/AdminHelpArticle'
+        - type: object
+          properties:
+            body: { type: [string, 'null'], description: 'Markdown, in `locale`.' }
+            locale: { $ref: '#/components/schemas/HelpLocale' }
+            helpful: { type: integer, minimum: 0, description: '"Yes" votes.' }
+            not_helpful: { type: integer, minimum: 0, description: '"No" votes.' }
+
+    CreateHelpCategoryRequest:
+      type: object
+      required: [slug, icon, title]
+      properties:
+        slug: { $ref: '#/components/schemas/HelpSlug' }
+        icon: { type: string, minLength: 1, maxLength: 64 }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        locale: { $ref: '#/components/schemas/HelpLocale' }
+        published: { type: boolean, default: false }
+
+    UpdateHelpCategoryRequest:
+      type: object
+      description: At least one of `slug`, `icon`, `title`, `published`.
+      properties:
+        slug: { $ref: '#/components/schemas/HelpSlug' }
+        icon: { type: string, minLength: 1, maxLength: 64 }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        locale: { $ref: '#/components/schemas/HelpLocale' }
+        published: { type: boolean }
+
+    CreateHelpArticleRequest:
+      type: object
+      required: [categoryId, slug, title, body]
+      properties:
+        categoryId: { type: string, format: uuid }
+        slug: { $ref: '#/components/schemas/HelpSlug' }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        body: { type: string, minLength: 1, maxLength: 20000, description: Markdown. }
+        locale: { $ref: '#/components/schemas/HelpLocale' }
+        published: { type: boolean, default: false }
+
+    UpdateHelpArticleRequest:
+      type: object
+      description: |
+        At least one of `categoryId`, `slug`, `title`, `body`, `published`.
+        The key is `categoryId`; the route's Swagger text says `category_id`,
+        which the validator does not read.
+      properties:
+        categoryId: { type: string, format: uuid }
+        slug: { $ref: '#/components/schemas/HelpSlug' }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        body: { type: string, minLength: 1, maxLength: 20000 }
+        locale: { $ref: '#/components/schemas/HelpLocale' }
+        published: { type: boolean }
+
+    HelpReorderRequest:
+      type: object
+      required: [ids]
+      properties:
+        ids:
+          type: array
+          minItems: 1
+          maxItems: 200
+          items: { type: string, format: uuid }
+
+    HelpReorderResult:
+      type: object
+      properties:
+        reordered: { type: integer }
+
+    HelpDeleted:
+      type: object
+      properties:
+        deleted: { type: boolean, const: true }
 
     SuccessEnvelope:
       type: object
@@ -3101,7 +3601,7 @@ components:
 
     AdminModule:
       type: string
-      enum: [dashboard, users, chats, wallets, transactions, kyc, reports, analytics, roles_permissions, admin_accounts, system_settings]
+      enum: [dashboard, users, chats, wallets, transactions, kyc, reports, analytics, roles_permissions, admin_accounts, system_settings, help_center]
 
     AdminUserSummary:
       type: object
@@ -3219,6 +3719,7 @@ components:
             - roles_permissions
             - admin_accounts
             - system_settings
+            - help_center
         actor:
           type: object
           description: The admin who performed it; both fields are `null` for a system-originated event.

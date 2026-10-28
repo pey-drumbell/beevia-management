@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft — for review · **updated 2026-08-05** |
 | **Scope** | The complete HTTP surface of `beevia-api` (the consumer API): what exists today, and what the PRD requires that does not exist yet |
-| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, **141 operations** · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, **38 operations** (35 net-new + 3 live-endpoint modifications) · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
+| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, **146 operations** · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, **38 operations** (35 net-new + 3 live-endpoint modifications) · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
 | **Sibling RFC** | [`admin-api-rfc.md`](./admin-api-rfc.md) — the `beevia-admin-api` back-office service |
 | **Sources** | `beevia-api/src/**/*.controller.ts`, `beevia-api/src/**/dto/*.ts`, `beevia-db-schema/src/schema/*`, `beevia-api/postman/Beevia.postman_collection.json`, `Beevia_PRD.pdf` |
 | **Base path** | `/api/v1` (global prefix set in `src/main.ts`; `/i/:code` is explicitly excluded) |
@@ -171,9 +171,10 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | Notifications | 5 | 0 | Complete |
 | **Activity** | **2** | 0 | **New 2026-10-08.** Unified chats/calls/payments feed with keyset pagination, plus its badge count. Chat previews are per-device ciphertext, not server-read text (§5.14) |
 | **Statements** | **2** | 0 | **New 2026-10-27.** `POST /statements` (202, emailed wallet or card statement, PDF password-protected) and `GET /statements` (request history). Not a PRD line item; see §5.16 |
-| Support | **0** | 4 | Does not exist. Includes `POST /payments/{id}/dispute`, listed under §7.2 but tagged Support. Sprint 1002 carries Help & Support items (FAQ, disputes, support chat) whose server half has no code on any branch yet (§5.16) |
+| **Help & Support** | **5** | 0 | **New 2026-10-28.** FAQ only: categories, questions in a category, full-text search, an answer, and the "Was this helpful?" vote. Content is written through the admin API (`admin-api-rfc.md`). Disputes and the support chat have no server code yet (§5.17) |
+| Support | **0** | 4 | Does not exist. Includes `POST /payments/{id}/dispute`, listed under §7.2 but tagged Support. The FAQ half of sprint 1002's Help & Support block shipped as `/help/*` (§5.17); disputes (`BVA-I341`, `I344`) and the support conversation (`I347`) are In progress with no server branch |
 | Webhooks | **4** | 1 | **+1:** `POST /webhooks/paystack` for card top-ups. Card issuer callback still missing |
-| **Total** | **141** | **35** | +3 live-endpoint modifications = 38 operations in the proposed file |
+| **Total** | **146** | **35** | +3 live-endpoint modifications = 38 operations in the proposed file |
 
 ---
 
@@ -597,6 +598,17 @@ On the client, `beevia-mobile` `main` already had the iOS half: `AppDelegate.swi
 
 **Block state** (`beevia-api` #83, `a2b843a`, 27 Oct). `ContactProfile.blocked` and each `Conversation.peers[].blocked` are now returned, **directional**: true only when the viewer did the blocking, so a block is never disclosed to the blocked user. `POST /conversations/{id}/calls` now refuses a blocked direct pair with `403 blocked`, as messaging and conversation creation already did. **Payments are deliberately untouched** ("Payments deliberately left alone for now"): a blocked user can still send money to, or request money from, the user who blocked them (`suggestions.md` §4.9).
 
+### 5.17 Help & Support: the FAQ half shipped, disputes and support chat did not (2026-10-28)
+
+**`/help/*`** (`beevia-api` #86, 28 Oct 12:40 UTC; tables in `beevia-db-schema` #25, v0.0.44; admin CRUD in `beevia-admin-api` #23). Five consumer operations: `GET /help/categories`, `GET /help/categories/{slug}`, `GET /help/search`, `GET /help/articles/{slug}` and `POST /help/articles/{slug}/feedback`. Content is split into structure (`faq_categories`, `faq_articles`: order, publish state) and per-locale text (`faq_*_translations`), so other languages need no migration. Reads resolve the caller's language and fall back to `en-US` in SQL. The answer body is Markdown, rendered natively by the client. The vote is one per user per article and can be changed. Sprint 1002's `BVA-I335` and `I338` track this work, and both went to REVIEW/QA 21 minutes after the merge.
+
+Two design points (`suggestions.md` §4.10):
+
+- **Search does not fall back.** It searches the caller's language only, while every read falls back to `en-US`. So for a Spanish user, an untranslated article is readable by link but cannot be found by search. While only English content exists, **search returns nothing for every non-English user**. All tsvectors use the English dictionary regardless of locale; the db-schema commit makes that choice on purpose.
+- **The permission exists, but no role holds it.** db-schema v0.0.44 adds `help_center` to `admin_module` and does not grant it to any role. Until a role is edited through the roles API, every admin gets `403` on all eleven `/admin/help/*` routes, and no FAQ content can be written.
+
+**Not shipped:** disputes (the proposed `/support/tickets` and `POST /payments/{id}/dispute`, and 1002's `I341`/`I344`) and the support conversation (`I347`). #86's commit says so directly: "There is no support-chat backend to point it at." The mobile Help & Support screens (`origin/BVA-I330`, also inside `origin/BVA-I353`) still run on placeholder data (`TODO(support-api)`), including the FAQ screens whose API now exists.
+
 ---
 
 ## 6. Implemented surface
@@ -720,7 +732,7 @@ Escrow mechanics themselves are sound: a 24-hour hold scheduled through BullMQ, 
 
 **But no production payment has used them.** Per the #57 commit (2026-09-25), all six sends on production went through `POST /payments/transfer` — the mobile client's in-chat Send posts there — and each completed in the same millisecond it was created. The PRD's *Transfer Acceptance & Escrow* feature (§10.2, MVP Phase 3) is built on the server and bypassed by the client. See §5.11.
 
-### 6.8 Chat, Calls, Attachments, Translate, Notifications, Activity, Statements, Webhooks
+### 6.8 Chat, Calls, Attachments, Translate, Notifications, Activity, Statements, Help & Support, Webhooks
 
 | | Method | Path | Auth | Status |
 |---|---|---|---|---|
@@ -766,6 +778,11 @@ Escrow mechanics themselves are sound: a 24-hour hold scheduled through BullMQ, 
 | | GET | `/activity/unattended-count` | 🔑 | ✅ **New 2026-10-08.** Badge number only; same value as the feed's `unattended_count` |
 | | POST | `/statements` | 🔑 | ✅ **New 2026-10-27.** `202`; generated and emailed in the background. PDF encrypted with the phone number (§5.16) |
 | | GET | `/statements` | 🔑 | ✅ **New 2026-10-27.** Last 50 requests, newest first; the audit record, not the file |
+| | GET | `/help/categories` | 🔑 | ✅ **New 2026-10-28.** Published FAQ categories with `icon` name and published-question count; `en-US` fallback (§5.17) |
+| | GET | `/help/categories/{slug}` | 🔑 | ✅ **New 2026-10-28.** One category's question titles |
+| | GET | `/help/search` | 🔑 | 🟡 **New 2026-10-28.** `websearch_to_tsquery`, retried with OR'd terms on a miss. **Caller's language only, no fallback** (§5.17) |
+| | GET | `/help/articles/{slug}` | 🔑 | ✅ **New 2026-10-28.** Markdown body plus the caller's own vote |
+| | POST | `/help/articles/{slug}/feedback` | 🔑 | ✅ **New 2026-10-28.** `{helpful}`; one changeable vote per user |
 | | POST | `/webhooks/anchor` | 🔓 | ✅ HMAC over raw body; deduped. **Processed no real delivery until 2026-09-03** — envelope mismatch, see §5.6. Now also syncs card lifecycle events |
 | | POST | `/webhooks/livekit` | 🔓 | ✅ JWT in `Authorization` |
 
