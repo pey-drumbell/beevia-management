@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft — for review · **updated 2026-08-05** |
 | **Scope** | The complete HTTP surface of `beevia-api` (the consumer API): what exists today, and what the PRD requires that does not exist yet |
-| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, **146 operations** · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, **38 operations** (35 net-new + 3 live-endpoint modifications) · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
+| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, **149 operations** · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, **37 operations** (34 net-new + 3 live-endpoint modifications) · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
 | **Sibling RFC** | [`admin-api-rfc.md`](./admin-api-rfc.md) — the `beevia-admin-api` back-office service |
 | **Sources** | `beevia-api/src/**/*.controller.ts`, `beevia-api/src/**/dto/*.ts`, `beevia-db-schema/src/schema/*`, `beevia-api/postman/Beevia.postman_collection.json`, `Beevia_PRD.pdf` |
 | **Base path** | `/api/v1` (global prefix set in `src/main.ts`; `/i/:code` is explicitly excluded) |
@@ -172,9 +172,10 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | **Activity** | **2** | 0 | **New 2026-10-08.** Unified chats/calls/payments feed with keyset pagination, plus its badge count. Chat previews are per-device ciphertext, not server-read text (§5.14) |
 | **Statements** | **2** | 0 | **New 2026-10-27.** `POST /statements` (202, emailed wallet or card statement, PDF password-protected) and `GET /statements` (request history). Not a PRD line item; see §5.16 |
 | **Help & Support** | **5** | 0 | **New 2026-10-28.** FAQ only: categories, questions in a category, full-text search, an answer, and the "Was this helpful?" vote. Content is written through the admin API (`admin-api-rfc.md`). Disputes and the support chat have no server code yet (§5.17) |
-| Support | **0** | 4 | Does not exist. Includes `POST /payments/{id}/dispute`, listed under §7.2 but tagged Support. The FAQ half of sprint 1002's Help & Support block shipped as `/help/*` (§5.17); disputes (`BVA-I341`, `I344`) and the support conversation (`I347`) are In progress with no server branch |
+| **Disputes** | **3** | 0 | **New 2026-10-28.** "Report an issue" on a transaction (`POST /disputes`), the user's history and one report. The snapshot of the transaction is built server-side from the reference. Answered through the admin API's dispute queue. Shipped in place of the proposed `POST /payments/{id}/dispute` (§5.18) |
+| Support | **0** | 3 | Support chat and general escalation (`/support/tickets`). Does not exist. Support chat (`BVA-I347`) is In progress with no server branch (§5.18) |
 | Webhooks | **4** | 1 | **+1:** `POST /webhooks/paystack` for card top-ups. Card issuer callback still missing |
-| **Total** | **146** | **35** | +3 live-endpoint modifications = 38 operations in the proposed file |
+| **Total** | **149** | **34** | +3 live-endpoint modifications = 37 operations in the proposed file |
 
 ---
 
@@ -607,7 +608,20 @@ Two design points (`suggestions.md` §4.10):
 - **Search does not fall back.** It searches the caller's language only, while every read falls back to `en-US`. So for a Spanish user, an untranslated article is readable by link but cannot be found by search. While only English content exists, **search returns nothing for every non-English user**. All tsvectors use the English dictionary regardless of locale; the db-schema commit makes that choice on purpose.
 - **The permission exists, but no role holds it.** db-schema v0.0.44 adds `help_center` to `admin_module` and does not grant it to any role. Until a role is edited through the roles API, every admin gets `403` on all eleven `/admin/help/*` routes, and no FAQ content can be written.
 
-**Not shipped:** disputes (the proposed `/support/tickets` and `POST /payments/{id}/dispute`, and 1002's `I341`/`I344`) and the support conversation (`I347`). #86's commit says so directly: "There is no support-chat backend to point it at." The mobile Help & Support screens (`origin/BVA-I330`, also inside `origin/BVA-I353`) still run on placeholder data (`TODO(support-api)`), including the FAQ screens whose API now exists.
+**Not shipped (as of 28 Oct 14:05 UTC):** disputes and the support conversation (`I347`). Disputes shipped later the same day; see §5.18. #86's commit says so directly: "There is no support-chat backend to point it at." The mobile Help & Support screens (`origin/BVA-I330`, also inside `origin/BVA-I353`) still run on placeholder data (`TODO(support-api)`), including the FAQ screens whose API now exists.
+
+### 5.18 Disputes shipped; support chat did not (2026-10-29)
+
+**`/disputes`** (`beevia-api` #87, 28 Oct 16:05 UTC; tables in `beevia-db-schema` #26, v0.0.45; the admin queue in `beevia-admin-api` #24, 16:21 UTC). Three consumer operations: `POST /disputes`, `GET /disputes` and `GET /disputes/{id}`. This is the built form of the proposed `POST /payments/{id}/dispute`, which has been removed from `openapi.proposed.yaml`. It is built differently from that proposal: the subject is the **receipt reference**, not a payment id, so a dispute can name a ledger transaction or a peer payment. The **snapshot of the transaction is composed by the server** from the caller's own rows. Ownership is in the `where` clause, and the client cannot supply amounts. The reasons are a seven-value enum. One report can be open per transaction per user (a partial unique index), with `409 dispute_already_open` returning the existing id. Attachments are `POST /upload/image` URLs checked against Beevia's own storage origin. 10 integration tests run against real Postgres.
+
+Four limits (`suggestions.md` §4.11):
+
+- **No admin can answer one yet.** db-schema v0.0.45 adds `disputes` to `admin_module` and grants it to no role, the same as `help_center` a day earlier. Users can file disputes in production now, and every `/admin/disputes` call is `403` until a role is edited.
+- **Card spending cannot be disputed.** It has no local row to resolve a reference against. The commit says so. It is likely the most disputed category.
+- **No notification on an answer.** Resolving a dispute writes the note and the status. Nothing tells the user, so they see the answer only by reopening the history screen.
+- **`GET /disputes/{id}` with a malformed id returns `500`** (§1.1, `22P02` still unmapped).
+
+**Not shipped:** dispute *messaging* (`I344`'s "message send/fetch endpoints scoped to a dispute id"), the open-dispute count for the history badge (`I332`), and the general support conversation (`I347`). `/support/tickets` stays proposed for the general case. Its ticket model (`open`/`pending_partner`/`resolved`/`closed`) would need reconciling with the shipped dispute statuses (`submitted`/`under_review`/`resolved`/`rejected`).
 
 ---
 
@@ -732,7 +746,7 @@ Escrow mechanics themselves are sound: a 24-hour hold scheduled through BullMQ, 
 
 **But no production payment has used them.** Per the #57 commit (2026-09-25), all six sends on production went through `POST /payments/transfer` — the mobile client's in-chat Send posts there — and each completed in the same millisecond it was created. The PRD's *Transfer Acceptance & Escrow* feature (§10.2, MVP Phase 3) is built on the server and bypassed by the client. See §5.11.
 
-### 6.8 Chat, Calls, Attachments, Translate, Notifications, Activity, Statements, Help & Support, Webhooks
+### 6.8 Chat, Calls, Attachments, Translate, Notifications, Activity, Statements, Help & Support, Disputes, Webhooks
 
 | | Method | Path | Auth | Status |
 |---|---|---|---|---|
@@ -783,6 +797,9 @@ Escrow mechanics themselves are sound: a 24-hour hold scheduled through BullMQ, 
 | | GET | `/help/search` | 🔑 | 🟡 **New 2026-10-28.** `websearch_to_tsquery`, retried with OR'd terms on a miss. **Caller's language only, no fallback** (§5.17) |
 | | GET | `/help/articles/{slug}` | 🔑 | ✅ **New 2026-10-28.** Markdown body plus the caller's own vote |
 | | POST | `/help/articles/{slug}/feedback` | 🔑 | ✅ **New 2026-10-28.** `{helpful}`; one changeable vote per user |
+| | POST | `/disputes` | 🔑 | 🟡 **New 2026-10-28.** Receipt reference + reason enum + optional details and up to 5 uploaded screenshot URLs; server-built snapshot; `409 dispute_already_open`. **Not card spending**; no admin role can answer yet (§5.18) |
+| | GET | `/disputes` | 🔑 | ✅ **New 2026-10-28.** The caller's reports, newest first, unpaginated |
+| | GET | `/disputes/{id}` | 🔑 | ✅ **New 2026-10-28.** One report with `resolution_note`; someone else's is `404` |
 | | POST | `/webhooks/anchor` | 🔓 | ✅ HMAC over raw body; deduped. **Processed no real delivery until 2026-09-03** — envelope mismatch, see §5.6. Now also syncs card lifecycle events |
 | | POST | `/webhooks/livekit` | 🔓 | ✅ JWT in `Authorization` |
 
@@ -836,7 +853,7 @@ When one of these ships, update the operation in `openapi.yaml` and **delete** i
 
 Quotes are single-use and short-lived. Expiry returns `quote_expired` and the client re-quotes — never extend a quote in place, or the rate the user confirmed stops being the rate that settles.
 
-### 7.2 Payments (5) — closes §4.4
+### 7.2 Payments (4) — closes §4.4
 
 | Method | Path | Auth | PRD |
 |---|---|---|---|
@@ -844,7 +861,8 @@ Quotes are single-use and short-lived. Expiry returns `quote_expired` and the cl
 | GET | `/payments/{id}` | 🔑 | §10.2 |
 | POST | `/payments/send/preview` | 🔑 | Flow 5 + edge cases |
 | POST | `/payments/request/preview` | 🔑 | §8.2, Flow 6 |
-| POST | `/payments/{id}/dispute` | 🔑 | §7.4, §8.3 |
+
+*(`POST /payments/{id}/dispute` shipped on 2026-10-28 as `POST /disputes`, keyed by receipt reference rather than payment id. See §5.18. It now lives in `openapi.yaml`.)*
 
 Previews deliberately require **no** step-up: they move no money, and requiring one would reintroduce the ordering problem they exist to fix. `request/preview` always returns `is_binding: false` and no quote id, keeping the PRD's non-binding-preview requirement enforceable in the UI.
 
@@ -960,7 +978,7 @@ Ordered by unblocked value per unit of work, not by PRD section order.
 `/cards/*`, `POST /webhooks/cards`.
 
 **Phase E — compliance and support.** Required before public launch per §11 Phase 4 and §12.4.
-Consents, limits mutation, deletion status, data export, `/support/*`, `POST /payments/{id}/dispute`.
+Consents, limits mutation, deletion status, data export, `/support/*`. (Disputes shipped 2026-10-28, §5.18.)
 
 **Ongoing, no phase:** translation preferences and batch, single-attachment presign, beneficiary CRUD, and converging `/upgrade/*` with `/kyc/*` (§5.1).
 

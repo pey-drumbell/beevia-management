@@ -54,9 +54,9 @@ info:
     Every protected route declares `@RequirePermission(module, action)` and is
     checked by `PermissionGuard` against the caller's role.
 
-    * **Modules** (12): `dashboard`, `users`, `chats`, `wallets`, `transactions`,
+    * **Modules** (13): `dashboard`, `users`, `chats`, `wallets`, `transactions`,
       `kyc`, `reports`, `analytics`, `roles_permissions`, `admin_accounts`,
-      `system_settings`, `help_center`.
+      `system_settings`, `help_center`, `disputes`.
     * **Actions** (7): `view`, `create`, `edit`, `delete`, `approve`, `export`,
       `manage`.
     * `can_manage` on a module is a superset flag — it satisfies any action check
@@ -133,6 +133,13 @@ tags:
       their order and publish state. Read by the consumer API's `/help/*`
       routes. All routes need the `help_center` module, which shipped with
       db-schema v0.0.44 and is granted to **no role** by its migration.
+  - name: Admin Disputes
+    description: |
+      The dispute queue: transactions users reported from the app's "Report
+      an issue" sheet (`POST /disputes` in the consumer API). All routes need
+      the `disputes` module, which shipped with db-schema v0.0.45 and, like
+      `help_center`, is granted to **no role** by its migration. Answering a
+      dispute records a decision; it never moves money.
   - name: Reports
     description: |
       The Reports screen — a catalogue of report types, asynchronous CSV
@@ -2375,6 +2382,130 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 
+  /admin/disputes:
+    get:
+      tags: [Admin Disputes]
+      operationId: listDisputesAdmin
+      summary: The dispute queue
+      description: |
+        Reported transaction issues. **With no `status` filter this is the
+        open queue** (`submitted` and `under_review`), not everything ever
+        reported; pass `status` to see closed ones. Ordered **oldest first**.
+        `search` matches the transaction reference (case-insensitive
+        substring), and `reason` filters by what the user said went wrong.
+
+        Each row carries `age_hours`, counted from `created_at` to now. It
+        keeps counting after a dispute is answered, so on a closed dispute it
+        is the report's age, not the time the user waited for an answer.
+      x-required-permission: 'disputes:view'
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 500, default: 20 }
+        - name: status
+          in: query
+          description: Omit for the open queue.
+          schema: { $ref: '#/components/schemas/AdminDisputeStatus' }
+        - name: reason
+          in: query
+          schema: { $ref: '#/components/schemas/AdminDisputeReason' }
+        - name: search
+          in: query
+          description: Substring of the transaction reference.
+          schema: { type: string, minLength: 2, maxLength: 128 }
+      responses:
+        '200':
+          description: Paginated disputes, oldest first.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/QueuedDispute' }
+                      meta: { $ref: '#/components/schemas/PaginationMeta' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/disputes/{id}:
+    parameters:
+      - $ref: '#/components/parameters/DisputeId'
+    get:
+      tags: [Admin Disputes]
+      operationId: getDisputeAdmin
+      summary: One dispute
+      description: |
+        Everything the reporter sent: the transaction snapshot as it appeared
+        to them when they complained (not what the row says today), their
+        note and any screenshots, newest first.
+      x-required-permission: 'disputes:view'
+      responses:
+        '200':
+          description: The dispute.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/DisputeDetail' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such dispute (`dispute_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    patch:
+      tags: [Admin Disputes]
+      operationId: resolveDispute
+      summary: Claim or answer a dispute
+      description: |
+        `under_review` claims it. `resolved` and `rejected` answer it, and
+        both **require a `note`** (`400 note_required`). Both endings are
+        final: a closed dispute is `409 dispute_already_closed`, and the user
+        may raise a fresh report instead. Claiming one already under review is
+        `409 dispute_already_claimed`.
+
+        `reviewed_by` and `reviewed_at` are stamped only when the dispute is
+        answered, so a claim does not record who claimed it. The status check
+        and the update are separate statements with no condition on the
+        current status, so two admins acting at once can both succeed.
+        **This does not move money.** A refund is a separate ledger operation.
+      x-required-permission: 'disputes:edit'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ResolveDisputeRequest' }
+      responses:
+        '200':
+          description: The dispute after the change.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/DisputeDetail' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such dispute (`dispute_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '409':
+          description: 'Already closed (`dispute_already_closed`) or already claimed (`dispute_already_claimed`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
 # =============================================================================
 # Components
 # =============================================================================
@@ -2543,6 +2674,12 @@ components:
       in: path
       required: true
       description: FAQ article id.
+      schema: { type: string, format: uuid }
+    DisputeId:
+      name: id
+      in: path
+      required: true
+      description: Dispute id.
       schema: { type: string, format: uuid }
 
   responses:
@@ -2740,6 +2877,55 @@ components:
               path: { type: string }
               message: { type: string }
         timestamp: { type: string, format: date-time }
+
+    AdminDisputeStatus:
+      type: string
+      enum: [submitted, under_review, resolved, rejected]
+    AdminDisputeReason:
+      type: string
+      enum: [money_didnt_arrive, charged_twice, wrong_amount, still_pending, not_my_transaction, failed_but_debited, something_else]
+    QueuedDispute:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        reference: { type: string, description: The transaction reference the user reported. }
+        reason: { $ref: '#/components/schemas/AdminDisputeReason' }
+        status: { $ref: '#/components/schemas/AdminDisputeStatus' }
+        reported_by:
+          type: object
+          properties:
+            id: { type: string, format: uuid }
+            display_name: { type: string, nullable: true }
+            phone: { type: string, nullable: true }
+        transaction:
+          type: object
+          description: The snapshot captured when the report was made (`description`, `amount`, `currency`, `occurred_at`, `status`, `source`).
+          additionalProperties: true
+        created_at: { type: string, format: date-time }
+        age_hours: { type: integer, description: Whole hours from `created_at` to now, for open and closed disputes alike. }
+    DisputeDetail:
+      allOf:
+        - $ref: '#/components/schemas/QueuedDispute'
+        - type: object
+          properties:
+            details: { type: string, nullable: true }
+            attachments:
+              type: array
+              items:
+                type: object
+                properties:
+                  url: { type: string, format: uri }
+                  filename: { type: string, nullable: true }
+                  size_bytes: { type: integer, nullable: true }
+            resolution_note: { type: string, nullable: true }
+            reviewed_by: { type: string, format: uuid, nullable: true, description: The admin who answered it. Not set by a claim. }
+            reviewed_at: { type: string, format: date-time, nullable: true }
+    ResolveDisputeRequest:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [under_review, resolved, rejected] }
+        note: { type: string, minLength: 1, maxLength: 4000, description: Required for `resolved` and `rejected`. }
 
     PaginationMeta:
       type: object
@@ -3601,7 +3787,7 @@ components:
 
     AdminModule:
       type: string
-      enum: [dashboard, users, chats, wallets, transactions, kyc, reports, analytics, roles_permissions, admin_accounts, system_settings, help_center]
+      enum: [dashboard, users, chats, wallets, transactions, kyc, reports, analytics, roles_permissions, admin_accounts, system_settings, help_center, disputes]
 
     AdminUserSummary:
       type: object
@@ -3720,6 +3906,7 @@ components:
             - admin_accounts
             - system_settings
             - help_center
+            - disputes
         actor:
           type: object
           description: The admin who performed it; both fields are `null` for a system-originated event.

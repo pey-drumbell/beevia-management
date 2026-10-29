@@ -145,8 +145,10 @@ tags:
     description: The Activity tab — one feed of chats, calls and payments, and its badge count.
   - name: Help & Support
     description: FAQ categories, answers, search and the "Was this helpful?" vote. Content is managed in the admin API.
+  - name: Disputes
+    description: '"Report an issue" on a transaction and the dispute history. Answered from the admin API''s dispute queue.'
   - name: Support
-    description: Disputes and escalation. Entirely proposed.
+    description: Support chat and general escalation. Entirely proposed; disputes are under `Disputes`.
   - name: Webhooks
     description: Partner-facing callbacks. Public, signature-verified, envelope-free.
 
@@ -2265,6 +2267,113 @@ paths:
                         properties:
                           helpful: { type: boolean }
         '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /disputes:
+    post:
+      tags: [Disputes]
+      operationId: createDispute
+      summary: Report an issue with a transaction
+      description: |
+        Backs the "Report an issue" sheet. Send the reference printed on the
+        receipt (`Ref CB2026…`), what went wrong, and optionally a note and up
+        to five screenshots.
+
+        **The transaction summary is built server-side**, not sent by the
+        client. The reference is resolved against the caller's own
+        transactions (the ledger first, then peer payments, either side of a
+        payment) and the snapshot in `transaction` is composed from the row
+        found. A reference that is not the caller's is
+        `404 transaction_not_found`. **Card spending cannot be disputed yet**:
+        it is read live from the card partner and has no local row to resolve
+        a reference against.
+
+        **Attachments are URLs from `POST /upload/image`**, not files. Upload
+        first, then send the URL that came back. A URL whose origin is not
+        Beevia's own storage is `400 attachment_not_ours`.
+
+        **One open report per transaction per user.** A second report while
+        the first is `submitted` or `under_review` is
+        `409 dispute_already_open`, whose `details` carry the existing
+        report's id and status so the app can show it instead. Once a report
+        is answered the same transaction can be reported again.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateDisputeRequest' }
+      responses:
+        '201':
+          description: Report submitted.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Dispute' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: 'This transaction already has an open report (`dispute_already_open`). `details` carry `dispute_id` and `status` (error keys are snake_cased).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    get:
+      tags: [Disputes]
+      operationId: listDisputes
+      summary: Dispute history
+      description: |
+        The caller's reports, newest first, each with its status, the
+        transaction snapshot and any answer. Not paginated. An empty array is
+        the normal state for most users.
+      responses:
+        '200':
+          description: The caller's reports, newest first.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Dispute' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /disputes/{id}:
+    get:
+      tags: [Disputes]
+      operationId: getDispute
+      summary: One report
+      description: |
+        A single report of the caller's. `resolution_note` carries the answer
+        once there is one, on a rejection as much as a resolution. Someone
+        else's report is `404 dispute_not_found`, not `403`, so the response
+        does not confirm that the id exists. The id is not validated as a
+        UUID before the query, so a malformed id currently returns `500`
+        (`suggestions.md` §1.1).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Dispute id.
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: The report.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Dispute' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
 
@@ -5242,6 +5351,63 @@ components:
         endDate: { type: string, format: date, example: '2026-01-31' }
         format: { type: string, enum: [pdf, csv], default: pdf }
 
+    DisputeReason:
+      type: string
+      description: What the user said went wrong. The same enum is `dispute_reason` in the database.
+      enum: [money_didnt_arrive, charged_twice, wrong_amount, still_pending, not_my_transaction, failed_but_debited, something_else]
+    DisputeStatus:
+      type: string
+      description: '`submitted` and `under_review` are open; `resolved` and `rejected` are final answers.'
+      enum: [submitted, under_review, resolved, rejected]
+    DisputeAttachmentInput:
+      type: object
+      required: [url]
+      properties:
+        url: { type: string, format: uri, maxLength: 2048, description: 'A URL returned by `POST /upload/image`.' }
+        filename: { type: string, minLength: 1, maxLength: 255 }
+        sizeBytes: { type: integer, minimum: 1, maximum: 10000000 }
+    CreateDisputeRequest:
+      type: object
+      required: [transactionReference, reason]
+      properties:
+        transactionReference: { type: string, minLength: 3, maxLength: 128, description: 'The reference printed on the receipt.' }
+        reason: { $ref: '#/components/schemas/DisputeReason' }
+        details: { type: string, minLength: 1, maxLength: 4000, description: '"Tell us more". Optional.' }
+        attachments:
+          type: array
+          maxItems: 5
+          default: []
+          items: { $ref: '#/components/schemas/DisputeAttachmentInput' }
+    DisputedTransaction:
+      type: object
+      description: The transaction as the receipt showed it, captured server-side when the report was made. It is not re-derived later.
+      properties:
+        description: { type: string, nullable: true }
+        amount: { type: string, nullable: true, description: 'Decimal string at full scale, e.g. `"2000.00000000"`.' }
+        currency: { type: string, nullable: true }
+        occurred_at: { type: string, format: date-time, nullable: true }
+        status: { type: string, nullable: true }
+        source: { type: string, enum: [ledger, payment] }
+    Dispute:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        transaction_reference: { type: string }
+        transaction: { $ref: '#/components/schemas/DisputedTransaction' }
+        reason: { $ref: '#/components/schemas/DisputeReason' }
+        details: { type: string, nullable: true }
+        status: { $ref: '#/components/schemas/DisputeStatus' }
+        resolution_note: { type: string, nullable: true, description: 'The answer, once there is one.' }
+        resolved_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+        attachments:
+          type: array
+          items:
+            type: object
+            properties:
+              url: { type: string, format: uri }
+              filename: { type: string, nullable: true }
+              size_bytes: { type: integer, nullable: true }
     HelpFeedbackRequest:
       type: object
       required: [helpful]

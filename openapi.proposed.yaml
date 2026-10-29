@@ -98,7 +98,7 @@ tags:
   - name: Notifications
     description: Push token binding and category preferences.
   - name: Support
-    description: Disputes and escalation. Entirely proposed.
+    description: Support chat and general escalation. Transaction disputes shipped as `/disputes` in `openapi.yaml`.
   - name: Webhooks
     description: Partner-facing callbacks. Public, signature-verified, envelope-free.
 
@@ -983,46 +983,6 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
 
-  /payments/{id}/dispute:
-    parameters:
-      - $ref: '#/components/parameters/PaymentId'
-    post:
-      tags: [Support]
-      operationId: disputePayment
-      summary: 'Raise a dispute on a payment'
-      description: |
-        Opens a support case attached to a specific payment or ledger
-        transaction. The PRD tracks "Dispute Resolution Time — 90 percent of
-        issues resolved within 72 hours" as a compliance KPI and commits that
-        "Beevia handles escalation" rather than sending users to the partner, but
-        the API has no dispute or support surface at all, so neither the promise
-        nor the metric is instrumentable.
-      externalDocs:
-        description: "PRD §7.4 Dispute Resolution Time, §8.3 \"Beevia handles escalation\""
-        url: ./Beevia_PRD.md
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/CreateDisputeRequest' }
-      responses:
-        '201':
-          description: Dispute opened.
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessEnvelope'
-                  - type: object
-                    properties:
-                      data: { $ref: '#/components/schemas/SupportTicket' }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '409':
-          description: A dispute is already open for this payment (`dispute_already_open`).
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
-
   /contacts/sync/status:
     get:
       tags: [Contacts]
@@ -1176,8 +1136,10 @@ paths:
       operationId: createSupportTicket
       summary: 'Open a support ticket'
       description: |
-        General escalation path, of which `POST /payments/{id}/dispute` is the
-        payment-scoped specialization. The PRD commits that a user is *never*
+        General escalation path. The transaction-scoped case shipped on
+        28 Oct 2026 as `POST /disputes` (`openapi.yaml`), with its own
+        reason enum and statuses; this ticket model would need reconciling
+        with it. The PRD commits that a user is *never*
         told to contact the partner directly — Beevia owns escalation — and
         tracks partner escalations and resolution time as KPIs. Neither is
         possible without a ticket record.
@@ -1620,13 +1582,6 @@ components:
         bankCode: { type: string, minLength: 3, maxLength: 10 }
         accountNumber: { type: string, pattern: '^\d{10}$' }
         nickname: { type: string, maxLength: 64 }
-
-    CreateDisputeRequest:
-      type: object
-      required: [reason]
-      properties:
-        reason: { type: string, enum: [not_received, wrong_amount, unauthorized, duplicate, other] }
-        details: { type: string, maxLength: 2000 }
 
     CreateFxQuoteRequest:
       type: object

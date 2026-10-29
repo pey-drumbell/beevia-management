@@ -34,7 +34,7 @@
       <span class="topbar__wordmark">Beevia</span>
     </div>
     <nav class="topbar__nav label" aria-label="Report">
-      <a href="2026-10-28.html">Latest frame</a>
+      <a href="2026-10-29.html">Latest frame</a>
     </nav>
 </div>
 
@@ -43,9 +43,9 @@
     <div class="field__rail field__rail--l">
       <dl>
         <dt>Frames held</dt>
-        <dd>55</dd>
+        <dd>56</dd>
         <dt>Latest</dt>
-        <dd>2026-10-28 · Help &amp; Support FAQ ships but no admin role can write it; card screens surface, mis-wired</dd>
+        <dd>2026-10-29 · Disputes ship end to end but no admin role can answer them; the app wires FAQ and disputes</dd>
       </dl>
     </div>
 
@@ -55,7 +55,7 @@
       </div>
       <div class="field__meta num">
         <span>Beevia project status</span>
-        <span>2026-08-05 &rarr; 2026-10-28</span>
+        <span>2026-08-05 &rarr; 2026-10-29</span>
         <span>Newest first</span>
       </div>
     </div>
@@ -75,9 +75,9 @@
   <div class="mvp__head">
     <span class="mvp__label label">MVP readiness &mdash; estimate</span>
     <span class="mvp__pct num">&asymp;67%</span>
-    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 57 days past</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 58 days past</span>
   </div>
-  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged. Help and Support is not a rubric capability, and the new card screens are on an unmerged branch. E2EE messaging 0.90; voice and video calling 0.92; message translation 0.60; local KYC 0.90; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.80; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged. Disputes are not a rubric capability, and the new client work is on an unmerged branch. E2EE messaging 0.90; voice and video calling 0.92; message translation 0.60; local KYC 0.90; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.80; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
     <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.90"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.92"><i style="width:92%"></i></span>
     <span class="mvp__seg" style="flex:7" title="Message translation — 0.60"><i style="width:60%"></i></span>
@@ -90,10 +90,27 @@
     <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
     <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.97"><i style="width:97%"></i></span>
   </div>
-  <p class="mvp__read"><strong>67.32, unchanged.</strong> The FAQ is not a rubric line, and the card-management screens are on an unmerged branch with 5 of 6 calls mismatched against the server, so line 9 holds at 0.80. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 28 Oct 2026 &mdash; <a href="2026-10-28.html#mvp-method">method and capability table</a>.</p>
+  <p class="mvp__read"><strong>67.32, unchanged.</strong> Disputes are not a rubric line, and the app&rsquo;s FAQ, dispute and card work is on an unmerged branch, so no line moves. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 29 Oct 2026 &mdash; <a href="2026-10-29.html#mvp-method">method and capability table</a>.</p>
 </section>
 
 <main class="frames">
+
+  <a class="frame" href="2026-10-29.html">
+    <span class="frame__idx num">56</span>
+    <span>
+      <span class="frame__date">29 Oct 2026</span>
+      <span class="frame__sum"><strong>Transaction disputes shipped on the server (3 app routes, a 3-route admin queue, a schema), and users can file them now, but the new <code>disputes</code> permission is granted to no role, so no admin can answer one.</strong> The app&rsquo;s branch <code>BVA-I353</code> now calls the real FAQ and dispute routes, correct bar one reason code. The card-verification mismatch is a design question (<code>I378</code>), and the first review checklist closed with 0 of 63 checks ticked. 16 of 44 leaves in REVIEW/QA, 4 with merged code. Spec at 149 / 63.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:16"></i><u style="flex:28"></u></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>1002 &middot; day 9 of 16 &middot; 12 To do &middot; 13 In progress &middot; 16 QA &middot; 0 Blocked &middot; 3 Done</span></div>
+      <div><span>MVP est</span><span>&asymp;67% &middot; &Delta; 0</span></div>
+      <div><span>Test-gated deploys</span><span>0 of 3 backend repos</span></div>
+      <div><span>Disputes</span><span>live for users &middot; no role holds disputes &middot; card spending excluded</span></div>
+      <div><span>Board actions</span><span>7 leaf moves in 1.0 day &middot; 2 into QA &middot; 2 Done by owner &middot; 0 accepted</span></div>
+      <div><span>API surface</span><span>149 / 63 &middot; drift 6 &rarr; 0 &middot; 1 proposal shipped</span></div>
+    </span>
+  </a>
 
   <a class="frame" href="2026-10-28.html">
     <span class="frame__idx num">55</span>
@@ -1033,7 +1050,7 @@
 <footer class="foot">
   <span class="barcode barcode--lg" aria-hidden="true"></span>
   <span>Frames are written by the <code>beevia-refresh</code> skill alongside the Markdown in <code>project-status/</code>.</span>
-  <span><a href="2026-10-28.html">Latest</a></span>
+  <span><a href="2026-10-29.html">Latest</a></span>
 </footer>
 
 <script src="ui.js"></script>

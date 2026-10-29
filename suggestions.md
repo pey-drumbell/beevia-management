@@ -295,6 +295,20 @@ Options, cheapest first: say in the email and the app that the password is the p
 3. **Reorder does not check that the list is complete.** `assertCompleteOrder` checks that each id sent exists and is unique, not that every category (or every article in the category) was sent. A partial list renumbers those ids from 0 and leaves the rest in place, so two rows can share a position. The route text promises "Send **every** category id". Either enforce it (`existing.length === total`) or renumber the omitted rows after the ones sent.
 4. **Small contract slips.** `GET /help/categories/{slug}` computes `article_count` before dropping untitled articles, so it can exceed the list it returns. Both category and article misses report `article_not_found`. The admin route text says `category_id`, but the validator reads `categoryId` and ignores the snake-case key.
 
+### 4.11 Disputes: users can file them, and no admin can answer them yet (2026-10-29)
+
+`beevia-db-schema` #26 (v0.0.45), `beevia-api` #87 and `beevia-admin-api` #24 shipped "Report an issue" end to end between 15:49 and 16:21 UTC on 28 Oct. The core design is sound. The server builds the transaction snapshot from the caller's own rows, so a user cannot claim a different amount. Ownership is in the `where` clause. Attachments must be on Beevia's own storage origin. A partial unique index allows one open report per transaction, which `409` explains rather than hides. Someone else's report returns `404`, not `403`. Closing a dispute requires a written answer, and the dispute module never moves money. Seven things remain:
+
+1. **No role holds `disputes`.** This is §4.10.1 again, with a user-facing cost from the first day: `POST /disputes` is live (deploy on push), so complaints about money can be filed now, and every `/admin/disputes` call is `403`. Grant `disputes` with `help_center` in the same seed or migration.
+2. **Card spending cannot be disputed.** It has no local row, so the reference resolves to `transaction_not_found`. `BVA-I339` lists "virtual card payment" among the types the sheet must cover. The schema already allows a dispute with neither foreign key, so a card dispute could be resolved against the partner's transaction list by reference.
+3. **The transaction type is not stored.** `BVA-I341` asks for "the transaction's type on the dispute … so admin can filter and report by reason and type". The snapshot keeps `source` (`ledger`/`payment`) and uses the type only as a fallback for `description`. There is no type column or filter.
+4. **Nothing tells the user when a dispute is answered.** Neither service's dispute code sends a push or socket event. The answer appears only when the user reopens the history.
+5. **Claims are anonymous and unguarded.** `reviewed_by` is written only on the final answer. `resolve()` reads the status and then updates by id alone, so two admins can both claim, or both answer. Make the update conditional on the status that was read (`WHERE status = $read`) and record the claimant.
+6. **`age_hours` ignores `reviewed_at`.** It is computed from `created_at` to now on every row. The commit says the answer time is stamped "so the age of an answered dispute means how long the person waited". Use `reviewed_at` when it is set. It is also the input to the PRD's 72-hour resolution KPI (§7.4).
+7. **A malformed id is a `500`** on `GET /disputes/{id}` and both admin `/{id}` routes (§1.1, `22P02`).
+
+Not built: dispute messaging (`BVA-I344`, `I343`'s thread), the open-dispute count (`I332`), agent assignment (`I350`) and support chat (`I347`). The board has `I350` (*Agent-Facing Conversation & Dispute APIs*) as To do, although #24 delivered its list, claim and status half.
+
 ---
 
 ## 5. Maintainability
@@ -686,6 +700,13 @@ Firebase client API keys are designed to ship inside the app, so this is not a c
 | `POST /cards/{id}/freeze` | same | ✅ |
 
 The mock server was taught all seven routes in the same commit, and `spec_contract_test.dart` allowlists them with the comment *"limits and the card sub-routes are specified only in openapi.proposed.yaml so far; the statement routes are client placeholders with no spec at all yet."* Both halves of that comment are wrong. The card sub-routes are implemented, and the statement route shipped the day before (#84) under a different path and body. This is §5.10 again: the client's vendored spec does not contain `/statements`, `/cards/*` or the card-PIN model, so the contract test passes against an API that does not exist. Before merge: point the statement call at `POST /statements`, use the card-PIN sheet for reveal, unfreeze and terminate (the server deliberately gates them with the card's own PIN, not account step-up), and hide the limits screen until `GET /wallets/limits` ships.
+### 5.15 `BVA-I353` now calls the real FAQ and dispute routes, and the card routes wait on a design decision (2026-10-29)
+
+Commit `a444ec9` *dispute resolution* (29 Oct 10:18 UTC, `origin/BVA-I353`, unmerged) replaces the Help & Support placeholders with real calls: the five `/help/*` routes, `GET /disputes`, `GET /disputes/{id}`, `POST /disputes`, and `POST /upload/image` for the screenshot. Checked against `origin/main`, the paths, query (`q`), bodies (`helpful`; `transactionReference`, `reason`, `details`, `attachments[{url, filename, sizeBytes}]`) and response parsing all match, **with one exception**: the "I didn't make this transaction" reason is sent as `didnt_make_transaction`, and the server's enum value is `not_my_transaction`. That choice returns `400`, and it is the reason most likely to be used for fraud. The client's own comment flags that only `money_didnt_arrive` was confirmed (from Postman). The new contract-test allowlist entries say the help routes are "not yet in openapi.yaml", but they have been there since 28 Oct. The vendored copy (§5.10) is what lacks them.
+
+Support chat is still placeholder data (`TODO(support-api)`, 5 left).
+
+**§5.14's card rows need a decision, not just a client fix.** Sprint 1002's `BVA-I378` *"Verify It's You" Authentication*, started 29 Oct with `I379` (design), `I380` (mobile) and `I381` (backend), specifies one reusable PIN-or-biometrics sheet. It "return[s] a short-lived authorization that sensitive card endpoints require" for reveal, card details, delete, update limit and unfreeze. Freeze is exempt. That is the account step-up model the branch already uses (`X-Step-Up-Token`), not the server's per-card PIN in the body. So today there are three models: the server's (card PIN per card), the board's (account PIN or biometrics → token), and the client's (token, without the biometric path the server cannot verify, §5.11). Decide which one `I381` builds before either side changes. If it is the board's, the server's card routes change and the client's card calls become correct. The statement and `/wallets/limits` rows of §5.14 are unaffected and still need the client fix.
 
 
 ## 8. Suggested order
