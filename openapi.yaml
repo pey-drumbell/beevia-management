@@ -989,7 +989,16 @@ paths:
       tags: [Users]
       operationId: blockUser
       summary: Block a user
-      description: A blocked peer's thread is hidden and messaging is disabled. `cannot_block_self` if the target is the caller.
+      description: |
+        Messages, new conversations and calls between the two users are
+        refused in **both** directions with `403 blocked`. The existing thread
+        stays in both inboxes; only the blocker sees it flagged (`blocked` is
+        directional, see `ContactProfile.blocked`). The blocked user is not
+        told.
+
+        Idempotent: blocking someone already blocked returns `200` and adds no
+        second row. `400 cannot_block_self` if the target is the caller;
+        `404` if the target does not exist.
       requestBody:
         required: true
         content:
@@ -1010,6 +1019,7 @@ paths:
                         properties:
                           blocked: { type: boolean, example: true }
         '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
 
   /users/blocks/{userId}:
     parameters:
@@ -1018,9 +1028,17 @@ paths:
       tags: [Users]
       operationId: unblockUser
       summary: Unblock a user
+      description: |
+        Takes effect on the next send or call in both directions; there is no
+        cache to wait out. Clears the blocker's flag on the thread and removes
+        the user from `GET /users/blocks`.
+
+        Idempotent: unblocking someone who was never blocked, or who does not
+        exist, returns `200` with `blocked: false`, so a stale screen can send
+        it safely. It never returns `404`.
       responses:
         '200':
-          description: Unblocked.
+          description: Unblocked, or was not blocked.
           content:
             application/json:
               schema:
@@ -1032,7 +1050,6 @@ paths:
                         type: object
                         properties:
                           blocked: { type: boolean, example: false }
-        '404': { $ref: '#/components/responses/NotFound' }
 
   /users/by-username/{username}:
     parameters:

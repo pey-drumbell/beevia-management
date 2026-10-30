@@ -34,7 +34,7 @@
       <span class="topbar__wordmark">Beevia</span>
     </div>
     <nav class="topbar__nav label" aria-label="Report">
-      <a href="2026-10-29.html">Latest frame</a>
+      <a href="2026-10-30.html">Latest frame</a>
     </nav>
 </div>
 
@@ -43,9 +43,9 @@
     <div class="field__rail field__rail--l">
       <dl>
         <dt>Frames held</dt>
-        <dd>56</dd>
+        <dd>57</dd>
         <dt>Latest</dt>
-        <dd>2026-10-29 · Disputes ship end to end but no admin role can answer them; the app wires FAQ and disputes</dd>
+        <dd>2026-10-30 · A still board; #88 pins blocking and corrects the spec; 1002 ends Thursday with nothing accepted</dd>
       </dl>
     </div>
 
@@ -55,7 +55,7 @@
       </div>
       <div class="field__meta num">
         <span>Beevia project status</span>
-        <span>2026-08-05 &rarr; 2026-10-29</span>
+        <span>2026-08-05 &rarr; 2026-10-30</span>
         <span>Newest first</span>
       </div>
     </div>
@@ -75,9 +75,9 @@
   <div class="mvp__head">
     <span class="mvp__label label">MVP readiness &mdash; estimate</span>
     <span class="mvp__pct num">&asymp;67%</span>
-    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 58 days past</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 59 days past</span>
   </div>
-  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged. Disputes are not a rubric capability, and the new client work is on an unmerged branch. E2EE messaging 0.90; voice and video calling 0.92; message translation 0.60; local KYC 0.90; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.80; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged. The only code change was tests, which are outside the rubric. E2EE messaging 0.90; voice and video calling 0.92; message translation 0.60; local KYC 0.90; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.80; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
     <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.90"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.92"><i style="width:92%"></i></span>
     <span class="mvp__seg" style="flex:7" title="Message translation — 0.60"><i style="width:60%"></i></span>
@@ -90,10 +90,27 @@
     <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
     <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.97"><i style="width:97%"></i></span>
   </div>
-  <p class="mvp__read"><strong>67.32, unchanged.</strong> Disputes are not a rubric line, and the app&rsquo;s FAQ, dispute and card work is on an unmerged branch, so no line moves. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 29 Oct 2026 &mdash; <a href="2026-10-29.html#mvp-method">method and capability table</a>.</p>
+  <p class="mvp__read"><strong>67.32, unchanged.</strong> The only code change was #88&rsquo;s tests, which the rubric does not score, so no line moves. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 30 Oct 2026 &mdash; <a href="2026-10-30.html#mvp-method">method and capability table</a>.</p>
 </section>
 
 <main class="frames">
+
+  <a class="frame" href="2026-10-30.html">
+    <span class="frame__idx num">57</span>
+    <span>
+      <span class="frame__date">30 Oct 2026</span>
+      <span class="frame__sum"><strong>A still day: sprint 1002 recorded no board action, and its export is byte-identical to 29 Oct. The only code was <code>beevia-api</code> #88, ten tests for block and unblock, which showed the spec described blocking wrongly in three places (corrected).</strong> None of the fourteen 29 Oct recommendations moved. 1002 ends Thursday 5 Nov with 41 of 44 leaves not Done, nothing accepted and no successor sprint. Spec at 149 / 63.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:16"></i><u style="flex:28"></u></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>1002 &middot; day 10 of 16 &middot; 12 To do &middot; 13 In progress &middot; 16 QA &middot; 0 Blocked &middot; 3 Done</span></div>
+      <div><span>MVP est</span><span>&asymp;67% &middot; &Delta; 0</span></div>
+      <div><span>Test-gated deploys</span><span>0 of 3 backend repos</span></div>
+      <div><span>Recommendations</span><span>0 of 14 moved &middot; disputes still unanswerable</span></div>
+      <div><span>Board actions</span><span>0 in 1.0 day &middot; last 29 Oct 11:33 UTC &middot; 0 accepted</span></div>
+      <div><span>API surface</span><span>149 / 63 &middot; route drift 0 &middot; 2 block ops corrected</span></div>
+    </span>
+  </a>
 
   <a class="frame" href="2026-10-29.html">
     <span class="frame__idx num">56</span>
@@ -1050,7 +1067,7 @@
 <footer class="foot">
   <span class="barcode barcode--lg" aria-hidden="true"></span>
   <span>Frames are written by the <code>beevia-refresh</code> skill alongside the Markdown in <code>project-status/</code>.</span>
-  <span><a href="2026-10-29.html">Latest</a></span>
+  <span><a href="2026-10-30.html">Latest</a></span>
 </footer>
 
 <script src="ui.js"></script>
