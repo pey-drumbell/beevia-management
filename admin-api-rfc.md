@@ -346,7 +346,7 @@ Two smaller notes. The `admin_activity` report is the only one of the four that 
 | PATCH | `/admin/help/articles/{id}` | `help_center:edit` | A new `categoryId` moves the article to the end of that category |
 | DELETE | `/admin/help/articles/{id}` | `help_center:delete` | Cascades translations and votes |
 
-`beevia-admin-api` #23 (`437cb68`, merged 28 Oct 13:19 UTC) backs the content the consumer API's `/help/*` serves (`api-rfc.md` §5.17). It is guarded at controller level (`AdminAuthGuard` + `PermissionGuard`, so §4.2 is respected). Sprint 1002 tracks it under the unassigned Story `BVA-I351` *Admin Dashboard: FAQ Content Management* (API task `I352`). There is no dashboard UI for it: `beevia-admin` has no help or FAQ route and no commit since 22 Sep.
+`beevia-admin-api` #23 (`437cb68`, merged 28 Oct 13:19 UTC) backs the content the consumer API's `/help/*` serves (`api-rfc.md` §5.17). It is guarded at controller level (`AdminAuthGuard` + `PermissionGuard`, so §4.2 is respected). Sprint 1002 tracks it under the unassigned Story `BVA-I351` *Admin Dashboard: FAQ Content Management* (API task `I352`). There is no dashboard UI for it: `beevia-admin` has no help or FAQ route (still true on 2026-11-02; `64304ef` added support screens, not FAQ ones).
 
 Three things to know before anyone uses it:
 
@@ -372,7 +372,7 @@ Five things to know (`suggestions.md` §4.11):
 - **`age_hours` keeps counting after close.** It runs from `created_at` to now on every row. The commit says `reviewed_at` is stamped on the decision "so the age of an answered dispute means how long the person waited", but `age_hours` does not use it.
 - **No notification.** Answering writes the note. Nothing pushes it to the user.
 
-There is no dashboard UI: `beevia-admin` has no dispute route. Sprint 1002's Support Inbox Story (`BVA-I349`) is unassigned.
+**Update 2026-11-02: a dashboard screen exists, and it does not call these routes.** `beevia-admin` `64304ef` (30 Oct) adds `/support/inbox` and `/support/triage-config`. Both run on an in-memory mock by default, and their 11 operations under `/admin/support/*` are a proposal (`beevia-admin/docs/hs6-…`, `hs7-…`), not this service. The inbox's dispute contract differs from §3.16 on reason codes, statuses and the written answer (`suggestions.md` §5.16). None of the 11 is in `openapi.admin.proposed.yaml` yet, because the document itself says nothing is confirmed and adding it would pre-empt the choice between it and §3.16. Sprint 1002's Support Inbox Story (`BVA-I349`) is still unassigned and To do.
 
 ---
 

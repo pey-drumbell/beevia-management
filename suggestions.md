@@ -309,6 +309,8 @@ Options, cheapest first: say in the email and the app that the password is the p
 6. **`age_hours` ignores `reviewed_at`.** It is computed from `created_at` to now on every row. The commit says the answer time is stamped "so the age of an answered dispute means how long the person waited". Use `reviewed_at` when it is set. It is also the input to the PRD's 72-hour resolution KPI (§7.4).
 7. **A malformed id is a `500`** on `GET /disputes/{id}` and both admin `/{id}` routes (§1.1, `22P02`).
 
+**Update 2026-11-02:** the admin inbox now exists on mock data and does not call `/admin/disputes` (§5.16), and the branch's fraud reason is fixed (§5.15). Items 1–7 are unchanged.
+
 Not built: dispute messaging (`BVA-I344`, `I343`'s thread), the open-dispute count (`I332`), agent assignment (`I350`) and support chat (`I347`). The board has `I350` (*Agent-Facing Conversation & Dispute APIs*) as To do, although #24 delivered its list, claim and status half.
 
 ---
@@ -702,6 +704,8 @@ Firebase client API keys are designed to ship inside the app, so this is not a c
 | `POST /cards/{id}/freeze` | same | ✅ |
 
 The mock server was taught all seven routes in the same commit, and `spec_contract_test.dart` allowlists them with the comment *"limits and the card sub-routes are specified only in openapi.proposed.yaml so far; the statement routes are client placeholders with no spec at all yet."* Both halves of that comment are wrong. The card sub-routes are implemented, and the statement route shipped the day before (#84) under a different path and body. This is §5.10 again: the client's vendored spec does not contain `/statements`, `/cards/*` or the card-PIN model, so the contract test passes against an API that does not exist. Before merge: point the statement call at `POST /statements`, use the card-PIN sheet for reveal, unfreeze and terminate (the server deliberately gates them with the card's own PIN, not account step-up), and hide the limits screen until `GET /wallets/limits` ships.
+**Update 2026-11-02.** `21fe490` (30 Oct, still unmerged) moves both statement calls to `POST /statements` with `type`, `walletId`/`cardId`, `startDate`, `endDate` and `format`, and drops `email`, which matches `src/statements/dto/statements.dto.ts`. That row is closed. `GET /wallets/limits` and the three card rows are unchanged. The statement screen still does not say the PDF's password is the phone number (§4.8).
+
 ### 5.15 `BVA-I353` now calls the real FAQ and dispute routes, and the card routes wait on a design decision (2026-10-29)
 
 Commit `a444ec9` *dispute resolution* (29 Oct 10:18 UTC, `origin/BVA-I353`, unmerged) replaces the Help & Support placeholders with real calls: the five `/help/*` routes, `GET /disputes`, `GET /disputes/{id}`, `POST /disputes`, and `POST /upload/image` for the screenshot. Checked against `origin/main`, the paths, query (`q`), bodies (`helpful`; `transactionReference`, `reason`, `details`, `attachments[{url, filename, sizeBytes}]`) and response parsing all match, **with one exception**: the "I didn't make this transaction" reason is sent as `didnt_make_transaction`, and the server's enum value is `not_my_transaction`. That choice returns `400`, and it is the reason most likely to be used for fraud. The client's own comment flags that only `money_didnt_arrive` was confirmed (from Postman). The new contract-test allowlist entries say the help routes are "not yet in openapi.yaml", but they have been there since 28 Oct. The vendored copy (§5.10) is what lacks them.
@@ -710,6 +714,31 @@ Support chat is still placeholder data (`TODO(support-api)`, 5 left).
 
 **§5.14's card rows need a decision, not just a client fix.** Sprint 1002's `BVA-I378` *"Verify It's You" Authentication*, started 29 Oct with `I379` (design), `I380` (mobile) and `I381` (backend), specifies one reusable PIN-or-biometrics sheet. It "return[s] a short-lived authorization that sensitive card endpoints require" for reveal, card details, delete, update limit and unfreeze. Freeze is exempt. That is the account step-up model the branch already uses (`X-Step-Up-Token`), not the server's per-card PIN in the body. So today there are three models: the server's (card PIN per card), the board's (account PIN or biometrics → token), and the client's (token, without the biometric path the server cannot verify, §5.11). Decide which one `I381` builds before either side changes. If it is the board's, the server's card routes change and the client's card calls become correct. The statement and `/wallets/limits` rows of §5.14 are unaffected and still need the client fix.
 
+
+**Update 2026-11-02.** `21fe490` fixes `didnt_make_transaction` → `not_my_transaction`, so a fraud report no longer returns `400` from the branch's sheet. On 30 Oct 14:55 UTC the `BVA-I378` Story and its three children (`I379`, `I380`, `I381`) went to Done in the same millisecond, straight from In progress, which is what closing a parent looks like. That did not settle the model. On `origin/main`, `POST /auth/step-up` is still PIN-only with no failed-attempt limit (`assertPin` compares and throws), reveal, unfreeze and terminate still take the card PIN in the body, and `I381`'s lockout and biometric-backed credential exist nowhere. On the branch the sheet is `showConfirmPaymentSheet` with a new title, and it has no lockout message.
+
+### 5.16 The support inbox is built against a dispute contract the server does not have (2026-11-02)
+
+`beevia-admin` `64304ef` (30 Oct, direct to `main`, 68 files, +10,750/−11) adds `/support/inbox` and `/support/triage-config`. They are real screens: queue, thread, claim and assign, reply, status, availability, live socket handlers, triage editor. Every call goes to an in-memory adapter unless `NEXT_PUBLIC_USE_MOCK_SUPPORT_API` is `false`. Its contract documents call themselves proposals, and `hs7` alone asks 17 open questions (12 backend, 5 product), so this is a fair way to start the conversation. Three things need settling first:
+
+**1. Disputes already have an API, and the inbox does not use it.**
+
+| | Inbox proposal (`hs7`) | `beevia-admin-api` / `beevia-api` today |
+|---|---|---|
+| Route | `/admin/support/conversations*` (9 operations) | `/admin/disputes*` (3 operations, #24) |
+| Reasons | `amount_wrong`, `didnt_make_this_transaction` | `wrong_amount`, `not_my_transaction` (the other five match) |
+| Status | `in_progress`, `resolved` | `submitted`, `under_review`, `resolved`, `rejected` |
+| Closing | `PATCH …/status` with `{status}` only | `resolved` or `rejected` **requires a `note`** |
+| Rejected disputes | no such state | a final state; the screen could not show one |
+| Claiming | atomic, named holder, `409 already_claimed` | anonymous and unguarded (§4.11.5) |
+| Search | user's full name | transaction reference |
+| Replies | `POST …/messages` | none; dispute messaging is `BVA-I344`, In progress |
+
+Decide whether the server adapts disputes behind one `/admin/support/conversations` queue (what `BVA-I350` describes) or the inbox reads `/admin/disputes` for that half. Either way, the two reason codes and the `rejected` state are mismatches regardless of the route. The mobile client made the same reason-code mistake and fixed it the same day this commit was written (§5.15).
+
+**2. The mock is on unless someone turns it off.** `USE_MOCK_SUPPORT_API` is `process.env.NEXT_PUBLIC_USE_MOCK_SUPPORT_API !== "false"`, whereas the app's older flag is `NEXT_PUBLIC_USE_MOCKS === "true"`. The dev panels check `NODE_ENV`; the adapter and its 1,049 lines of seed conversations do not. A production build without the flag would show a working inbox where agents answer invented users while real disputes wait. Whether that build exists cannot be seen from here. Default it off in production, or show a banner while it is on.
+
+**3. The server half has not started in any visible way.** No support-conversation table exists in `beevia-db-schema`, and no support controller in either API. `BVA-I347` has been In progress for 7 days with no matching commit on any remote, and `BVA-I350` is To do. The mobile chat screen is also on placeholders (`TODO(support-api)`, 5 left). Both clients are ahead of the server, each with its own assumed contract, so the agreement is best reached before `I347` is written. Also open: `BVA-I349`'s criterion that agents "view the current service status and post updates" is only a reserved slot in the inbox header (`TODO(HS9)`), and the contract does not cover it.
 
 ## 8. Suggested order
 
