@@ -309,9 +309,26 @@ Options, cheapest first: say in the email and the app that the password is the p
 6. **`age_hours` ignores `reviewed_at`.** It is computed from `created_at` to now on every row. The commit says the answer time is stamped "so the age of an answered dispute means how long the person waited". Use `reviewed_at` when it is set. It is also the input to the PRD's 72-hour resolution KPI (§7.4).
 7. **A malformed id is a `500`** on `GET /disputes/{id}` and both admin `/{id}` routes (§1.1, `22P02`).
 
-**Update 2026-11-02:** the admin inbox now exists on mock data and does not call `/admin/disputes` (§5.16), and the branch's fraud reason is fixed (§5.15). Items 1–7 are unchanged.
+**Update 2026-11-03: the module this section reviews was replaced** (§4.12). Item 1 still holds. Item 2 still holds. Item 3 is partly met, as the type feeds the derived title but is still not stored or filterable. Item 4 is half met, with a socket event and no push. Item 5 is fixed by the atomic claim. Item 6 is replaced by `waiting_since`. Item 7 still holds on the new `/{id}` routes. **A correction to this section's premise:** it called the cost of item 1 user-facing "from the first day", and the status report added that every complaint about money was waiting. The 3 Nov schema commit records that `transaction_disputes` had zero rows, and no client on any `main` called it. On that record, nobody was waiting.
 
 Not built: dispute messaging (`BVA-I344`, `I343`'s thread), the open-dispute count (`I332`), agent assignment (`I350`) and support chat (`I347`). The board has `I350` (*Agent-Facing Conversation & Dispute APIs*) as To do, although #24 delivered its list, claim and status half.
+
+### 4.12 Support threads: what stands between the code and a working service (2026-11-03)
+
+`beevia-api` #89–#91, `beevia-admin-api` #25–#27 and `beevia-db-schema` #27–#28 replaced disputes with support threads and put an AI assistant in front of them (`api-rfc.md` §5.19, `admin-api-rfc.md` §3.16). The design is careful in the places that matter most: the tools only read, the user id cannot be chosen by the model, claims are atomic, and a resolved thread is read-only on the server. All of this comes from reading the code; nothing was run.
+
+1. **No role holds `disputes`.** No migration or seed grants it, and `PermissionGuard` has no super-admin bypass. All nine inbox routes return `403` until a role is edited. A thread the assistant hands over therefore has no reader, and the user has been told "Someone from the team will pick this up".
+2. **`support_hours` is empty and nothing writes it.** No migration inserts into it, `src/seed` does not mention it, and neither API has a route for it. With no row, `isWithinHours` is false, so `GET /support/availability` reports offline permanently.
+3. **The assistant is not told what a dispute is about.** `runAssistant` passes only message bodies, and `SupportAgentService.respond` uses `thread.id` and `thread.userId`. The reason, reference and snapshot never reach the model, although #89's commit says most reports are answered by reading the transaction's status back. Pass them in as context.
+4. **A fraud reason does not go straight to a person.** `STRAIGHT_TO_HUMAN` tests message text only. A dispute with reason `didnt_make_this_transaction` and a note saying "please check this" goes to the model. Force handoff on that reason as well.
+5. **A dispute with no `details` calls the model with no messages.** `details` is optional. That request should fail and be caught, handing over with outcome `error`. It would work by accident, and would record every such report as an assistant failure. Skip the turn.
+6. **Run one real chat.** Every chat's first stored message is the assistant's greeting, so the model call opens with an `assistant` turn. The specs stub the model, so they cannot show whether the provider accepts that. The API docs consulted did not settle it. If it is refused, every chat would hand over at the first message and the assistant would never answer one.
+7. **Account data now goes to a third party, and no consent record exists.** Support messages, balances, transaction descriptions and masked card numbers are sent to the model provider. The PRD does not mention an assistant, and its consent list (location, biometrics, translation) does not cover this. Decide it explicitly, and cover it in the privacy notice. Whether the user is told they are talking to an AI also needs a decision: `support.views.ts` says the client shows both as Beevia Support.
+8. **No push on an agent's reply.** `support_replies` was added to notification preferences and nothing reads it. A reply reaches only a connected socket, so a user who has left the app hears nothing. `BVA-I347` asks for the push.
+9. **"Logged" is an application log line.** The route description says who read what is recorded, and `hs7` asks for that record. `this.logger.log` is not queryable and rotates. Use the admin activity log.
+10. **Smaller points.** Card spending still cannot be disputed. `rejected` is gone, so a refused dispute reads as `resolved`. Malformed ids still return `500` on `/{id}` routes, and a non-UUID `assignedTo` will too (§1.1; #91 fixed the reference path only). `SupportAvailabilityService.current` counts `support_available` admins without checking they are active, so a suspended admin can keep support "online". The controller description still says `assigned_to` and `resolution_note`; the schema takes camelCase and ignores unknown keys. `GET /admin/support/agents` and assign do not agree on active admins. `support_flows` is unused and can be dropped, as #89's commit says.
+
+**The migration order was stated and accepted.** #27's commit says the table drop lands before the new API, so the dispute routes return `500` in between. By merge times that was about 2h 10m (11:27 → 13:38 UTC). With no rows and no client it cost nothing this time. It is §7.7's point in practice: nothing in any of the three pipelines would have stopped it.
 
 ---
 
@@ -717,6 +734,8 @@ Support chat is still placeholder data (`TODO(support-api)`, 5 left).
 
 **Update 2026-11-02.** `21fe490` fixes `didnt_make_transaction` → `not_my_transaction`, so a fraud report no longer returns `400` from the branch's sheet. On 30 Oct 14:55 UTC the `BVA-I378` Story and its three children (`I379`, `I380`, `I381`) went to Done in the same millisecond, straight from In progress, which is what closing a parent looks like. That did not settle the model. On `origin/main`, `POST /auth/step-up` is still PIN-only with no failed-attempt limit (`assertPin` compares and throws), reveal, unfreeze and terminate still take the card PIN in the body, and `I381`'s lockout and biometric-backed credential exist nowhere. On the branch the sheet is `showConfirmPaymentSheet` with a new title, and it has no lockout message.
 
+**Update 2026-11-03.** The fraud fix above is undone by the server, not the client. #89 renamed the enum to `didnt_make_this_transaction` and `amount_wrong`, so the branch's `not_my_transaction` and `wrong_amount` are rejected again (§5.17). `f6df54e` (3 Nov, unmerged) moves terminate to `POST /cards/{id}/terminate` and keeps the `X-Step-Up-Token` model, so reveal, unfreeze and terminate still send no card PIN and return `400`. `GET /cards/{id}/transactions` matches. `BVA-I383` and `I384` went Done with their parent `I382` on 2 Nov at 15:58:58 UTC, in the same way as `I378` above.
+
 ### 5.16 The support inbox is built against a dispute contract the server does not have (2026-11-02)
 
 `beevia-admin` `64304ef` (30 Oct, direct to `main`, 68 files, +10,750/−11) adds `/support/inbox` and `/support/triage-config`. They are real screens: queue, thread, claim and assign, reply, status, availability, live socket handlers, triage editor. Every call goes to an in-memory adapter unless `NEXT_PUBLIC_USE_MOCK_SUPPORT_API` is `false`. Its contract documents call themselves proposals, and `hs7` alone asks 17 open questions (12 backend, 5 product), so this is a fair way to start the conversation. Three things need settling first:
@@ -739,6 +758,32 @@ Decide whether the server adapts disputes behind one `/admin/support/conversatio
 **2. The mock is on unless someone turns it off.** `USE_MOCK_SUPPORT_API` is `process.env.NEXT_PUBLIC_USE_MOCK_SUPPORT_API !== "false"`, whereas the app's older flag is `NEXT_PUBLIC_USE_MOCKS === "true"`. The dev panels check `NODE_ENV`; the adapter and its 1,049 lines of seed conversations do not. A production build without the flag would show a working inbox where agents answer invented users while real disputes wait. Whether that build exists cannot be seen from here. Default it off in production, or show a banner while it is on.
 
 **3. The server half has not started in any visible way.** No support-conversation table exists in `beevia-db-schema`, and no support controller in either API. `BVA-I347` has been In progress for 7 days with no matching commit on any remote, and `BVA-I350` is To do. The mobile chat screen is also on placeholders (`TODO(support-api)`, 5 left). Both clients are ahead of the server, each with its own assumed contract, so the agreement is best reached before `I347` is written. Also open: `BVA-I349`'s criterion that agents "view the current service status and post updates" is only a reserved slot in the inbox header (`TODO(HS9)`), and the contract does not cover it.
+
+**Update 2026-11-03: the server half arrived, and adopted most of this contract.** Point 3 above was wrong within a day, and "not started in any visible way" should have read "nothing pushed". Point 1 is settled: `/admin/support/conversations` is the route, and `/admin/disputes` is gone. The reason codes are `hs7`'s, and `rejected` is gone. Point 2 is unchanged: the mock is still on by default. **The screen still cannot use the server.** Setting the flag to `false` fails as follows:
+
+| | `beevia-admin` `api.ts` | `beevia-admin-api` |
+|---|---|---|
+| List response | `data.conversations`, `data.pagination.total_pages` | `data` array + `meta`. `data.pagination.page` throws |
+| Filters | `assigned_to`, `reason_code`, `transaction_type` | `assignedTo`, `reasonCode`, no type filter. **Unknown keys are ignored**, so the default view shows every agent's queue while appearing filtered |
+| Statuses | `waiting`, `active`, `closed`, `in_progress`, `resolved` | `with_assistant`, `queued`, `in_progress`, `resolved` |
+| Closing | `{status}`, with `closed` for chats | `resolved` needs `resolutionNote`, else `422` |
+| Triage panel | `triage_context` | `assistant_summary`, free text |
+| Claim conflict | `assigned_to` at the top of the error | `details.assigned_to` |
+| Linked transaction | typed object with `id`, `type`, `counterpart_name`, `internal_status` | the stored snapshot, without those fields |
+| Message sender | includes `scripted` | `user`, `assistant`, `agent` |
+
+The server's differences are deliberate and listed in its commit. They now need the screen to follow. `/support/triage-config` needs a decision of its own: its two routes were not built, and the assistant replaced what it configures, although `BVA-I348` still asks for it and now shows REVIEW/QA.
+
+### 5.17 The app's support code is on the old contract, and chat has no client (2026-11-03)
+
+`origin/BVA-I353` (`f6df54e`, unmerged, no PR) was written against the routes #89 replaced.
+
+- **Two of seven reasons are rejected.** `IssueReason` sends `wrong_amount` and `not_my_transaction`. The server takes `amount_wrong` and `didnt_make_this_transaction`, so those two return `400`. `not_my_transaction` is the fraud report. The branch's mock server still accepts the old values, so its tests cannot show this.
+- **Dispute history shows the server's English title.** `GET /disputes` rows no longer carry `reason` or `details`, and the row uses `dispute.title` when present, ahead of the localized reason label. A report filed in another language now reads in English.
+- **Attachments moved.** They are on each message now, not on the dispute.
+- **The dispute thread is read-only on the client, and the server now accepts replies.** `SupportChatScreen` shows a dispute's report and note. `BVA-I343` asks for sending new messages and live status.
+- **Chat is still placeholder data.** `support_service.dart` says "support chat has no endpoints yet", with 5 `TODO(support-api)` left. The routes and socket commands exist since today. `BVA-I346` shows REVIEW/QA because its parent moved, not because the screen is wired.
+- **The socket is the primary transport**, so the client needs the `support.*` commands, the `with_assistant` typing state, `quick_replies`, and to filter `sender_kind: system`.
 
 ## 8. Suggested order
 

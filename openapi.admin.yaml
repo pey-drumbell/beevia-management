@@ -133,13 +133,17 @@ tags:
       their order and publish state. Read by the consumer API's `/help/*`
       routes. All routes need the `help_center` module, which shipped with
       db-schema v0.0.44 and is granted to **no role** by its migration.
-  - name: Admin Disputes
+  - name: Admin Support
     description: |
-      The dispute queue: transactions users reported from the app's "Report
-      an issue" sheet (`POST /disputes` in the consumer API). All routes need
-      the `disputes` module, which shipped with db-schema v0.0.45 and, like
-      `help_center`, is granted to **no role** by its migration. Answering a
-      dispute records a decision; it never moves money.
+      The support inbox: disputes and chats in one queue, and what an agent does
+      to them. The consumer API creates these threads, and its assistant answers
+      first. All routes need the `disputes` module, which shipped with db-schema
+      v0.0.45 and, like `help_center`, is granted to **no role** by its
+      migration. Answering a thread records a decision; it never moves money.
+
+      A socket on this service pushes `support.conversation.new`,
+      `support.message.new` and `support.conversation.updated` to any active
+      admin. Agents act over REST only.
   - name: Reports
     description: |
       The Reports screen — a catalogue of report types, asynchronous CSV
@@ -2382,41 +2386,57 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 
-  /admin/disputes:
+  /admin/support/conversations:
     get:
-      tags: [Admin Disputes]
-      operationId: listDisputesAdmin
-      summary: The dispute queue
+      tags: [Admin Support]
+      operationId: listSupportConversations
+      summary: The support queue
       description: |
-        Reported transaction issues. **With no `status` filter this is the
-        open queue** (`submitted` and `under_review`), not everything ever
-        reported; pass `status` to see closed ones. Ordered **oldest first**.
-        `search` matches the transaction reference (case-insensitive
-        substring), and `reason` filters by what the user said went wrong.
+        Disputes and chats together. **With no `status` this is the working
+        queue** (`queued` and `in_progress`). Threads the assistant still holds
+        are left out; pass `status=with_assistant` to see them.
 
-        Each row carries `age_hours`, counted from `created_at` to now. It
-        keeps counting after a dispute is answered, so on a closed dispute it
-        is the report's age, not the time the user waited for an answer.
+        Sorted `waiting_longest` by default: oldest handover first, then the
+        rest by recency. Each row carries `waiting_since`, the first user message
+        since an agent last replied. The assistant's replies do not reset it.
+
+        **Filters are camelCase.** Unknown query keys are ignored rather than
+        rejected, so `assigned_to` or `reason_code` return `200` with the filter
+        silently not applied. An `assignedTo` value that is not `me`,
+        `unassigned` or a UUID is compared against a UUID column.
       x-required-permission: 'disputes:view'
       parameters:
         - $ref: '#/components/parameters/Page'
         - name: limit
           in: query
           schema: { type: integer, minimum: 1, maximum: 500, default: 20 }
+        - name: kind
+          in: query
+          schema: { type: string, enum: [dispute, chat] }
         - name: status
           in: query
-          description: Omit for the open queue.
-          schema: { $ref: '#/components/schemas/AdminDisputeStatus' }
-        - name: reason
+          description: Omit for the working queue.
+          schema: { $ref: '#/components/schemas/SupportConversationStatus' }
+        - name: assignedTo
           in: query
-          schema: { $ref: '#/components/schemas/AdminDisputeReason' }
+          description: '`me`, `unassigned`, an admin id, or a comma-separated mix of those, OR-ed.'
+          schema: { type: string, minLength: 1, maxLength: 500 }
+        - name: reasonCode
+          in: query
+          schema: { $ref: '#/components/schemas/SupportDisputeReason' }
+        - name: topic
+          in: query
+          schema: { $ref: '#/components/schemas/SupportChatTopic' }
         - name: search
           in: query
-          description: Substring of the transaction reference.
-          schema: { type: string, minLength: 2, maxLength: 128 }
+          description: Matches the user's display name, their phone, or the transaction reference.
+          schema: { type: string, minLength: 1, maxLength: 200 }
+        - name: sort
+          in: query
+          schema: { type: string, enum: [waiting_longest, newest], default: waiting_longest }
       responses:
         '200':
-          description: Paginated disputes, oldest first.
+          description: Paginated conversations.
           content:
             application/json:
               schema:
@@ -2426,26 +2446,21 @@ paths:
                     properties:
                       data:
                         type: array
-                        items: { $ref: '#/components/schemas/QueuedDispute' }
+                        items: { $ref: '#/components/schemas/SupportConversationSummary' }
                       meta: { $ref: '#/components/schemas/PaginationMeta' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '403': { $ref: '#/components/responses/Forbidden' }
 
-  /admin/disputes/{id}:
-    parameters:
-      - $ref: '#/components/parameters/DisputeId'
+  /admin/support/agents:
     get:
-      tags: [Admin Disputes]
-      operationId: getDisputeAdmin
-      summary: One dispute
-      description: |
-        Everything the reporter sent: the transaction snapshot as it appeared
-        to them when they complained (not what the row says today), their
-        note and any screenshots, newest first.
+      tags: [Admin Support]
+      operationId: listSupportAgents
+      summary: Agents a conversation can go to
+      description: Every active admin, whether they are on duty, and how many unresolved conversations each is holding.
       x-required-permission: 'disputes:view'
       responses:
         '200':
-          description: The dispute.
+          description: The agents.
           content:
             application/json:
               schema:
@@ -2453,38 +2468,51 @@ paths:
                   - $ref: '#/components/schemas/SuccessEnvelope'
                   - type: object
                     properties:
-                      data: { $ref: '#/components/schemas/DisputeDetail' }
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/SupportAgent' }
         '403': { $ref: '#/components/responses/Forbidden' }
-        '404':
-          description: 'No such dispute (`dispute_not_found`).'
+
+  /admin/support/me/availability:
+    get:
+      tags: [Admin Support]
+      operationId: getMySupportAvailability
+      summary: Am I on duty
+      description: Your own availability, plus what you are still holding.
+      x-required-permission: 'disputes:view'
+      responses:
+        '200':
+          description: Your availability.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
-    patch:
-      tags: [Admin Disputes]
-      operationId: resolveDispute
-      summary: Claim or answer a dispute
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/SupportAvailabilityState' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    put:
+      tags: [Admin Support]
+      operationId: setMySupportAvailability
+      summary: Go on or off duty
       description: |
-        `under_review` claims it. `resolved` and `rejected` answer it, and
-        both **require a `note`** (`400 note_required`). Both endings are
-        final: a closed dispute is `409 dispute_already_closed`, and the user
-        may raise a fresh report instead. Claiming one already under review is
-        `409 dispute_already_claimed`.
-
-        `reviewed_by` and `reviewed_at` are stamped only when the dispute is
-        answered, so a claim does not record who claimed it. The status check
-        and the update are separate statements with no condition on the
-        current status, so two admins acting at once can both succeed.
-        **This does not move money.** A refund is a separate ledger operation.
+        Returns `open_conversations` too, so the screen can warn before someone
+        signs off. The app shows Online only when an admin is available **and**
+        the clock is inside `support_hours`.
       x-required-permission: 'disputes:edit'
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ResolveDisputeRequest' }
+            schema:
+              type: object
+              required: [available]
+              properties:
+                available: { type: boolean }
       responses:
         '200':
-          description: The dispute after the change.
+          description: Your availability after the change.
           content:
             application/json:
               schema:
@@ -2492,16 +2520,221 @@ paths:
                   - $ref: '#/components/schemas/SuccessEnvelope'
                   - type: object
                     properties:
-                      data: { $ref: '#/components/schemas/DisputeDetail' }
+                      data: { $ref: '#/components/schemas/SupportAvailabilityState' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/support/conversations/{id}:
+    parameters:
+      - $ref: '#/components/parameters/SupportConversationId'
+    get:
+      tags: [Admin Support]
+      operationId: getSupportConversation
+      summary: One conversation
+      description: |
+        Every message, the transaction as it looked to the user when they
+        reported it, and `assistant_summary`, what the assistant established
+        before handing over. The handover note is filtered out of `messages`.
+
+        Opening a conversation writes an application log line. It is not an
+        audit-table record.
+      x-required-permission: 'disputes:view'
+      responses:
+        '200':
+          description: The conversation.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/SupportConversationDetail' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '404':
-          description: 'No such dispute (`dispute_not_found`).'
+          description: 'No such conversation (`not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /admin/support/conversations/{id}/claim:
+    parameters:
+      - $ref: '#/components/parameters/SupportConversationId'
+    post:
+      tags: [Admin Support]
+      operationId: claimSupportConversation
+      summary: Take a conversation
+      description: |
+        Assigns it to you and moves it to `in_progress`, in one conditional
+        `UPDATE`, so two agents cannot both win. The loser gets
+        `409 already_claimed`, with `details.assigned_to` naming the holder.
+        Re-claiming one you already hold succeeds.
+      x-required-permission: 'disputes:edit'
+      responses:
+        '200':
+          description: The conversation after the claim.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/SupportConversationSummary' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such conversation (`not_found`).'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
         '409':
-          description: 'Already closed (`dispute_already_closed`) or already claimed (`dispute_already_claimed`).'
+          description: 'Held by someone else (`already_claimed`), or resolved (`conversation_closed`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /admin/support/conversations/{id}/assign:
+    parameters:
+      - $ref: '#/components/parameters/SupportConversationId'
+    post:
+      tags: [Admin Support]
+      operationId: assignSupportConversation
+      summary: Hand it to someone
+      description: |
+        Assigns to any admin, including yourself, and moves it to `in_progress`.
+        Reassigning one someone else holds is allowed. The agent is checked for
+        existence, not for being active.
+      x-required-permission: 'disputes:edit'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [agentId]
+              properties:
+                agentId: { type: string, format: uuid }
+      responses:
+        '200':
+          description: The conversation after the change.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/SupportConversationSummary' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such conversation (`not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '409':
+          description: 'Resolved (`conversation_closed`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '422':
+          description: 'No such agent (`validation_error`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /admin/support/conversations/{id}/messages:
+    parameters:
+      - $ref: '#/components/parameters/SupportConversationId'
+    post:
+      tags: [Admin Support]
+      operationId: replyToSupportConversation
+      summary: Reply as the agent
+      description: |
+        Text only. **You have to be holding it**; anyone else gets
+        `403 not_assigned`. The reply reaches a connected app as a
+        `support.message` socket push over the shared Redis. No push notification
+        is sent.
+      x-required-permission: 'disputes:edit'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: { type: string, minLength: 1, maxLength: 2000 }
+      responses:
+        '201':
+          description: The message.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/SupportConversationMessage' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403':
+          description: 'Missing permission, or not holding this conversation (`not_assigned`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '404':
+          description: 'No such conversation (`not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '409':
+          description: 'Resolved (`conversation_closed`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /admin/support/conversations/{id}/status:
+    parameters:
+      - $ref: '#/components/parameters/SupportConversationId'
+    patch:
+      tags: [Admin Support]
+      operationId: setSupportConversationStatus
+      summary: Close it, or put it back in progress
+      description: |
+        `resolved` **requires `resolutionNote`** and is final; a further change
+        is `409 conversation_closed`, and a recurrence is a new conversation.
+        `with_assistant` is not settable. **This does not move money.**
+      x-required-permission: 'disputes:edit'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SetSupportConversationStatusRequest' }
+      responses:
+        '200':
+          description: The conversation after the change.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/SupportConversationSummary' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such conversation (`not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '409':
+          description: 'Already resolved (`conversation_closed`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '422':
+          description: '`resolved` without a `resolutionNote` (`validation_error`).'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
@@ -2675,11 +2908,11 @@ components:
       required: true
       description: FAQ article id.
       schema: { type: string, format: uuid }
-    DisputeId:
+    SupportConversationId:
       name: id
       in: path
       required: true
-      description: Dispute id.
+      description: Support thread id, for a dispute or a chat.
       schema: { type: string, format: uuid }
 
   responses:
@@ -2878,54 +3111,103 @@ components:
               message: { type: string }
         timestamp: { type: string, format: date-time }
 
-    AdminDisputeStatus:
+    SupportConversationStatus:
       type: string
-      enum: [submitted, under_review, resolved, rejected]
-    AdminDisputeReason:
+      description: '`with_assistant`: the AI holds it. `queued`: handed over, waiting. `in_progress`: an agent has it. `resolved`: final.'
+      enum: [with_assistant, queued, in_progress, resolved]
+    SupportDisputeReason:
       type: string
-      enum: [money_didnt_arrive, charged_twice, wrong_amount, still_pending, not_my_transaction, failed_but_debited, something_else]
-    QueuedDispute:
+      enum: [money_didnt_arrive, charged_twice, amount_wrong, still_pending, didnt_make_this_transaction, failed_but_debited, something_else]
+    SupportChatTopic:
+      type: string
+      enum: [kyc, login_issue, wallet_issue, failed_transaction, virtual_card_issues, other]
+    SupportPersonRef:
       type: object
       properties:
         id: { type: string, format: uuid }
-        reference: { type: string, description: The transaction reference the user reported. }
-        reason: { $ref: '#/components/schemas/AdminDisputeReason' }
-        status: { $ref: '#/components/schemas/AdminDisputeStatus' }
-        reported_by:
+        full_name: { type: string }
+    SupportConversationSummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        kind: { type: string, enum: [dispute, chat] }
+        title: { type: string }
+        status: { $ref: '#/components/schemas/SupportConversationStatus' }
+        reason_code:
+          allOf:
+            - $ref: '#/components/schemas/SupportDisputeReason'
+          nullable: true
+        topic:
+          allOf:
+            - $ref: '#/components/schemas/SupportChatTopic'
+          nullable: true
+        user:
           type: object
           properties:
             id: { type: string, format: uuid }
-            display_name: { type: string, nullable: true }
-            phone: { type: string, nullable: true }
-        transaction:
-          type: object
-          description: The snapshot captured when the report was made (`description`, `amount`, `currency`, `occurred_at`, `status`, `source`).
-          additionalProperties: true
+            full_name: { type: string, nullable: true }
+            phone: { type: string }
+        last_message_preview: { type: string }
+        last_message_at: { type: string, format: date-time, nullable: true }
+        waiting_since: { type: string, format: date-time, nullable: true, description: The first user message since an agent last replied. The assistant's replies do not reset it. }
+        assigned_to:
+          allOf:
+            - $ref: '#/components/schemas/SupportPersonRef'
+          nullable: true
+        handed_off_at: { type: string, format: date-time, nullable: true }
         created_at: { type: string, format: date-time }
-        age_hours: { type: integer, description: Whole hours from `created_at` to now, for open and closed disputes alike. }
-    DisputeDetail:
+    SupportConversationMessage:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        sender: { type: string, enum: [user, assistant, agent, system] }
+        sender_name: { type: string, nullable: true, description: The agent's name when `sender` is `agent`. }
+        body: { type: string }
+        attachments:
+          type: array
+          items:
+            type: object
+            properties:
+              url: { type: string, format: uri }
+              file_name: { type: string, nullable: true }
+              size_bytes: { type: integer, nullable: true }
+        created_at: { type: string, format: date-time }
+    SupportConversationDetail:
       allOf:
-        - $ref: '#/components/schemas/QueuedDispute'
+        - $ref: '#/components/schemas/SupportConversationSummary'
         - type: object
           properties:
-            details: { type: string, nullable: true }
-            attachments:
+            messages:
               type: array
-              items:
-                type: object
-                properties:
-                  url: { type: string, format: uri }
-                  filename: { type: string, nullable: true }
-                  size_bytes: { type: integer, nullable: true }
+              items: { $ref: '#/components/schemas/SupportConversationMessage' }
+            linked_transaction:
+              type: object
+              nullable: true
+              description: The snapshot captured when the report was made (`description`, `amount`, `currency`, `occurred_at`, `status`, `source`).
+              additionalProperties: true
+            transaction_reference: { type: string, nullable: true }
+            assistant_summary: { type: string, nullable: true, description: What the assistant established before handing over. }
             resolution_note: { type: string, nullable: true }
-            reviewed_by: { type: string, format: uuid, nullable: true, description: The admin who answered it. Not set by a claim. }
-            reviewed_at: { type: string, format: date-time, nullable: true }
-    ResolveDisputeRequest:
+            resolved_at: { type: string, format: date-time, nullable: true }
+    SupportAgent:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        full_name: { type: string }
+        email: { type: string, format: email }
+        available: { type: boolean }
+        open_conversations: { type: integer, minimum: 0 }
+    SupportAvailabilityState:
+      type: object
+      properties:
+        available: { type: boolean }
+        open_conversations: { type: integer, minimum: 0 }
+    SetSupportConversationStatusRequest:
       type: object
       required: [status]
       properties:
-        status: { type: string, enum: [under_review, resolved, rejected] }
-        note: { type: string, minLength: 1, maxLength: 4000, description: Required for `resolved` and `rejected`. }
+        status: { type: string, enum: [in_progress, resolved] }
+        resolutionNote: { type: string, minLength: 1, maxLength: 2000, description: Required for `resolved`. }
 
     PaginationMeta:
       type: object

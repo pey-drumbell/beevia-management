@@ -146,9 +146,18 @@ tags:
   - name: Help & Support
     description: FAQ categories, answers, search and the "Was this helpful?" vote. Content is managed in the admin API.
   - name: Disputes
-    description: '"Report an issue" on a transaction and the dispute history. Answered from the admin API''s dispute queue.'
+    description: '"Report an issue" on a transaction and the dispute history. A dispute is a support thread with a transaction attached; it is answered by the assistant first, then from the admin API''s support inbox.'
   - name: Support
-    description: Support chat and general escalation. Entirely proposed; disputes are under `Disputes`.
+    description: |
+      Chat with Support, and the thread both chats and disputes run on. The
+      assistant answers first and a person takes over on handoff. Support
+      messages are **not** end-to-end encrypted, by design, because an agent has
+      to read them. The socket is the primary transport (`support.chat.start`,
+      `support.chats.list`, `support.message.send`, `support.thread.get`,
+      `support.availability`, `support.dispute.create`, `support.disputes.list`);
+      these REST routes are the fallback and call the same service. The server
+      pushes `support.message`, `support.thread.created` and
+      `support.thread.updated`.
   - name: Webhooks
     description: Partner-facing callbacks. Public, signature-verified, envelope-free.
 
@@ -2287,6 +2296,153 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
 
+  /support/availability:
+    get:
+      tags: [Support]
+      operationId: getSupportAvailability
+      summary: Is support online
+      description: |
+        What the chat header and the home-screen line read. `online` needs two
+        things: an admin marked available, and the clock inside the
+        `support_hours` schedule, read in the schedule's own timezone.
+
+        While online, show `reply_estimate`. While offline, show
+        `offline_message`; `opens_at` carries the same moment as a timestamp.
+        An empty schedule is always offline, with `opens_at: null`.
+      responses:
+        '200':
+          description: Current availability.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/SupportAvailability' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /support/chats:
+    post:
+      tags: [Support]
+      operationId: startSupportChat
+      summary: Start a chat with support
+      description: |
+        **Always starts a new chat.** To carry on an old one, pick it from
+        `GET /support/chats` and send into it by id.
+
+        Returns the new thread with its greeting. The opening chips arrive as
+        `quick_replies` on the message that offers them. The thread is titled
+        `Chat with support` until the first user message, which the assistant
+        names it from.
+      responses:
+        '201':
+          description: The new thread, with its greeting.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/SupportThreadDetail' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    get:
+      tags: [Support]
+      operationId: listSupportChats
+      summary: Chat history
+      description: |
+        The caller's chats, newest first. This is how a user resumes one. Not
+        paginated. Disputes are listed separately by `GET /disputes`.
+      responses:
+        '200':
+          description: The caller's chats, newest first.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/SupportThread' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /support/threads/{id}:
+    parameters:
+      - $ref: '#/components/parameters/SupportThreadId'
+    get:
+      tags: [Support]
+      operationId: getSupportThread
+      summary: One thread
+      description: |
+        The thread and its messages, for a chat or a dispute. `can_reply` is
+        false once resolved, and a resolved thread is read-only. Someone else's
+        thread is `404 thread_not_found`. The id is not validated as a UUID
+        before the query, so a malformed id currently returns `500`
+        (`suggestions.md` §1.1).
+
+        `messages` includes `sender_kind: system`, the handover note written for
+        the agent. The client filters it out of the conversation.
+      responses:
+        '200':
+          description: The thread.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/SupportThreadDetail' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /support/threads/{id}/messages:
+    parameters:
+      - $ref: '#/components/parameters/SupportThreadId'
+    post:
+      tags: [Support]
+      operationId: sendSupportMessage
+      summary: Send into a thread
+      description: |
+        Works for a chat and a dispute alike. Send `body`, up to five
+        `attachments` (URLs from `POST /upload/image`), or both.
+
+        While `status` is `with_assistant` the assistant's reply is already in
+        the thread returned, so this can take a few seconds. Once `status` is
+        `queued` or `in_progress` a person has it, and the response returns as
+        soon as the message is stored.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SendSupportMessageRequest' }
+      responses:
+        '201':
+          description: The thread after the message, including any assistant reply.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/SupportThreadDetail' }
+        '400':
+          description: 'Validation failure (`validation_error`), or an attachment not on Beevia storage (`attachment_not_ours`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: 'The thread is resolved and read-only (`thread_resolved`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
   /disputes:
     post:
       tags: [Disputes]
@@ -2295,26 +2451,30 @@ paths:
       description: |
         Backs the "Report an issue" sheet. Send the reference printed on the
         receipt (`Ref CB2026…`), what went wrong, and optionally a note and up
-        to five screenshots.
+        to five screenshots. Creates a support thread of `kind: dispute`, and
+        `details` becomes its first message.
 
         **The transaction summary is built server-side**, not sent by the
         client. The reference is resolved against the caller's own
         transactions (the ledger first, then peer payments, either side of a
         payment) and the snapshot in `transaction` is composed from the row
-        found. A reference that is not the caller's is
+        found. A reference that is not the caller's, or that matches nothing, is
         `404 transaction_not_found`. **Card spending cannot be disputed yet**:
         it is read live from the card partner and has no local row to resolve
         a reference against.
 
-        **Attachments are URLs from `POST /upload/image`**, not files. Upload
-        first, then send the URL that came back. A URL whose origin is not
-        Beevia's own storage is `400 attachment_not_ours`.
+        The title is derived from the transaction and the reason ("Transfer
+        didn't arrive"). The assistant then takes a turn, so this can take a few
+        seconds. It can only read, and it hands over to a person when the answer
+        needs more than a lookup.
 
-        **One open report per transaction per user.** A second report while
-        the first is `submitted` or `under_review` is
-        `409 dispute_already_open`, whose `details` carry the existing
-        report's id and status so the app can show it instead. Once a report
-        is answered the same transaction can be reported again.
+        **Attachments are URLs from `POST /upload/image`**, not files. A URL
+        whose origin is not Beevia's own storage is `400 attachment_not_ours`.
+
+        **One open report per transaction per user.** A second report while the
+        first is unresolved is `409 dispute_already_open`, whose `details` carry
+        the existing report's id and status. Once a report is resolved the same
+        transaction can be reported again.
       requestBody:
         required: true
         content:
@@ -2322,7 +2482,7 @@ paths:
             schema: { $ref: '#/components/schemas/CreateDisputeRequest' }
       responses:
         '201':
-          description: Report submitted.
+          description: Report submitted. The thread, including any assistant reply.
           content:
             application/json:
               schema:
@@ -2330,7 +2490,7 @@ paths:
                   - $ref: '#/components/schemas/SuccessEnvelope'
                   - type: object
                     properties:
-                      data: { $ref: '#/components/schemas/Dispute' }
+                      data: { $ref: '#/components/schemas/SupportThreadDetail' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
@@ -2344,9 +2504,10 @@ paths:
       operationId: listDisputes
       summary: Dispute history
       description: |
-        The caller's reports, newest first, each with its status, the
-        transaction snapshot and any answer. Not paginated. An empty array is
-        the normal state for most users.
+        The caller's reports, newest first, each with its title, status and the
+        transaction it concerns. Not paginated. An empty array is the normal
+        state for most users. Rows carry no `reason`; the derived `title` is
+        what the history shows.
       responses:
         '200':
           description: The caller's reports, newest first.
@@ -2359,7 +2520,29 @@ paths:
                     properties:
                       data:
                         type: array
-                        items: { $ref: '#/components/schemas/Dispute' }
+                        items: { $ref: '#/components/schemas/SupportThread' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /disputes/open-count:
+    get:
+      tags: [Disputes]
+      operationId: getOpenDisputeCount
+      summary: Open dispute count
+      description: The badge number for the Dispute history row, counting everything not yet resolved.
+      responses:
+        '200':
+          description: The count.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          count: { type: integer, minimum: 0 }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
   /disputes/{id}:
@@ -2368,18 +2551,13 @@ paths:
       operationId: getDispute
       summary: One report
       description: |
-        A single report of the caller's. `resolution_note` carries the answer
-        once there is one, on a rejection as much as a resolution. Someone
-        else's report is `404 dispute_not_found`, not `403`, so the response
-        does not confirm that the id exists. The id is not validated as a
-        UUID before the query, so a malformed id currently returns `500`
-        (`suggestions.md` §1.1).
+        A single report of the caller's, with its thread. `resolution_note`
+        carries the answer once there is one. Someone else's report is
+        `404 thread_not_found`, not `403`, so the response does not confirm that
+        the id exists. The id is not validated as a UUID before the query, so a
+        malformed id currently returns `500` (`suggestions.md` §1.1).
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Dispute id.
-          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/SupportThreadId'
       responses:
         '200':
           description: The report.
@@ -2390,7 +2568,7 @@ paths:
                   - $ref: '#/components/schemas/SuccessEnvelope'
                   - type: object
                     properties:
-                      data: { $ref: '#/components/schemas/Dispute' }
+                      data: { $ref: '#/components/schemas/SupportThreadDetail' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
 
@@ -3923,6 +4101,12 @@ paths:
 components:
 
   parameters:
+    SupportThreadId:
+      name: id
+      in: path
+      required: true
+      description: Support thread id. A dispute's id is its thread id.
+      schema: { type: string, format: uuid }
     ConversationId:
       name: id
       in: path
@@ -5370,13 +5554,13 @@ components:
 
     DisputeReason:
       type: string
-      description: What the user said went wrong. The same enum is `dispute_reason` in the database.
-      enum: [money_didnt_arrive, charged_twice, wrong_amount, still_pending, not_my_transaction, failed_but_debited, something_else]
-    DisputeStatus:
+      description: What the user said went wrong. The same enum is `dispute_reason` in the database. Renamed on 3 Nov 2026 from `wrong_amount` and `not_my_transaction`.
+      enum: [money_didnt_arrive, charged_twice, amount_wrong, still_pending, didnt_make_this_transaction, failed_but_debited, something_else]
+    SupportThreadStatus:
       type: string
-      description: '`submitted` and `under_review` are open; `resolved` and `rejected` are final answers.'
-      enum: [submitted, under_review, resolved, rejected]
-    DisputeAttachmentInput:
+      description: '`with_assistant`: the AI holds it. `queued`: handed over, waiting for a person. `in_progress`: an agent has it. `resolved`: final and read-only.'
+      enum: [with_assistant, queued, in_progress, resolved]
+    SupportAttachmentInput:
       type: object
       required: [url]
       properties:
@@ -5389,12 +5573,22 @@ components:
       properties:
         transactionReference: { type: string, minLength: 3, maxLength: 128, description: 'The reference printed on the receipt.' }
         reason: { $ref: '#/components/schemas/DisputeReason' }
-        details: { type: string, minLength: 1, maxLength: 4000, description: '"Tell us more". Optional.' }
+        details: { type: string, minLength: 1, maxLength: 4000, description: '"Tell us more". Optional. Becomes the first message in the thread.' }
         attachments:
           type: array
           maxItems: 5
           default: []
-          items: { $ref: '#/components/schemas/DisputeAttachmentInput' }
+          items: { $ref: '#/components/schemas/SupportAttachmentInput' }
+    SendSupportMessageRequest:
+      type: object
+      description: At least one of `body` or `attachments` is required.
+      properties:
+        body: { type: string, minLength: 1, maxLength: 4000 }
+        attachments:
+          type: array
+          maxItems: 5
+          default: []
+          items: { $ref: '#/components/schemas/SupportAttachmentInput' }
     DisputedTransaction:
       type: object
       description: The transaction as the receipt showed it, captured server-side when the report was made. It is not re-derived later.
@@ -5405,18 +5599,48 @@ components:
         occurred_at: { type: string, format: date-time, nullable: true }
         status: { type: string, nullable: true }
         source: { type: string, enum: [ledger, payment] }
-    Dispute:
+    SupportAvailability:
+      type: object
+      properties:
+        online: { type: boolean }
+        reply_estimate: { type: string, nullable: true, description: Shown while online. }
+        offline_message: { type: string, nullable: true, description: Shown while offline. }
+        opens_at: { type: string, format: date-time, nullable: true }
+    SupportThread:
       type: object
       properties:
         id: { type: string, format: uuid }
-        transaction_reference: { type: string }
-        transaction: { $ref: '#/components/schemas/DisputedTransaction' }
-        reason: { $ref: '#/components/schemas/DisputeReason' }
-        details: { type: string, nullable: true }
-        status: { $ref: '#/components/schemas/DisputeStatus' }
-        resolution_note: { type: string, nullable: true, description: 'The answer, once there is one.' }
+        kind: { type: string, enum: [dispute, chat] }
+        title: { type: string }
+        status: { $ref: '#/components/schemas/SupportThreadStatus' }
+        topic:
+          type: string
+          nullable: true
+          enum: [kyc, login_issue, wallet_issue, failed_transaction, virtual_card_issues, other, null]
+        can_reply: { type: boolean, description: 'False once resolved. Replace the composer rather than relying on the error.' }
+        transaction:
+          allOf:
+            - $ref: '#/components/schemas/DisputedTransaction'
+          nullable: true
+          description: The snapshot on a dispute; null on a chat.
+        transaction_reference: { type: string, nullable: true }
+        last_message_at: { type: string, format: date-time, nullable: true }
         resolved_at: { type: string, format: date-time, nullable: true }
+        resolution_note: { type: string, nullable: true, description: 'The answer, once there is one.' }
         created_at: { type: string, format: date-time }
+    SupportMessage:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        sender_kind:
+          type: string
+          enum: [user, assistant, agent, system]
+          description: '`assistant` is the AI, `agent` a person. `system` is the handover note and is not part of the conversation.'
+        body: { type: string, description: 'May be empty on a message that only carries attachments.' }
+        quick_replies:
+          type: array
+          nullable: true
+          items: { type: string }
         attachments:
           type: array
           items:
@@ -5425,6 +5649,15 @@ components:
               url: { type: string, format: uri }
               filename: { type: string, nullable: true }
               size_bytes: { type: integer, nullable: true }
+        created_at: { type: string, format: date-time }
+    SupportThreadDetail:
+      allOf:
+        - $ref: '#/components/schemas/SupportThread'
+        - type: object
+          properties:
+            messages:
+              type: array
+              items: { $ref: '#/components/schemas/SupportMessage' }
     HelpFeedbackRequest:
       type: object
       required: [helpful]

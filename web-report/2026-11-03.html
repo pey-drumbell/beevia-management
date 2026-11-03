@@ -1,0 +1,929 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beevia — Project Status — 3 Nov 2026</title>
+<meta name="description" content="The support backend shipped: one queue for disputes and chats, with an AI assistant answering first. It replaced the disputes API and adopted most of the admin contract. Nobody can use it yet: no admin role holds the inbox permission, the dashboard runs on a mock, and the app sends two rejected dispute reasons. 1002 ends Thursday with 24 of 44 leaves in review, 9 with merged code. API surface 155 / 69, route drift zero after spec updates. MVP estimate 67.32, unchanged.">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!--
+  DIRECTION CONTRACT · seed 6c4a0ed0 (carried forward unchanged)
+  THESIS: A status report whose subject is the disagreement between its sources.
+  STORY: The support server arrives and settles the contract, nobody can use it yet,
+  and the board says more than the code as the sprint ends Thursday.
+-->
+
+<div class="topbar">
+    <div class="topbar__mark">
+      <span class="barcode" aria-hidden="true"></span>
+      <span class="topbar__wordmark">Beevia</span>
+    </div>
+    <nav class="topbar__nav label" aria-label="Report">
+      <a href="index.html">Archive</a>
+      <a href="#overview">Overview</a>
+      <a href="#s2"><span>1002 review</span></a>
+      <a href="#s1"><span>Board</span></a>
+      <a href="#method">Method</a>
+    </nav>
+</div>
+
+<header class="masthead">
+  <div class="field">
+    <div class="field__rail field__rail--l">
+      <dl>
+        <dt>Sprints open</dt>
+        <dd>1002 &middot; 21 Oct &rarr; 5 Nov &middot; day 14 of 16</dd>
+        <dt>1002 leaves</dt>
+        <dd>6 To do &middot; 6 In progress &middot; 24 QA &middot; 0 Blocked &middot; 8 Done</dd>
+        <dt>Route drift</dt>
+        <dd>15 new, 3 removed &rarr; 0 after spec update &middot; 155 / 69</dd>
+        <dt>Window</dt>
+        <dd>1.0 day &middot; Mon &rarr; Tue</dd>
+      </dl>
+    </div>
+
+    <div class="field__stage">
+      <div class="field__title">
+        <h1>Project<br>Status</h1>
+      </div>
+      <div class="field__meta num">
+        <span>2026-11-03</span>
+        <span>1002 live &middot; 0902 swept &middot; 0901-admin static</span>
+        <span>21 Oct&ndash;5 Nov</span>
+        <span>api bdb616c &middot; admin-api 1523591 &middot; db-schema v0.0.47 &middot; mobile BVA-I353 f6df54e</span>
+      </div>
+    </div>
+
+    <div class="field__rail field__rail--r">
+      <dl>
+        <dt>Board actions on 1002</dt>
+        <dd>20 in the window &middot; last 3 Nov 13:52 UTC</dd>
+        <dt>Sprint end</dt>
+        <dd>Thu 5 Nov &middot; 36 of 44 leaves not Done &middot; no successor</dd>
+        <dt>1002 QA with merged code</dt>
+        <dd>9 of 24 &middot; 0 accepted</dd>
+        <dt>2 Nov recommendations moved</dt>
+        <dd>2 of 14, one fully</dd>
+      </dl>
+    </div>
+  </div>
+</header>
+
+<section class="mvp" aria-label="MVP readiness estimate">
+  <div class="mvp__head">
+    <span class="mvp__label label">MVP readiness &mdash; estimate</span>
+    <span class="mvp__pct num">&asymp;67%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 63 days past</span>
+  </div>
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged. Support and disputes are not rubric capabilities, and the admin support screens still run on mock data. E2EE messaging 0.90; voice and video calling 0.92; message translation 0.60; local KYC 0.90; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.80; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
+    <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.90"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.92"><i style="width:92%"></i></span>
+    <span class="mvp__seg" style="flex:7" title="Message translation — 0.60"><i style="width:60%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.90"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
+    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.85"><i style="width:85%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.92"><i style="width:92%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
+    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0.80"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
+    <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.97"><i style="width:97%"></i></span>
+  </div>
+  <p class="mvp__read"><strong>67.32, unchanged.</strong> The new support backend is not a rubric line, and the admin screens are still on a mock, so no line moves. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. <a href="#mvp-method">Method and capability table</a>.</p>
+</section>
+
+<div class="shell">
+  <nav class="contents label" aria-label="Contents">
+    Contents
+    <ol>
+      <li><a href="#overview"><span>00</span> Quick overview</a></li>
+      <li><a href="#s1"><span>01</span> Board movement</a></li>
+      <li><a href="#s2"><span>02</span> Sprint 1002: review vs code</a></li>
+      <li><a href="#s3"><span>03</span> Code, API and drift</a></li>
+      <li><a href="#s4"><span>04</span> Risks</a></li>
+      <li><a href="#s5"><span>05</span> PRD gap</a></li>
+      <li><a href="#s6"><span>06</span> Team performance</a></li>
+      <li><a href="#s7"><span>07</span> Previous recommendations</a></li>
+      <li><a href="#s8"><span>08</span> What I would do this week</a></li>
+      <li><a href="#admin"><span>&mdash;</span> Admin dashboard board</a></li>
+      <li><a href="#method"><span>&mdash;</span> Method</a></li>
+    </ol>
+  </nav>
+
+  <main class="doc">
+    <section class="sec" id="overview">
+      <div class="sec__h"><span class="sec__n">00</span><h2>Quick overview</h2></div>
+
+<div class="invert" style="margin-bottom:var(--s-6)"><p class="lede"><strong>The support backend shipped today: one queue for disputes and chats, with an AI assistant answering first. It replaced the disputes API and adopted most of Promise's contract, which settles yesterday's main question. Nobody can use it yet. No admin role can open the inbox, the dashboard still runs on its mock, and the app has no chat client and sends two dispute reasons the server now rejects, including the fraud one. 1002 ends Thursday with 24 of 44 leaves in review, 9 of them with merged code, none accepted, and no successor sprint.</strong></p></div>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Metric</th>
+<th style="text-align: right;">2 Nov</th>
+<th style="text-align: right;">3 Nov</th>
+<th scope="col">Δ</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">Sprint 1002 items (leaves + parents)</th>
+<td style="text-align: right;">63 (44+19)</td>
+<td style="text-align: right;"><strong>63 (44+19)</strong></td>
+<td>none added or removed</td>
+</tr>
+<tr><th scope="row">Sprint 1002 leaves To do / In progress / REVIEW/QA / BLOCKED / Done</th>
+<td style="text-align: right;">11 / 11 / 16 / 0 / 6</td>
+<td style="text-align: right;"><strong>6 / 6 / 24 / 0 / 8</strong></td>
+<td>8 into REVIEW/QA, 2 into Done, 3 into In progress</td>
+</tr>
+<tr><th scope="row">Board actions on 1002 in the window</th>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;"><strong>20</strong></td>
+<td>5 on 2 Nov 15:58–15:59 UTC, 15 today</td>
+</tr>
+<tr><th scope="row">Transitions into REVIEW/QA, last 7 days (leaves)</th>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;"><strong>14</strong></td>
+<td>8 by the leaf's owner (Ayomikun), 6 moved by Ayomikun on David's and unassigned items</td>
+</tr>
+<tr><th scope="row">Owners' last submission of their <em>own</em> leaf</th>
+<td style="text-align: right;">28 Oct 16:22 UTC</td>
+<td style="text-align: right;"><strong>3 Nov 13:52 UTC</strong> (Ayomikun, <code>I344</code>)</td>
+<td>David's last own submission is 14 Oct, <strong>19.9 days</strong> ago</td>
+</tr>
+<tr><th scope="row">Items that left REVIEW/QA on 1002, ever</th>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td>checked in the sidecar</td>
+</tr>
+<tr><th scope="row">1002 REVIEW/QA leaves with matching <strong>merged</strong> code</th>
+<td style="text-align: right;">4 of 16</td>
+<td style="text-align: right;"><strong>9 of 24</strong></td>
+<td><code>I332</code>, <code>I344</code>, <code>I347</code>, <code>I350</code>, <code>I352</code> added</td>
+</tr>
+<tr><th scope="row">Routes in code but not in the spec (consumer / admin), before today's edits</th>
+<td style="text-align: right;">0 / 0</td>
+<td style="text-align: right;"><strong>6 / 9</strong>, plus 3 admin routes removed</td>
+<td>now <strong>0 / 0</strong>: specs updated</td>
+</tr>
+<tr><th scope="row">API surface (consumer / admin)</th>
+<td style="text-align: right;">149 / 63</td>
+<td style="text-align: right;"><strong>155 / 69</strong></td>
+<td>+6 / +9 −3</td>
+</tr>
+<tr><th scope="row">Proposed operations (consumer / admin)</th>
+<td style="text-align: right;">37 / 18</td>
+<td style="text-align: right;"><strong>34 / 18</strong></td>
+<td><code>/support/tickets</code> shipped in another shape</td>
+</tr>
+<tr><th scope="row">Backend repos that deploy or migrate production on push with no test gate</th>
+<td style="text-align: right;">3 of 3</td>
+<td style="text-align: right;"><strong>3 of 3</strong></td>
+<td></td>
+</tr>
+<tr><th scope="row"><code>beevia-admin</code> days since a commit</th>
+<td style="text-align: right;">3.0</td>
+<td style="text-align: right;"><strong>4.0</strong></td>
+<td></td>
+</tr>
+<tr><th scope="row"><code>beevia-mobile</code> days since a commit on <code>main</code></th>
+<td style="text-align: right;">11.2</td>
+<td style="text-align: right;"><strong>12.2</strong></td>
+<td><code>BVA-I353</code> moved: <code>f6df54e</code>, 0.2 d ago, still no PR</td>
+</tr>
+<tr><th scope="row"><code>beevia-api</code> / <code>beevia-admin-api</code> / <code>beevia-db-schema</code> days since a commit</th>
+<td style="text-align: right;">3.9 / 4.9 / 5.0</td>
+<td style="text-align: right;"><strong>0.0 / 0.0 / 0.1</strong></td>
+<td>8 merges across the three today</td>
+</tr>
+<tr><th scope="row">Admin board: open sprint / days since any activity</th>
+<td style="text-align: right;">none / 49.0</td>
+<td style="text-align: right;"><strong>none / 50.0</strong></td>
+<td></td>
+</tr>
+<tr><th scope="row">Estimation points set (1002)</th>
+<td style="text-align: right;">0/63</td>
+<td style="text-align: right;"><strong>0/63</strong></td>
+<td></td>
+</tr>
+<tr><th scope="row">MVP readiness (estimate)</th>
+<td style="text-align: right;">≈67% (67.32)</td>
+<td style="text-align: right;"><strong>≈67% (67.32)</strong></td>
+<td><strong>0</strong>: support is not on the rubric, and line 11's screens are still on a mock</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Three corrections to 2 Nov.</strong></p>
+<ol>
+<li><strong>"Every complaint about money waits with no reader" described nobody.</strong> That edition listed disputes that could not be answered as a live risk, with the 72-hour KPI "counting". The schema commit <code>4ab65b5</code> records that <code>transaction_disputes</code> had zero rows, and no client on any <code>main</code> called it. That is the commit's claim, and production cannot be seen from here, but on that record nobody was waiting.</li>
+<li><strong>"<code>BVA-I353</code> closed the fraud-report bug" did not last a day.</strong> It was accurate against the 2 Nov server. #89 then renamed the enum, so the branch's <code>not_my_transaction</code> and <code>wrong_amount</code> are rejected again (§3.3).</li>
+<li><strong>"The server half has not started in any visible way" (<code>suggestions.md</code> §5.16) was a claim about what had been pushed.</strong> It shipped the next day. This is the third time this report has read silence as absence, after mobile on 27 Oct and <code>beevia-admin</code> on 30 Oct.</li>
+</ol>
+<p><strong>Team, at a glance:</strong></p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Person</th>
+<th scope="col">Owns</th>
+<th scope="col">Board leaves</th>
+<th style="text-align: right;">Submissions (7d)</th>
+<th scope="col">Median cycle</th>
+<th scope="col">Open WIP</th>
+<th style="text-align: right;">Commits (7d)</th>
+<th scope="col">Flag</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">Ayomikun Araoye</th>
+<td>backend + admin API</td>
+<td><strong>1002: 18</strong> (3 To do, 1 In progress, 12 REVIEW/QA, 2 Done) · <code>I392</code> shared · 0901-admin: 1 In progress</td>
+<td style="text-align: right;"><strong>8 own</strong> (+6 moves on other items)</td>
+<td>1.48 d (n=20)</td>
+<td><code>I387</code> (1.0 d, moved there by its parent) · <code>BVA-I8</code> on 0901-admin (<strong>50.0 d</strong>)</td>
+<td style="text-align: right;"><strong>23</strong> (11 <code>beevia-api</code>, 7 <code>beevia-admin-api</code>, 5 <code>beevia-db-schema</code>)</td>
+<td>The role grant and <code>support_hours</code> decide whether today's work can be used</td>
+</tr>
+<tr><th scope="row">David Samuel</th>
+<td>mobile</td>
+<td><strong>1002: 16</strong> (1 To do, 5 In progress, 8 REVIEW/QA, 2 Done) · <code>I392</code> shared</td>
+<td style="text-align: right;">5 (<strong>0 own</strong>, 5 moved by Ayomikun)</td>
+<td>0.98 d (n=33)</td>
+<td>5: <code>I331</code>, <code>I354</code> (<strong>12.2 d</strong>), <code>I386</code> (8.0 d), <code>I357</code>, <code>I361</code> (0.3 d)</td>
+<td style="text-align: right;"><strong>0 on <code>main</code></strong> · <strong>4 on <code>BVA-I353</code></strong></td>
+<td>The server contract changed under the branch today. Still no PR</td>
+</tr>
+<tr><th scope="row">Philip Chidera</th>
+<td>design</td>
+<td><strong>1002: 7</strong> (1 To do, 3 REVIEW/QA, 3 Done) · <code>I392</code> shared (Done)</td>
+<td style="text-align: right;">0</td>
+<td>0.89 d (n=3)</td>
+<td>none</td>
+<td style="text-align: right;">n/a</td>
+<td>Zero WIP: what is next?</td>
+</tr>
+<tr><th scope="row">Promise Udo</th>
+<td>admin dashboard</td>
+<td>0901-admin: 4 (3 Done, 1 In progress) · <strong>1002: 0</strong></td>
+<td style="text-align: right;">0</td>
+<td>n/a</td>
+<td><code>BVA-I9</code> (<strong>50.0 d</strong>)</td>
+<td style="text-align: right;"><strong>1</strong> (<code>beevia-admin</code>, 68 files)</td>
+<td>The server now exists, and the screen needs to follow its differences. <code>I348</code> and <code>I349</code> still show no assignee</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>The three questions for standup:</strong> (1) <strong>Who grants <code>disputes</code> and fills <code>support_hours</code>, and when?</strong> Until both happen, handed-over threads have no reader and support shows offline permanently. (2) <strong>Was the AI assistant decided, and by whom?</strong> It sends account data to a model provider, the PRD does not mention it, and the only record is commit messages. (3) <strong>How does 1002 close on Thursday?</strong> Two working days remain after today, 24 leaves wait in review, and there is no successor sprint.</p>
+<p><strong>The three things worth knowing:</strong></p>
+<div class="stack">
+  <div class="finding"><div class="finding__n num">1</div><div><p><strong>The server settled the contract, and now both clients have to move.</strong> #25 builds nine of the eleven routes in Promise's <code>hs7</code>/<code>hs6</code> documents and adopts their reason codes. It departs from them on purpose in three places and says so. <code>/admin/disputes</code> is gone. But the dashboard cannot simply switch off its mock: the response shape, status names and filter names all differ. The filter case is the dangerous one, because unknown query keys are ignored, so <code>assigned_to</code> returns <code>200</code> with no filter applied (§3.2). The app's reasons, chat screen and dispute thread are on the old contract too (§3.3). None of this is a mistake by anyone. The server was built last and made its choices clear, so this is the expected next step.</p></div></div>
+  <div class="finding"><div class="finding__n num">2</div><div><p><strong>The assistant is built carefully, and it has gaps a real chat would show.</strong> It can only read, the model cannot choose whose account to read, and sensitive wording goes straight to a person. However, from reading the code, it is never told a dispute's reason, reference or snapshot. A dispute with the fraud reason still goes to the model unless the note contains certain words. And every chat opens with an assistant turn, which the stubbed tests cannot exercise, so one real chat should be run (§3.1). Separately, balances, transactions and masked card numbers now go to a third party, and no consent record exists. That needs a decision, not a code change.</p></div></div>
+  <div class="finding"><div class="finding__n num">3</div><div><p><strong>The board now says more than the code does.</strong> Two parent moves carried David's <code>I343</code> and <code>I346</code> and the unassigned <code>I348</code> into REVIEW/QA today: <code>I346</code>'s chat screen is placeholder data, and <code>I348</code>'s screen runs on a mock and configures a triage the assistant has just replaced. Closing <code>I382</code> yesterday marked <code>I383</code> and <code>I384</code> Done with the client code unmerged. <strong>This is a process point, not a personal one: on this board a parent's status carries its children</strong>, and that has happened six times since 30 Oct. A sweep would record all 32 leaves now in REVIEW/QA or Done as delivered, while only 9 of the 24 in review have merged code.</p></div></div>
+</div>
+<p><strong>If you read nothing else:</strong> today's backend is real progress and removes yesterday's contract question. It needs one role grant, one table filled, one real chat and a decision on the assistant before it does anything for a user.</p>
+    </section>
+
+    <section class="sec" id="s1">
+      <div class="sec__h"><span class="sec__n">01</span><h2>Board movement</h2></div>
+
+<h3>1.1 Sprints 0902, 0901, 0901-admin and 08-01</h3>
+<p>All static. 0902 and 0901 were not re-exported, and the 08-01 and 0901-admin sidecars have no entry after 3 Sep and 14 Sep. The audit's <code>SINCE</code> block compares two 08-01 exports and correctly reports no change. <code>ZOHO_SPRINT_FILTER</code> still points at 08-01. Zoho lists the same six Beevia sprints (<code>1002</code>, <code>0902</code>, <code>0901</code>, <code>08-01</code>, <code>0702</code>, <code>0701</code>) and only <code>0901-admin</code> for the admin project: <strong>no successor to 1002 exists yet.</strong></p>
+<h3>1.2 Sprint 1002</h3>
+<p><strong>63 items: 44 leaves + 19 parents</strong>, unchanged.</p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Time (UTC)</th>
+<th scope="col">Items</th>
+<th scope="col">Move</th>
+<th scope="col">Made by</th>
+<th scope="col">Reading</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">2 Nov 15:58:58</th>
+<td><code>I382</code> (parent), <code>I383</code>, <code>I384</code></td>
+<td>In progress → Done</td>
+<td>Philip</td>
+<td>Parent close, within 2 ms</td>
+</tr>
+<tr><th scope="row">2 Nov 15:59:12</th>
+<td><code>I385</code> (parent), <code>I387</code></td>
+<td>To do → In progress</td>
+<td>Philip</td>
+<td>Parent move, within 1 ms</td>
+</tr>
+<tr><th scope="row">3 Nov 08:04, 08:08</th>
+<td><code>I357</code>, <code>I361</code></td>
+<td>To do → In progress</td>
+<td>David</td>
+<td>Own moves</td>
+</tr>
+<tr><th scope="row">3 Nov 11:11</th>
+<td><code>I330</code></td>
+<td>Ayomikun removed as owner</td>
+<td>Ayomikun</td>
+<td></td>
+</tr>
+<tr><th scope="row">3 Nov 11:15</th>
+<td><code>I352</code></td>
+<td>To do → BLOCKED → REVIEW/QA</td>
+<td>Ayomikun</td>
+<td>The board's usual 6-second route to review. Not a real block. API shipped 28 Oct</td>
+</tr>
+<tr><th scope="row">3 Nov 11:15, 13:52</th>
+<td><code>I350</code></td>
+<td>To do → In progress → REVIEW/QA</td>
+<td>Ayomikun</td>
+<td>Own</td>
+</tr>
+<tr><th scope="row">3 Nov 13:52:46</th>
+<td><code>I332</code></td>
+<td>In progress → REVIEW/QA</td>
+<td>Ayomikun</td>
+<td>Own</td>
+</tr>
+<tr><th scope="row">3 Nov 13:52:50</th>
+<td><code>I345</code> (parent), <code>I346</code>, <code>I347</code>, <code>I348</code></td>
+<td>In progress → REVIEW/QA</td>
+<td>Ayomikun</td>
+<td>Parent move, within 3 ms</td>
+</tr>
+<tr><th scope="row">3 Nov 13:52:58</th>
+<td><code>I342</code> (parent), <code>I343</code>, <code>I344</code></td>
+<td>In progress → REVIEW/QA</td>
+<td>Ayomikun</td>
+<td>Parent move, within 2 ms</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>That 2 Nov 15:58 batch came 57 minutes after the last edition's cut-off. Parent moves are inferred from timing, as no comment records intent. <strong>No comments in the window.</strong> <code>I392</code> still shows Done with 0 of 63 ticked. <strong>Nothing has ever left REVIEW/QA on 1002</strong> (no sidecar entry reads "from REVIEW/QA"). Board administration made no move in the window.</p>
+<p>Board actions per day on 1002:</p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th style="text-align: right;">23 Oct</th>
+<th style="text-align: right;">26 Oct</th>
+<th style="text-align: right;">27 Oct</th>
+<th style="text-align: right;">28 Oct</th>
+<th style="text-align: right;">29 Oct</th>
+<th style="text-align: right;">30 Oct</th>
+<th style="text-align: right;">31 Oct</th>
+<th style="text-align: right;">1 Nov</th>
+<th style="text-align: right;">2 Nov</th>
+<th style="text-align: right;">3 Nov (to 15:01)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">17</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><strong>5</strong></td>
+<td style="text-align: right;"><strong>15</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3>1.3 What the last days of 1002 hold</h3>
+<p>1002 ends <strong>Thursday 5 Nov</strong>, two working days after today. 36 of its 44 leaves are not Done: 24 in REVIEW/QA, 6 In progress, 6 To do. The only precedent is 0902. It ran six days past its end date, then a 21 Oct sweep by board administration marked its 7 REVIEW/QA leaves Done and removed 15 leaves to a destination the export cannot see.</p>
+    </section>
+
+    <section class="sec" id="s2">
+      <div class="sec__h"><span class="sec__n">02</span><h2>Sprint 1002: what is in review, and whether the code exists</h2></div>
+
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">REVIEW/QA leaves (24)</th>
+<th style="text-align: right;">Count</th>
+<th scope="col">Items</th>
+<th scope="col">Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">Backend, matching merged code</th>
+<td style="text-align: right;"><strong>9</strong></td>
+<td><code>I366</code>, <code>I335</code>, <code>I338</code>, <code>I341</code>, <code>I332</code>, <code>I344</code>, <code>I347</code>, <code>I350</code>, <code>I352</code></td>
+<td>Routes on <code>origin/main</code>. <code>I347</code> was built differently from its description: it asks for a rules engine, and the assistant replaced that. <code>I350</code> matches its route list</td>
+</tr>
+<tr><th scope="row">Backend, already existed or no identifiable change</th>
+<td style="text-align: right;">3</td>
+<td><code>I370</code>, <code>I377</code>, <code>I358</code></td>
+<td>Unchanged</td>
+</tr>
+<tr><th scope="row">Mobile, code only on <code>origin/BVA-I353</code></th>
+<td style="text-align: right;">6</td>
+<td><code>I334</code>, <code>I337</code>, <code>I340</code>, <code>I365</code>, <code>I369</code>, <code>I376</code></td>
+<td>Unmerged. <code>I340</code> (report sheet) now sends two reasons the server rejects</td>
+</tr>
+<tr><th scope="row">Carried in by a parent today, code does not match</th>
+<td style="text-align: right;">3</td>
+<td><code>I343</code>, <code>I346</code>, <code>I348</code></td>
+<td><code>I343</code>: list works on the branch, thread is read-only. <code>I346</code>: placeholder data. <code>I348</code>: mock only, no server route</td>
+</tr>
+<tr><th scope="row">Design</th>
+<td style="text-align: right;">3</td>
+<td><code>I364</code>, <code>I368</code>, <code>I375</code></td>
+<td>Design files are not in git</td>
+</tr>
+</tbody>
+</table>
+</div>
+<ul>
+<li><strong>Done without matching merged code:</strong> <code>I380</code>, <code>I381</code> (unchanged since 2 Nov: no attempt limit or lockout on <code>POST /auth/step-up</code>, no reopen) and now <code>I383</code> (client on the branch) and <code>I384</code>. <code>I384</code> asks for full card details behind a valid authorization, and <code>POST /cards/{id}/reveal</code> predates the sprint and takes the card PIN, so whether it meets the item depends on the still-open verification model.</li>
+<li><strong>Admin Stories:</strong> <code>BVA-I349</code> (Support Inbox) is To do and unassigned while its API child <code>I350</code> is in review. <code>BVA-I351</code> (FAQ CMS) is the same, with <code>I352</code> in review and no dashboard screen.</li>
+<li><strong><code>origin/BVA-I353</code>:</strong> 8 ahead, 4 behind <code>main</code>, last commit <code>f6df54e</code> <em>card details flow</em> (3 Nov 10:00 UTC, 26 files, +571/−78). <strong>No PR.</strong> New: card transactions via <code>GET /cards/{id}/transactions</code> (matches), terminate as <code>POST</code>, send and request from the card screen. <strong>Still open:</strong> reveal, unfreeze and terminate send <code>X-Step-Up-Token</code> and no card PIN, so each returns <code>400</code>; <code>GET /wallets/limits</code> is proposed only; the statement screen still does not mention the PDF password.</li>
+<li><strong>WIP ages:</strong> <code>I331</code> and <code>I354</code> at 12.2 d; <code>I386</code> at 8.0 d; <code>I387</code> at 1.0 d; <code>I357</code> and <code>I361</code> at 0.3 d.</li>
+</ul>
+    </section>
+
+    <section class="sec" id="s3">
+      <div class="sec__h"><span class="sec__n">03</span><h2>Code, API surface and spec drift</h2></div>
+
+<p><strong>Audit: clean after today's edits.</strong> Against a <code>git archive</code> shadow of <code>origin/main</code> (<code>$BEEVIA_ROOT=/tmp/beevia-shadow-2026-11-03</code>), it first reported 6 consumer and 9 admin routes undocumented and 3 admin routes removed (exit 1). After the spec changes: 155/155 consumer, 69/69 admin, proposed 34/18, spec health clean, no <code>x-beevia-*</code> (exit 0). The in-repo audit still reports 59 phantom lines from the three <code>diverged</code> working trees (24 consumer + 35 admin "in spec, not in code", up from 47 because the specs gained routes the frozen trees lack), and they were not acted on.</p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Repo</th>
+<th scope="col">From → to</th>
+<th scope="col">What</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row"><code>beevia-db-schema</code> <code>main</code></th>
+<td><code>2fbf657</code> → <code>167ad39</code></td>
+<td>#27, #28; <strong>v0.0.46, v0.0.47</strong>. <code>support_threads</code>, messages, attachments, flows, hours, <code>support_agent_turns</code>. Drops <code>transaction_disputes</code></td>
+</tr>
+<tr><th scope="row"><code>beevia-api</code> <code>main</code></th>
+<td><code>4c57305</code> → <code>bdb616c</code></td>
+<td>#89 threads and assistant, #90 inbox events, #91 <code>500</code> on a non-UUID reference. +3,237/−710</td>
+</tr>
+<tr><th scope="row"><code>beevia-admin-api</code> <code>main</code></th>
+<td><code>b8b6a13</code> → <code>1523591</code></td>
+<td>#25 inbox and socket, #27 event shape, #26 Postman filters. +2,902/−726</td>
+</tr>
+<tr><th scope="row"><code>beevia-mobile</code> <code>BVA-I353</code></th>
+<td><code>21fe490</code> → <code>f6df54e</code></td>
+<td>Unmerged (§2)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code>beevia-admin</code> (<code>64304ef</code>) and <code>beevia-mobile</code> <code>main</code> (<code>ccb4f63</code>, 22 Oct) did not move.</p>
+<h3>3.1 The assistant</h3>
+<p><code>SupportAgentService</code> uses <code>@ai-sdk/anthropic</code> (<code>SUPPORT_AI_MODEL</code>, default <code>claude-sonnet-5-5</code>), with six read-only tools and a handoff signal. Each turn is logged to <code>support_agent_turns</code>. Without an API key it hands every message to a person. No workflow or example file names the key, so whether it runs in production cannot be seen here. Open points (<code>suggestions.md</code> §4.12), all from reading the code:</p>
+<ul>
+<li><strong>It is not told what a dispute is about.</strong> Only message bodies reach the model. Reason, reference and snapshot do not.</li>
+<li><strong>A fraud reason alone does not force a person.</strong> The regex tests text only.</li>
+<li><strong>A dispute with no <code>details</code> calls the model with no messages.</strong> That should fail and hand over, logged as an error.</li>
+<li><strong>Every chat opens with an assistant turn</strong>, the greeting. The specs stub the model, and the API docs checked do not settle whether the provider accepts this. If it does not, every chat would hand over at once. One real chat answers it.</li>
+<li><strong>Account data leaves for a third party, and no consent record exists.</strong> The PRD's consent list covers location, biometrics and translation. Whether a user is told they are talking to an AI is also undecided in the code: <code>support.views.ts</code> has the client showing both as Beevia Support.</li>
+<li><strong>The decision is in commit messages only.</strong> <code>4ab65b5</code> called triage "rule-based by requirement" at 11:27 UTC, and <code>63ec19f</code> replaced it 56 minutes later. The owner may well have decided this elsewhere; it just cannot be seen here. <code>I347</code>'s description still asks for the rules engine.</li>
+</ul>
+<h3>3.2 The inbox: what stops it working today</h3>
+<ul>
+<li><strong>No role holds <code>disputes</code>.</strong> No migration or seed grants it, and <code>PermissionGuard</code> has no super-admin bypass, so all nine routes return <code>403</code>.</li>
+<li><strong><code>support_hours</code> is empty, and nothing writes it.</strong> No migration, seed or route. <code>GET /support/availability</code> therefore reports offline permanently.</li>
+<li><strong>The dashboard fails if the mock is switched off:</strong></li>
+</ul>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col"></th>
+<th scope="col"><code>beevia-admin</code></th>
+<th scope="col"><code>beevia-admin-api</code></th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">List</th>
+<td><code>data.conversations</code>, <code>data.pagination</code></td>
+<td><code>data</code> array + <code>meta</code>; the screen throws</td>
+</tr>
+<tr><th scope="row">Filters</th>
+<td><code>assigned_to</code>, <code>reason_code</code>, <code>transaction_type</code></td>
+<td><code>assignedTo</code>, <code>reasonCode</code>; <strong>unknown keys are ignored</strong></td>
+</tr>
+<tr><th scope="row">Statuses</th>
+<td><code>waiting</code>, <code>active</code>, <code>closed</code>, <code>in_progress</code>, <code>resolved</code></td>
+<td><code>with_assistant</code>, <code>queued</code>, <code>in_progress</code>, <code>resolved</code></td>
+</tr>
+<tr><th scope="row">Closing</th>
+<td><code>{status}</code> only</td>
+<td><code>resolved</code> needs <code>resolutionNote</code>, else <code>422</code></td>
+</tr>
+<tr><th scope="row">Triage panel</th>
+<td><code>triage_context</code></td>
+<td><code>assistant_summary</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The mock's default is still on (<code>NEXT_PUBLIC_USE_MOCK_SUPPORT_API !== "false"</code>), so a production build without the flag still shows invented conversations. <code>/support/triage-config</code> has no route, and <code>support_flows</code> is now unused. Also: no push on an agent's reply (<code>support_replies</code> is read by nothing), and "opening is logged" is an application log line, not an audit record.</p>
+<h3>3.3 The app against the new contract</h3>
+<p><code>BVA-I353</code>'s <code>IssueReason</code> sends <code>wrong_amount</code> and <code>not_my_transaction</code>; the server takes <code>amount_wrong</code> and <code>didnt_make_this_transaction</code>, so those two of seven return <code>400</code>. Its mock still accepts them, so its tests cannot show it. History rows now show the server's English <code>title</code> where the screen used a localized reason. <code>support_service.dart</code> still says chat has no endpoints, with 5 <code>TODO(support-api)</code> left. The dispute thread is read-only, although the server now accepts replies.</p>
+<h3>3.4 Document changes this cycle</h3>
+<ul>
+<li><strong><code>openapi.yaml</code>:</strong> +6 (<code>/disputes/open-count</code>, <code>/support/availability</code>, <code>GET</code>/<code>POST /support/chats</code>, <code>/support/threads/{id}</code>, <code>/support/threads/{id}/messages</code>); <code>/disputes*</code> rewritten to the thread shape and renamed reasons. <strong><code>openapi.admin.yaml</code>:</strong> +9 <code>/admin/support/*</code>, −3 <code>/admin/disputes*</code>. <strong><code>openapi.proposed.yaml</code>:</strong> −3 <code>/support/tickets</code>, with a comment on what stays unbuilt. <code>openapi.admin.proposed.yaml</code>: no change. The inbox's 9 routes went straight to the implemented file, and the two triage routes are not added, since the assistant replaced what they configure.</li>
+<li><strong><code>api-rfc.md</code>:</strong> counts, new §5.19, §6.8, §7.8, Phase E. <strong>Found, not fixed:</strong> the §7 tables list 11 operations that have since shipped, and the intro said 35/38. The intro now gives 31 + 3 and says so.</li>
+<li><strong><code>admin-api-rfc.md</code>:</strong> counts, Module 5, §3.16 rewritten as the inbox.</li>
+<li><strong><code>suggestions.md</code>:</strong> new §4.12 and §5.17; updates to §4.11, §5.15 and §5.16, including corrections.</li>
+</ul>
+<h3>3.5 The standing checks</h3>
+<ul>
+<li><strong>Pipelines:</strong> whole <code>release.yml</code>/<code>sync.yml</code>/<code>deploy.yml</code> read at <code>origin/main</code>, and no workflow changed. All three repos still deploy or migrate on push with no test gate. #27's commit states that the table drop lands before the new API, so dispute routes return <code>500</code> in between: about 2 h 10 min by merge times (11:27 → 13:38 UTC). It cost nothing today, as the table was empty, and nothing would have stopped it otherwise.</li>
+<li><code>PaymentService.activeNgn()</code>, <code>StubTranslateAdapter</code>, unmapped <code>22P02</code> (#91 guards the reference path only), unindexed <code>messages.ref_id</code>, FAQ search's missing <code>en-US</code> fallback, and no grant of <code>help_center</code> or <code>disputes</code>: all unchanged.</li>
+<li><code>POST /auth/step-up</code>: no attempt limit, and no throttler anywhere in <code>src</code>.</li>
+<li><strong>Mobile:</strong> <code>main</code> unchanged. <strong><code>call.ended</code> is still unhandled</strong> on <code>main</code> and on <code>BVA-I353</code>. The biometric step-up is unchanged.</li>
+</ul>
+    </section>
+
+    <section class="sec" id="s4">
+      <div class="sec__h"><span class="sec__n">04</span><h2>Risks</h2></div>
+
+<ul>
+<li><strong>A user can be told a person is coming when none can come.</strong> Once a client ships, handover says "Someone from the team will pick this up here", and no role can open the queue (§3.2).</li>
+<li><strong>Account data going to a third party without a recorded decision or consent</strong> (§3.1).</li>
+<li><strong>1002 ends Thursday with nothing accepted and no successor sprint.</strong> A sweep like 0902's would mark unmerged, mock-only and replaced work as delivered.</li>
+<li><strong>Done and REVIEW/QA on the board now hide open work.</strong> <code>I381</code>'s lockout does not exist, so <strong>guessing a 4-digit PIN against <code>/auth/step-up</code> has no limit visible in the code</strong>. That token guards card creation and PIN reveal.</li>
+<li><strong>The inbox's mock is on by default</strong>, and switching it off naively would show an unfiltered queue or an error.</li>
+<li><strong>The fraud reason returns <code>400</code> from the branch</strong>, if it merged as it stands.</li>
+<li><strong>Every backend repo still deploys or migrates production on push without a test gate.</strong> Today put 8 merges, five migrations and a new external dependency through that path in about three hours.</li>
+<li><strong>The FAQ is still empty in production</strong> until someone grants <code>help_center</code> and enters content. It still has no admin screen.</li>
+<li><strong>Blocking does not reach payments.</strong></li>
+<li>Carried, unchanged: <code>call.ended</code> unconsumed; statement PDF password (§4.8); FAQ search fallback (§4.10); card spending not disputable; 0902's 15 removed leaves (not visible); wallet-failure notices off by default; possible pre-12 Oct PII in logs; malformed path ids return <code>500</code>; production SSH (unverified); biometric step-up on <code>main</code> (§5.11); Firebase keys in history; three diverged local working trees.</li>
+<li><strong>Withdrawn:</strong> "disputes can be filed and cannot be answered", on the record in correction 1.</li>
+</ul>
+    </section>
+
+    <section class="sec" id="s5">
+      <div class="sec__h"><span class="sec__n">05</span><h2>PRD gap</h2></div>
+
+<p>The four structural gaps (international KYC, multi-currency/FX settlement, consent management, and virtual cards beyond what is wired) are unchanged and carry 32 of the rubric's 100 points. Today's work serves PRD §7.4's dispute KPI and §8.3's escalation promise, neither of which is a rubric line. <code>pending_partner</code>, <code>partner_reference</code> and <code>sla_due_at</code> from the removed proposal are still unbuilt. The AI assistant is outside the PRD (§3.1), and support threads are a deliberate carve-out from its "end-to-end encryption on every conversation".</p>
+    </section>
+
+    <section class="sec" id="s6">
+      <div class="sec__h"><span class="sec__n">06</span><h2>Team performance: detail</h2></div>
+
+<p>All flow figures come from the activity sidecars (the <code>actiontime</code> of each transition), never from <code>Last Modified</code>. The 7-day window is 27 Oct 15:01 → 3 Nov 15:01 UTC. Commit counts are non-merge commits on <code>origin/main</code> in that window, summing each person's git identities (<code>Phoenixdadhev</code> + <code>Ayomikun Araoye</code>; <code>Davidtariq96</code> + <code>David Samuel</code>), with bots excluded. Branch commits are listed separately. WIP ages run from each item's last entry into In progress. <strong>Submissions are split by who made the move.</strong></p>
+<p><strong>Median cycle times are recomputed and not comparable with 2 Nov.</strong> New items entered review, so they could not be carried again, and the 20 Oct 0902 file that fed the older figures is gone: 0.98 d (n=33, was 0.99, n=40), 1.48 d (n=20, was 0.99, n=20), 0.89 d (n=3, was 0.94, n=4). Ayomikun's rise comes from losing old short cycles and adding <code>I332</code> and <code>I347</code>, which were open for days, and does not mean anything slowed.</p>
+<h3>6.1 Ayomikun Araoye: backend + admin API</h3>
+<p><strong>23 commits in 7 days</strong>: 11 in <code>beevia-api</code>, 7 in <code>beevia-admin-api</code>, 5 in <code>beevia-db-schema</code>. All of today's backend work is under this identity. <strong>8 own submissions</strong>, 5 of them today, and 6 moves on other items, 3 of them today through parent moves. WIP: <code>I387</code> (1.0 d, moved there by its parent, so not evidence that work began). <code>I362</code>, <code>I372</code> and <code>I391</code> are To do. <code>I381</code> remains Done with no lockout. <code>BVA-I8</code> has been In progress on the closed admin board for 50.0 days.</p>
+<h3>6.2 David Samuel: mobile</h3>
+<p><strong>0 commits on <code>main</code></strong> in the window (the last, <code>8039bd7</code>, was 21 Oct). <strong>4 on <code>origin/BVA-I353</code></strong> in the window, 8 ahead of <code>main</code> in all, the latest today at 10:00 UTC. <strong>Zero own submissions</strong>: the last was <code>I286</code> on 14 Oct, <strong>19.9 days</strong> ago. All five 7-day "submissions" were moved by Ayomikun. This is why that count says little about mobile work: the branch has moved steadily and has no PR to submit against. WIP: <strong>5 items</strong>, with two started this morning. The server contract changed under the branch today through no action of David's.</p>
+<h3>6.3 Philip Chidera: design</h3>
+<p>Closed <code>I382</code> and its children, and moved <code>I385</code> and <code>I387</code> to In progress, on 2 Nov. <strong>Zero 7-day submissions</strong> (the 27 Oct move aged out) and <strong>zero WIP</strong>, with <code>I389</code> To do: finished, blocked or working untracked. Worth a question, not an assumption. Design files are not in git.</p>
+<h3>6.4 Promise Udo: admin dashboard</h3>
+<p><strong>1 commit</strong>, <code>64304ef</code> on 30 Oct, now 4.0 days old. The server was built to Promise's documents, a real result for that work, and its three differences plus the mechanical ones in §3.2 are the next step. Whether the two spoke cannot be seen here. The board still shows none of this: <code>I348</code> moved to REVIEW/QA with no assignee, and <code>I349</code> is To do. <code>BVA-I9</code> has been In progress on the closed admin board for 50.0 days.</p>
+<h3>6.5 Weekly submission trend (leaves, transitions into REVIEW/QA)</h3>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">ISO week</th>
+<th style="text-align: right;">0901</th>
+<th style="text-align: right;">0902</th>
+<th style="text-align: right;">1002</th>
+<th style="text-align: right;">by the leaf's owner</th>
+<th style="text-align: right;">by another team member</th>
+<th style="text-align: right;">by board administration</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">2026-W39</th>
+<td style="text-align: right;"><strong>42</strong></td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">27</td>
+</tr>
+<tr><th scope="row">2026-W40 (28 Sep → 4 Oct)</th>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr><th scope="row">2026-W41 (5 → 11 Oct)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>10</strong></td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr><th scope="row">2026-W42 (12 → 18 Oct)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>8</strong></td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr><th scope="row">2026-W43 (19 → 25 Oct)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><strong>6</strong></td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr><th scope="row">2026-W44 (26 Oct → 1 Nov)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>10</strong></td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr><th scope="row">2026-W45 (from Mon 2 Nov, to 3 Nov 15:01 UTC)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>8</strong></td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Nothing has left REVIEW/QA on 1002.</strong> Leaving aside the three bulk sweeps (3 Sep, 30 Sep, 21 Oct), no item has been accepted from review by someone other than its submitter since <code>BVA-I268</code> on 16 Sep. Output stayed steady and acceptance stayed at zero. The bottleneck is the review step, not the developers.</p>
+<h3>6.6 What this does not measure</h3>
+<ul>
+<li><strong>No estimation points on any item on any board.</strong> A five-migration feature and a one-line fix count the same, and so do 23 commits against one of 10,750 lines.</li>
+<li><strong>Who moved an item is not whether it is done.</strong> Today's three moves on others' leaves are parent moves.</li>
+<li><strong>Unpushed and untracked work.</strong> Today's backend was invisible yesterday.</li>
+<li><strong>Nothing here measures correctness.</strong> No build, test or lint ran in any repository. The commits report test counts (1,020 in <code>beevia-api</code>, 321 in <code>beevia-admin-api</code>), and those were read, not run.</li>
+</ul>
+    </section>
+
+    <section class="sec" id="s7">
+      <div class="sec__h"><span class="sec__n">07</span><h2>Previous recommendations: where they stand</h2></div>
+
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Recommendation from 2 Nov</th>
+<th scope="col">Status on 3 Nov</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row"><strong>1. Plan 1002's close before Thursday</strong></th>
+<td>❌ <strong>Not visible.</strong> No successor sprint; nothing left review; filter still 08-01</td>
+</tr>
+<tr><th scope="row"><strong>2. Reopen <code>I380</code> and <code>I381</code></strong></th>
+<td>❌ <strong>No.</strong> Still Done, and <code>I383</code>/<code>I384</code> closed the same way</td>
+</tr>
+<tr><th scope="row"><strong>3. Promise and Ayomikun settle <code>hs7</code>/<code>hs6</code></strong></th>
+<td>✅ <strong>Settled in code.</strong> Route, reason codes, <code>rejected</code> and the note are all decided. Whether they spoke cannot be seen. The routes went to the implemented spec</td>
+</tr>
+<tr><th scope="row"><strong>4. Assign <code>I348</code> and <code>I349</code> to Promise</strong></th>
+<td>❌ <strong>No.</strong> Both still unassigned</td>
+</tr>
+<tr><th scope="row"><strong>5. Default the support mock off in production</strong></th>
+<td>❌ <strong>No</strong></td>
+</tr>
+<tr><th scope="row"><strong>6. Open a PR for <code>BVA-I353</code></strong></th>
+<td>❌ <strong>No.</strong> One more commit, no PR</td>
+</tr>
+<tr><th scope="row"><strong>7. Grant <code>disputes</code> and <code>help_center</code></strong></th>
+<td>❌ <strong>No</strong>, and now it blocks the whole inbox</td>
+</tr>
+<tr><th scope="row"><strong>8. Reopen <code>I392</code></strong></th>
+<td>❌ <strong>No</strong></td>
+</tr>
+<tr><th scope="row"><strong>9. Close the payments half of blocking</strong></th>
+<td>❌ <strong>Not done</strong></td>
+</tr>
+<tr><th scope="row"><strong>10. Disputes follow-ups</strong></th>
+<td>🟡 <strong>Partly, by replacement.</strong> Atomic, named claim: yes. Answer notifies the user: over the socket, no push. Conditional admin answer: yes. Card spending and transaction type: no</td>
+</tr>
+<tr><th scope="row"><strong>11. <code>needs: test</code> on <code>beevia-api</code>'s <code>sync</code></strong></th>
+<td>❌ <strong>Not done</strong></td>
+</tr>
+<tr><th scope="row"><strong>12. Generate <code>openapi.yaml</code>; stop vendoring the client spec</strong></th>
+<td>❌ <strong>Not done</strong></td>
+</tr>
+<tr><th scope="row"><strong>13. Handle <code>call.ended</code> on the client</strong></th>
+<td>❌ <strong>Not done</strong></td>
+</tr>
+<tr><th scope="row"><strong>14. Carried items</strong></th>
+<td>❌ <strong>None moved</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Two of fourteen moved, one fully.</strong> Both came from the backend's own plan rather than this list, and the list's other items may still be on someone's.</p>
+    </section>
+
+    <section class="sec" id="s8">
+      <div class="sec__h"><span class="sec__n">08</span><h2>What I would do this week</h2></div>
+
+<ol>
+<li><strong>Plan 1002's close before Thursday (carried).</strong> Review the nine REVIEW/QA leaves with merged code and accept or return them. Move the nine mobile and mock-only ones back to In progress. Create the successor sprint, carry the remainder explicitly, and do not sweep. Then set <code>ZOHO_SPRINT_FILTER</code>.</li>
+<li><strong>Make the inbox reachable (new).</strong> Grant <code>disputes</code> and <code>help_center</code> to the support role and Super Admin, and fill <code>support_hours</code>, with an admin route or a seed.</li>
+<li><strong>Decide the assistant on the record (new).</strong> Who approved it, what the privacy notice says about account data going to the model provider, and whether users are told it is an AI. Add it to the PRD.</li>
+<li><strong>Run one real chat and one real dispute through the assistant (new).</strong> Then pass the dispute's reason, reference and snapshot to the model, force handoff on <code>didnt_make_this_transaction</code>, and skip the turn when there is no message.</li>
+<li><strong>Bring the dashboard onto the real contract (new)</strong>: shape, statuses, camelCase filters, <code>resolutionNote</code>, <code>assistant_summary</code>. Default the mock off in production builds at the same time. Decide whether <code>/support/triage-config</code> and <code>I348</code> still have a purpose.</li>
+<li><strong>Open a PR for <code>BVA-I353</code>, and fix the two reasons first (carried, changed).</strong> Split it if needed. Chat, socket commands and dispute replies can follow on a second branch.</li>
+<li><strong>Reopen <code>I380</code>, <code>I381</code>, <code>I383</code> and <code>I384</code> if those closes were not meant for them (carried)</strong>, decide the card verification model, and add an attempt limit to <code>/auth/step-up</code> whatever the model is.</li>
+<li><strong>Agree how parent status moves work on this board (new).</strong> Move children first, or do not let a parent's move carry them. Reset <code>I343</code>, <code>I346</code> and <code>I348</code>.</li>
+<li><strong>Assign <code>I348</code> and <code>I349</code> to Promise (carried)</strong>, and give the admin dashboard a sprint or say the consumer board is its home.</li>
+<li><strong>Send a push when an agent replies, and move "logged" to the admin activity log (new)</strong> (<code>suggestions.md</code> §4.12).</li>
+<li><strong>Reopen <code>I392</code></strong> until its boxes reflect what was verified (carried).</li>
+<li><strong>Close the payments half of blocking</strong> (<code>suggestions.md</code> §4.9), and let card spending be disputed (carried).</li>
+<li><strong>Put <code>needs: test</code> back on <code>beevia-api</code>'s <code>sync</code></strong>, and give db-schema's Release and admin-api's Sync a verify job (carried).</li>
+<li><strong>Generate <code>openapi.yaml</code> from the running app and diff it in CI</strong> (§5.4), and stop vendoring the client spec (§5.10) (carried).</li>
+<li><strong>Handle <code>call.ended</code> on the client</strong> (carried).</li>
+<li><strong>Carried:</strong> add the <code>en-US</code> fallback to FAQ search; decide the statement password and delivery model (§4.8); account for 0902's 15 leaves; test the iOS ring on a device; split <code>flutter_local_notifications</code> out of #53; add the <code>messages.ref_id</code> index; restrict the Firebase API keys; decide the <code>walletActivity</code> default; check production logs for pre-12 Oct PII; map <code>22P02</code> to <code>400</code>; make Flutter CI a required check; check the production host's SSH settings; hide the biometric option outside mock mode; prune the §7 tables in <code>api-rfc.md</code>; and the longer tail listed on 27 Oct.</li>
+</ol>
+    </section>
+
+    <section class="sec" id="admin">
+      <div class="sec__h"><span class="sec__n">&mdash;</span><h2>Admin dashboard board</h2></div>
+
+<p><code>0901-admin</code> still has 12 items (8 leaves + 4 parents: 6 leaves Done, 2 In progress). It is closed, and nothing on it has changed since <strong>14 Sep 14:53 UTC, 50.0 days ago</strong>. <code>BVA-I8</code> (<em>Report Data Query</em>, Ayomikun) and <code>BVA-I9</code> (<em>Report Content Display</em>, Promise) have both been In progress for all 50 days. <strong>Zoho lists no successor sprint for this project.</strong> Admin-dashboard work is instead on the consumer board's 1002: <code>I349</code> Support Inbox (To do, unassigned; screen on mock; API child <code>I350</code> in review), <code>I348</code> Triage Flow Configuration (REVIEW/QA, unassigned; screen on mock, no route) and <code>I351</code> FAQ CMS (To do, unassigned; API only). <code>beevia-admin</code> last moved 4.0 days ago. These figures are never added to the main board's.</p>
+    </section>
+
+    <section class="sec" id="method">
+      <div class="sec__h"><span class="sec__n">&mdash;</span><h2>Appendix: method and readiness rubric</h2></div>
+
+<p><strong>Sources.</strong> <code>sprint-board-exports/beevia-sprint-board-2026-11-03.csv</code> + <code>beevia-activity-2026-11-03.json</code> (64 items, sprint 08-01, frozen); <code>sprint-board-exports/admin/beevia-admin-sprint-board-2026-11-03.csv</code> + its activity sidecar (12 items, sprint 0901-admin); a read-only scratch export of sprint <strong>1002 (63 items)</strong> in <code>/tmp/beevia-scratch/1002/</code>, diffed against the 2 Nov file in the same folder. All five repos were read at <code>origin/main</code>, plus every remote branch and <code>refs/pull/*</code>. <code>beevia-api</code>, <code>beevia-admin-api</code> and <code>beevia-db-schema</code> were read through a <code>git archive</code> shadow, because their working trees are still <code>diverged</code>.</p>
+<p><a id="mvp-method"></a></p>
+
+<h3>MVP readiness: ≈67% (estimate; 67.32, unchanged)</h3>
+<p><strong>Target 2026-09-01 (provisional). The target date passed sixty-three days ago.</strong> Weights are frozen, and <strong>this edition makes no methodology change.</strong> Scores measure build on <code>main</code>, not acceptance, and not correctness.</p>
+<p>No line moves, on a day with the largest backend change in weeks. Support and disputes are not rubric capabilities, so most of it scores nothing here. Line 11 is the one to explain: the admin API grew, but its new routes have no role and no wired screen, and line 11 scores what is wired, so it holds at 0.97. Line 1 stays at 0.90: support threads are plaintext by design, and they are separate from the E2EE chat surface. Line 9's client work is still unmerged.</p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">#</th>
+<th scope="col">Capability</th>
+<th style="text-align: right;">Weight</th>
+<th style="text-align: right;">Score</th>
+<th style="text-align: right;">Δ</th>
+<th scope="col">Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">1</th>
+<td>E2EE messaging</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">0.90</td>
+<td style="text-align: right;">0</td>
+<td>Chat surface unchanged; support threads are a separate, plaintext carve-out</td>
+</tr>
+<tr><th scope="row">2</th>
+<td>Voice &amp; video calling</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">0.92</td>
+<td style="text-align: right;">0</td>
+<td><code>call.ended</code> push still unhandled on any branch</td>
+</tr>
+<tr><th scope="row">3</th>
+<td>Message translation</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">0.60</td>
+<td style="text-align: right;">0</td>
+<td><code>StubTranslateAdapter</code> still bound; no translate change</td>
+</tr>
+<tr><th scope="row">4</th>
+<td>Local KYC tier (BVN)</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">0.90</td>
+<td style="text-align: right;">0</td>
+<td>No <code>/kyc</code> or <code>/upgrade</code> change</td>
+</tr>
+<tr><th scope="row">5</th>
+<td>International KYC tier</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0</td>
+<td>Proposed only</td>
+</tr>
+<tr><th scope="row">6</th>
+<td>Multi-currency wallets</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.85</td>
+<td style="text-align: right;">0</td>
+<td><code>activeNgn()</code> unchanged; <code>GET /wallets/limits</code> still proposed</td>
+</tr>
+<tr><th scope="row">7</th>
+<td>Send / request / receive in chat</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.92</td>
+<td style="text-align: right;">0</td>
+<td>Biometric option still on <code>main</code></td>
+</tr>
+<tr><th scope="row">8</th>
+<td>Cross-currency FX settlement</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0</td>
+<td><code>/fx/*</code> proposed only</td>
+</tr>
+<tr><th scope="row">9</th>
+<td>Virtual cards</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">0.80</td>
+<td style="text-align: right;">0</td>
+<td>No server card change. Client card management on unmerged <code>BVA-I353</code>; auth model undecided</td>
+</tr>
+<tr><th scope="row">10</th>
+<td>Consent management</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0</td>
+<td>No endpoint, record or board item</td>
+</tr>
+<tr><th scope="row">11</th>
+<td>Admin oversight</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0.97</td>
+<td style="text-align: right;">0</td>
+<td>9 inbox routes shipped, 3 dispute routes removed. No role holds <code>disputes</code>; the screens still run on a mock</td>
+</tr>
+<tr><th scope="row"></th>
+<td><strong>Weighted total</strong></td>
+<td style="text-align: right;"><strong>100</strong></td>
+<td style="text-align: right;"><strong>67.32</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td><strong>≈67%</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3>What this report cannot tell you</h3>
+<ul>
+<li><strong>Whether the assistant runs at all in production</strong>: whether the key is set, whether <code>SUPPORT_AI_ENABLED</code> is on, and whether a real model call succeeds.</li>
+<li><strong>Who decided on the assistant, and whether a privacy or legal review happened.</strong> No record is visible here.</li>
+<li><strong>Whether production has any disputes.</strong> "Zero rows" is the commit's statement, made before the drop.</li>
+<li><strong>Whether the migrations have run in production.</strong> Merge times are known, and workflow results are not.</li>
+<li><strong>Whether any role was granted <code>disputes</code> or <code>help_center</code>, or <code>support_hours</code> filled, by hand.</strong></li>
+<li><strong>Whether the commit-reported tests pass, or whether anything renders.</strong> Nothing was executed.</li>
+<li><strong>Whether closing <code>I382</code> was meant to close its children</strong>, or the same for <code>I378</code>. Same-millisecond timing is inference.</li>
+<li><strong>Whether a server-side attempt limit exists at a proxy</strong> in front of the API.</li>
+<li><strong>Whether a production build of <code>beevia-admin</code> exists</strong>, and with which flag.</li>
+<li><strong>What the design items contain.</strong> Design files are not in git.</li>
+<li><strong>Where 0902's 15 leaves went</strong>, or what will happen to 1002's open items on 5 Nov.</li>
+<li><strong>Whether any PR was reviewed</strong>, or whether branch protection requires CI on any <code>main</code>.</li>
+<li><strong>Velocity for any sprint.</strong> Nothing on any board is estimated.</li>
+</ul>
+<h3>Method</h3>
+<p><strong>Pipeline.</strong> The <code>beevia-refresh</code> steps ran in this order:</p>
+<ol>
+<li>Board exports, run in parallel as three background calls, starting at about 15:00 UTC. Main board (step 1a): 64 items, sprint 08-01, exit 0. Admin board (step 1b) with <code>--sprint 0901-admin</code>: 12 items, exit 0, sidecar byte-identical to 2 Nov. Read-only scratch export of <strong>1002</strong> with <code>--modified --activity</code> to <code>/tmp/beevia-scratch/1002/</code>: 63 items, exit 0.</li>
+<li>Fast-forward sync (step 2), exit 1. <code>beevia-admin</code> and <code>beevia-mobile</code> were already current, with no branch switch. <code>beevia-api</code>, <code>beevia-admin-api</code> and <code>beevia-db-schema</code> were refused as <code>diverged</code> (unchanged since 8 Sep).</li>
+<li>Audit (step 3) against a <code>git archive</code> shadow at <code>$BEEVIA_ROOT=/tmp/beevia-shadow-2026-11-03</code>: exit 1 before spec edits, exit 0 after. The in-repo audit ran too, for the board section (phantom lines only). All through <code>uv run --no-project --with pyyaml</code>.</li>
+<li>Board analysis (<code>q03.py</code>, <code>flow03.py</code>, <code>win03.py</code>, <code>items03.py</code>): a diff of 1002 against 2 Nov, every action in the window, 7-day submissions split by actor, WIP ages, the weekly trend, and a search for any transition out of REVIEW/QA. The sprint lists came from the <code>__nonexistent__</code> dry run.</li>
+<li>Content checks. <code>git fetch --all --prune</code>, <code>for-each-ref</code> and <code>ls-remote</code> of <code>refs/pull/*</code> on every repo. In <code>beevia-api</code>/<code>beevia-admin-api</code>: support controllers, DTOs, services, views, tools, gateway, realtime, <code>PermissionGuard</code>, card controller and <code>env.ts</code>. In <code>beevia-db-schema</code>: migrations 0042–0046, <code>support.ts</code> and the seeds. In <code>beevia-mobile</code>: <code>f6df54e</code>'s diff, support models, service and screens. In <code>beevia-admin</code>: <code>api.ts</code>, <code>constants.ts</code>, <code>types.ts</code>, the contract documents. Provider docs were checked for the first-turn question and did not settle it.</li>
+<li>Spec and narrative updates (§3.4).</li>
+<li>This report and its web edition.</li>
+<li>End-of-run recheck: see the note under Window.</li>
+</ol>
+<p><strong>A note on who appears here.</strong> Only people whose work is tracked have rows. Board administration is done by a non-contributor, whose actions are reported without naming the actor.</p>
+<p><strong>Nothing was executed from any sub-repo.</strong> No <code>npm</code>, <code>node</code>, <code>flutter</code> or build step ran. No repository was reset, rebased or cleaned, and no sub-repo file was edited. The sync's <code>--ff-only</code> limit was not overridden. Beyond the sync's own <code>fetch</code>, the only git operations were <code>fetch</code>, <code>ls-remote</code>, <code>git archive</code>, and read-only <code>log</code>/<code>show</code>/<code>diff</code>/<code>grep</code>/<code>for-each-ref</code>. Nothing was committed, pushed or deployed.</p>
+<p><strong>Files changed this cycle:</strong> this report, <code>web-report/2026-11-03.html</code>, <code>web-report/index.html</code>, <code>openapi.yaml</code>, <code>openapi.admin.yaml</code>, <code>openapi.proposed.yaml</code>, <code>api-rfc.md</code>, <code>admin-api-rfc.md</code>, <code>suggestions.md</code>, plus new board exports for 3 Nov in <code>sprint-board-exports/</code> and <code>sprint-board-exports/admin/</code>.</p>
+<p><strong>Degraded inputs.</strong></p>
+<ul>
+<li><strong><code>ZOHO_SPRINT_FILTER</code> is still <code>08-01</code></strong>, so the in-repo main export is a frozen closed sprint, and the audit's <code>SINCE</code> block compares two identical snapshots. All 1002 figures come from the scratch export.</li>
+<li><strong>The 20 Oct 0902 scratch file is gone from <code>/tmp</code></strong>, so median cycle times have lower n and are not comparable with earlier editions. The older rows of the weekly table are carried.</li>
+<li><strong>The default <code>python3</code> has no PyYAML</strong>, so <code>audit.py</code> exits 2 when run exactly as the skill documents. Both audits ran through <code>uv run --no-project --with pyyaml</code>.</li>
+<li><strong>Three repositories remain unsynced.</strong> <code>beevia-api</code>, <code>beevia-admin-api</code> and <code>beevia-db-schema</code> are <code>diverged</code>. Every backend claim is made against <code>origin/main</code> through the shadow.</li>
+<li><strong>GitHub PR metadata, reviews, settings, CI results and deploy state cannot be seen from here.</strong></li>
+<li><strong>The export's "no source key" warning fired on <code>Epic</code>.</strong> This is the known sampling artefact; 1002's items genuinely have no epic.</li>
+</ul>
+<p><strong>Window.</strong> 2 Nov 15:01 UTC → 3 Nov 15:01 UTC. All <code>actiontime</code> and board figures are in UTC. <code>git log</code> timestamps were converted from their local offsets. <strong>End-of-run recheck at 15:12 UTC:</strong> a fast re-export of 1002 (<code>--activity --no-descriptions</code>, exit 0) found no board action after 3 Nov 13:52 UTC, and <code>ls-remote</code> showed every <code>main</code> and <code>BVA-I353</code> at the commits read above, with no new PR on any repo.</p>
+    </section>
+
+  </main>
+</div>
+
+<footer class="foot">
+  <span class="barcode barcode--lg" aria-hidden="true"></span>
+  <span>Beevia project status &middot; 2026-11-03 &middot; support backend ships, AI first &middot; nobody can use it yet &middot; sprint ends Thursday</span>
+  <span><a href="index.html">All frames</a></span>
+</footer>
+
+<script src="ui.js"></script>
+</body>
+</html>

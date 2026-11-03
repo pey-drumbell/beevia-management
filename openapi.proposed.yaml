@@ -97,8 +97,6 @@ tags:
     description: One-shot translation proxy. Nothing is stored.
   - name: Notifications
     description: Push token binding and category preferences.
-  - name: Support
-    description: Support chat and general escalation. Transaction disputes shipped as `/disputes` in `openapi.yaml`.
   - name: Webhooks
     description: Partner-facing callbacks. Public, signature-verified, envelope-free.
 
@@ -1130,94 +1128,10 @@ paths:
   # two halves of the translate surface still disagree about what a language is.
   # Tracked in api-rfc.md §5.5a rather than re-proposed here.
 
-  /support/tickets:
-    post:
-      tags: [Support]
-      operationId: createSupportTicket
-      summary: 'Open a support ticket'
-      description: |
-        General escalation path. The transaction-scoped case shipped on
-        28 Oct 2026 as `POST /disputes` (`openapi.yaml`), with its own
-        reason enum and statuses; this ticket model would need reconciling
-        with it. The PRD commits that a user is *never*
-        told to contact the partner directly — Beevia owns escalation — and
-        tracks partner escalations and resolution time as KPIs. Neither is
-        possible without a ticket record.
-      externalDocs:
-        description: "PRD §8.3 \"Never tell the user to contact the partner directly\", §7.4"
-        url: ./Beevia_PRD.md
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/CreateSupportTicketRequest' }
-      responses:
-        '201':
-          description: Ticket opened.
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessEnvelope'
-                  - type: object
-                    properties:
-                      data: { $ref: '#/components/schemas/SupportTicket' }
-        '400': { $ref: '#/components/responses/BadRequest' }
-    get:
-      tags: [Support]
-      operationId: listSupportTickets
-      summary: 'List my tickets'
-      description: Paginated, newest first.
-      externalDocs:
-        description: "PRD §7.4 Compliance and Trust"
-        url: ./Beevia_PRD.md
-      parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/Limit'
-        - name: status
-          in: query
-          schema: { type: string, enum: [open, pending_partner, resolved, closed] }
-      responses:
-        '200':
-          description: Paginated tickets.
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessEnvelope'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items: { $ref: '#/components/schemas/SupportTicket' }
-                      meta: { $ref: '#/components/schemas/PaginationMeta' }
-
-  /support/tickets/{ticketId}:
-    parameters:
-      - name: ticketId
-        in: path
-        required: true
-        schema: { type: string, format: uuid }
-    get:
-      tags: [Support]
-      operationId: getSupportTicket
-      summary: 'Get a ticket'
-      description: Full ticket with its message thread and current SLA state.
-      externalDocs:
-        description: "PRD §7.4 Dispute Resolution Time"
-        url: ./Beevia_PRD.md
-      responses:
-        '200':
-          description: The ticket.
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessEnvelope'
-                  - type: object
-                    properties:
-                      data: { $ref: '#/components/schemas/SupportTicket' }
-        '404': { $ref: '#/components/responses/NotFound' }
+  # `/support/tickets` shipped on 3 Nov 2026, in a different shape, as
+  # `POST`/`GET /support/chats` and `GET /support/threads/{id}` (`openapi.yaml`).
+  # What the proposal also named is still open: `pending_partner`,
+  # `partner_reference` and `sla_due_at`. Tracked in api-rfc.md §5.19.
 
   /webhooks/cards:
     post:
@@ -1593,16 +1507,6 @@ components:
         sendAmount: { $ref: '#/components/schemas/Money' }
         receiveAmount: { $ref: '#/components/schemas/Money' }
         purpose: { type: string, enum: [p2p_send, request_payment, withdrawal], default: p2p_send }
-
-    CreateSupportTicketRequest:
-      type: object
-      required: [subject, body]
-      properties:
-        kind: { type: string, enum: [dispute, general, technical], default: general }
-        subject: { type: string, minLength: 1, maxLength: 200 }
-        body: { type: string, minLength: 1, maxLength: 4000 }
-        paymentId: { type: string, format: uuid }
-        transactionId: { type: string, format: uuid }
 
     CurrencyCode:
       type: string
@@ -2031,28 +1935,6 @@ components:
         data: { description: The payload. Shape varies by route. }
         meta: { $ref: '#/components/schemas/PaginationMeta' }
         timestamp: { type: string, format: date-time }
-
-    SupportTicket:
-      type: object
-      properties:
-        id: { type: string, format: uuid }
-        kind: { type: string, enum: [dispute, general, technical] }
-        status: { type: string, enum: [open, pending_partner, resolved, closed] }
-        subject: { type: string }
-        payment_id: { type: [string, 'null'], format: uuid }
-        transaction_id: { type: [string, 'null'], format: uuid }
-        partner_reference: { type: [string, 'null'] }
-        sla_due_at: { type: [string, 'null'], format: date-time, description: Drives the 72h resolution KPI. }
-        messages:
-          type: array
-          items:
-            type: object
-            properties:
-              author: { type: string, enum: [user, support] }
-              body: { type: string }
-              created_at: { type: string, format: date-time }
-        created_at: { type: string, format: date-time }
-        resolved_at: { type: [string, 'null'], format: date-time }
 
     TransactionDetail:
       description: 'A ledger entry with everything the detail sheet and a dispute need.'

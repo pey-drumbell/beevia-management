@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft — for review · **updated 2026-08-05** |
 | **Scope** | The complete HTTP surface of `beevia-api` (the consumer API): what exists today, and what the PRD requires that does not exist yet |
-| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, **149 operations** · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, **37 operations** (34 net-new + 3 live-endpoint modifications) · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
+| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, **155 operations** · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, **34 operations** (31 net-new + 3 live-endpoint modifications) · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
 | **Sibling RFC** | [`admin-api-rfc.md`](./admin-api-rfc.md) — the `beevia-admin-api` back-office service |
 | **Sources** | `beevia-api/src/**/*.controller.ts`, `beevia-api/src/**/dto/*.ts`, `beevia-db-schema/src/schema/*`, `beevia-api/postman/Beevia.postman_collection.json`, `Beevia_PRD.pdf` |
 | **Base path** | `/api/v1` (global prefix set in `src/main.ts`; `/i/:code` is explicitly excluded) |
@@ -172,10 +172,10 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | **Activity** | **2** | 0 | **New 2026-10-08.** Unified chats/calls/payments feed with keyset pagination, plus its badge count. Chat previews are per-device ciphertext, not server-read text (§5.14) |
 | **Statements** | **2** | 0 | **New 2026-10-27.** `POST /statements` (202, emailed wallet or card statement, PDF password-protected) and `GET /statements` (request history). Not a PRD line item; see §5.16 |
 | **Help & Support** | **5** | 0 | **New 2026-10-28.** FAQ only: categories, questions in a category, full-text search, an answer, and the "Was this helpful?" vote. Content is written through the admin API (`admin-api-rfc.md`). Disputes and the support chat have no server code yet (§5.17) |
-| **Disputes** | **3** | 0 | **New 2026-10-28.** "Report an issue" on a transaction (`POST /disputes`), the user's history and one report. The snapshot of the transaction is built server-side from the reference. Answered through the admin API's dispute queue. Shipped in place of the proposed `POST /payments/{id}/dispute` (§5.18) |
-| Support | **0** | 3 | Support chat and general escalation (`/support/tickets`). Does not exist. Support chat (`BVA-I347`) is In progress with no server branch (§5.18) |
+| **Disputes** | **4** | 0 | **New 2026-10-28, rebuilt 2026-11-03.** "Report an issue" on a transaction (`POST /disputes`), the user's history, one report, and the open count for the badge. A dispute is now a support thread with a transaction attached. The snapshot of the transaction is built server-side from the reference. Shipped in place of the proposed `POST /payments/{id}/dispute` (§5.18, §5.19) |
+| **Support** | **5** | 0 | **New 2026-11-03.** Chat with Support, availability, and the thread both chats and disputes run on. An AI assistant answers first. Shipped in place of the proposed `/support/tickets` (§5.19) |
 | Webhooks | **4** | 1 | **+1:** `POST /webhooks/paystack` for card top-ups. Card issuer callback still missing |
-| **Total** | **149** | **34** | +3 live-endpoint modifications = 37 operations in the proposed file |
+| **Total** | **155** | **31** | +3 live-endpoint modifications = 34 operations in the proposed file |
 
 ---
 
@@ -267,7 +267,7 @@ This is a small amount of work relative to its impact and is the highest value-p
 
 **No consent record.** §10.4 lists Consent Management as an MVP feature — revoking location, biometrics and translation independently, with dependent features disabled until consent is restored — and Phase 4 calls for consent logging and audit trails. There is no consent table, endpoint, or log.
 
-**No dispute or support surface.** §7.4 tracks "Dispute Resolution Time — 90% within 72 hours" and "Financial Partner Escalations" as compliance KPIs, and §8.3 commits that a user is never told to contact the partner directly. Neither the promise nor the metric is instrumentable today.
+**No dispute or support surface.** §7.4 tracks "Dispute Resolution Time — 90% within 72 hours" and "Financial Partner Escalations" as compliance KPIs, and §8.3 commits that a user is never told to contact the partner directly. Neither the promise nor the metric was instrumentable until support threads shipped on 2026-11-03 (§5.19), and partner escalation still is not.
 
 **No deletion status — and, since 2026-08-06, nothing left to build it on.** `DELETE /users/me` returns `{ deleted: true }` synchronously, but partner-side deletion is asynchronous. Flow 8 explicitly requires that a partner delay surface as *"deletion in progress"*, "not a silent failure", and §7.4 tracks completion within 5 days.
 
@@ -623,6 +623,16 @@ Four limits (`suggestions.md` §4.11):
 
 **Not shipped:** dispute *messaging* (`I344`'s "message send/fetch endpoints scoped to a dispute id"), the open-dispute count for the history badge (`I332`), and the general support conversation (`I347`). `/support/tickets` stays proposed for the general case. Its ticket model (`open`/`pending_partner`/`resolved`/`closed`) would need reconciling with the shipped dispute statuses (`submitted`/`under_review`/`resolved`/`rejected`).
 
+### 5.19 Support threads replaced disputes, and an AI assistant answers first (2026-11-03)
+
+**What shipped.** `beevia-db-schema` #27 and #28 (v0.0.46, v0.0.47), `beevia-api` #89, #90, #91 and `beevia-admin-api` #25, #26, #27, all merged 3 Nov between 11:27 and 14:40 UTC. Consumer operations go from 149 to 155 and admin from 63 to 69. A dispute and a support chat are now one `support_threads` row, so one send route serves both. The seven-value reason enum was renamed (`wrong_amount` → `amount_wrong`, `not_my_transaction` → `didnt_make_this_transaction`) and `rejected` no longer exists.
+
+**The assistant.** `SupportAgentService` calls a model through `@ai-sdk/anthropic` (`SUPPORT_AI_MODEL`, default `claude-sonnet-5-5`). It has six read-only tools (account status, balances, recent transactions, one transaction, cards, existing disputes) and one handoff signal. The user id is a closure variable, not a tool input, so the model cannot be asked to read another account. A regex sends fraud, theft, legal and account-closure wording straight to a person. A missing key, a model error or the step limit also hands over. Every turn is logged to `support_agent_turns`.
+
+**Built differently from the proposal.** `/support/tickets` is removed from `openapi.proposed.yaml`, as are its schemas. `POST`/`GET /support/chats` and `GET /support/threads/{id}` are its built form. **Still not built:** `pending_partner`, `partner_reference` and `sla_due_at`, which the proposal carried for PRD §7.4's partner-escalation KPI, have no equivalent on a thread.
+
+Open points are in `suggestions.md` §4.12 (server) and §5.17 (clients). **PRD note:** the PRD does not mention an AI assistant, and the 11:27 UTC schema commit still called triage "rule-based by requirement". It was replaced 56 minutes later. The decision is recorded only in commit messages.
+
 ---
 
 ## 6. Implemented surface
@@ -797,9 +807,15 @@ Escrow mechanics themselves are sound: a 24-hour hold scheduled through BullMQ, 
 | | GET | `/help/search` | 🔑 | 🟡 **New 2026-10-28.** `websearch_to_tsquery`, retried with OR'd terms on a miss. **Caller's language only, no fallback** (§5.17) |
 | | GET | `/help/articles/{slug}` | 🔑 | ✅ **New 2026-10-28.** Markdown body plus the caller's own vote |
 | | POST | `/help/articles/{slug}/feedback` | 🔑 | ✅ **New 2026-10-28.** `{helpful}`; one changeable vote per user |
-| | POST | `/disputes` | 🔑 | 🟡 **New 2026-10-28.** Receipt reference + reason enum + optional details and up to 5 uploaded screenshot URLs; server-built snapshot; `409 dispute_already_open`. **Not card spending**; no admin role can answer yet (§5.18) |
-| | GET | `/disputes` | 🔑 | ✅ **New 2026-10-28.** The caller's reports, newest first, unpaginated |
-| | GET | `/disputes/{id}` | 🔑 | ✅ **New 2026-10-28.** One report with `resolution_note`; someone else's is `404` |
+| | POST | `/disputes` | 🔑 | 🟡 **Rebuilt 2026-11-03.** Receipt reference + reason enum + optional details and up to 5 uploaded screenshot URLs; server-built snapshot; the assistant takes a turn before the response; `409 dispute_already_open`. **Not card spending** (§5.19) |
+| | GET | `/disputes` | 🔑 | ✅ The caller's threads of `kind: dispute`, newest first, unpaginated. **No `reason` on the row since 2026-11-03**; `title` is derived from it |
+| | GET | `/disputes/open-count` | 🔑 | ✅ **New 2026-11-03.** The badge number |
+| | GET | `/disputes/{id}` | 🔑 | ✅ One report with its messages and `resolution_note`; someone else's is `404 thread_not_found` |
+| | GET | `/support/availability` | 🔑 | 🟡 **New 2026-11-03.** Online needs an available admin and `support_hours`. Nothing seeds or writes that table, so it is offline until someone does (`suggestions.md` §4.12) |
+| | POST | `/support/chats` | 🔑 | ✅ **New 2026-11-03.** Always a new thread, with greeting and chips |
+| | GET | `/support/chats` | 🔑 | ✅ **New 2026-11-03.** Chat history, newest first, unpaginated |
+| | GET | `/support/threads/{id}` | 🔑 | ✅ **New 2026-11-03.** A chat or a dispute with its messages; `can_reply` false once resolved |
+| | POST | `/support/threads/{id}/messages` | 🔑 | ✅ **New 2026-11-03.** Body, attachments or both; the assistant's reply is in the response while it holds the thread; `409 thread_resolved` |
 | | POST | `/webhooks/anchor` | 🔓 | ✅ HMAC over raw body; deduped. **Processed no real delivery until 2026-09-03** — envelope mismatch, see §5.6. Now also syncs card lifecycle events |
 | | POST | `/webhooks/livekit` | 🔓 | ✅ JWT in `Authorization` |
 
@@ -831,7 +847,7 @@ Typing and presence being WS-only is correct — they are ephemeral. `sync.boots
 
 ## 7. Proposed surface
 
-All 35 operations below live in [`openapi.proposed.yaml`](./openapi.proposed.yaml) with full schemas, alongside the 3 live-endpoint modifications described in §7.1 — 38 operations in the file. Each conforms to the existing conventions: `/api/v1` prefix, standard envelope, snake_case responses, camelCase Zod-validated request bodies, `JwtAuthGuard` by default, `StepUpGuard` on anything that moves money or is irreversible.
+The file [`openapi.proposed.yaml`](./openapi.proposed.yaml) holds 31 net-new operations with full schemas, alongside the 3 live-endpoint modifications described in §7.1 — 34 operations in the file. **Note 2026-11-03: the tables below have drifted from the file and were not rewritten this cycle.** §7.3 and §7.5 still list 11 operations that have since shipped (eight under `/cards`, plus `GET /wallets/banks`, `POST /wallets/resolve-account` and `DELETE /wallets/beneficiaries/{beneficiaryId}`), and `GET /contacts/sync/status` is in the file but not listed. Treat the file as authoritative. Each conforms to the existing conventions: `/api/v1` prefix, standard envelope, snake_case responses, camelCase Zod-validated request bodies, `JwtAuthGuard` by default, `StepUpGuard` on anything that moves money or is irreversible.
 
 ### 7.1 FX (3) — closes §4.1
 
@@ -942,22 +958,19 @@ Batch reports failures **per item** rather than failing the batch, so the PRD's 
 
 The shipped surface is better than what was proposed on precedence and on clearing an override, and **short of it on one thing that matters: there is no on/off flag.** See §5.5a. `POST /translate/batch` is the only survivor, and it is probably obsolete for the on-device design.
 
-### 7.8 Attachments, platform, support (6)
+### 7.8 Attachments, platform (3)
 
 | Method | Path | Auth |
 |---|---|---|
 | GET | `/attachments/{attachmentId}/download-url` | 🔑 |
 | GET | `/health` | 🔓 |
 | GET | `/status` | 🔑 |
-| POST | `/support/tickets` | 🔑 |
-| GET | `/support/tickets` | 🔑 |
-| GET | `/support/tickets/{ticketId}` | 🔑 |
 
 *(`DELETE /messages/{id}` was proposed here in the last revision and has since shipped — see §5.2. It now lives in `openapi.yaml`.)*
 
 `GET /status` returns user-facing banner copy per capability. That copy must never instruct the user to contact the partner — §8.3 is explicit that Beevia owns escalation.
 
-The support surface is now doubly motivated: `POST /support/tickets` is the consumer-side counterpart to the admin case-notes and moderation queues, which the admin service is beginning to build. Without it, a user has no way to *originate* the thing an admin reviews.
+*(`/support/tickets` shipped on 2026-11-03 as `/support/chats` and `/support/threads/{id}`, in a different shape. See §5.19. Partner escalation fields remain unbuilt.)*
 
 ---
 
@@ -978,7 +991,7 @@ Ordered by unblocked value per unit of work, not by PRD section order.
 `/cards/*`, `POST /webhooks/cards`.
 
 **Phase E — compliance and support.** Required before public launch per §11 Phase 4 and §12.4.
-Consents, limits mutation, deletion status, data export, `/support/*`. (Disputes shipped 2026-10-28, §5.18.)
+Consents, limits mutation, deletion status, data export, partner escalation. (Disputes shipped 2026-10-28, §5.18; support threads 2026-11-03, §5.19.)
 
 **Ongoing, no phase:** translation preferences and batch, single-attachment presign, beneficiary CRUD, and converging `/upgrade/*` with `/kyc/*` (§5.1).
 
