@@ -1,0 +1,881 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beevia — Project Status — 4 Nov 2026</title>
+<meta name="description" content="The app gained a real support chat client on its branch, opening hours are fixed, and the server gained card limits and one card history. Mobile has not reached main in 13 days, no admin role can open the inbox, and the card stories ask for spending controls the provider does not appear to offer. 1002 ends tomorrow with 30 of 44 leaves in review, 11 with merged code. API surface 158 / 72, route drift zero after spec updates. MVP estimate 67.32, unchanged.">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!--
+  DIRECTION CONTRACT · seed 6c4a0ed0 (carried forward unchanged)
+  THESIS: A status report whose subject is the disagreement between its sources.
+  STORY: Client and server converge fast, the seams show, the card stories meet
+  what the provider can do, and the sprint ends tomorrow with no plan.
+-->
+
+<div class="topbar">
+    <div class="topbar__mark">
+      <span class="barcode" aria-hidden="true"></span>
+      <span class="topbar__wordmark">Beevia</span>
+    </div>
+    <nav class="topbar__nav label" aria-label="Report">
+      <a href="index.html">Archive</a>
+      <a href="#overview">Overview</a>
+      <a href="#s2"><span>1002 review</span></a>
+      <a href="#s1"><span>Board</span></a>
+      <a href="#method">Method</a>
+    </nav>
+</div>
+
+<header class="masthead">
+  <div class="field">
+    <div class="field__rail field__rail--l">
+      <dl>
+        <dt>Sprints open</dt>
+        <dd>1002 &middot; 21 Oct &rarr; 5 Nov &middot; day 15 of 16</dd>
+        <dt>1002 leaves</dt>
+        <dd>2 To do &middot; 4 In progress &middot; 30 QA &middot; 0 Blocked &middot; 8 Done</dd>
+        <dt>Route drift</dt>
+        <dd>6 new &rarr; 0 after spec update &middot; 158 / 72</dd>
+        <dt>Window</dt>
+        <dd>1.0 day &middot; Tue &rarr; Wed</dd>
+      </dl>
+    </div>
+
+    <div class="field__stage">
+      <div class="field__title">
+        <h1>Project<br>Status</h1>
+      </div>
+      <div class="field__meta num">
+        <span>2026-11-04</span>
+        <span>1002 live &middot; 0902 swept &middot; 0901-admin static</span>
+        <span>21 Oct&ndash;5 Nov</span>
+        <span>api bc7da11 &middot; admin-api 59e03f9 &middot; db-schema v0.0.49 &middot; mobile BVA-I353 f46641f</span>
+      </div>
+    </div>
+
+    <div class="field__rail field__rail--r">
+      <dl>
+        <dt>Board actions on 1002</dt>
+        <dd>8 in the window &middot; last 3 Nov 16:04 UTC</dd>
+        <dt>Sprint end</dt>
+        <dd>Thu 5 Nov, tomorrow &middot; 36 of 44 leaves not Done &middot; no successor</dd>
+        <dt>1002 QA with merged code</dt>
+        <dd>11 of 30 &middot; 0 accepted</dd>
+        <dt>3 Nov recommendations moved</dt>
+        <dd>3 of 16, all partly</dd>
+      </dl>
+    </div>
+  </div>
+</header>
+
+<section class="mvp" aria-label="MVP readiness estimate">
+  <div class="mvp__head">
+    <span class="mvp__label label">MVP readiness &mdash; estimate</span>
+    <span class="mvp__pct num">&asymp;67%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 64 days past</span>
+  </div>
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged. The new card and support-hours routes have no client on main. E2EE messaging 0.90; voice and video calling 0.92; message translation 0.60; local KYC 0.90; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.80; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
+    <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.90"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.92"><i style="width:92%"></i></span>
+    <span class="mvp__seg" style="flex:7" title="Message translation — 0.60"><i style="width:60%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.90"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
+    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.85"><i style="width:85%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.92"><i style="width:92%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
+    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0.80"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
+    <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.97"><i style="width:97%"></i></span>
+  </div>
+  <p class="mvp__read"><strong>67.32, unchanged.</strong> The new card and support-hours routes have no client on main, so no line moves. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. <a href="#mvp-method">Method and capability table</a>.</p>
+</section>
+
+<div class="shell">
+  <nav class="contents label" aria-label="Contents">
+    Contents
+    <ol>
+      <li><a href="#overview"><span>00</span> Quick overview</a></li>
+      <li><a href="#s1"><span>01</span> Board movement</a></li>
+      <li><a href="#s2"><span>02</span> Sprint 1002: review vs code</a></li>
+      <li><a href="#s3"><span>03</span> Code, API and drift</a></li>
+      <li><a href="#s4"><span>04</span> Risks</a></li>
+      <li><a href="#s5"><span>05</span> PRD gap</a></li>
+      <li><a href="#s6"><span>06</span> Team performance</a></li>
+      <li><a href="#s7"><span>07</span> Previous recommendations</a></li>
+      <li><a href="#s8"><span>08</span> What I would do this week</a></li>
+      <li><a href="#admin"><span>&mdash;</span> Admin dashboard board</a></li>
+      <li><a href="#method"><span>&mdash;</span> Method</a></li>
+    </ol>
+  </nav>
+
+  <main class="doc">
+    <section class="sec" id="overview">
+      <div class="sec__h"><span class="sec__n">00</span><h2>Quick overview</h2></div>
+
+<div class="invert" style="margin-bottom:var(--s-6)"><p class="lede"><strong>Both sides of support and cards moved again, and the gaps have narrowed to specific items. The app's real chat client arrived on its branch on the new contract, opening hours are fixed, and the server gained card limits and a single card history. Three things still stop users benefiting: nothing from mobile has reached <code>main</code> in 13 days, no admin role can open the inbox, and the card stories ask for spending controls the provider does not appear to offer. 1002 ends tomorrow with 30 of 44 leaves in review, 11 of them with merged code, none accepted, and no successor sprint.</strong></p></div>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Metric</th>
+<th style="text-align: right;">3 Nov</th>
+<th style="text-align: right;">4 Nov</th>
+<th scope="col">Δ</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">Sprint 1002 items (leaves + parents)</th>
+<td style="text-align: right;">63 (44+19)</td>
+<td style="text-align: right;"><strong>63 (44+19)</strong></td>
+<td>none added or removed</td>
+</tr>
+<tr><th scope="row">Sprint 1002 leaves To do / In progress / REVIEW/QA / BLOCKED / Done</th>
+<td style="text-align: right;">6 / 6 / 24 / 0 / 8</td>
+<td style="text-align: right;"><strong>2 / 4 / 30 / 0 / 8</strong></td>
+<td>6 into REVIEW/QA</td>
+</tr>
+<tr><th scope="row">Board actions on 1002 in the window</th>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;"><strong>8</strong></td>
+<td>all on 3 Nov at 16:04 UTC, 52 minutes after the last edition's recheck. None today</td>
+</tr>
+<tr><th scope="row">Transitions into REVIEW/QA, last 7 days (leaves)</th>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;"><strong>16</strong></td>
+<td>9 by the leaf's owner (Ayomikun), 7 moved by Ayomikun on David's, Philip's and unassigned items</td>
+</tr>
+<tr><th scope="row">Owners' last submission of their <em>own</em> leaf</th>
+<td style="text-align: right;">3 Nov 13:52 UTC</td>
+<td style="text-align: right;"><strong>3 Nov 16:04 UTC</strong> (Ayomikun, <code>I387</code>)</td>
+<td>David's last own submission is 14 Oct, <strong>20.9 days</strong> ago</td>
+</tr>
+<tr><th scope="row">Items that left REVIEW/QA on 1002, ever</th>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td>checked in the sidecar</td>
+</tr>
+<tr><th scope="row">1002 REVIEW/QA leaves with matching <strong>merged</strong> code</th>
+<td style="text-align: right;">9 of 24</td>
+<td style="text-align: right;"><strong>11 of 30</strong></td>
+<td><code>I387</code> and <code>I391</code> added, each narrower than its description</td>
+</tr>
+<tr><th scope="row">Routes in code but not in the spec (consumer / admin), before today's edits</th>
+<td style="text-align: right;">6 / 9</td>
+<td style="text-align: right;"><strong>3 / 3</strong></td>
+<td>now <strong>0 / 0</strong>: specs updated</td>
+</tr>
+<tr><th scope="row">API surface (consumer / admin)</th>
+<td style="text-align: right;">155 / 69</td>
+<td style="text-align: right;"><strong>158 / 72</strong></td>
+<td>+3 / +3</td>
+</tr>
+<tr><th scope="row">Proposed operations (consumer / admin)</th>
+<td style="text-align: right;">34 / 18</td>
+<td style="text-align: right;"><strong>34 / 18</strong></td>
+<td></td>
+</tr>
+<tr><th scope="row">Backend repos that deploy or migrate production on push with no test gate</th>
+<td style="text-align: right;">3 of 3</td>
+<td style="text-align: right;"><strong>3 of 3</strong></td>
+<td></td>
+</tr>
+<tr><th scope="row"><code>beevia-admin</code> days since a commit</th>
+<td style="text-align: right;">4.0</td>
+<td style="text-align: right;"><strong>5.0</strong></td>
+<td></td>
+</tr>
+<tr><th scope="row"><code>beevia-mobile</code> days since a commit on <code>main</code></th>
+<td style="text-align: right;">12.2</td>
+<td style="text-align: right;"><strong>13.2</strong></td>
+<td><code>BVA-I353</code> moved: <code>f46641f</code>, 0.2 d ago, still no PR</td>
+</tr>
+<tr><th scope="row"><code>beevia-api</code> / <code>beevia-admin-api</code> / <code>beevia-db-schema</code> days since a commit</th>
+<td style="text-align: right;">0.0 / 0.0 / 0.1</td>
+<td style="text-align: right;"><strong>0.2 / 1.0 / 0.2</strong></td>
+<td>6 merges since the last edition</td>
+</tr>
+<tr><th scope="row">Admin board: open sprint / days since any activity</th>
+<td style="text-align: right;">none / 50.0</td>
+<td style="text-align: right;"><strong>none / 51.0</strong></td>
+<td></td>
+</tr>
+<tr><th scope="row">Estimation points set (1002)</th>
+<td style="text-align: right;">0/63</td>
+<td style="text-align: right;"><strong>0/63</strong></td>
+<td></td>
+</tr>
+<tr><th scope="row">MVP readiness (estimate)</th>
+<td style="text-align: right;">≈67% (67.32)</td>
+<td style="text-align: right;"><strong>≈67% (67.32)</strong></td>
+<td><strong>0</strong>: the new card and hours routes have no client on <code>main</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>One correction to 3 Nov.</strong></p>
+<ol>
+<li><strong>"The app has no chat client" should have read "nothing pushed".</strong> That edition's headline said so, and <code>f46641f</code> arrived about 19 hours later with a working chat client, 3,841 lines across 43 files. Some of that work was very likely under way when the sentence was written. It is the fourth time this report has read silence as absence, after mobile on 27 Oct, <code>beevia-admin</code> on 30 Oct and the server on 2 Nov.</li>
+</ol>
+<p><strong>Team, at a glance:</strong></p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Person</th>
+<th scope="col">Owns</th>
+<th scope="col">Board leaves</th>
+<th style="text-align: right;">Submissions (7d)</th>
+<th scope="col">Median cycle</th>
+<th scope="col">Open WIP</th>
+<th style="text-align: right;">Commits (7d)</th>
+<th scope="col">Flag</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">Ayomikun Araoye</th>
+<td>backend + admin API</td>
+<td><strong>1002: 18</strong> (1 To do, 15 REVIEW/QA, 2 Done) · <code>I392</code> shared · 0901-admin: 1 In progress</td>
+<td style="text-align: right;"><strong>9 own</strong> (+7 moves on other items)</td>
+<td>1.44 d (n=21)</td>
+<td>none on 1002 · <code>BVA-I8</code> on 0901-admin (<strong>51.0 d</strong>)</td>
+<td style="text-align: right;"><strong>24</strong> (13 <code>beevia-api</code>, 6 <code>beevia-admin-api</code>, 5 <code>beevia-db-schema</code>)</td>
+<td><code>I372</code> shows REVIEW/QA with no code, and #94 says it cannot be built on this provider. It needs a decision, not more work</td>
+</tr>
+<tr><th scope="row">David Samuel</th>
+<td>mobile</td>
+<td><strong>1002: 16</strong> (1 To do, 4 In progress, 9 REVIEW/QA, 2 Done) · <code>I392</code> shared</td>
+<td style="text-align: right;">4 (<strong>0 own</strong>, 4 moved by Ayomikun)</td>
+<td>0.98 d (n=34)</td>
+<td>4: <code>I331</code>, <code>I354</code> (<strong>13.2 d</strong>), <code>I357</code>, <code>I361</code> (1.3 d)</td>
+<td style="text-align: right;"><strong>0 on <code>main</code></strong> · <strong>4 on <code>BVA-I353</code></strong></td>
+<td>The branch is now 91 files and moving fast, with no PR. Card history would be empty against the real server</td>
+</tr>
+<tr><th scope="row">Philip Chidera</th>
+<td>design</td>
+<td><strong>1002: 7</strong> (4 REVIEW/QA, 3 Done) · <code>I392</code> shared (Done)</td>
+<td style="text-align: right;">1 (moved by Ayomikun)</td>
+<td>0.89 d (n=3)</td>
+<td>none</td>
+<td style="text-align: right;">n/a</td>
+<td>Zero WIP and nothing left To do: what is next?</td>
+</tr>
+<tr><th scope="row">Promise Udo</th>
+<td>admin dashboard</td>
+<td>0901-admin: 4 (3 Done, 1 In progress) · <strong>1002: 0</strong></td>
+<td style="text-align: right;">0</td>
+<td>n/a</td>
+<td><code>BVA-I9</code> (<strong>51.0 d</strong>)</td>
+<td style="text-align: right;"><strong>1</strong> (<code>beevia-admin</code>, 68 files)</td>
+<td>The server has moved further towards the screen, including hours. No commit in 5.0 days, and this may be unpushed</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>The three questions for standup:</strong> (1) <strong>What is a card limit?</strong> Accept funding caps and rewrite <code>I372</code>, <code>I385</code> and <code>I387</code>, or take the requirement to the provider. (2) <strong>Who grants <code>disputes</code>, and who goes on duty?</strong> That is now the one thing stopping the inbox, and support reads offline until it happens. (3) <strong>What happens to 1002 tomorrow, and when does <code>BVA-I353</code> get a PR?</strong> The whole mobile half of the sprint is on that one branch.</p>
+<p><strong>The three things worth knowing:</strong></p>
+<div class="stack">
+  <div class="finding"><div class="finding__n num">1</div><div><p><strong>The card stories ask for something the provider does not appear to offer.</strong> <code>I372</code> asks to approve or decline card payments in real time, and <code>I385</code>/<code>I387</code> ask for limits "enforced on card spending" and applied at the provider. #94 says the provider has no spend controls and no authorization hook, so it capped funding instead and labelled it so (<code>enforced_on: "funding"</code>). The public docs agree as far as they go: the description is "the only card attribute that can be changed after creation", and <code>cardPayment.*</code> events report what has already happened. Card product configuration is not visible there. The engineering here is careful and honestly named. The decision belongs to the product side, and until it is made these items show REVIEW/QA against descriptions they cannot meet (§3.1).</p></div></div>
+  <div class="finding"><div class="finding__n num">2</div><div><p><strong>"Card disputes" do not reach a merchant payment.</strong> #92's commit says card disputes were impossible and are now covered, naming <code>card_transfers</code> as "spending from a card". The schema defines that table as wallet↔card movements, and <code>card_topups</code> as funding the <em>wallet</em> by bank card. So "my card was charged twice" still returns <code>404</code>, and the assistant is told its lookup covers card spending and that "not found" means the reference is not the user's. That is the case most likely to be a fraud report, and the fix looks small: the schema already allows a reference with no foreign key, and the provider call already exists (§3.2).</p></div></div>
+  <div class="finding"><div class="finding__n num">3</div><div><p><strong>Today's new code has seams, and each side's tests cannot show them.</strong> The app's card history expects a list and the server sends <code>data.items</code>, so a used card would look unused, and the branch's mock returns the list it expects. On the server, the inbox's <code>transactionType</code> filter can match only one of its nine values and that value escapes the status filter, and the transaction view never looks up payments. None of it can reach a user or an admin yet: the app code is unmerged and the inbox routes return <code>403</code>. All of it is a normal result of both sides moving this fast, and a real run would surface most of it (§3.2, §3.4).</p></div></div>
+</div>
+<p><strong>If you read nothing else:</strong> the code is converging quickly, but tomorrow's sprint close has nothing planned. A sweep like 0902's would mark <code>I372</code>, with no code, as delivered.</p>
+    </section>
+
+    <section class="sec" id="s1">
+      <div class="sec__h"><span class="sec__n">01</span><h2>Board movement</h2></div>
+
+<h3>1.1 Sprints 0902, 0901, 0901-admin and 08-01</h3>
+<p>All static. 0902 and 0901 were not re-exported, and the 08-01 and 0901-admin sidecars are byte-identical to 3 Nov. The audit's <code>SINCE</code> block compares two 08-01 exports and correctly reports no change. <code>ZOHO_SPRINT_FILTER</code> still points at 08-01. Zoho lists the same six Beevia sprints (<code>1002</code>, <code>0902</code>, <code>0901</code>, <code>08-01</code>, <code>0702</code>, <code>0701</code>) and only <code>0901-admin</code> for the admin project: <strong>no successor to 1002 exists yet, with one day left.</strong></p>
+<h3>1.2 Sprint 1002</h3>
+<p><strong>63 items: 44 leaves + 19 parents</strong>, unchanged.</p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Time (UTC)</th>
+<th scope="col">Items</th>
+<th scope="col">Move</th>
+<th scope="col">Made by</th>
+<th scope="col">Reading</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">3 Nov 16:04:12</th>
+<td><code>I372</code></td>
+<td>To do → REVIEW/QA</td>
+<td>Ayomikun</td>
+<td>Own. No code on any branch, and its parent <code>I371</code> is still To do</td>
+</tr>
+<tr><th scope="row">3 Nov 16:04:20</th>
+<td><code>I388</code> (parent), <code>I389</code>, <code>I390</code>, <code>I391</code></td>
+<td>To do → REVIEW/QA</td>
+<td>Ayomikun</td>
+<td>Parent move, within 3 ms. <code>I391</code>'s route merged 21 minutes later (#93)</td>
+</tr>
+<tr><th scope="row">3 Nov 16:04:33</th>
+<td><code>I385</code> (parent), <code>I386</code>, <code>I387</code></td>
+<td>In progress → REVIEW/QA</td>
+<td>Ayomikun</td>
+<td>Parent move, within 3 ms. <code>I387</code>'s route merged <strong>19 hours later</strong> (#94)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>These moves came 52 minutes after the last edition's recheck. Parent moves are inferred from timing, as no comment records intent. That makes <strong>eight</strong> parent moves since 30 Oct. <strong>No comments in the window, and none on 1002 ever.</strong> <code>I392</code> still shows Done with 0 of 63 ticked. <strong>Nothing has ever left REVIEW/QA on 1002</strong> (no sidecar entry reads "from REVIEW/QA"). Board administration made no move in the window.</p>
+<p>Board actions per day on 1002:</p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th style="text-align: right;">26 Oct</th>
+<th style="text-align: right;">27 Oct</th>
+<th style="text-align: right;">28 Oct</th>
+<th style="text-align: right;">29 Oct</th>
+<th style="text-align: right;">30 Oct</th>
+<th style="text-align: right;">31 Oct</th>
+<th style="text-align: right;">1 Nov</th>
+<th style="text-align: right;">2 Nov</th>
+<th style="text-align: right;">3 Nov</th>
+<th style="text-align: right;">4 Nov (to 15:01)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">17</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;"><strong>23</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3>1.3 What the last day of 1002 holds</h3>
+<p>1002 ends <strong>tomorrow, Thursday 5 Nov</strong>. 36 of its 44 leaves are not Done: 30 in REVIEW/QA, 4 In progress, 2 To do (<code>I362</code> limits and usage endpoint, <code>I373</code> reflect card spending in the app). The only precedent is 0902. It ran six days past its end date, then a 21 Oct sweep by board administration marked its 7 REVIEW/QA leaves Done and removed 15 leaves to a destination the export cannot see.</p>
+    </section>
+
+    <section class="sec" id="s2">
+      <div class="sec__h"><span class="sec__n">02</span><h2>Sprint 1002: what is in review, and whether the code exists</h2></div>
+
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">REVIEW/QA leaves (30)</th>
+<th style="text-align: right;">Count</th>
+<th scope="col">Items</th>
+<th scope="col">Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">Backend, matching merged code</th>
+<td style="text-align: right;"><strong>11</strong></td>
+<td><code>I366</code>, <code>I335</code>, <code>I338</code>, <code>I341</code>, <code>I332</code>, <code>I344</code>, <code>I347</code>, <code>I350</code>, <code>I352</code>, <code>I387</code>, <code>I391</code></td>
+<td>Routes on <code>origin/main</code>. <code>I387</code> caps funding, not spending, and has no maximum. <code>I391</code> asks for pagination, search, filter and the Activity tab's query logic, and has none of them</td>
+</tr>
+<tr><th scope="row">Backend, already existed or no identifiable change</th>
+<td style="text-align: right;">3</td>
+<td><code>I370</code>, <code>I377</code>, <code>I358</code></td>
+<td>Unchanged</td>
+</tr>
+<tr><th scope="row">Mobile, code only on <code>origin/BVA-I353</code></th>
+<td style="text-align: right;">9</td>
+<td><code>I334</code>, <code>I337</code>, <code>I340</code>, <code>I343</code>, <code>I346</code>, <code>I365</code>, <code>I369</code>, <code>I376</code>, <code>I390</code></td>
+<td>Unmerged. <code>I343</code> and <code>I346</code> moved here from the row below today, with a real client. <code>I390</code> is unassigned and its list would be empty (§3.4)</td>
+</tr>
+<tr><th scope="row">Moved to review, no matching code</th>
+<td style="text-align: right;">3</td>
+<td><code>I348</code>, <code>I386</code>, <code>I372</code></td>
+<td><code>I348</code>: mock only, and its server table is gone. <code>I386</code>: nothing pushed calls <code>/limits</code>. <code>I372</code>: no code, and not buildable as written</td>
+</tr>
+<tr><th scope="row">Design</th>
+<td style="text-align: right;">4</td>
+<td><code>I364</code>, <code>I368</code>, <code>I375</code>, <code>I389</code></td>
+<td>Design files are not in git</td>
+</tr>
+</tbody>
+</table>
+</div>
+<ul>
+<li><strong>Done without matching merged code:</strong> <code>I380</code>, <code>I381</code> (no attempt limit or lockout on <code>POST /auth/step-up</code>, no reopen), <code>I383</code> (client on the branch) and <code>I384</code>. All unchanged.</li>
+<li><strong>Stories out of step with their children:</strong> <code>I371</code> is To do with <code>I372</code> in review. <code>BVA-I349</code> (Support Inbox) is To do and unassigned with <code>I350</code> in review. <code>BVA-I351</code> (FAQ CMS) is To do and unassigned with <code>I352</code> in review and no dashboard screen.</li>
+<li><strong><code>origin/BVA-I353</code>:</strong> 9 ahead, 4 behind <code>main</code>, 91 files, +13,526/−134. Last commit <code>f46641f</code> <em>card history, dispute events</em> (4 Nov 10:13 UTC, 43 files, +3,841/−878). <strong>No PR.</strong></li>
+<li><strong>WIP ages:</strong> <code>I331</code> and <code>I354</code> at 13.2 d; <code>I357</code> and <code>I361</code> at 1.3 d.</li>
+</ul>
+    </section>
+
+    <section class="sec" id="s3">
+      <div class="sec__h"><span class="sec__n">03</span><h2>Code, API surface and spec drift</h2></div>
+
+<p><strong>Audit: clean after today's edits.</strong> Against a <code>git archive</code> shadow of <code>origin/main</code> (<code>$BEEVIA_ROOT=/tmp/beevia-shadow-2026-11-04</code>), it first reported 3 consumer and 3 admin routes undocumented (exit 1). After the spec changes: 158/158 consumer, 72/72 admin, proposed 34/18, spec health clean, no <code>x-beevia-*</code> (exit 0). The in-repo audit still reports 65 phantom lines from the three <code>diverged</code> working trees (27 consumer + 38 admin "in spec, not in code"), and they were not acted on.</p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Repo</th>
+<th scope="col">From → to</th>
+<th scope="col">What</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row"><code>beevia-db-schema</code> <code>main</code></th>
+<td><code>167ad39</code> → <code>6c69dbc</code></td>
+<td>#29, #30; <strong>v0.0.48, v0.0.49</strong>. Seeds <code>support_hours</code>, adds <code>support_settings</code> and per-agent reads, drops <code>support_flows</code> and <code>flow_state</code>, adds card limit columns</td>
+</tr>
+<tr><th scope="row"><code>beevia-api</code> <code>main</code></th>
+<td><code>bdb616c</code> → <code>bc7da11</code></td>
+<td>#92 card disputes, assistant topics, hours copy (3 Nov 15:47 UTC). #93 card activity (3 Nov 16:25). #94 card limits (4 Nov 11:16). +2,288/−59</td>
+</tr>
+<tr><th scope="row"><code>beevia-admin-api</code> <code>main</code></th>
+<td><code>1523591</code> → <code>59e03f9</code></td>
+<td>#28 hours, unread counts, transaction filter and view (3 Nov 15:50). +827/−20</td>
+</tr>
+<tr><th scope="row"><code>beevia-mobile</code> <code>BVA-I353</code></th>
+<td><code>f6df54e</code> → <code>f46641f</code></td>
+<td>Unmerged (§2, §3.4)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code>beevia-admin</code> (<code>64304ef</code>) and <code>beevia-mobile</code> <code>main</code> (<code>ccb4f63</code>, 22 Oct) did not move. Four of the six merges came within about 75 minutes after the last edition's recheck, so this edition covers more than today's commits.</p>
+<h3>3.1 Card limits</h3>
+<p><code>GET</code>/<code>PATCH /cards/{cardId}/limits</code>. The change is behind account step-up. <code>used</code> counts settled and in-flight fundings in Africa/Lagos days and months, and <code>assertFundingAllowed</code> runs before the wallet is touched. #94's commit says the provider has no spend controls or authorization hook. <strong>Checked against the provider's public docs, which agree as far as they go:</strong> Manage Cards says the description "is the only card attribute that can be changed after creation", Create Card takes no limit fields, and Card Payment Events describes after-the-fact notifications. Card product configuration is not visible there, so this does not prove that no limit can exist.</p>
+<ul>
+<li><strong>The stories cannot be met as written.</strong> See overview item 1. <code>I385</code> also requires a maximum "allowed for the user", and #94 deliberately has none yet, with KYC-tier limits to come.</li>
+<li><strong>The funding check can be raced.</strong> It reads the total and then writes the transfer with no lock, so two simultaneous fundings can both pass (<code>suggestions.md</code> §4.13.8).</li>
+</ul>
+<h3>3.2 Card activity and card disputes</h3>
+<p><code>GET /cards/{cardId}/activity</code> merges <code>card_transfers</code> with a live partner read and reports <code>spend_included: false</code> if the partner fails, which is a careful touch. From reading the code (<code>suggestions.md</code> §4.13):</p>
+<ul>
+<li><strong>Merchant payments still cannot be disputed</strong>, as above, and <strong>the assistant's tool description says otherwise</strong>. A withdrawal is also typed <code>card_payment</code> for the model.</li>
+<li><strong><code>transactionType</code> on the inbox list is faulty.</strong> Only <code>payment</code> can match, because no snapshot has a <code>type</code> key. That value escapes the other filters, because the raw <code>or</code> is unparenthesised and Drizzle's <code>and()</code> does not wrap its items (checked in 0.45.2), so resolved threads would appear in the working queue. #28's tests do not cover this filter.</li>
+<li><strong>The new transaction view never reads payments.</strong> The last branch returns <code>null</code> either way, so a payment dispute says "Transaction no longer found".</li>
+<li><strong><code>unreadOnly</code> filters after paging</strong>, so <code>meta.total</code> overstates and pages run short.</li>
+</ul>
+<h3>3.3 The inbox: what is left</h3>
+<ul>
+<li><strong><code>support_hours</code>: closed.</strong> Seeded weekdays 09:00–18:00 Africa/Lagos, and writable through <code>/admin/support/hours</code>.</li>
+<li><strong>No role holds <code>disputes</code>: open, and now the only blocker.</strong> All twelve routes return <code>403</code>. <code>online</code> needs an on-duty admin, and going on duty needs that permission, so <strong>the app still reads "offline" during open hours.</strong></li>
+<li><strong>The dashboard is unchanged.</strong> The mock is on by default, and the <code>suggestions.md</code> §5.16 table still stands. <code>/support/triage-config</code> is now only half alive: the server built hours and dropped the rest.</li>
+<li><strong>The assistant's gaps are unchanged:</strong> no dispute reason, reference or snapshot reaches the model, the fraud reason alone does not force a person, a dispute with no <code>details</code> calls the model with no messages, and one real chat has still not been recorded. #92 widened what it is asked to handle to five topics.</li>
+<li><strong>New:</strong> <code>PUT /admin/support/hours</code> accepts any <code>timezone</code>, and an unknown zone would make <code>GET /support/availability</code> throw for every app user.</li>
+</ul>
+<h3>3.4 The app against the new contract</h3>
+<p>On <code>BVA-I353</code>, unmerged. <strong>Closed since yesterday:</strong> the two rejected reasons (<code>amount_wrong</code>, <code>didnt_make_this_transaction</code>, with old values still read), chat placeholders (real client over the socket with a REST fallback, and all seven <code>support.*</code> command names match the gateway), a composer on open dispute threads, <code>with_assistant</code> and <code>quick_replies</code>. Two <code>TODO(support-api)</code> remain, both about the support email address. <strong>Open:</strong></p>
+<ul>
+<li><strong>Card history would come back empty.</strong> The parser takes rows only when <code>data</code> is a list, and the server returns <code>data.items</code>. The mock returns a list, so its tests pass.</li>
+<li><strong>Then every row would read as money out</strong>, since the server sends <code>in</code>/<code>out</code> and <code>isCredit</code> tests for <code>credit</code>.</li>
+<li><strong><code>spend_included</code> is not read anywhere</strong>, and "load more" stops at 200.</li>
+<li><strong>Reveal, unfreeze and terminate still send no card PIN</strong>, so each returns <code>400</code>. <code>GET /wallets/limits</code> is still proposed only. The statement screen still does not mention the PDF password.</li>
+<li><strong>Send and request on the card screen were replaced by fund and withdraw</strong>, which match the server. This reverses part of 3 Nov's <code>f6df54e</code>, and its comment says the design may bring them back.</li>
+</ul>
+<h3>3.5 Document changes this cycle</h3>
+<ul>
+<li><strong><code>openapi.yaml</code>:</strong> +3 (<code>GET</code>/<code>PATCH /cards/{cardId}/limits</code>, <code>GET /cards/{cardId}/activity</code>), 5 new schemas, limit errors on fund, and rewritten <code>POST /disputes</code> and <code>/support/availability</code> text. <strong><code>openapi.admin.yaml</code>:</strong> +3 (<code>GET</code>/<code>PUT /admin/support/hours</code>, <code>/admin/support/conversations/{id}/transaction</code>), <code>transactionType</code>, <code>unreadOnly</code> and <code>unread_count</code>, with the misbehaviour stated in the parameter descriptions. Proposed files: no change.</li>
+<li><strong><code>api-rfc.md</code>:</strong> counts, new §5.20. <strong><code>admin-api-rfc.md</code>:</strong> counts, §3.16 to twelve routes.</li>
+<li><strong><code>suggestions.md</code>:</strong> new §4.13; updates to §4.12, §5.15, §5.16 and §5.17, including the correction above.</li>
+</ul>
+<h3>3.6 The standing checks</h3>
+<ul>
+<li><strong>Pipelines:</strong> whole <code>release.yml</code>/<code>sync.yml</code>/<code>deploy.yml</code> read at <code>origin/main</code>, and no workflow changed. All three repos still deploy or migrate on push with no test gate. <code>beevia-api</code>'s comment still says "Deliberately not <code>needs: test</code>". #29's Release dropped <code>flow_state</code> about 20 minutes before the APIs that stopped reading it merged, so support reads probably failed in between (inferred from merge times).</li>
+<li><code>PaymentService.activeNgn()</code>, <code>StubTranslateAdapter</code>, unmapped <code>22P02</code>, unindexed <code>messages.ref_id</code>, FAQ search's missing <code>en-US</code> fallback, and no grant of <code>help_center</code> or <code>disputes</code>: all unchanged.</li>
+<li><code>POST /auth/step-up</code>: no attempt limit, and no throttler anywhere in <code>src</code>. <code>PATCH /cards/{id}/limits</code> now sits behind it too.</li>
+<li><strong>Mobile:</strong> <code>main</code> unchanged. <strong><code>call.ended</code> is still unhandled</strong> on <code>main</code> and on <code>BVA-I353</code>. The biometric step-up is unchanged.</li>
+</ul>
+    </section>
+
+    <section class="sec" id="s4">
+      <div class="sec__h"><span class="sec__n">04</span><h2>Risks</h2></div>
+
+<ul>
+<li><strong>1002 ends tomorrow with nothing accepted and no successor sprint.</strong> A sweep like 0902's would mark no-code and mock-only work as delivered, including <code>I372</code>.</li>
+<li><strong>A real charge could be answered with "that isn't yours".</strong> Merchant payments have no dispute path, and the assistant's instructions say otherwise (§3.2). It takes effect once a client ships and the assistant is switched on.</li>
+<li><strong>All of mobile's sprint work is on one unreviewed branch</strong>, now 91 files, with <code>main</code> 13 days behind it. The longer it runs, the more server contract it has to chase, as today's card history shows.</li>
+<li><strong>A user can be told a person is coming when none can come</strong> (§3.3).</li>
+<li><strong>Account data going to a third party without a recorded decision or consent.</strong> #92 widened the topics, not the data flow.</li>
+<li><strong>Done and REVIEW/QA on the board now hide open work.</strong> <code>I381</code>'s lockout does not exist, so <strong>guessing a 4-digit PIN against <code>/auth/step-up</code> has no limit visible in the code</strong>. That token now guards raising a card limit too.</li>
+<li><strong>The inbox's mock is on by default</strong>, and switching it off naively would show an unfiltered queue or an error.</li>
+<li><strong>Every backend repo still deploys or migrates production on push without a test gate.</strong></li>
+<li><strong>The FAQ is still empty in production</strong> until someone grants <code>help_center</code> and enters content. It still has no admin screen.</li>
+<li><strong>Blocking does not reach payments.</strong></li>
+<li>Carried, unchanged: <code>call.ended</code> unconsumed; statement PDF password (§4.8); FAQ search fallback (§4.10); 0902's 15 removed leaves (not visible); wallet-failure notices off by default; possible pre-12 Oct PII in logs; malformed path ids return <code>500</code>; production SSH (unverified); biometric step-up on <code>main</code> (§5.11); Firebase keys in history; three diverged local working trees.</li>
+<li><strong>Withdrawn:</strong> "the fraud reason returns <code>400</code> from the branch" and "support hours are permanently empty". Both are fixed, the first on the branch only.</li>
+</ul>
+    </section>
+
+    <section class="sec" id="s5">
+      <div class="sec__h"><span class="sec__n">05</span><h2>PRD gap</h2></div>
+
+<p>The four structural gaps (international KYC, multi-currency/FX settlement, consent management, and virtual cards beyond what is wired) are unchanged and carry 32 of the rubric's 100 points. PRD §3.2 says users "want to set limits", and today's limits meet that for funding only. The PRD does not say a limit must stop a purchase, so the funding cap may be acceptable. The stories are what say so. The AI assistant is still outside the PRD. <code>pending_partner</code>, <code>partner_reference</code> and <code>sla_due_at</code> are still unbuilt.</p>
+    </section>
+
+    <section class="sec" id="s6">
+      <div class="sec__h"><span class="sec__n">06</span><h2>Team performance: detail</h2></div>
+
+<p>All flow figures come from the activity sidecars (the <code>actiontime</code> of each transition), never from <code>Last Modified</code>. The 7-day window is 28 Oct 15:01 → 4 Nov 15:01 UTC. Commit counts are non-merge commits on <code>origin/main</code> in that window, summing each person's git identities (<code>Phoenixdadhev</code> + <code>Ayomikun Araoye</code>; <code>Davidtariq96</code> + <code>David Samuel</code>), with bots excluded. Branch commits are listed separately. WIP ages run from each item's last entry into In progress. <strong>Submissions are split by who made the move.</strong></p>
+<p><strong>Median cycle times are recomputed at the same reduced base as 3 Nov</strong> (the 20 Oct 0902 file is still gone): 0.98 d (n=34), 1.44 d (n=21), 0.89 d (n=3). Each new cycle is a parent move, so read these with care.</p>
+<h3>6.1 Ayomikun Araoye: backend + admin API</h3>
+<p><strong>24 commits in 7 days</strong>: 13 in <code>beevia-api</code>, 6 in <code>beevia-admin-api</code>, 5 in <code>beevia-db-schema</code>. <strong>9 own submissions</strong> and 7 moves on other items, 3 of them in this window through parent moves. <strong>No WIP on 1002</strong>, and <code>I362</code> is the only To do. <code>I381</code> remains Done with no lockout. <code>BVA-I8</code> has been In progress on the closed admin board for 51.0 days. <code>I387</code> went to review 19 hours before its code merged, through its parent. This is a board process point, as with the others below.</p>
+<h3>6.2 David Samuel: mobile</h3>
+<p><strong>0 commits on <code>main</code></strong> in the window (the last, <code>8039bd7</code>, was 21 Oct). <strong>4 on <code>origin/BVA-I353</code></strong> in the window, 9 ahead of <code>main</code> in all, the latest today at 10:13 UTC. <strong>Zero own submissions</strong>: the last was <code>I286</code> on 14 Oct, <strong>20.9 days</strong> ago. All four 7-day "submissions" were moved by Ayomikun, so that count says little about mobile work: today's commit alone is the largest client change in the sprint, and it has no PR to submit against. It caught up with a contract that changed the day before. <code>I386</code> and <code>I390</code> went to review without David moving them. WIP: <strong>4 items</strong>, with <code>I331</code> and <code>I354</code> at 13.2 days.</p>
+<h3>6.3 Philip Chidera: design</h3>
+<p><strong>One 7-day submission</strong>, <code>I389</code>, moved by its parent. <strong>Zero WIP and no leaf left To do</strong>: finished, blocked or working untracked. Worth a question, not an assumption. Design files are not in git.</p>
+<h3>6.4 Promise Udo: admin dashboard</h3>
+<p><strong>1 commit</strong>, <code>64304ef</code> on 30 Oct, now 5.0 days old. The server has moved further towards the screen: hours, unread counts and the transaction beside its snapshot, all to Promise's documents. Nothing has been pushed in response, which after four corrections this report does not read as nothing having been done. The board still shows none of this: <code>I348</code> is in REVIEW/QA with no assignee, and <code>I349</code> is To do. <code>BVA-I9</code> has been In progress on the closed admin board for 51.0 days.</p>
+<h3>6.5 Weekly submission trend (leaves, transitions into REVIEW/QA)</h3>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">ISO week</th>
+<th style="text-align: right;">0901</th>
+<th style="text-align: right;">0902</th>
+<th style="text-align: right;">1002</th>
+<th style="text-align: right;">by the leaf's owner</th>
+<th style="text-align: right;">by another team member</th>
+<th style="text-align: right;">by board administration</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">2026-W39</th>
+<td style="text-align: right;"><strong>42</strong></td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">27</td>
+</tr>
+<tr><th scope="row">2026-W40 (28 Sep → 4 Oct)</th>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr><th scope="row">2026-W41 (5 → 11 Oct)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>10</strong></td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr><th scope="row">2026-W42 (12 → 18 Oct)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>8</strong></td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr><th scope="row">2026-W43 (19 → 25 Oct)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><strong>6</strong></td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr><th scope="row">2026-W44 (26 Oct → 1 Nov)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>10</strong></td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr><th scope="row">2026-W45 (from Mon 2 Nov, to 4 Nov 15:01 UTC)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>14</strong></td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Nothing has left REVIEW/QA on 1002.</strong> Leaving aside the three bulk sweeps (3 Sep, 30 Sep, 21 Oct), no item has been accepted from review by someone other than its submitter since <code>BVA-I268</code> on 16 Sep. Output stayed steady and acceptance stayed at zero. The bottleneck is the review step, not the developers.</p>
+<h3>6.6 What this does not measure</h3>
+<ul>
+<li><strong>No estimation points on any item on any board.</strong> A migration, a provider investigation and a one-line fix all count the same.</li>
+<li><strong>Who moved an item is not whether it is done.</strong> Seven of this window's eight actions belong to two parent moves, and the routes behind <code>I387</code> and <code>I391</code> had not merged when those moves happened.</li>
+<li><strong>Unpushed and untracked work.</strong> Yesterday's "no chat client" is today's evidence of that.</li>
+<li><strong>Nothing here measures correctness.</strong> No build, test or lint ran in any repository. The commits report test counts (1,090 in <code>beevia-api</code>, 342 in <code>beevia-admin-api</code>), and those were read, not run.</li>
+</ul>
+    </section>
+
+    <section class="sec" id="s7">
+      <div class="sec__h"><span class="sec__n">07</span><h2>Previous recommendations: where they stand</h2></div>
+
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Recommendation from 3 Nov</th>
+<th scope="col">Status on 4 Nov</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row"><strong>1. Plan 1002's close before Thursday</strong></th>
+<td>❌ <strong>Not visible.</strong> No successor sprint; nothing left review; 6 more went in; filter still 08-01</td>
+</tr>
+<tr><th scope="row"><strong>2. Make the inbox reachable</strong></th>
+<td>🟡 <strong>Half.</strong> <code>support_hours</code> seeded and writable. No role granted <code>disputes</code> or <code>help_center</code></td>
+</tr>
+<tr><th scope="row"><strong>3. Decide the assistant on the record</strong></th>
+<td>❌ <strong>Not visible</strong></td>
+</tr>
+<tr><th scope="row"><strong>4. Run one real chat; pass the dispute's context; force handoff on fraud; skip the empty turn</strong></th>
+<td>❌ <strong>Not visible.</strong> Code unchanged on all three</td>
+</tr>
+<tr><th scope="row"><strong>5. Bring the dashboard onto the real contract</strong></th>
+<td>❌ <strong>No commit.</strong> The server closed some of the distance (§3.3)</td>
+</tr>
+<tr><th scope="row"><strong>6. Open a PR for <code>BVA-I353</code>, fix the two reasons first</strong></th>
+<td>🟡 <strong>Half.</strong> Reasons fixed. No PR</td>
+</tr>
+<tr><th scope="row"><strong>7. Reopen <code>I380</code>, <code>I381</code>, <code>I383</code>, <code>I384</code>; add an attempt limit</strong></th>
+<td>❌ <strong>No</strong></td>
+</tr>
+<tr><th scope="row"><strong>8. Agree how parent status moves work; reset <code>I343</code>, <code>I346</code>, <code>I348</code></strong></th>
+<td>❌ <strong>No.</strong> Two more parent moves. <code>I343</code> and <code>I346</code> now at least have code on the branch</td>
+</tr>
+<tr><th scope="row"><strong>9. Assign <code>I348</code> and <code>I349</code> to Promise</strong></th>
+<td>❌ <strong>No</strong></td>
+</tr>
+<tr><th scope="row"><strong>10. Push on an agent's reply; move "logged" to the activity log</strong></th>
+<td>❌ <strong>No</strong></td>
+</tr>
+<tr><th scope="row"><strong>11. Reopen <code>I392</code></strong></th>
+<td>❌ <strong>No</strong></td>
+</tr>
+<tr><th scope="row"><strong>12. Close the payments half of blocking; let card spending be disputed</strong></th>
+<td>🟡 <strong>Partly.</strong> Wallet↔card movements are disputable. Merchant payments are not, and blocking is unchanged</td>
+</tr>
+<tr><th scope="row"><strong>13. <code>needs: test</code> on <code>beevia-api</code>'s <code>sync</code>, verify jobs elsewhere</strong></th>
+<td>❌ <strong>Not done</strong></td>
+</tr>
+<tr><th scope="row"><strong>14. Generate <code>openapi.yaml</code>; stop vendoring the client spec</strong></th>
+<td>❌ <strong>Not done</strong></td>
+</tr>
+<tr><th scope="row"><strong>15. Handle <code>call.ended</code> on the client</strong></th>
+<td>❌ <strong>Not done</strong></td>
+</tr>
+<tr><th scope="row"><strong>16. Carried items</strong></th>
+<td>❌ <strong>None moved</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Three of sixteen moved, all partly.</strong> All three came from the team's own plan rather than this list, and the list's other items may still be on someone's.</p>
+    </section>
+
+    <section class="sec" id="s8">
+      <div class="sec__h"><span class="sec__n">08</span><h2>What I would do this week</h2></div>
+
+<ol>
+<li><strong>Close 1002 deliberately tomorrow (carried, now urgent).</strong> Accept or return the eleven REVIEW/QA leaves with merged code. Move <code>I372</code>, <code>I386</code>, <code>I348</code> and the nine branch-only mobile leaves back to In progress. Create the successor sprint, carry the remainder explicitly, and do not sweep. Then set <code>ZOHO_SPRINT_FILTER</code>.</li>
+<li><strong>Decide what a card limit is (new).</strong> Accept funding caps and rewrite <code>I371</code>, <code>I372</code>, <code>I385</code> and <code>I387</code>, or ask the provider whether card product configuration can hold limits. Either way, the screen must not say "spending limit" while it caps funding.</li>
+<li><strong>Grant <code>disputes</code> and <code>help_center</code> to the support role and Super Admin, and name who goes on duty (carried, changed).</strong> It is the last server-side step before anyone can answer a thread.</li>
+<li><strong>Let a merchant payment be disputed, and correct the assistant's text (new).</strong> Resolve the reference against the partner's list, and until then remove "card spending" from <code>getTransaction</code>'s description and hand over.</li>
+<li><strong>Open a PR for <code>BVA-I353</code> (carried, changed).</strong> Fix the <code>data.items</code> parsing and <code>in</code>/<code>out</code> first, read <code>spend_included</code>, and test against a response taken from the server. Split it if that gets it merged sooner, with support first.</li>
+<li><strong>Fix the inbox's seams (new):</strong> store the transaction type and parenthesise the <code>or</code>, look up payments in the transaction view, and filter <code>unreadOnly</code> before paging. Validate <code>timezone</code>.</li>
+<li><strong>Run one real chat and one real dispute through the assistant (carried)</strong>, then pass the dispute's reason, reference and snapshot, force handoff on <code>didnt_make_this_transaction</code>, and skip the empty turn.</li>
+<li><strong>Decide the assistant on the record (carried).</strong> Who approved it, what the privacy notice says, and whether users are told it is an AI. Add it to the PRD.</li>
+<li><strong>Bring the dashboard onto the real contract (carried)</strong>, default the mock off in production builds, and cut <code>/support/triage-config</code> down to hours.</li>
+<li><strong>Reopen <code>I380</code>, <code>I381</code>, <code>I383</code> and <code>I384</code> if those closes were not meant for them (carried)</strong>, decide the card verification model, and add an attempt limit to <code>/auth/step-up</code> whatever the model is.</li>
+<li><strong>Agree how parent status moves work on this board (carried).</strong> Move children first, or do not let a parent's move carry them.</li>
+<li><strong>Assign <code>I348</code>, <code>I349</code> and <code>I390</code> (carried, extended)</strong>, and give the admin dashboard a sprint or say the consumer board is its home.</li>
+<li><strong>Send a push when an agent replies, and move "logged" to the admin activity log (carried).</strong></li>
+<li><strong>Reopen <code>I392</code></strong> until its boxes reflect what was verified (carried).</li>
+<li><strong>Close the payments half of blocking</strong> (<code>suggestions.md</code> §4.9) (carried).</li>
+<li><strong>Put <code>needs: test</code> back on <code>beevia-api</code>'s <code>sync</code></strong>, and give db-schema's Release and admin-api's Sync a verify job (carried). Order schema drops after the code that stops reading them.</li>
+<li><strong>Generate <code>openapi.yaml</code> from the running app and diff it in CI</strong> (§5.4), and stop vendoring the client spec (§5.10) (carried). Today's card history bug is the case for it.</li>
+<li><strong>Handle <code>call.ended</code> on the client</strong> (carried).</li>
+<li><strong>Carried:</strong> add the <code>en-US</code> fallback to FAQ search; decide the statement password and delivery model (§4.8); account for 0902's 15 leaves; test the iOS ring on a device; split <code>flutter_local_notifications</code> out of #53; add the <code>messages.ref_id</code> index; restrict the Firebase API keys; decide the <code>walletActivity</code> default; check production logs for pre-12 Oct PII; map <code>22P02</code> to <code>400</code>; make Flutter CI a required check; check the production host's SSH settings; hide the biometric option outside mock mode; prune the §7 tables in <code>api-rfc.md</code>; and the longer tail listed on 27 Oct.</li>
+</ol>
+    </section>
+
+    <section class="sec" id="admin">
+      <div class="sec__h"><span class="sec__n">&mdash;</span><h2>Admin dashboard board</h2></div>
+
+<p><code>0901-admin</code> still has 12 items (8 leaves + 4 parents: 6 leaves Done, 2 In progress). It is closed, and nothing on it has changed since <strong>14 Sep 14:53 UTC, 51.0 days ago</strong>. <code>BVA-I8</code> (<em>Report Data Query</em>, Ayomikun) and <code>BVA-I9</code> (<em>Report Content Display</em>, Promise) have both been In progress for all 51 days. <strong>Zoho lists no successor sprint for this project.</strong> Admin-dashboard work is instead on the consumer board's 1002: <code>I349</code> Support Inbox (To do, unassigned; screen on mock; API child <code>I350</code> in review), <code>I348</code> Triage Flow Configuration (REVIEW/QA, unassigned; screen on mock, and the server now serves only its hours half) and <code>I351</code> FAQ CMS (To do, unassigned; API only). <code>beevia-admin</code> last moved 5.0 days ago. These figures are never added to the main board's.</p>
+    </section>
+
+    <section class="sec" id="method">
+      <div class="sec__h"><span class="sec__n">&mdash;</span><h2>Appendix: method and readiness rubric</h2></div>
+
+<p><strong>Sources.</strong> <code>sprint-board-exports/beevia-sprint-board-2026-11-04.csv</code> + <code>beevia-activity-2026-11-04.json</code> (64 items, sprint 08-01, frozen); <code>sprint-board-exports/admin/beevia-admin-sprint-board-2026-11-04.csv</code> + its activity sidecar (12 items, sprint 0901-admin); a read-only scratch export of sprint <strong>1002 (63 items)</strong> in <code>/tmp/beevia-scratch/1002/</code>, diffed against the 3 Nov file in the same folder. All five repos were read at <code>origin/main</code>, plus every remote branch and <code>refs/pull/*</code>. <code>beevia-api</code>, <code>beevia-admin-api</code> and <code>beevia-db-schema</code> were read through a <code>git archive</code> shadow, because their working trees are still <code>diverged</code>. The card provider's public docs were read to check one claim (§3.1).</p>
+<p><a id="mvp-method"></a></p>
+
+<h3>MVP readiness: ≈67% (estimate; 67.32, unchanged)</h3>
+<p><strong>Target 2026-09-01 (provisional). The target date passed sixty-four days ago.</strong> Weights are frozen, and <strong>this edition makes no methodology change.</strong> Scores measure build on <code>main</code>, not acceptance, and not correctness.</p>
+<p>No line moves. Line 9 is the one to explain: the server gained limits and activity, but no client on <code>main</code> calls them, and the limits are not the spending limits the stories describe. It takes the same treatment as line 11 on 3 Nov, and should move when <code>BVA-I353</code> merges with those calls working. Line 11 holds at 0.97: three more admin routes, still no role and no wired screen.</p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">#</th>
+<th scope="col">Capability</th>
+<th style="text-align: right;">Weight</th>
+<th style="text-align: right;">Score</th>
+<th style="text-align: right;">Δ</th>
+<th scope="col">Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">1</th>
+<td>E2EE messaging</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">0.90</td>
+<td style="text-align: right;">0</td>
+<td>Chat surface unchanged; support threads are a separate, plaintext carve-out</td>
+</tr>
+<tr><th scope="row">2</th>
+<td>Voice &amp; video calling</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">0.92</td>
+<td style="text-align: right;">0</td>
+<td><code>call.ended</code> push still unhandled on any branch</td>
+</tr>
+<tr><th scope="row">3</th>
+<td>Message translation</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">0.60</td>
+<td style="text-align: right;">0</td>
+<td><code>StubTranslateAdapter</code> still bound; no translate change</td>
+</tr>
+<tr><th scope="row">4</th>
+<td>Local KYC tier (BVN)</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">0.90</td>
+<td style="text-align: right;">0</td>
+<td>No <code>/kyc</code> or <code>/upgrade</code> change</td>
+</tr>
+<tr><th scope="row">5</th>
+<td>International KYC tier</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0</td>
+<td>Proposed only</td>
+</tr>
+<tr><th scope="row">6</th>
+<td>Multi-currency wallets</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.85</td>
+<td style="text-align: right;">0</td>
+<td><code>activeNgn()</code> unchanged; <code>GET /wallets/limits</code> still proposed</td>
+</tr>
+<tr><th scope="row">7</th>
+<td>Send / request / receive in chat</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.92</td>
+<td style="text-align: right;">0</td>
+<td>Biometric option still on <code>main</code></td>
+</tr>
+<tr><th scope="row">8</th>
+<td>Cross-currency FX settlement</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0</td>
+<td><code>/fx/*</code> proposed only</td>
+</tr>
+<tr><th scope="row">9</th>
+<td>Virtual cards</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">0.80</td>
+<td style="text-align: right;">0</td>
+<td>3 server routes shipped (limits on funding only, activity). Client card management on unmerged <code>BVA-I353</code>; auth model undecided</td>
+</tr>
+<tr><th scope="row">10</th>
+<td>Consent management</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0</td>
+<td>No endpoint, record or board item</td>
+</tr>
+<tr><th scope="row">11</th>
+<td>Admin oversight</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0.97</td>
+<td style="text-align: right;">0</td>
+<td>3 more support routes. No role holds <code>disputes</code>; the screens still run on a mock</td>
+</tr>
+<tr><th scope="row"></th>
+<td><strong>Weighted total</strong></td>
+<td style="text-align: right;"><strong>100</strong></td>
+<td style="text-align: right;"><strong>67.32</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td><strong>≈67%</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3>What this report cannot tell you</h3>
+<ul>
+<li><strong>Whether the provider could offer card limits through card product configuration or a commercial agreement.</strong> Only its public docs were read, and they do not cover that.</li>
+<li><strong>Whether the assistant runs at all in production</strong>: whether the key is set, whether <code>SUPPORT_AI_ENABLED</code> is on, and whether a real model call succeeds.</li>
+<li><strong>Who decided on the assistant, or on funding caps, and whether a privacy or legal review happened.</strong> No record is visible here.</li>
+<li><strong>Whether the migrations have run in production, and whether support reads failed during #29's gap.</strong> Merge times are known, and workflow results are not.</li>
+<li><strong>Whether any role was granted <code>disputes</code> or <code>help_center</code> by hand.</strong></li>
+<li><strong>Whether the commit-reported tests pass, or whether anything renders.</strong> Nothing was executed. The client findings come from reading the parser beside the server's code and its Postman samples.</li>
+<li><strong>Whether closing or moving a parent was meant to carry its children.</strong> Same-millisecond timing is inference.</li>
+<li><strong>Whether a server-side attempt limit exists at a proxy</strong> in front of the API.</li>
+<li><strong>Whether a production build of <code>beevia-admin</code> exists</strong>, and with which flag.</li>
+<li><strong>What the design items contain.</strong> Design files are not in git.</li>
+<li><strong>Where 0902's 15 leaves went</strong>, or what will happen to 1002's open items on 5 Nov.</li>
+<li><strong>Whether any PR was reviewed</strong>, or whether branch protection requires CI on any <code>main</code>.</li>
+<li><strong>Velocity for any sprint.</strong> Nothing on any board is estimated.</li>
+</ul>
+<h3>Method</h3>
+<p><strong>Pipeline.</strong> The <code>beevia-refresh</code> steps ran in this order:</p>
+<ol>
+<li>Board exports, run in parallel as three background calls, starting at about 15:00 UTC. Main board (step 1a): 64 items, sprint 08-01, exit 0. Admin board (step 1b) with <code>--sprint 0901-admin</code>: 12 items, exit 0, sidecar byte-identical to 3 Nov. Read-only scratch export of <strong>1002</strong> with <code>--modified --activity</code> to <code>/tmp/beevia-scratch/1002/</code>: 63 items, exit 0.</li>
+<li>Fast-forward sync (step 2), exit 1. <code>beevia-admin</code> and <code>beevia-mobile</code> were already current, with no branch switch. <code>beevia-api</code>, <code>beevia-admin-api</code> and <code>beevia-db-schema</code> were refused as <code>diverged</code> (unchanged since 8 Sep).</li>
+<li>Audit (step 3) against a <code>git archive</code> shadow at <code>$BEEVIA_ROOT=/tmp/beevia-shadow-2026-11-04</code>: exit 1 before spec edits, exit 0 after. The in-repo audit ran too, for the board section (phantom lines only). All through <code>uv run --no-project --with pyyaml</code>.</li>
+<li>Board analysis (<code>q04.py</code>, <code>flow04.py</code>, <code>win04.py</code>, <code>items04.py</code>): a diff of 1002 against 3 Nov, every action in the window, 7-day submissions split by actor, WIP ages, the weekly trend, and a search for any transition out of REVIEW/QA. The sprint lists came from the <code>__nonexistent__</code> dry run.</li>
+<li>Content checks. <code>git fetch --all --prune</code>, <code>for-each-ref</code> and <code>ls-remote</code> of <code>refs/pull/*</code> on every repo. In <code>beevia-api</code>: card controller, DTO, limits, activity and funding services, support service, agent and tools, availability, gateway. In <code>beevia-admin-api</code>: support controller, DTO, service, hours. In <code>beevia-db-schema</code>: migrations 0047–0049, <code>cards.ts</code>, <code>card-topups.ts</code>, <code>support.ts</code>. In <code>beevia-mobile</code>: <code>f46641f</code>'s wallet and support code, its mock routes. Drizzle's <code>and()</code> was read in the 0.45.2 copy already installed in <code>beevia-api/node_modules</code>; nothing was run from it.</li>
+<li>Provider docs, read only: <a href="https://docs.getanchor.co/docs/manage-cards">Manage Cards</a>, <a href="https://docs.getanchor.co/docs/create-card">Create Card</a>, <a href="https://docs.getanchor.co/docs/card-payment-events">Card Payment Events</a>.</li>
+<li>Spec and narrative updates (§3.5).</li>
+<li>This report and its web edition.</li>
+<li>End-of-run recheck: see the note under Window.</li>
+</ol>
+<p><strong>A note on who appears here.</strong> Only people whose work is tracked have rows. Board administration is done by a non-contributor, whose actions are reported without naming the actor.</p>
+<p><strong>Nothing was executed from any sub-repo.</strong> No <code>npm</code>, <code>node</code>, <code>flutter</code> or build step ran. No repository was reset, rebased or cleaned, and no sub-repo file was edited. The sync's <code>--ff-only</code> limit was not overridden. Beyond the sync's own <code>fetch</code>, the only git operations were <code>fetch</code>, <code>ls-remote</code>, <code>git archive</code>, and read-only <code>log</code>/<code>show</code>/<code>diff</code>/<code>grep</code>/<code>for-each-ref</code>/<code>rev-list</code>/<code>reflog</code>. Nothing was committed, pushed or deployed.</p>
+<p><strong>Files changed this cycle:</strong> this report, <code>web-report/2026-11-04.html</code>, <code>web-report/index.html</code>, <code>openapi.yaml</code>, <code>openapi.admin.yaml</code>, <code>api-rfc.md</code>, <code>admin-api-rfc.md</code>, <code>suggestions.md</code>, plus new board exports for 4 Nov in <code>sprint-board-exports/</code> and <code>sprint-board-exports/admin/</code>.</p>
+<p><strong>Degraded inputs.</strong></p>
+<ul>
+<li><strong><code>ZOHO_SPRINT_FILTER</code> is still <code>08-01</code></strong>, so the in-repo main export is a frozen closed sprint, and the audit's <code>SINCE</code> block compares two identical snapshots. All 1002 figures come from the scratch export.</li>
+<li><strong>The 20 Oct 0902 scratch file is gone from <code>/tmp</code></strong>, so median cycle times have lower n and are not comparable with editions before 3 Nov. The older rows of the weekly table are carried.</li>
+<li><strong>The default <code>python3</code> has no PyYAML</strong>, so <code>audit.py</code> exits 2 when run exactly as the skill documents. Both audits ran through <code>uv run --no-project --with pyyaml</code>.</li>
+<li><strong>Three repositories remain unsynced.</strong> <code>beevia-api</code>, <code>beevia-admin-api</code> and <code>beevia-db-schema</code> are <code>diverged</code>. Every backend claim is made against <code>origin/main</code> through the shadow.</li>
+<li><strong>GitHub PR metadata, reviews, settings, CI results and deploy state cannot be seen from here.</strong></li>
+<li><strong>The export's "no source key" warning fired on <code>Epic</code>.</strong> This is the known sampling artefact; 1002's items genuinely have no epic.</li>
+<li><strong>Provider documentation is partial.</strong> One guessed page returned <code>404</code> (Card Payments Lifecycle), and card product configuration is not described.</li>
+</ul>
+<p><strong>Window.</strong> 3 Nov 15:01 UTC → 4 Nov 15:01 UTC. All <code>actiontime</code> and board figures are in UTC. <code>git log</code> timestamps were converted from their local offsets. <strong>End-of-run recheck at 15:12 UTC:</strong> a fast re-export of 1002 (<code>--activity --no-descriptions</code>, exit 0) found no board action after 3 Nov 16:04 UTC, and <code>ls-remote</code> showed every <code>main</code> and <code>BVA-I353</code> at the commits read above, with no new PR on any repo.</p>
+    </section>
+
+  </main>
+</div>
+
+<footer class="foot">
+  <span class="barcode barcode--lg" aria-hidden="true"></span>
+  <span>Beevia project status &middot; 2026-11-04 &middot; client and server converge &middot; card stories meet the provider &middot; sprint ends tomorrow</span>
+  <span><a href="index.html">All frames</a></span>
+</footer>
+
+<script src="ui.js"></script>
+</body>
+</html>

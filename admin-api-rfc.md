@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft — for review · created 2026-08-05 |
 | **Scope** | The HTTP surface of `beevia-admin-api`: what exists today, and what "Beevia Admin Dashboard.md" specifies that does not exist yet |
-| **Companion artifacts** | [`openapi.admin.yaml`](./openapi.admin.yaml) — implemented, **69 operations** · [`openapi.admin.proposed.yaml`](./openapi.admin.proposed.yaml) — designed but unbuilt, 18 operations |
+| **Companion artifacts** | [`openapi.admin.yaml`](./openapi.admin.yaml) — implemented, **72 operations** · [`openapi.admin.proposed.yaml`](./openapi.admin.proposed.yaml) — designed but unbuilt, 18 operations |
 | **Sibling RFC** | [`api-rfc.md`](./api-rfc.md) — the consumer API |
 | **Sources** | `beevia-admin-api/src/**`, `beevia-db-schema/src/schema/*`, `Beevia Admin Dashboard.md` |
 | **Base path** | `/api/v1`, with every business route further prefixed `/admin` |
@@ -15,9 +15,9 @@
 
 ## 1. Summary
 
-`beevia-admin-api` is a **separate NestJS service** from the consumer API, sharing the database through the published `@drumbell-technologies/beevia-db-schema` package. It is **69 operations** across fourteen controllers, backing the admin dashboard specified in `Beevia Admin Dashboard.md`.
+`beevia-admin-api` is a **separate NestJS service** from the consumer API, sharing the database through the published `@drumbell-technologies/beevia-db-schema` package. It is **72 operations** across fourteen controllers, backing the admin dashboard specified in `Beevia Admin Dashboard.md`.
 
-**Three of the spec's eight modules are built, a fourth opened on 2026-09-02** when the cross-module activity feed merged (§5.4a), **and a fifth opened on 2026-09-04** when transaction oversight and reconciliation landed (§3.9, §3.10, §5.2) — the first money-oversight surface this service has ever had. Module 5 widened again on **2026-09-06** with the wallets screen (§3.12), leaving flagging as its only unbuilt operation. **On 2026-09-08 a sixth module opened, and it is the one this RFC has called blocking since 5 August**: the `/admin/chats` module merged to `main` (§3.13), implementing Module 4 as the metadata-only Option A of §5.1 — no message content, and the first reader `conversation_reports` has ever had. **On 2026-09-09/10 a seventh opened**: the Reports screen merged (§3.14), giving Module 7 its first exportable dataset and taking this service from 42 to 47 operations in two days. **On 2026-09-17 Module 4 became a workflow and the E2EE question was answered** (§3.13, §5.1b): report detail and a review decision shipped, taking the service to 49 operations, and the consumer app was changed the same night so that a reporter can hand over the messages they chose to disclose — Option B of §5.1, which had waited since 5 August for exactly that consumer change. **On 2026-10-28 the service grew to 60 operations** with eleven Help & Support content routes (§3.15). That work is outside the spec's eight modules and was the first admin-api change in 20 days. **Later the same day it grew to 63** with the dispute queue (§3.16), the admin half of the consumer app's "Report an issue". **On 2026-11-03 it reached 69**: the nine-route support inbox replaced that queue (§3.16). What exists is well-made: the permission model is more capable than the spec asked for, KYC values are masked by default with reveals logged, case notes are append-only, and account actions require a structured reason and land in a queryable history.
+**Three of the spec's eight modules are built, a fourth opened on 2026-09-02** when the cross-module activity feed merged (§5.4a), **and a fifth opened on 2026-09-04** when transaction oversight and reconciliation landed (§3.9, §3.10, §5.2) — the first money-oversight surface this service has ever had. Module 5 widened again on **2026-09-06** with the wallets screen (§3.12), leaving flagging as its only unbuilt operation. **On 2026-09-08 a sixth module opened, and it is the one this RFC has called blocking since 5 August**: the `/admin/chats` module merged to `main` (§3.13), implementing Module 4 as the metadata-only Option A of §5.1 — no message content, and the first reader `conversation_reports` has ever had. **On 2026-09-09/10 a seventh opened**: the Reports screen merged (§3.14), giving Module 7 its first exportable dataset and taking this service from 42 to 47 operations in two days. **On 2026-09-17 Module 4 became a workflow and the E2EE question was answered** (§3.13, §5.1b): report detail and a review decision shipped, taking the service to 49 operations, and the consumer app was changed the same night so that a reporter can hand over the messages they chose to disclose — Option B of §5.1, which had waited since 5 August for exactly that consumer change. **On 2026-10-28 the service grew to 60 operations** with eleven Help & Support content routes (§3.15). That work is outside the spec's eight modules and was the first admin-api change in 20 days. **Later the same day it grew to 63** with the dispute queue (§3.16), the admin half of the consumer app's "Report an issue". **On 2026-11-03 it reached 69**: the nine-route support inbox replaced that queue (§3.16). **Later the same day it reached 72** with support hours and the disputed-transaction view. What exists is well-made: the permission model is more capable than the spec asked for, KYC values are masked by default with reveals logged, case notes are append-only, and account actions require a structured reason and land in a queryable history.
 
 Against that, three findings need attention before this service is exposed to real staff:
 
@@ -35,7 +35,7 @@ Against that, three findings need attention before this service is exposed to re
 | 2 | Admin Account Management | ✅ **Built** — re-invite added 2026-09-08 | 4 |
 | 3 | User Management & Support Tools | 🟡 **Partial** — no assisted PIN reset | 18 |
 | 4 | Trust & Safety / Content Moderation | 🟡 **Option A merged 2026-09-08, Option B and the workflow 2026-09-17** (§3.13, §5.1b); not buildable *as written*. Now a workable queue — status, filter, detail, review decision — **and, since 2026-09-21, a dashboard that calls it** (`beevia-admin` `c1b0aeb`, §5.1b). Still no enforcement link and no prior-report history | **6** |
-| 5 | Transaction & Wallet Oversight | 🟡 **Partial** — feeds and reconciliation shipped 2026-09-04, wallets 2026-09-06, **the support inbox 2026-11-03, replacing the dispute queue** (§3.16); no flagging, no partner-balance comparison | **15** |
+| 5 | Transaction & Wallet Oversight | 🟡 **Partial** — feeds and reconciliation shipped 2026-09-04, wallets 2026-09-06, **the support inbox 2026-11-03, replacing the dispute queue** (§3.16); no flagging, no partner-balance comparison | **18** |
 | 6 | Country & Feature Configuration | ⛔ **Not built** | 0 |
 | 7 | Analytics & Reporting Dashboard | 🟡 **Partial** — activity feed, the landing-screen summary (2026-09-06) and **the Reports screen, merged 2026-09-09/10** (§3.14). Still no time-series analytics: four exportable datasets, no trend anywhere | **7** |
 | 8 | Account Deletion Requests | ⛔ **Not built** | 0 |
@@ -354,12 +354,13 @@ Three things to know before anyone uses it:
 - **Reorder does not enforce "the whole list".** The route says to send every id. The code only checks that each id sent exists and is not duplicated. A partial list renumbers those ids from 0 and leaves the others in place, so two rows can share a position (`suggestions.md` §4.10).
 - **The admin views are English-only.** Lists and article reads hard-code `en-US`. Writes accept a `locale`, but nothing reads a non-English title back. The route text says `category_id`, but the validator reads `categoryId` (`openapi.admin.yaml` documents the real key).
 
-### 3.16 Support inbox (9): spec Module 5, shipped 2026-11-03
+### 3.16 Support inbox (12): spec Module 5, shipped 2026-11-03
 
 | Method | Path | Permission | Notes |
 |---|---|---|---|
 | GET | `/admin/support/conversations` | `disputes:view` | **No `status` means the working queue** (`queued` + `in_progress`). Oldest handover first. Filters are camelCase: `kind`, `assignedTo`, `reasonCode`, `topic`, `search`, `sort` |
-| GET | `/admin/support/conversations/{id}` | `disputes:view` | Messages, the transaction snapshot, `assistant_summary` |
+| GET | `/admin/support/conversations/{id}` | `disputes:view` | Messages, the transaction snapshot, `assistant_summary`. Opening it marks it read for that agent |
+| GET | `/admin/support/conversations/{id}/transaction` | `disputes:view` | **New 2026-11-03.** Snapshot beside the live row. **Peer payments are not looked up**, so they read `live: null` |
 | POST | `/admin/support/conversations/{id}/claim` | `disputes:edit` | One conditional `UPDATE`; the loser gets `409 already_claimed` naming the holder |
 | POST | `/admin/support/conversations/{id}/assign` | `disputes:edit` | Any admin, including a reassign |
 | POST | `/admin/support/conversations/{id}/messages` | `disputes:edit` | Text only; `403 not_assigned` unless you hold it |
@@ -367,6 +368,8 @@ Three things to know before anyone uses it:
 | GET | `/admin/support/agents` | `disputes:view` | Active admins, availability, open load |
 | GET | `/admin/support/me/availability` | `disputes:view` | Your own, plus what you hold |
 | PUT | `/admin/support/me/availability` | `disputes:edit` | Go on or off duty |
+| GET | `/admin/support/hours` | `disputes:view` | **New 2026-11-03.** Always seven days from Sunday |
+| PUT | `/admin/support/hours` | `disputes:edit` | **New 2026-11-03.** Replaces the whole week in one transaction. `timezone` is not checked against real zones |
 
 `beevia-admin-api` #25 (`815010a`, merged 3 Nov 13:40 UTC), #27 and #26 build the contract in `beevia-admin/docs/hs7-support-inbox-api-contract.md`, with three stated differences: one status vocabulary (`with_assistant`, `queued`, `in_progress`, `resolved`), `assistant_summary` instead of `triage_context`, and `data` + `meta` instead of `{conversations, pagination}`. **`/admin/disputes*` (#24, 28 Oct) is gone**, because schema migration 0042 dropped its table; the schema commit records that the table had zero rows. A Socket.IO gateway on the same Redis as the consumer API pushes inbox events and carries an agent's reply to the phone. 321 tests are reported by the commit; nothing was run here.
 
@@ -376,7 +379,8 @@ Things to know (`suggestions.md` §4.12, §5.16):
 - **The dashboard does not use it.** `beevia-admin` still defaults to its mock, and switching the flag would fail on the response shape, statuses and filter names (`suggestions.md` §5.16).
 - **"Logged" means an application log line.** `this.logger.log` records who opened a thread, not a queryable audit row.
 - **The socket has no permission check.** Any active admin joins the inbox room. Events carry ids and row summaries.
-- **`/support/triage-config` has no server.** Its two proposed routes were not built, and `support_flows` is now unused, since the assistant replaced the scripted triage.
+- **`/support/triage-config` has no server, and now will not get one.** #28 builds only its out-of-hours half as `/admin/support/hours`. `beevia-db-schema` #29 dropped `support_flows` and `flow_state`, since the assistant replaced the scripted triage.
+- **Two list filters from #28 misbehave** (`suggestions.md` §4.13). `transactionType` can only match `payment`, and that value escapes the other filters. `unreadOnly` filters after paging, so `meta.total` overstates and pages run short.
 - **Assign does not check the agent is active.**
 
 ---

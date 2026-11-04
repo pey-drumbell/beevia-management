@@ -330,6 +330,23 @@ Not built: dispute messaging (`BVA-I344`, `I343`'s thread), the open-dispute cou
 
 **The migration order was stated and accepted.** #27's commit says the table drop lands before the new API, so the dispute routes return `500` in between. By merge times that was about 2h 10m (11:27 → 13:38 UTC). With no rows and no client it cost nothing this time. It is §7.7's point in practice: nothing in any of the three pipelines would have stopped it.
 
+**Update 2026-11-04.** Item 2 is **closed**: `beevia-db-schema` #29 seeds weekdays 09:00–18:00 Africa/Lagos, and `/admin/support/hours` writes it. Support still reads offline, because `online` also needs an on-duty admin and going on duty needs `disputes`. Item 1 is therefore now the single blocker. Item 10's `support_flows` was dropped. Items 3–9 are unchanged: `runAssistant` still passes message bodies only, `STRAIGHT_TO_HUMAN` still tests text only, and the read log is still `this.logger.log`. #92 widened what the assistant is asked to handle (five topics) without changing what it is told about a dispute. The availability count still does not check that an admin is active.
+
+### 4.13 Card limits and card disputes: what the code does against what it says (2026-11-04)
+
+`beevia-api` #92–#94, `beevia-admin-api` #28 and `beevia-db-schema` #29–#30 (`api-rfc.md` §5.20, `admin-api-rfc.md` §3.16). All of this comes from reading the code; nothing was run. The commits are unusually frank about their limits, and the funding-cap naming is the right call.
+
+1. **Decide what a card limit is.** `BVA-I385` asks for limits "actually enforced on card spending", `BVA-I387` for "applying them at the provider", and `BVA-I372` for approving or declining payments in real time against the wallet balance. #94 says the provider cannot do this, and its public docs agree as far as they go (`description` is the only editable attribute, and `cardPayment.*` events are after the fact). What exists is a cap on money moved onto the card. Either accept that and rewrite the stories and the screen copy, or take the requirement to the provider, including whether card product configuration can hold limits. `I372` shows REVIEW/QA with no code behind it.
+2. **A merchant payment still cannot be disputed.** #92 resolves `card_transfers` and `card_topups`. The schema defines the first as "money moved between a user's wallet and one of their cards" and the second as "a user-initiated wallet funding by card (Paystack)". Neither holds a purchase, and `CardActivityService` says spending "is never stored here". So "my card was charged twice" still gets `404 transaction_not_found`, including from a `spend` row's own reference. The schema's own comment calls this "the transaction most likely to be disputed" and already allows a reference and snapshot with no foreign key. Resolve the reference against `listCardPayments` before giving up. §4.11 item 2 stays open.
+3. **The assistant is told the opposite.** `getTransaction`'s description says it covers "card spending", the prompt repeats it, and the same description says `notFound` means the reference "is not one of this user's — say so plainly". A user asking about a real charge could be told it is not theirs. The prompt's "explain a decline" has no decline data behind it either, as no tool reads the partner. Add a card-payments tool, or correct both texts and hand over.
+4. **A withdrawal is labelled `card_payment`.** The dispute path and the tool both map `direction !== 'fund'` to `card_payment`. In the dispute path the type only feeds the title, where both map to "Virtual card". The tool hands it to the model, which could read a user's own withdrawal as a purchase, although its description does say "Money moved off the card".
+5. **`transactionType` on the inbox list does not work.** It tests the snapshot's `type` and `source` keys. No snapshot has a `type` key, and `source` holds `ledger`, `payment`, `card_transfer` or `card_topup`, so of the nine accepted values only `payment` can match. That value then escapes the other filters: the raw `a or b` fragment is not parenthesised, and Drizzle's `and()` (checked in 0.45.2) wraps the whole list, not each item. So the SQL reads `status in (…) and a or b and …`, and a resolved thread appears in the working queue. #28's tests do not cover this filter. Store the type on the thread and wrap the `or`.
+6. **`GET /admin/support/conversations/{id}/transaction` does not read payments.** `liveTransaction`'s last branch returns `null` whether or not the reference is a UUID, while the route description says payments are covered. A payment dispute reads "Transaction no longer found", a false signal to an agent deciding it.
+7. **`unreadOnly` filters after paging.** `meta.total` still counts the unfiltered rows, so a page can be short or empty with more behind it.
+8. **The funding check can be raced.** `assertFundingAllowed` reads the total and returns before `cardTransfers.create`, with no lock or transaction around them, so two simultaneous fundings can both pass. #94 counts pending fundings to stop several slipping past, and this is the remaining gap. The sum could also be taken under a per-card lock.
+9. **`PUT /admin/support/hours` accepts any `timezone` string.** `SupportAvailabilityService.minutesIn` passes it to `Intl.DateTimeFormat` unguarded, which throws on an unknown zone, so one typo would make `GET /support/availability` fail for every app user. Validate it against `Intl.supportedValuesOf('timeZone')`.
+10. **Same deploy ordering as 3 Nov.** Release for #29 (15:26 UTC) dropped `support_threads.flow_state`, while `beevia-api` #92 and `beevia-admin-api` #28 merged at 15:47 and 15:50. Code on the previous schema package names that column when it selects from the table, so support reads probably failed for about 20 minutes. This is inferred from merge times; workflow and deploy times cannot be seen from here. There was little to break today, but nothing in any pipeline would have stopped it (§7.7).
+
 ---
 
 ## 5. Maintainability
@@ -736,6 +753,8 @@ Support chat is still placeholder data (`TODO(support-api)`, 5 left).
 
 **Update 2026-11-03.** The fraud fix above is undone by the server, not the client. #89 renamed the enum to `didnt_make_this_transaction` and `amount_wrong`, so the branch's `not_my_transaction` and `wrong_amount` are rejected again (§5.17). `f6df54e` (3 Nov, unmerged) moves terminate to `POST /cards/{id}/terminate` and keeps the `X-Step-Up-Token` model, so reveal, unfreeze and terminate still send no card PIN and return `400`. `GET /cards/{id}/transactions` matches. `BVA-I383` and `I384` went Done with their parent `I382` on 2 Nov at 15:58:58 UTC, in the same way as `I378` above.
 
+**Update 2026-11-04.** `f46641f` (unmerged) leaves this unresolved: reveal, unfreeze and terminate still send `X-Step-Up-Token` with no body, while the server takes the card PIN in the body on all three, so each returns `400`. The new fund and withdraw calls send `{amount, pin}` and match. `PATCH /cards/{cardId}/limits` is the first new card route behind step-up since this question was raised, so #94 adds to the mixed model and does not settle it.
+
 ### 5.16 The support inbox is built against a dispute contract the server does not have (2026-11-02)
 
 `beevia-admin` `64304ef` (30 Oct, direct to `main`, 68 files, +10,750/−11) adds `/support/inbox` and `/support/triage-config`. They are real screens: queue, thread, claim and assign, reply, status, availability, live socket handlers, triage editor. Every call goes to an in-memory adapter unless `NEXT_PUBLIC_USE_MOCK_SUPPORT_API` is `false`. Its contract documents call themselves proposals, and `hs7` alone asks 17 open questions (12 backend, 5 product), so this is a fair way to start the conversation. Three things need settling first:
@@ -774,6 +793,9 @@ Decide whether the server adapts disputes behind one `/admin/support/conversatio
 
 The server's differences are deliberate and listed in its commit. They now need the screen to follow. `/support/triage-config` needs a decision of its own: its two routes were not built, and the assistant replaced what it configures, although `BVA-I348` still asks for it and now shows REVIEW/QA.
 
+
+**Update 2026-11-04: the server moved towards the screen, and the screen has not moved.** `beevia-admin-api` #28 adds `unread_count` per agent, a `transactionType` filter (faulty, §4.13), the transaction beside its snapshot, and `/admin/support/hours`, the out-of-hours half of `hs6`. The triage half will not be built, since `support_flows` is gone, so `/support/triage-config` needs cutting down to hours. The table above otherwise still stands, and `beevia-admin` has had no commit since 30 Oct. The mock is still on by default.
+
 ### 5.17 The app's support code is on the old contract, and chat has no client (2026-11-03)
 
 `origin/BVA-I353` (`f6df54e`, unmerged, no PR) was written against the routes #89 replaced.
@@ -784,6 +806,15 @@ The server's differences are deliberate and listed in its commit. They now need 
 - **The dispute thread is read-only on the client, and the server now accepts replies.** `SupportChatScreen` shows a dispute's report and note. `BVA-I343` asks for sending new messages and live status.
 - **Chat is still placeholder data.** `support_service.dart` says "support chat has no endpoints yet", with 5 `TODO(support-api)` left. The routes and socket commands exist since today. `BVA-I346` shows REVIEW/QA because its parent moved, not because the screen is wired.
 - **The socket is the primary transport**, so the client needs the `support.*` commands, the `with_assistant` typing state, `quick_replies`, and to filter `sender_kind: system`.
+
+
+**Update 2026-11-04: most of this section is closed on the branch.** `f46641f` (10:13 UTC, unmerged, no PR) sends `amount_wrong` and `didnt_make_this_transaction` while still reading the old values, and its mock now matches. It adds a real chat client over the socket with a REST fallback, whose seven `support.*` command names match `messaging.gateway.ts`, plus `with_assistant`, `quick_replies`, a chat history screen and a composer on open threads. Two `TODO(support-api)` remain (support's email address and the mail link). **"Chat has no client" in this section's title should have read "nothing pushed".** The new gaps are in the card half:
+
+- **Card history would come back empty.** `WalletTransactionsResponse.fromJson` takes rows only when `data` is a list, and `GET /cards/{cardId}/activity` returns `data: {items, spend_included, …}` (`CardActivity`, and #94's Postman samples, which its commit says were generated by running the services). The branch's mock returns a bare list, so its tests pass. A used card would look like one nobody has used.
+- **Once rows parse, every one reads as money out.** The server sends `direction: in|out`, and `isCredit` tests for `credit`. The mock sends `credit`/`debit`.
+- **`spend_included` is not read anywhere in `lib`.** When the partner call fails, the list silently omits every purchase, which is the exact case the server asks clients to flag.
+- **"Load more" raises `limit`, which stops at 200**, so older history cannot be reached.
+- **Nothing pushed calls `/cards/{cardId}/limits`.** `BVA-I386` shows REVIEW/QA because its parent moved. #94 landed an hour after this commit, so this is unsurprising.
 
 ## 8. Suggested order
 

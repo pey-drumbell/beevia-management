@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft — for review · **updated 2026-08-05** |
 | **Scope** | The complete HTTP surface of `beevia-api` (the consumer API): what exists today, and what the PRD requires that does not exist yet |
-| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, **155 operations** · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, **34 operations** (31 net-new + 3 live-endpoint modifications) · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
+| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, **158 operations** · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, **34 operations** (31 net-new + 3 live-endpoint modifications) · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
 | **Sibling RFC** | [`admin-api-rfc.md`](./admin-api-rfc.md) — the `beevia-admin-api` back-office service |
 | **Sources** | `beevia-api/src/**/*.controller.ts`, `beevia-api/src/**/dto/*.ts`, `beevia-db-schema/src/schema/*`, `beevia-api/postman/Beevia.postman_collection.json`, `Beevia_PRD.pdf` |
 | **Base path** | `/api/v1` (global prefix set in `src/main.ts`; `/i/:code` is explicitly excluded) |
@@ -38,7 +38,7 @@ Measured against the PRD, three MVP capabilities are **still absent from the cod
 
 | PRD capability | State |
 |---|---|
-| Virtual cards (§1.2, §8.2, §10.3, Phase 4) | **Shipped 2026-08-27** — 13 operations under `/cards`, backed by `cards` + `card_transfers` tables and an Anchor issuance path. See §4.2 |
+| Virtual cards (§1.2, §8.2, §10.3, Phase 4) | **Shipped 2026-08-27** — 13 operations under `/cards` (16 since 2026-11-04), backed by `cards` + `card_transfers` tables and an Anchor issuance path. See §4.2 |
 | Cross-currency conversion (§1.2, §5.2, §9 Flows 5–6) | **No code at all** — `PaymentService` hard-codes NGN via an `activeNgn()` helper |
 | Two verification tiers (§1.2, §1.4) | **Local tier only** — BVN/Nigeria; no international path for USD/GBP/EUR |
 | Consent management (§10.4) | **Listed as MVP, no endpoint or record** |
@@ -162,7 +162,7 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | **Top-ups** | **3** | 0 | **New.** Card funding of the NGN wallet via Paystack: initialize, list, status |
 | FX | **0** | 3 | Does not exist |
 | Payments | **9** | 4 | Direct transfer + recipient picker shipped 17 Aug. Still no read path — no `GET /payments`. (Plus the 3 live-endpoint modifications counted below.) |
-| Cards | **13** | 0 | **New, and larger than proposed.** Issue, list, get, rename, reveal, reveal-PIN, freeze, unfreeze, terminate, fund, withdraw, transfers, transactions. Each card carries its **own 4-digit PIN**, a model the proposal did not anticipate |
+| Cards | **16** | 0 | **New, and larger than proposed.** Issue, list, get, rename, reveal, reveal-PIN, freeze, unfreeze, terminate, fund, withdraw, transfers, transactions, plus **limits (read and change) and activity, 2026-11-03/04** (§5.20). Each card carries its **own 4-digit PIN**, a model the proposal did not anticipate |
 | Chat (REST) | 19 | 0 | +2 clear, delete. Message deletion now shipped |
 | Calls | 5 | 0 | Complete |
 | Attachments | 2 | 1 | No single-attachment download presign |
@@ -175,7 +175,7 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | **Disputes** | **4** | 0 | **New 2026-10-28, rebuilt 2026-11-03.** "Report an issue" on a transaction (`POST /disputes`), the user's history, one report, and the open count for the badge. A dispute is now a support thread with a transaction attached. The snapshot of the transaction is built server-side from the reference. Shipped in place of the proposed `POST /payments/{id}/dispute` (§5.18, §5.19) |
 | **Support** | **5** | 0 | **New 2026-11-03.** Chat with Support, availability, and the thread both chats and disputes run on. An AI assistant answers first. Shipped in place of the proposed `/support/tickets` (§5.19) |
 | Webhooks | **4** | 1 | **+1:** `POST /webhooks/paystack` for card top-ups. Card issuer callback still missing |
-| **Total** | **155** | **31** | +3 live-endpoint modifications = 34 operations in the proposed file |
+| **Total** | **158** | **31** | +3 live-endpoint modifications = 34 operations in the proposed file |
 
 ---
 
@@ -632,6 +632,18 @@ Four limits (`suggestions.md` §4.11):
 **Built differently from the proposal.** `/support/tickets` is removed from `openapi.proposed.yaml`, as are its schemas. `POST`/`GET /support/chats` and `GET /support/threads/{id}` are its built form. **Still not built:** `pending_partner`, `partner_reference` and `sla_due_at`, which the proposal carried for PRD §7.4's partner-escalation KPI, have no equivalent on a thread.
 
 Open points are in `suggestions.md` §4.12 (server) and §5.17 (clients). **PRD note:** the PRD does not mention an AI assistant, and the 11:27 UTC schema commit still called triage "rule-based by requirement". It was replaced 56 minutes later. The decision is recorded only in commit messages.
+
+### 5.20 Card limits cap funding, and "card disputes" do not reach a merchant payment (2026-11-04)
+
+**What shipped.** `beevia-api` #92 (3 Nov 15:47 UTC), #93 (3 Nov 16:25 UTC) and #94 (4 Nov 11:16 UTC), with `beevia-db-schema` #29 and #30 (v0.0.48, v0.0.49). Consumer operations go from 155 to 158: `GET`/`PATCH /cards/{cardId}/limits` and `GET /cards/{cardId}/activity`.
+
+**Limits are funding caps, deliberately.** #94's commit says the provider offers no spend controls and no authorization hook, and the provider's public docs agree on what they show: the description is "the only card attribute that can be changed after creation", and the `cardPayment.*` events report what has already happened. So the limit is checked in `CardFundingService` before the wallet is touched, and the response carries `enforced_on: "funding"`. This is honest naming. It also means `BVA-I385`'s criterion ("the limits shown are the limits actually enforced on card spending"), `BVA-I387`'s "applying them at the provider" and all of `BVA-I372` (approve or decline card payments in real time) cannot be built on this provider as written. Whether a card product's configuration holds limits is not visible in the public docs. That is a product decision, not a code defect (`suggestions.md` §4.13).
+
+**Activity merges two sources.** `card_transfers` plus a live partner read, with `spend_included: false` if the partner call fails. It is not paged and has no search or filter, so it is narrower than `BVA-I391` asks for, and it is a new query where that item asks to reuse the Activity tab's logic.
+
+**#92's "card disputes" cover two of the three rails.** `POST /disputes` now resolves `card_transfers` (wallet↔card) and `card_topups` (funding the *wallet* by bank card). Its commit calls `card_transfers` "spending from a card", and the schema says otherwise. A merchant payment still has no local row, so it is still `404 transaction_not_found`, and the assistant's `getTransaction` has the same gap while its description says it covers card spending (`suggestions.md` §4.13).
+
+**Availability** now reads its copy from `support_settings`, honours `general` mode, and quotes a reopening time only when the clock is the reason support is shut. `support_hours` is seeded by migration, which closes `suggestions.md` §4.12 item 2. `online` still needs an on-duty admin, and no role can go on duty until someone is granted `disputes`.
 
 ---
 

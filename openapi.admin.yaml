@@ -2424,9 +2424,17 @@ paths:
         - name: reasonCode
           in: query
           schema: { $ref: '#/components/schemas/SupportDisputeReason' }
+        - name: transactionType
+          in: query
+          description: Disputes only. As built this tests the stored snapshot's `type` and `source` keys, and snapshots carry no `type` key, so only `payment` can match. That value also escapes the other filters, as the `or` is not parenthesised.
+          schema: { type: string, enum: [transfer, payment, topup, deposit, withdrawal, card_funding, card_payment, fee, reversal] }
         - name: topic
           in: query
           schema: { $ref: '#/components/schemas/SupportChatTopic' }
+        - name: unreadOnly
+          in: query
+          description: Keep only rows with something the calling agent has not seen. Applied after paging, so `meta.total` still counts the unfiltered rows and a page can come back short.
+          schema: { type: string, enum: ['true', 'false'] }
         - name: search
           in: query
           description: Matches the user's display name, their phone, or the transaction reference.
@@ -2450,6 +2458,66 @@ paths:
                       meta: { $ref: '#/components/schemas/PaginationMeta' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/support/hours:
+    get:
+      tags: [Admin Support]
+      operationId: getSupportHours
+      summary: When support is open
+      description: |
+        The week, the timezone and the two sentences shown when support is shut.
+        Always seven days in order from Sunday. A closed day has `open` and
+        `close` both null. `mode` is `fixed_hours` (honour the clock) or
+        `general` (no fixed hours; only being off duty closes support).
+      x-required-permission: 'disputes:view'
+      responses:
+        '200':
+          description: The hours.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/SupportHours' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    put:
+      tags: [Admin Support]
+      operationId: setSupportHours
+      summary: Set when support is open
+      description: |
+        **Replaces the whole week**, all seven days, in one transaction. Send
+        `open` and `close` as `HH:mm`, or both null to close a day.
+        `messageWithReopenTime` must contain `{reopen_time}`. It is used only
+        when the clock is what keeps support shut.
+
+        `timezone` is checked for length only. The consumer API passes it to
+        `Intl.DateTimeFormat`, which throws on an unknown zone.
+      x-required-permission: 'disputes:edit'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SetSupportHoursRequest' }
+      responses:
+        '200':
+          description: The hours after the change.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/SupportHours' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422':
+          description: '`validation_error`, with an `errors` map keyed by `hours[n]` or the field name.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 
   /admin/support/agents:
     get:
@@ -2536,8 +2604,8 @@ paths:
         reported it, and `assistant_summary`, what the assistant established
         before handing over. The handover note is filtered out of `messages`.
 
-        Opening a conversation writes an application log line. It is not an
-        audit-table record.
+        Opening a conversation marks it read for the calling agent only. It also
+        writes an application log line, which is not an audit-table record.
       x-required-permission: 'disputes:view'
       responses:
         '200':
@@ -2550,6 +2618,45 @@ paths:
                   - type: object
                     properties:
                       data: { $ref: '#/components/schemas/SupportConversationDetail' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such conversation (`not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /admin/support/conversations/{id}/transaction:
+    parameters:
+      - $ref: '#/components/parameters/SupportConversationId'
+    get:
+      tags: [Admin Support]
+      operationId: getSupportConversationTransaction
+      summary: The disputed transaction, then and now
+      description: |
+        `snapshot` is the transaction as it looked when the user reported it, and
+        `live` is what the row says today. `live` is looked up in the ledger,
+        wallet↔card transfers and wallet top-ups.
+
+        **Peer payments are not looked up**, as the last branch returns null
+        either way. A dispute resolved through `payments` therefore reads
+        `live: null` with the message "Transaction no longer found".
+      x-required-permission: 'disputes:view'
+      responses:
+        '200':
+          description: The snapshot beside the live row.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          reference: { type: string, nullable: true }
+                          snapshot: { type: object, nullable: true, additionalProperties: true }
+                          live: { type: object, nullable: true, additionalProperties: true }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404':
           description: 'No such conversation (`not_found`).'
@@ -3154,8 +3261,42 @@ components:
           allOf:
             - $ref: '#/components/schemas/SupportPersonRef'
           nullable: true
+        unread_count: { type: integer, minimum: 0, description: Messages the calling agent has not seen. Per agent; never counts that agent's own replies. }
         handed_off_at: { type: string, format: date-time, nullable: true }
         created_at: { type: string, format: date-time }
+    SupportHoursDay:
+      type: object
+      required: [day, open, close]
+      properties:
+        day: { type: string, enum: [sun, mon, tue, wed, thu, fri, sat] }
+        open: { type: string, nullable: true, pattern: '^([01]\d|2[0-3]):[0-5]\d$', example: '09:00' }
+        close: { type: string, nullable: true, pattern: '^([01]\d|2[0-3]):[0-5]\d$', example: '18:00' }
+    SupportHours:
+      type: object
+      properties:
+        mode: { type: string, enum: [fixed_hours, general] }
+        timezone: { type: string, example: Africa/Lagos }
+        hours:
+          type: array
+          minItems: 7
+          maxItems: 7
+          items: { $ref: '#/components/schemas/SupportHoursDay' }
+        message_with_reopen_time: { type: string }
+        message_general: { type: string }
+        updated_at: { type: string, format: date-time, nullable: true }
+    SetSupportHoursRequest:
+      type: object
+      required: [mode, hours, messageWithReopenTime, messageGeneral]
+      properties:
+        mode: { type: string, enum: [fixed_hours, general] }
+        timezone: { type: string, minLength: 1, maxLength: 64, default: Africa/Lagos }
+        hours:
+          type: array
+          minItems: 7
+          maxItems: 7
+          items: { $ref: '#/components/schemas/SupportHoursDay' }
+        messageWithReopenTime: { type: string, minLength: 1, maxLength: 300, description: 'Must contain `{reopen_time}`.' }
+        messageGeneral: { type: string, minLength: 1, maxLength: 300 }
     SupportConversationMessage:
       type: object
       properties:

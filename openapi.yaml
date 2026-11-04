@@ -1968,7 +1968,7 @@ paths:
                     properties:
                       data: { $ref: '#/components/schemas/CardTransfer' }
         '400':
-          description: '`insufficient_funds` / validation error.'
+          description: '`insufficient_funds`, `daily_limit_exceeded`, `monthly_limit_exceeded` / validation error. A refused funding reserves nothing.'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
@@ -2050,6 +2050,115 @@ paths:
                       data:
                         type: array
                         items: { $ref: '#/components/schemas/CardTransaction' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /cards/{cardId}/limits:
+    parameters:
+      - $ref: '#/components/parameters/CardId'
+    get:
+      tags: [Cards]
+      operationId: getCardLimits
+      summary: This card's limits and how much is left
+      description: |
+        Daily and monthly limits, how much of each is gone, what remains, and a
+        percentage for the ring. A null `limit` means the user has not set one;
+        `remaining` and `percent_used` are then null too.
+
+        `used` is **money moved onto the card** in the window: settled and
+        in-flight fundings. A failed funding and a withdrawal never count.
+        Windows are **Africa/Lagos** days and months.
+
+        **These cap funding, not merchant spending.** `enforced_on` is always
+        `funding`. The server cannot decline a purchase, so do not present this
+        as a spending limit.
+      responses:
+        '200':
+          description: The limits.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/CardLimits' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Cards]
+      operationId: setCardLimits
+      summary: Change this card's limits
+      description: |
+        **Omit a field to leave it alone; send `null` to remove that limit.**
+        At least one field is required. The daily limit may not exceed the
+        monthly limit, including one already stored. There is no maximum above
+        that. Takes effect on the next funding attempt, and nothing is sent to
+        the card partner.
+      security:
+        - accessToken: []
+          stepUpToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SetCardLimitsRequest' }
+      responses:
+        '200':
+          description: The limits after the change.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/CardLimits' }
+        '400':
+          description: '`daily_limit_exceeds_monthly` / validation error.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /cards/{cardId}/activity:
+    parameters:
+      - $ref: '#/components/parameters/CardId'
+    get:
+      tags: [Cards]
+      operationId: getCardActivity
+      summary: Everything on a card
+      description: |
+        Funding and spending in one list, newest first: what `/transfers` and
+        `/transactions` return separately, merged into one shape. Those two
+        routes remain.
+
+        `direction` is **relative to the card** and is `in` or `out`. A merchant
+        payment is always `out`.
+
+        **Check `spend_included`.** Spending exists only at the card partner.
+        If that call fails, the funding half is returned with `spend_included:
+        false` and a reason, and the client must say so: a list missing every
+        merchant payment looks like a card nobody has used.
+
+        Not paged, and no search or filter. `limit` is applied to each source
+        and again to the merged result.
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+      responses:
+        '200':
+          description: The card's activity.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/CardActivity' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
 
   /statements:
@@ -2307,8 +2416,12 @@ paths:
         `support_hours` schedule, read in the schedule's own timezone.
 
         While online, show `reply_estimate`. While offline, show
-        `offline_message`; `opens_at` carries the same moment as a timestamp.
-        An empty schedule is always offline, with `opens_at: null`.
+        `offline_message`, which admins can edit; `opens_at` carries the same
+        moment as a timestamp, and is set only when the clock is what keeps
+        support shut. With no admin marked available inside open hours it is
+        null. In `general` mode the clock is ignored and only being off duty
+        closes support. The schedule is seeded weekdays 09:00–18:00
+        Africa/Lagos, weekend closed.
       responses:
         '200':
           description: Current availability.
@@ -2456,12 +2569,14 @@ paths:
 
         **The transaction summary is built server-side**, not sent by the
         client. The reference is resolved against the caller's own
-        transactions (the ledger first, then peer payments, either side of a
-        payment) and the snapshot in `transaction` is composed from the row
-        found. A reference that is not the caller's, or that matches nothing, is
-        `404 transaction_not_found`. **Card spending cannot be disputed yet**:
-        it is read live from the card partner and has no local row to resolve
-        a reference against.
+        transactions (the ledger, wallet↔card transfers, wallet top-ups by bank
+        card, then peer payments, either side of a payment) and the snapshot in
+        `transaction` is composed from the row found. A reference that is not
+        the caller's, or that matches nothing, is `404 transaction_not_found`.
+        **A merchant payment on a card still cannot be disputed**: it is read
+        live from the card partner and has no local row to resolve a reference
+        against. A `spend` row from `GET /cards/{cardId}/activity` therefore
+        returns `404`.
 
         The title is derived from the transaction and the reason ("Transfer
         didn't arrive"). The assistant then takes a turn, so this can take a few
@@ -4766,6 +4881,55 @@ components:
         status: { type: string, enum: [authorized, settled, refunded, declined] }
         decline_reason: { type: [string, 'null'] }
         created_at: { type: string, format: date-time }
+
+    CardLimitWindow:
+      type: object
+      properties:
+        limit: { type: [string, 'null'], description: Null when the user has not set this limit., example: '50000.00' }
+        used: { type: string, description: Settled and in-flight funding in the window., example: '22500.00' }
+        remaining: { type: [string, 'null'], description: Never negative. Null with no limit., example: '27500.00' }
+        percent_used: { type: [integer, 'null'], minimum: 0, maximum: 100, description: Null with no limit. }
+
+    CardLimits:
+      type: object
+      properties:
+        currency: { type: string, example: NGN }
+        daily: { $ref: '#/components/schemas/CardLimitWindow' }
+        monthly: { $ref: '#/components/schemas/CardLimitWindow' }
+        enforced_on:
+          type: string
+          enum: [funding]
+          description: These cap money moved onto the card, not merchant spending.
+
+    SetCardLimitsRequest:
+      type: object
+      description: Omit a field to leave it alone; `null` removes that limit. At least one is required.
+      properties:
+        dailyLimit: { type: [string, 'null'], example: '50000.00' }
+        monthlyLimit: { type: [string, 'null'], example: '500000.00' }
+
+    CardActivityItem:
+      type: object
+      properties:
+        kind: { type: string, enum: [funding, spend], description: '`funding` is wallet↔card; `spend` is the card at a merchant.' }
+        direction: { type: string, enum: [in, out], description: Relative to the card. }
+        reference: { type: [string, 'null'] }
+        description: { type: string }
+        merchant: { type: [string, 'null'], description: Only on a merchant payment. }
+        amount: { type: string, example: '5000.00' }
+        currency: { type: string, example: NGN }
+        status: { type: string, description: 'Our transfer status, or the partner''s payment status as sent.' }
+        occurred_at: { type: string, format: date-time }
+        source: { type: string, enum: [beevia, partner] }
+
+    CardActivity:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/CardActivityItem' }
+        spend_included: { type: boolean, description: False means this list is incomplete. }
+        spend_unavailable_reason: { type: [string, 'null'] }
 
     CardTransfer:
       type: object
