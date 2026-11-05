@@ -1724,7 +1724,11 @@ paths:
       description: |
         Returns the top-up. If it is still pending, it is verified against
         Paystack first — the client fallback for a missed webhook — so a
-        just-completed payment reflects here.
+        just-completed payment reflects here. A checkout still unpaid 30
+        minutes after it started is closed as `abandoned` (or `failed`); a
+        payment that lands after that is still credited. A sweep every 10
+        minutes closes stale checkouts, since Paystack sends no webhook for an
+        unpaid one.
       responses:
         '200':
           description: Current top-up state.
@@ -1833,7 +1837,9 @@ paths:
       description: |
         Returns the card number, CVV and expiry. Requires **this card's PIN**.
         The details are fetched from the partner on demand and are never stored
-        or logged — treat the response as sensitive and do not cache it.
+        or logged — treat the response as sensitive and do not cache it. If the
+        partner cannot return them the response is `503`
+        `card_reveal_unavailable`; try again later.
       requestBody:
         required: true
         content:
@@ -1853,6 +1859,11 @@ paths:
         '400': { $ref: '#/components/responses/BadRequest' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '503':
+          description: '`card_reveal_unavailable` — the card partner could not return the details.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 
   /cards/{cardId}/reveal-pin:
     parameters:
@@ -1949,8 +1960,12 @@ paths:
       summary: Fund a card
       description: |
         Moves money from your NGN wallet onto the card. Requires this card's PIN.
-        Settles asynchronously: the wallet is debited immediately and **refunded
-        if the partner rejects it**.
+        The wallet is debited immediately and the response **waits up to 5 s for
+        the partner's verdict**, so `status` is usually `completed`. A rejection
+        returns `400` `card_transfer_failed` and the wallet is refunded.
+        `pending` only when the partner is slower, and the outcome then arrives
+        by push. The money is moved from the organisation's pool account, where
+        deposits are swept, not from the user's own provider account.
       requestBody:
         required: true
         content:
@@ -1968,7 +1983,7 @@ paths:
                     properties:
                       data: { $ref: '#/components/schemas/CardTransfer' }
         '400':
-          description: '`insufficient_funds`, `daily_limit_exceeded`, `monthly_limit_exceeded` / validation error. A refused funding reserves nothing.'
+          description: '`insufficient_funds`, `daily_limit_exceeded`, `monthly_limit_exceeded`, `card_transfer_failed` / validation error. A refused funding reserves nothing.'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
@@ -1983,8 +1998,10 @@ paths:
       summary: Withdraw from a card
       description: |
         Moves money from the card back to your NGN wallet. Requires this card's
-        PIN. The wallet is credited **only once the partner confirms** the
-        transfer.
+        PIN. The wallet is credited **only once the partner confirms**; the
+        response waits up to 5 s for that, so `status` is usually `completed`.
+        A rejection returns `400` `card_transfer_failed`; `pending` only when
+        the partner is slower.
       requestBody:
         required: true
         content:
@@ -2061,8 +2078,11 @@ paths:
       summary: This card's limits and how much is left
       description: |
         Daily and monthly limits, how much of each is gone, what remains, and a
-        percentage for the ring. A null `limit` means the user has not set one;
-        `remaining` and `percent_used` are then null too.
+        percentage for the ring. Each `limit` is the one in force: the card's
+        own, else the admin default (`GET /admin/settings/card-limits`).
+        `source` says which (`card`, `default`, or `none`); with `none`,
+        `limit`, `remaining` and `percent_used` are null. `default_limit`
+        carries the admin default so the app can offer "reset to default".
 
         `used` is **money moved onto the card** in the window: settled and
         in-flight fundings. A failed funding and a withdrawal never count.
@@ -2089,11 +2109,14 @@ paths:
       operationId: setCardLimits
       summary: Change this card's limits
       description: |
-        **Omit a field to leave it alone; send `null` to remove that limit.**
-        At least one field is required. The daily limit may not exceed the
-        monthly limit, including one already stored. There is no maximum above
-        that. Takes effect on the next funding attempt, and nothing is sent to
-        the card partner.
+        **Omit a field to leave it alone; send `null` to clear the card's own
+        limit**, so the admin default applies again. At least one field is
+        required. The card's own daily limit may not exceed its own monthly
+        limit, including one already stored; the admin default is never part of
+        that check, and a card's own limit overrides the default above or
+        below it. There is no maximum yet (KYC tiers will add one). Takes
+        effect on the next funding attempt, and nothing is sent to the card
+        partner.
       security:
         - accessToken: []
           stepUpToken: []
@@ -2176,6 +2199,11 @@ paths:
         **Scope.** `type` is `wallet` or `card`; send `walletId` for the first
         and `cardId` for the second. Dates are `YYYY-MM-DD` and inclusive
         calendar days in UTC, so 1–31 January covers everything on the 31st.
+        The account's opening day is a valid start. Rows are titled as the
+        app's history titles them (`Transfer to Ada`, `Deposit from …`), the
+        sender's own note on a transfer sits on a separate line (a `Note`
+        column in the `csv`), and the wallet's `pdf` carries its virtual
+        account number and bank.
         Card lines are read live from the card partner, which takes no date
         range, so the window is applied server-side; a partner outage fails
         the request rather than producing an empty statement.
@@ -4855,6 +4883,7 @@ components:
         expiry_month: { type: [string, 'null'], example: '09' }
         expiry_year: { type: [string, 'null'], example: '2029' }
         description: { type: [string, 'null'], example: Shopping card }
+        cardholder_name: { type: [string, 'null'], description: 'The name for the card face: the verified legal name, else the display name.', example: Ada Obi }
         currency: { type: string, example: NGN }
         balance: { $ref: '#/components/schemas/Money' }
         created_at: { type: string, format: date-time }
@@ -4869,6 +4898,7 @@ components:
         cvv: { type: string, example: '123' }
         expiry_month: { type: string, example: '09' }
         expiry_year: { type: string, example: '2029' }
+        cardholder_name: { type: [string, 'null'], example: Ada Obi }
 
     CardTransaction:
       type: object
@@ -4885,7 +4915,9 @@ components:
     CardLimitWindow:
       type: object
       properties:
-        limit: { type: [string, 'null'], description: Null when the user has not set this limit., example: '50000.00' }
+        limit: { type: [string, 'null'], description: 'The limit in force: the card''s own, else the admin default. Null when neither is set.', example: '50000.00' }
+        source: { type: string, enum: [card, default, none], description: '`card` when the user set it, `default` when the admin default applies, `none` when neither.' }
+        default_limit: { type: [string, 'null'], description: 'The admin default, for a "reset to default" control. Null when there is none.', example: '500000.00' }
         used: { type: string, description: Settled and in-flight funding in the window., example: '22500.00' }
         remaining: { type: [string, 'null'], description: Never negative. Null with no limit., example: '27500.00' }
         percent_used: { type: [integer, 'null'], minimum: 0, maximum: 100, description: Null with no limit. }
@@ -4903,7 +4935,7 @@ components:
 
     SetCardLimitsRequest:
       type: object
-      description: Omit a field to leave it alone; `null` removes that limit. At least one is required.
+      description: Omit a field to leave it alone; `null` clears the card's own limit so the admin default applies. At least one is required.
       properties:
         dailyLimit: { type: [string, 'null'], example: '50000.00' }
         monthlyLimit: { type: [string, 'null'], example: '500000.00' }

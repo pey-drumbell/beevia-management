@@ -645,6 +645,21 @@ Open points are in `suggestions.md` §4.12 (server) and §5.17 (clients). **PRD 
 
 **Availability** now reads its copy from `support_settings`, honours `general` mode, and quotes a reopening time only when the clock is the reason support is shut. `support_hours` is seeded by migration, which closes `suggestions.md` §4.12 item 2. `online` still needs an on-duty admin, and no role can go on duty until someone is granted `disputes`.
 
+### 5.21 Cards: funding fixed at the provider, admin defaults, cardholder name (2026-11-05)
+
+**What shipped.** `beevia-api` #95–#99 (5 Nov, 03:59–14:57 UTC) and `beevia-db-schema` #31 (v0.0.50), with `beevia-admin-api` #29 and #30 (§3.15 and §3.17 of `admin-api-rfc.md`). **Consumer operations stay at 158**: nothing was added, and eight existing operations changed contract.
+
+- **Card funding was failing in production, and #97 says why.** Its commit states that every funding failed with "Insufficient balance", because customer money is pooled in the organisation's Anchor account and the card transfer drew on the user's own empty one; "all three fundings so far failed this way" while the wallet held NGN 25,600. Transfers now use `ANCHOR_POOL_ACCOUNT_ID`, falling back to the user's account when it is unset, as payouts already do. **Whether that variable is set in production cannot be seen from here.** This is the commit's own account and was not checked against production. The commit also says the sandbox was tried first.
+- **Fund and withdraw now wait up to 5 s for the partner's verdict.** `status` is usually `completed`; a rejection is `400 card_transfer_failed` and the wallet is refunded; `pending` only when Anchor is slower. A client written to the earlier "always pending" behaviour still works.
+- **Reveal called a route that does not exist, and #95 fixes it.** `fetchCardDetails` now calls `GET /api/v1/cards/details` with the reveal token, because the token identifies the card. A partner failure is now `503 card_reveal_unavailable` instead of an unhandled error. The commit says the old path is not a provider route, that **every reveal answered `401`** and reached the app as a bare internal error, and that it checked sandbox with a real token. That is the commit's account; nothing was run here.
+- **Admin default card limits (#99, #31, admin #30).** A card with no limit of its own is now held to the admin default. `GET /cards/{id}/limits` reports each window's `limit` (the one in force), `source` (`card`, `default` or `none`) and `default_limit`. Sending `null` to `PATCH` now clears the card's own limit so the default applies again, rather than removing all limits. **Migration 0050 seeds NGN 500,000 a day and a month**, so from deploy every existing card is capped at that amount of funding per window unless its owner set otherwise, against a per-transfer maximum of 1,000,000. This is a behaviour change on deploy, not an opt-in.
+- **`cardholder_name`** on every card view and on reveal: the verified legal name, else the display name. `BVA-I353`'s `virtual_card.dart` already reads it.
+- **Top-ups (#98).** Paystack reports `abandoned` for any unpaid checkout, so the old code closed a top-up as unpaid the first time anyone looked at it, and a later payment was then ignored. Now a checkout is closed only after 30 minutes, a payment that lands afterwards is still credited, and a sweep every 10 minutes (`topup-reconcile`, BullMQ) settles ones nobody returned to. The sweep schedule is created at start-up and a failure there is logged, not fatal.
+- **Statements (#96).** The PDF and CSV are redesigned: rows titled as the app's history titles them, the sender's note on its own line (a `Note` column in the CSV), amounts grouped, opening and closing balances, and the wallet's virtual account number. The account's opening day is now a valid start (it was refused as `period_before_opening`). `rate_limited` now carries the limit.
+- **Message keys (#95).** 26 i18n keys that reached users as raw keys were added in four languages.
+
+Open points are in `suggestions.md` §4.14.
+
 ---
 
 ## 6. Implemented surface

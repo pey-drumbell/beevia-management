@@ -144,6 +144,10 @@ tags:
       A socket on this service pushes `support.conversation.new`,
       `support.message.new` and `support.conversation.updated` to any active
       admin. Agents act over REST only.
+  - name: Admin Settings
+    description: |
+      Platform settings an admin manages. Today that is the default card
+      limits. Routes need the `system_settings` module.
   - name: Reports
     description: |
       The Reports screen — a catalogue of report types, asynchronous CSV
@@ -2254,6 +2258,60 @@ paths:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 
   /admin/help/articles:
+    get:
+      tags: [Help & Support]
+      operationId: listAllHelpArticlesAdmin
+      summary: Every article, across categories
+      description: |
+        The list for **finding** an article and for seeing which ones are
+        failing readers; `categories/{id}/articles` needs a category id. Each
+        row carries `helpful` and `not_helpful`, so "which articles are not
+        working" is one request. `sort=most_unhelpful` puts the worst first.
+
+        `search` matches the slug and the title in `locale`.
+        `untranslated=true` keeps only articles with **no title in `locale`**,
+        the translation gaps. `published` filters drafts in or out; omitted
+        returns both. `data` is the array and `meta` the pagination.
+      x-required-permission: 'help_center:view'
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 500, default: 20 }
+        - name: search
+          in: query
+          schema: { type: string, minLength: 1, maxLength: 200 }
+        - name: categoryId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: published
+          in: query
+          schema: { type: string, enum: ['true', 'false'] }
+        - name: untranslated
+          in: query
+          schema: { type: string, enum: ['true', 'false'] }
+        - name: sort
+          in: query
+          schema: { type: string, enum: [position, recent, most_unhelpful, most_helpful], default: position }
+        - name: locale
+          in: query
+          schema: { $ref: '#/components/schemas/HelpLocale' }
+      responses:
+        '200':
+          description: The articles, one page.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/AdminHelpArticleListRow' }
+                      meta: { $ref: '#/components/schemas/PaginationMeta' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
     post:
       tags: [Help & Support]
       operationId: createHelpArticle
@@ -2518,6 +2576,72 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /admin/settings/card-limits:
+    get:
+      tags: [Admin Settings]
+      operationId: getCardLimitDefaults
+      summary: Default card limits
+      description: |
+        The daily and monthly limits, in naira, that every card **without a
+        limit of its own** is held to. A card's own limit, set by its owner,
+        overrides them, above or below. `null` means no default for that
+        window. `updated_by` and `updated_at` say who last changed them.
+        db-schema v0.0.50 seeds NGN 500,000 for both.
+
+        **These cap funding, not merchant spending.** The card provider
+        exposes no spend controls and no authorization hook. Per-KYC-tier
+        defaults will replace this single default.
+      x-required-permission: 'system_settings:view'
+      responses:
+        '200':
+          description: The defaults.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/CardLimitDefaults' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    put:
+      tags: [Admin Settings]
+      operationId: setCardLimitDefaults
+      summary: Set the default card limits
+      description: |
+        **Replaces both defaults in one save.** Send `dailyLimit` and
+        `monthlyLimit` as a number or a string with at most 2 decimals, or
+        `null` for no default in that window. The daily default may not
+        exceed the monthly one.
+
+        Applies **at once** to every card without a limit of its own. Nothing
+        is copied onto cards, so there is nothing to backfill, and cards whose
+        owners set their own limits are unaffected. Caps funding, not
+        merchant spending.
+      x-required-permission: 'system_settings:edit'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SetCardLimitDefaultsRequest' }
+      responses:
+        '200':
+          description: The defaults after the change.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/CardLimitDefaults' }
+        '400':
+          description: '`validation_error`, with `details` keyed by field.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '403': { $ref: '#/components/responses/Forbidden' }
 
   /admin/support/agents:
     get:
@@ -3117,6 +3241,22 @@ components:
         published: { type: boolean }
         updated_at: { type: string, format: date-time }
 
+    AdminHelpArticleListRow:
+      type: object
+      description: A row in the flat article list — where it lives, and how it is landing.
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string }
+        position: { type: integer }
+        published: { type: boolean }
+        updated_at: { type: string, format: date-time }
+        category_id: { type: string, format: uuid }
+        category_slug: { type: string }
+        title: { type: [string, 'null'], description: 'Null when there is no translation in `locale`.' }
+        helpful: { type: integer, minimum: 0, description: '"Yes" votes.' }
+        not_helpful: { type: integer, minimum: 0, description: '"No" votes.' }
+        locale: { $ref: '#/components/schemas/HelpLocale' }
+
     AdminHelpArticleDetail:
       allOf:
         - $ref: '#/components/schemas/AdminHelpArticle'
@@ -3284,6 +3424,24 @@ components:
         message_with_reopen_time: { type: string }
         message_general: { type: string }
         updated_at: { type: string, format: date-time, nullable: true }
+    CardLimitDefaults:
+      type: object
+      properties:
+        currency: { type: string, example: NGN }
+        daily_limit: { type: [string, 'null'], example: '500000.00' }
+        monthly_limit: { type: [string, 'null'], example: '500000.00' }
+        updated_at: { type: [string, 'null'], format: date-time }
+        updated_by:
+          type: [object, 'null']
+          properties:
+            id: { type: string, format: uuid }
+            name: { type: string }
+    SetCardLimitDefaultsRequest:
+      type: object
+      required: [dailyLimit, monthlyLimit]
+      properties:
+        dailyLimit: { type: [string, number, 'null'], example: '500000.00' }
+        monthlyLimit: { type: [string, number, 'null'], example: '500000.00' }
     SetSupportHoursRequest:
       type: object
       required: [mode, hours, messageWithReopenTime, messageGeneral]

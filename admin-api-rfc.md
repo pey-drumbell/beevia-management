@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft — for review · created 2026-08-05 |
 | **Scope** | The HTTP surface of `beevia-admin-api`: what exists today, and what "Beevia Admin Dashboard.md" specifies that does not exist yet |
-| **Companion artifacts** | [`openapi.admin.yaml`](./openapi.admin.yaml) — implemented, **72 operations** · [`openapi.admin.proposed.yaml`](./openapi.admin.proposed.yaml) — designed but unbuilt, 18 operations |
+| **Companion artifacts** | [`openapi.admin.yaml`](./openapi.admin.yaml) — implemented, **75 operations** · [`openapi.admin.proposed.yaml`](./openapi.admin.proposed.yaml) — designed but unbuilt, 18 operations |
 | **Sibling RFC** | [`api-rfc.md`](./api-rfc.md) — the consumer API |
 | **Sources** | `beevia-admin-api/src/**`, `beevia-db-schema/src/schema/*`, `Beevia Admin Dashboard.md` |
 | **Base path** | `/api/v1`, with every business route further prefixed `/admin` |
@@ -15,9 +15,9 @@
 
 ## 1. Summary
 
-`beevia-admin-api` is a **separate NestJS service** from the consumer API, sharing the database through the published `@drumbell-technologies/beevia-db-schema` package. It is **72 operations** across fourteen controllers, backing the admin dashboard specified in `Beevia Admin Dashboard.md`.
+`beevia-admin-api` is a **separate NestJS service** from the consumer API, sharing the database through the published `@drumbell-technologies/beevia-db-schema` package. It is **75 operations** across fifteen controllers, backing the admin dashboard specified in `Beevia Admin Dashboard.md`.
 
-**Three of the spec's eight modules are built, a fourth opened on 2026-09-02** when the cross-module activity feed merged (§5.4a), **and a fifth opened on 2026-09-04** when transaction oversight and reconciliation landed (§3.9, §3.10, §5.2) — the first money-oversight surface this service has ever had. Module 5 widened again on **2026-09-06** with the wallets screen (§3.12), leaving flagging as its only unbuilt operation. **On 2026-09-08 a sixth module opened, and it is the one this RFC has called blocking since 5 August**: the `/admin/chats` module merged to `main` (§3.13), implementing Module 4 as the metadata-only Option A of §5.1 — no message content, and the first reader `conversation_reports` has ever had. **On 2026-09-09/10 a seventh opened**: the Reports screen merged (§3.14), giving Module 7 its first exportable dataset and taking this service from 42 to 47 operations in two days. **On 2026-09-17 Module 4 became a workflow and the E2EE question was answered** (§3.13, §5.1b): report detail and a review decision shipped, taking the service to 49 operations, and the consumer app was changed the same night so that a reporter can hand over the messages they chose to disclose — Option B of §5.1, which had waited since 5 August for exactly that consumer change. **On 2026-10-28 the service grew to 60 operations** with eleven Help & Support content routes (§3.15). That work is outside the spec's eight modules and was the first admin-api change in 20 days. **Later the same day it grew to 63** with the dispute queue (§3.16), the admin half of the consumer app's "Report an issue". **On 2026-11-03 it reached 69**: the nine-route support inbox replaced that queue (§3.16). **Later the same day it reached 72** with support hours and the disputed-transaction view. What exists is well-made: the permission model is more capable than the spec asked for, KYC values are masked by default with reveals logged, case notes are append-only, and account actions require a structured reason and land in a queryable history.
+**Three of the spec's eight modules are built, a fourth opened on 2026-09-02** when the cross-module activity feed merged (§5.4a), **and a fifth opened on 2026-09-04** when transaction oversight and reconciliation landed (§3.9, §3.10, §5.2) — the first money-oversight surface this service has ever had. Module 5 widened again on **2026-09-06** with the wallets screen (§3.12), leaving flagging as its only unbuilt operation. **On 2026-09-08 a sixth module opened, and it is the one this RFC has called blocking since 5 August**: the `/admin/chats` module merged to `main` (§3.13), implementing Module 4 as the metadata-only Option A of §5.1 — no message content, and the first reader `conversation_reports` has ever had. **On 2026-09-09/10 a seventh opened**: the Reports screen merged (§3.14), giving Module 7 its first exportable dataset and taking this service from 42 to 47 operations in two days. **On 2026-09-17 Module 4 became a workflow and the E2EE question was answered** (§3.13, §5.1b): report detail and a review decision shipped, taking the service to 49 operations, and the consumer app was changed the same night so that a reporter can hand over the messages they chose to disclose — Option B of §5.1, which had waited since 5 August for exactly that consumer change. **On 2026-10-28 the service grew to 60 operations** with eleven Help & Support content routes (§3.15). That work is outside the spec's eight modules and was the first admin-api change in 20 days. **Later the same day it grew to 63** with the dispute queue (§3.16), the admin half of the consumer app's "Report an issue". **On 2026-11-03 it reached 69**: the nine-route support inbox replaced that queue (§3.16). **Later the same day it reached 72** with support hours and the disputed-transaction view. **On 2026-11-05 it reached 75**: a flat, searchable article list (§3.15) and the default card limits (§3.17). What exists is well-made: the permission model is more capable than the spec asked for, KYC values are masked by default with reveals logged, case notes are append-only, and account actions require a structured reason and land in a queryable history.
 
 Against that, three findings need attention before this service is exposed to real staff:
 
@@ -330,7 +330,7 @@ Four contract facts worth carrying into the client:
 
 Two smaller notes. The `admin_activity` report is the only one of the four that is module-scoped at all; the other three are gated by the `reports` permission alone, which is defensible but should be a decision rather than an omission. And `4f3df97` folded the Users list's verification rule into one place — the SQL filter had a hardcoded `5` while the TypeScript counted off `KYC_CHECK_ORDER`; both now count off `KYC_CHECK_ORDER`. No behaviour changes today, because there are five checks. It is a latent-drift fix, and it is the kind that is invisible until a sixth check is added.
 
-### 3.15 Help & Support content (11): outside the spec, shipped 2026-10-28
+### 3.15 Help & Support content (12): outside the spec, shipped 2026-10-28
 
 | Method | Path | Permission | Notes |
 |---|---|---|---|
@@ -341,6 +341,7 @@ Two smaller notes. The `admin_activity` report is the only one of the four that 
 | DELETE | `/admin/help/categories/{id}` | `help_center:delete` | `409 category_not_empty` while it holds articles |
 | GET | `/admin/help/categories/{id}/articles` | `help_center:view` | Titles only, drafts included |
 | POST | `/admin/help/categories/{id}/articles/reorder` | `help_center:edit` | Ids from another category are refused |
+| GET | `/admin/help/articles` | `help_center:view` | **New 2026-11-05 (#29).** Every article across categories, paged, with `helpful` / `not_helpful`. `search`, `categoryId`, `published`, `untranslated`, `sort` (`position`, `recent`, `most_unhelpful`, `most_helpful`), `locale` |
 | GET | `/admin/help/articles/{id}` | `help_center:view` | Markdown body plus `helpful` / `not_helpful` counts |
 | POST | `/admin/help/articles` | `help_center:create` | Draft unless `published` |
 | PATCH | `/admin/help/articles/{id}` | `help_center:edit` | A new `categoryId` moves the article to the end of that category |
@@ -382,6 +383,21 @@ Things to know (`suggestions.md` §4.12, §5.16):
 - **`/support/triage-config` has no server, and now will not get one.** #28 builds only its out-of-hours half as `/admin/support/hours`. `beevia-db-schema` #29 dropped `support_flows` and `flow_state`, since the assistant replaced the scripted triage.
 - **Two list filters from #28 misbehave** (`suggestions.md` §4.13). `transactionType` can only match `payment`, and that value escapes the other filters. `unreadOnly` filters after paging, so `meta.total` overstates and pages run short.
 - **Assign does not check the agent is active.**
+
+### 3.17 Settings (2): outside the spec, shipped 2026-11-05
+
+| Method | Path | Permission | Notes |
+|---|---|---|---|
+| GET | `/admin/settings/card-limits` | `system_settings:view` | The daily and monthly funding limits a card without its own is held to; `updated_by`, `updated_at` |
+| PUT | `/admin/settings/card-limits` | `system_settings:edit` | **Replaces both in one save.** Positive naira, at most 2 decimals, or `null` for none; daily may not exceed monthly. Applies at once to every card without a limit of its own |
+
+`beevia-admin-api` #30 (merged 5 Nov 14:57 UTC) over `beevia-db-schema` #31 (v0.0.50, `card_settings`, one row). It is guarded at controller level. The consumer API reads the row on every funding attempt and every limits read (`api-rfc.md` §5.21). **Migration 0050 seeds NGN 500,000 for both windows**, so the default is live for every card from deploy.
+
+- **Unlike `help_center` and `disputes`, `system_settings` has existed since v0.0.20**, and the seed script grants every module to the Super Admin role. A Super Admin created by it can probably call these routes already. Whether production's role was seeded before or after that is not visible here.
+- **It caps funding, not merchant spending**, and the route text says so: the provider has no spend controls (`suggestions.md` §4.13).
+- **No audit row.** `updated_by` and `updated_at` record only the last change; there is no history of what the default was before, and the admin activity feed does not see it.
+- **Nothing in `beevia-admin` calls it.** Its `/settings` page is a one-line placeholder.
+- This is not Module 6 (country and feature configuration), which stays unbuilt.
 
 ---
 
