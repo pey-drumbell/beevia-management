@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft — for review · **updated 2026-08-05** |
 | **Scope** | The complete HTTP surface of `beevia-api` (the consumer API): what exists today, and what the PRD requires that does not exist yet |
-| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, **158 operations** · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, **34 operations** (31 net-new + 3 live-endpoint modifications) · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
+| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, **160 operations** · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, **32 operations** (29 net-new + 3 live-endpoint modifications) · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
 | **Sibling RFC** | [`admin-api-rfc.md`](./admin-api-rfc.md) — the `beevia-admin-api` back-office service |
 | **Sources** | `beevia-api/src/**/*.controller.ts`, `beevia-api/src/**/dto/*.ts`, `beevia-db-schema/src/schema/*`, `beevia-api/postman/Beevia.postman_collection.json`, `Beevia_PRD.pdf` |
 | **Base path** | `/api/v1` (global prefix set in `src/main.ts`; `/i/:code` is explicitly excluded) |
@@ -151,14 +151,14 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 |---|---:|---:|---|
 | Platform | 1 | 2 | Only a static root route today; no real health probe |
 | Auth & Onboarding | 13 | 3 | Session listing/revocation missing |
-| KYC | 6 | 3 | Local tier only. `POST /kyc/entrust/webhook` is counted under Webhooks |
-| **Upgrade** | **6** | 0 | **New.** Parallel KYC ladder for chat_only → chat_banking |
+| KYC | **7** | **2** | Local ladder only. **+2, −1 (2026-11-06, §5.22):** `POST /kyc/nin` and `GET /kyc/status` shipped, and the Entrust document check (`POST /kyc/id/start`) was removed. `GET /kyc/status` left the proposed file; the international tier is still unbuilt |
+| **Upgrade** | **7** | 0 | **New.** Parallel KYC ladder for chat_only → chat_banking. `POST /upgrade/nin` added 2026-11-06 |
 | Users | 14 | 7 | +2 contact-change. No consent, limits, deletion-status or export surface |
 | Contacts | 2 | **1** | **No longer complete.** `POST /contacts/sync` now accepts 25,000 entries but resolves only the first 500 inline, queueing the rest with **no completion signal** — proposed `GET /contacts/sync/status` |
 | Devices & Keys | 6 | 0 | Complete |
 | Invites | 3 | 0 | Complete (no dispatch, by design) |
 | Currencies | 1 | 0 | Complete |
-| Wallets | **13** | 5 | **+6:** bank list, account resolution, beneficiary rename/remove, and payout listing/status. Bank-transfer payouts are now observable end to end |
+| Wallets | **14** | **4** | **+6:** bank list, account resolution, beneficiary rename/remove, and payout listing/status. Bank-transfer payouts are now observable end to end. **+1 (2026-11-06):** `GET /wallets/limits`, NGN only and not enforced (§5.22) |
 | **Top-ups** | **3** | 0 | **New.** Card funding of the NGN wallet via Paystack: initialize, list, status |
 | FX | **0** | 3 | Does not exist |
 | Payments | **9** | 4 | Direct transfer + recipient picker shipped 17 Aug. Still no read path — no `GET /payments`. (Plus the 3 live-endpoint modifications counted below.) |
@@ -174,8 +174,8 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | **Help & Support** | **5** | 0 | **New 2026-10-28.** FAQ only: categories, questions in a category, full-text search, an answer, and the "Was this helpful?" vote. Content is written through the admin API (`admin-api-rfc.md`). Disputes and the support chat have no server code yet (§5.17) |
 | **Disputes** | **4** | 0 | **New 2026-10-28, rebuilt 2026-11-03.** "Report an issue" on a transaction (`POST /disputes`), the user's history, one report, and the open count for the badge. A dispute is now a support thread with a transaction attached. The snapshot of the transaction is built server-side from the reference. Shipped in place of the proposed `POST /payments/{id}/dispute` (§5.18, §5.19) |
 | **Support** | **5** | 0 | **New 2026-11-03.** Chat with Support, availability, and the thread both chats and disputes run on. An AI assistant answers first. Shipped in place of the proposed `/support/tickets` (§5.19) |
-| Webhooks | **4** | 1 | **+1:** `POST /webhooks/paystack` for card top-ups. Card issuer callback still missing |
-| **Total** | **158** | **31** | +3 live-endpoint modifications = 34 operations in the proposed file |
+| Webhooks | **3** | 1 | **+1:** `POST /webhooks/paystack` for card top-ups. **−1 (2026-11-06):** `POST /kyc/entrust/webhook` removed with the Entrust check. Card issuer callback still missing |
+| **Total** | **160** | **29** | +3 live-endpoint modifications = 32 operations in the proposed file |
 
 ---
 
@@ -230,11 +230,11 @@ Two proposal details did **not** ship and remain open:
 
 ### 4.3 Only one verification tier exists
 
-The PRD defines two independent tiers — local (NGN) and international (USD/GBP/EUR) — each unlocking the wallets relevant to it. The codebase implements the local tier thoroughly: email verification, BVN lookup, BVN ownership proof by face or record, KYC profile, document verification via workflow run and webhook.
+The PRD defines two independent tiers — local (NGN) and international (USD/GBP/EUR) — each unlocking the wallets relevant to it. The codebase implements the local tier thoroughly: email verification, BVN lookup, BVN ownership proof by face or record, a NIN matched to the BVN, and the KYC profile. (The document-verification workflow run and its webhook were removed on 2026-11-06, §5.22.)
 
-There is no international path, and — more immediately actionable — **no way to ask what tier the user has reached or what is outstanding**. The only signal is `kyc_level`, an opaque integer on `/auth/me`. A client cannot render a verification hub, cannot tell the user why USD is greyed out, and discovers the gate only by calling `POST /wallets` and reading `bvn_required` / `kyc_profile_required` / `provider_not_implemented` back as *errors*.
+There is no international path. **Update 2026-11-06:** the second half of that gap is half closed. `GET /kyc/status` now answers what tier the user has reached and what is outstanding, for the **local** ladder (tier 0, 2 or 3, the steps done, what the next tier needs). It says nothing about an international tier or about which currencies a tier unlocks, so a client still cannot tell the user why USD is greyed out, and still discovers the currency gate by calling `POST /wallets` and reading `bvn_required` / `nin_required` / `kyc_profile_required` / `provider_not_implemented` back as *errors*.
 
-Proposed: `GET /kyc/status` (per-tier state and unlocked currencies), `GET /kyc/requirements?currency=` (ordered outstanding steps), `POST /kyc/international/start`.
+Proposed: `GET /kyc/requirements?currency=` (ordered outstanding steps) and `POST /kyc/international/start`. The proposed `GET /kyc/status` (per-tier state and unlocked currencies) shipped in a narrower form and left the proposed file; the per-currency unlock is not covered by it.
 
 ### 4.4 Payments have no read path
 
@@ -662,6 +662,24 @@ Open points are in `suggestions.md` §4.14.
 
 ---
 
+### 5.22 KYC tiers: a NIN step, a tier model, and a limits route the app cannot yet read (2026-11-06)
+
+**What shipped.** `beevia-api` #100 (5 Nov, 15:13 UTC; the kobo fix) and #101 (6 Nov, 12:58 UTC) and `beevia-db-schema` #32 and #33 (v0.0.51, v0.0.52). **Consumer operations go from 158 to 160**: four added (`POST /kyc/nin`, `POST /upgrade/nin`, `GET /kyc/status`, `GET /wallets/limits`) and two removed (`POST /kyc/id/start`, `POST /kyc/entrust/webhook`). Two proposals shipped, and both left `openapi.proposed.yaml`.
+
+- **Banking now starts at Tier 2, and Tier 2 needs a NIN.** There is no Tier 1. `POST /kyc/nin` and `POST /upgrade/nin` look the NIN up with YouVerify and compare it to the BVN already verified: the same date of birth, and the BVN's first and last names among the NIN's names (any order; case and accents ignored). Five attempts an hour per user; a provider outage is `503 verification_unavailable` and alerts Slack. Onboarding and upgrade provisioning now wait for the NIN, `POST /upgrade/profile` refuses without it (`nin_required`), and `POST /wallets` refuses a **new** NGN account without it. Wallets that already exist are untouched.
+- **Existing banking users are not cut off, for 30 days.** Migration 0051 puts every user with a verified BVN at `kyc_level` 1 with `kyc_grace_until` thirty days out (about 6 Dec, if it ran at the release). `GET /kyc/status` reports `tier` 0 and `limits_tier` 2 for them until the grace ends. Because nothing reads the limits yet (below), the end of the grace changes nothing today.
+- **The Entrust (Onfido) document check is gone.** `POST /kyc/id/start` and `POST /kyc/entrust/webhook` were removed, with the service, the env vars and the Postman requests. The Entrust columns stay in `users` until nothing reads them. This was the only document-verification path in the API, and `POST /kyc/international/start` (still proposed) described itself as mirroring it.
+- **Card amounts were read as naira when the partner sends kobo (#100).** The commit says three NGN 100 fundings left NGN 300 on a card the app showed as NGN 30,000, and that the withdrawal pre-check passed NGN 2,000 and NGN 10,000 on to Anchor, which refused them. Card balance, activity spend rows and card statement lines now divide by 100, through one `fromMinorUnits`. A withdrawal above the card's balance now stops with "That is more than this card holds" before anything is sent. **`GET /cards/{id}/transactions` still passes the partner's payments through unchanged, so its `amount` is in kobo**, the only money field in the API that is. The commit says no card payment has happened yet. It also shows that three fundings reached a card after #97, in whichever environment the author used, which the 5 Nov edition could not say.
+- **`GET /kyc/status` shipped, narrower than proposed.** It returns `tier` (0, 2 or 3), `limits_tier`, the five steps (`email`, `bvn`, `nin`, `profile`, `address`), `grace_until`, `next` (the next tier and what it still needs) and the limits in force. It carries no international tier and no unlocked currencies, which was most of what the proposal asked for (§4.3).
+- **`GET /wallets/limits` shipped, in a different shape from the proposal.** The proposal returned a list of `CurrencyLimits` (`per_transaction_max`, `daily_max`, `daily_remaining`, ...). The route returns one NGN object: `daily` and `monthly` as `{ limit, used, remaining, percent_used }`, plus `single_transfer_limit`, `max_balance`, `tier`, `limits_tier`, `grace_until` and `next`. Amounts are naira strings. "Used" is money that left the wallet: P2P sends, requests the user paid, bank payouts without the fee, and card fundings whose wallet debit went through, per Lagos day and month. The monthly and single-transfer limits are new columns on `kyc_tier_limits` (migration 0052); the single-transfer limit is seeded at each tier's daily limit and the monthly one is **not seeded**, so it reads as no limit.
+- **The tier limits are reported and not applied.** On `origin/main` only `GET /kyc/status` and `GET /wallets/limits` read `kyc_tier_limits`. No send, payout or card funding checks the daily, monthly, single-transfer or maximum-balance figure. `kyc_holds` (money received above a Tier 2 cap, parked until upgrade) has no code, and neither has Tier 3: there is no address-verification route or webhook behind `address_verifications`. The migration comment says an admin can change the limits, and `beevia-admin-api` has no route that does. The seeded Tier 2 figures (NGN 200,000 a day, NGN 500,000 held) are the commit's reading of the CBN figures.
+- **The app cannot complete onboarding against this contract.** Neither `beevia-mobile` `main` nor `origin/BVA-I353` calls `POST /kyc/nin` or `POST /upgrade/nin`, or reads `nin_verified` or the `nin` next step. A new banking user who finishes the BVN and profile steps gets a `200` and no account is ever queued. The client only reads `GET /wallets`, so there is no `400` for it to show.
+- **The Transaction Limits screen on the branch reads the old proposal.** `BVA-I353`'s `wallet_limits.dart` reads `per_transaction_max`, `daily_max`, `daily_remaining`, `monthly_max` and `monthly_remaining`, and takes the first item of a list. Against the shipped object every one of those is absent, so the parser yields zeros and the usage card would read 0 of 0. The screen's own header cites `openapi.proposed.yaml`. `BVA-I362` (the endpoint) is still In progress on the board while its code is merged, and `BVA-I361` (the screen) is still In progress.
+
+Open points are in `suggestions.md` §4.15.
+
+---
+
 ## 6. Implemented surface
 
 Status legend: **✅ Complete** · **🟡 Partial** — works but materially narrower than the PRD describes · **🔴 Facade** — the route is real and the behaviour behind it is not.
@@ -700,9 +718,11 @@ Auth: 🔓 public · 🔑 access token · 🔐 access + step-up token.
 | | POST | `/kyc/email/verify` | 🔑 | ✅ |
 | | POST | `/kyc/bvn` | 🔑 | ✅ Lookup only |
 | | POST | `/kyc/bvn/verify-ownership` | 🔑 | 🟡 `face` + `record`; `phone` declared but unavailable |
+| | POST | `/kyc/nin` | 🔑 | ✅ **New 2026-11-06.** Matched to the BVN's record; 5 attempts an hour |
 | | POST | `/kyc/profile` | 🔑 | ✅ |
-| | POST | `/kyc/id/start` | 🔑 | ✅ Requires verified BVN |
-| | POST | `/kyc/entrust/webhook` | 🔓 | ✅ HMAC-verified. Path is under `/kyc`, not `/webhooks` |
+| | GET | `/kyc/status` | 🔑 | 🟡 **New 2026-11-06.** Local ladder only; no international tier or unlocked currencies |
+
+`POST /kyc/id/start` and `POST /kyc/entrust/webhook` were removed on 2026-11-06 (§5.22).
 
 ### 6.3a Upgrade (new)
 
@@ -715,7 +735,8 @@ Parallel ladder for `chat_only` users adopting banking. See §5.1 for why this s
 | | POST | `/upgrade/email/verify` | 🔑 | ✅ |
 | | POST | `/upgrade/bvn` | 🔑 | ✅ Lookup only |
 | | POST | `/upgrade/bvn/verify` | 🔑 | 🟡 Same `phone` gap as §6.3; path segment differs from KYC |
-| | POST | `/upgrade/profile` | 🔑 | ✅ No `email`; `gender` optional. Since 2026-09-01 requires a verified BVN (`bvn_required`) — see §5.1 |
+| | POST | `/upgrade/nin` | 🔑 | ✅ **New 2026-11-06.** Step 3, between the BVN and the profile |
+| | POST | `/upgrade/profile` | 🔑 | ✅ No `email`; `gender` optional. Requires a verified BVN (`bvn_required`) and, since 2026-11-06, a verified NIN (`nin_required`) — see §5.1 |
 
 ### 6.4 Users
 
@@ -758,7 +779,8 @@ Parallel ladder for `chat_only` users adopting banking. See §5.1 for why this s
 | | Method | Path | Auth | Status |
 |---|---|---|---|---|
 | | GET | `/wallets` | 🔑 | ✅ |
-| | POST | `/wallets` | 🔑 | 🟡 Idempotent, but only NGN succeeds |
+| | POST | `/wallets` | 🔑 | 🟡 Idempotent, but only NGN succeeds; a new account needs a verified NIN (`nin_required`) |
+| | GET | `/wallets/limits` | 🔑 | 🟡 **New 2026-11-06.** NGN only; reports usage and does not enforce (§5.22) |
 | | GET | `/wallets/payin-details` | 🔑 | ✅ Returns object with `?walletId`, array without |
 | | GET | `/wallets/beneficiaries` | 🔑 | 🟡 Read-only; rows appear only after a withdrawal |
 | | GET | `/wallets/transactions` | 🔑 | ✅ Paginated |
@@ -874,7 +896,7 @@ Typing and presence being WS-only is correct — they are ephemeral. `sync.boots
 
 ## 7. Proposed surface
 
-The file [`openapi.proposed.yaml`](./openapi.proposed.yaml) holds 31 net-new operations with full schemas, alongside the 3 live-endpoint modifications described in §7.1 — 34 operations in the file. **Note 2026-11-03: the tables below have drifted from the file and were not rewritten this cycle.** §7.3 and §7.5 still list 11 operations that have since shipped (eight under `/cards`, plus `GET /wallets/banks`, `POST /wallets/resolve-account` and `DELETE /wallets/beneficiaries/{beneficiaryId}`), and `GET /contacts/sync/status` is in the file but not listed. Treat the file as authoritative. Each conforms to the existing conventions: `/api/v1` prefix, standard envelope, snake_case responses, camelCase Zod-validated request bodies, `JwtAuthGuard` by default, `StepUpGuard` on anything that moves money or is irreversible.
+The file [`openapi.proposed.yaml`](./openapi.proposed.yaml) holds 29 net-new operations with full schemas, alongside the 3 live-endpoint modifications described in §7.1 — 32 operations in the file. **2026-11-06:** `GET /kyc/status` and `GET /wallets/limits` shipped and were removed from the file. **Note 2026-11-03: the tables below have drifted from the file and were not rewritten this cycle.** §7.3 and §7.5 still list 11 operations that have since shipped (eight under `/cards`, plus `GET /wallets/banks`, `POST /wallets/resolve-account` and `DELETE /wallets/beneficiaries/{beneficiaryId}`), and `GET /contacts/sync/status` is in the file but not listed. Treat the file as authoritative. Each conforms to the existing conventions: `/api/v1` prefix, standard envelope, snake_case responses, camelCase Zod-validated request bodies, `JwtAuthGuard` by default, `StepUpGuard` on anything that moves money or is irreversible.
 
 ### 7.1 FX (3) — closes §4.1
 
@@ -925,17 +947,16 @@ Previews deliberately require **no** step-up: they move no money, and requiring 
 
 Requires: a `cards` table, a `card_issuance` value on `provider_capability`, and an issuer adapter under `src/providers/`. No PAN or CVV is ever persisted — `reveal` proxies the issuer per call, and that route should be excluded from body logging.
 
-### 7.4 KYC (3) — closes §4.3
+### 7.4 KYC (2) — closes §4.3
 
 | Method | Path | Auth |
 |---|---|---|
-| GET | `/kyc/status` | 🔑 |
 | GET | `/kyc/requirements?currency=` | 🔑 |
 | POST | `/kyc/international/start` | 🔑 |
 
-`GET /kyc/status` is the cheapest item in this RFC and unblocks the verification hub immediately, independently of whether the international tier ships.
+`GET /kyc/status` shipped on 2026-11-06 for the local ladder and left this section (§5.22). What remains is the per-currency answer and the international start.
 
-### 7.5 Wallets (8)
+### 7.5 Wallets (7)
 
 | Method | Path | Auth |
 |---|---|---|
@@ -946,7 +967,6 @@ Requires: a `cards` table, a `card_issuance` value on `provider_capability`, and
 | DELETE | `/wallets/beneficiaries/{beneficiaryId}` | 🔑 |
 | GET | `/wallets/transactions/{transactionId}` | 🔑 |
 | GET | `/wallets/withdrawals/{reference}` | 🔑 |
-| GET | `/wallets/limits` | 🔑 |
 
 `resolve-account` needs no new integration — `account_resolution` is already a routable capability.
 
@@ -1006,10 +1026,10 @@ The shipped surface is better than what was proposed on precedence and on cleari
 Ordered by unblocked value per unit of work, not by PRD section order.
 
 **Phase A — read paths and state visibility.** No new integrations; unblocks client work immediately.
-`GET /payments`, `GET /payments/{id}`, `GET /kyc/status`, `GET /kyc/requirements`, `GET /wallets/{walletId}`, `GET /wallets/transactions/{transactionId}`, `GET /wallets/withdrawals/{reference}`, `GET /auth/sessions` + revocation, `GET /health`.
+`GET /payments`, `GET /payments/{id}`, ~~`GET /kyc/status`~~ (shipped 2026-11-06, local ladder), `GET /kyc/requirements`, `GET /wallets/{walletId}`, `GET /wallets/transactions/{transactionId}`, `GET /wallets/withdrawals/{reference}`, `GET /auth/sessions` + revocation, `GET /health`.
 
 **Phase B — pre-confirmation safety.** Removes the "submit and read the error" pattern from money flows.
-`POST /payments/send/preview`, `GET /wallets/banks`, `POST /wallets/resolve-account`, `GET /wallets/limits`, `GET /status`.
+`POST /payments/send/preview`, `GET /wallets/banks`, `POST /wallets/resolve-account`, ~~`GET /wallets/limits`~~ (shipped 2026-11-06, not enforced), `GET /status`.
 
 **Phase C — multi-currency.** The largest piece; needs a second rail, an FX provider, and ledger columns for applied conversions.
 `/fx/*`, request/response extensions on send / request / pay, `POST /kyc/international/start`, `POST /payments/request/preview`.

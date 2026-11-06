@@ -630,6 +630,45 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 
+  /upgrade/nin:
+    post:
+      tags: [Upgrade]
+      operationId: upgradeVerifyNin
+      summary: Verify NIN (step 3)
+      description: |
+        The upgrade path's equivalent of `POST /kyc/nin`: looks the NIN up with
+        YouVerify and checks its name and date of birth against the verified BVN.
+        Requires an upgrade in progress with the email verified, and a verified
+        BVN (`bvn_required`). Same attempt limit and error codes as the `/kyc`
+        route.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NinRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/UserOk' }
+        '400':
+          description: '`bvn_required` / `nin_not_found` / `nin_mismatch`, or the body failed validation.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '403':
+          description: Too many attempts in the last hour (`too_many_attempts`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '409':
+          description: The NIN belongs to another account (`nin_already_used`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '503':
+          description: The identity provider is unavailable (`verification_unavailable`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
   /upgrade/profile:
     post:
       tags: [Upgrade]
@@ -640,9 +679,10 @@ paths:
         customer. Unlike `POST /kyc/profile`, `email` is not resubmitted (it was
         established at `/upgrade/email`) and `gender` is optional.
 
-        Requires a verified BVN (`bvn_required`): the profile is the last step
-        before provisioning, so accepting it on an unverified BVN would return a
-        200 that looks like a finished upgrade while no account is ever opened.
+        Requires a verified BVN (`bvn_required`) and a verified NIN
+        (`nin_required`): the profile is the last step before provisioning, so
+        accepting it early would return a 200 that looks like a finished upgrade
+        while no account is ever opened.
       requestBody:
         required: true
         content:
@@ -651,10 +691,43 @@ paths:
       responses:
         '200': { $ref: '#/components/responses/UserOk' }
         '400':
-          description: BVN not yet verified (`bvn_required`), or the body failed validation.
+          description: BVN or NIN not yet verified (`bvn_required` / `nin_required`), or the body failed validation.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /kyc/status:
+    get:
+      tags: [KYC]
+      operationId: getKycStatus
+      summary: KYC tier and limits
+      description: |
+        The user's verified tier, which steps are done, what the next tier still
+        needs, any grace period, and the limits in force. There is no Tier 1:
+        banking starts at Tier 2 (a verified BVN plus a NIN that names the same
+        person), and Tier 3 adds a field-agent-confirmed address. `tier` is `0`
+        until Tier 2 is reached.
+
+        A user who banked before the NIN was required keeps their BVN-only
+        account at `tier` 0 with a 30-day `grace_until`; `limits_tier` is then 2,
+        the tier whose limits are shown and applied. Read `limits_tier`, not
+        `tier`, to decide what to display.
+
+        This covers the **local** ladder only. Nothing here reports an
+        international tier — that remains proposed (`GET /kyc/requirements`,
+        `POST /kyc/international/start`).
+      responses:
+        '200':
+          description: Current KYC state.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/KycStatus' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
 
   /kyc/email:
     post:
@@ -757,6 +830,50 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 
+  /kyc/nin:
+    post:
+      tags: [KYC]
+      operationId: verifyNin
+      summary: Verify NIN (Tier 2)
+      description: |
+        Looks the NIN up with YouVerify and compares its record with the verified
+        BVN: the same date of birth, and the BVN's first and last names among the
+        NIN's names (any order; case and accents ignored). Success stores the NIN,
+        sets `kyc_level` 2 and clears any grace period; the NGN account is then
+        provisioned once the profile is on file too. Calling it again after
+        success is a no-op.
+
+        Limited to 5 attempts an hour per user (`too_many_attempts`). A provider
+        outage returns `503 verification_unavailable` and alerts the team's Slack
+        channel.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NinRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/UserOk' }
+        '400':
+          description: '`bvn_required` / `nin_not_found` / `nin_mismatch`, or the body failed validation.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '403':
+          description: Too many attempts in the last hour (`too_many_attempts`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '409':
+          description: The NIN belongs to another account (`nin_already_used`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '503':
+          description: The identity provider is unavailable (`verification_unavailable`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
   /kyc/profile:
     post:
       tags: [KYC]
@@ -771,33 +888,6 @@ paths:
       responses:
         '200': { $ref: '#/components/responses/UserOk' }
         '400': { $ref: '#/components/responses/BadRequest' }
-
-  /kyc/id/start:
-    post:
-      tags: [KYC]
-      operationId: startIdVerification
-      summary: Start ID verification
-      description: |
-        Opens a document-verification workflow run with the identity provider and
-        returns the SDK token / hosted link for the client to capture the
-        document. Requires a verified BVN (`bvn_required`). Completion arrives
-        asynchronously on `POST /kyc/entrust/webhook`.
-      responses:
-        '200':
-          description: Workflow run created.
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessEnvelope'
-                  - type: object
-                    properties:
-                      data: { $ref: '#/components/schemas/IdVerificationStart' }
-        '400':
-          description: BVN not yet verified (`bvn_required`).
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 
   /users/me:
     patch:
@@ -1368,8 +1458,10 @@ paths:
         wallet list. Idempotent — a repeat call returns the existing wallet.
 
         Only currencies with an implemented provider succeed today (NGN); others
-        return `provider_not_implemented`. Requires BVN verification and a
-        completed KYC profile (`bvn_required` / `kyc_profile_required`).
+        return `provider_not_implemented`. Requires BVN verification, a verified
+        NIN and a completed KYC profile (`bvn_required` / `nin_required` /
+        `kyc_profile_required`). Existing accounts are untouched; only new NGN
+        accounts need the NIN.
         Provisioning is queued, so the virtual account (`vba`) may be `null` on
         the first response and populate shortly after.
       requestBody:
@@ -1384,6 +1476,42 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /wallets/limits:
+    get:
+      tags: [Wallets]
+      operationId: getWalletLimits
+      summary: Transaction limits
+      description: |
+        The KYC tier, its daily, monthly and single-transfer limits and its
+        maximum balance, and how much of the day and the month is used, for the
+        Transaction Limits screen. Amounts are naira strings with two decimals;
+        a `null` limit means no limit, and a user with no tier has every limit at
+        `0`.
+
+        "Used" is money that left the wallet: P2P sends (held or settled),
+        requests the user paid (dated when paid), bank payouts without the fee,
+        and card fundings whose wallet debit went through. Failed, declined,
+        expired and reversed ones do not count. Windows are the Lagos calendar day
+        and month. `next` is `null` at Tier 3, so there is nothing to upgrade to.
+
+        This route only **reports**. No send, payout or card funding reads these
+        limits yet (on `origin/main` only this route and `GET /kyc/status` read
+        `kyc_tier_limits`), so the daily, monthly and single-transfer figures
+        describe a cap that is not applied. The card funding limits
+        (`GET /cards/{cardId}/limits`) are separate and are enforced.
+      responses:
+        '200':
+          description: Limits and usage.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/WalletLimits' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
 
   /wallets/payin-details:
     get:
@@ -2053,7 +2181,10 @@ paths:
       summary: Card spend history
       description: |
         Authorizations, settlements, refunds and declines, read **live from the
-        partner** rather than from a local table.
+        partner** rather than from a local table, and passed through as the
+        partner sends them. **`amount` is therefore in kobo**, unlike every other
+        money field in this API. `GET /cards/{cardId}/activity` carries the same
+        spending in naira, merged with fundings; use that for display.
       responses:
         '200':
           description: Card spend history.
@@ -4163,29 +4294,6 @@ paths:
         '401':
           description: Signature verification failed.
 
-  /kyc/entrust/webhook:
-    post:
-      tags: [Webhooks]
-      operationId: identityWebhook
-      summary: Identity-verification webhook
-      description: |
-        Document-verification workflow results. Verified by HMAC-SHA2 over the
-        raw bytes (`X-SHA2-Signature`). Note the path sits under `/kyc`, not
-        `/webhooks`, unlike the other two partner callbacks.
-      security: []
-      parameters:
-        - name: x-sha2-signature
-          in: header
-          required: true
-          schema: { type: string }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { type: object, additionalProperties: true }
-      responses:
-        '200': { $ref: '#/components/responses/WebhookAck' }
-
   /webhooks/paystack:
     post:
       tags: [Webhooks]
@@ -5272,16 +5380,6 @@ components:
               message: { type: string, example: Phone must be in E.164 format (e.g. +2348012345678) }
         timestamp: { type: string, format: date-time }
 
-    IdVerificationStart:
-      type: object
-      properties:
-        workflow_run_id: { type: string, example: wr_abc123 }
-        sdk_token: { type: string }
-        link:
-          type: object
-          properties:
-            url: { type: string, format: uri }
-
     Invite:
       type: object
       properties:
@@ -5319,6 +5417,70 @@ components:
                     properties:
                       key_id: { type: integer }
                       public_key: { type: string }
+
+    NinRequest:
+      type: object
+      required: [nin]
+      properties:
+        nin: { type: string, pattern: '^\d{11}$', example: '12345678901', description: The 11-digit National Identification Number. }
+
+    KycStep:
+      type: string
+      enum: [email, bvn, nin, profile, address]
+
+    KycNext:
+      type: [object, 'null']
+      description: What the next tier still needs. `null` at Tier 3.
+      properties:
+        tier: { type: integer, enum: [2, 3] }
+        missing:
+          type: array
+          items: { $ref: '#/components/schemas/KycStep' }
+
+    KycStatus:
+      type: object
+      properties:
+        tier: { type: integer, enum: [0, 2, 3], description: The verified tier. There is no Tier 1; 0 means Tier 2 is not reached. }
+        limits_tier: { type: integer, enum: [0, 2, 3], description: The tier whose limits apply. 2 for a BVN-only user inside their grace period. }
+        steps:
+          type: object
+          properties:
+            email: { type: boolean }
+            bvn: { type: boolean }
+            nin: { type: boolean }
+            profile: { type: boolean }
+            address: { type: boolean }
+        grace_until: { type: [string, 'null'], format: date-time, description: Set only while a BVN-only user from before the NIN requirement is inside the grace period. }
+        next: { $ref: '#/components/schemas/KycNext' }
+        limits:
+          type: [object, 'null']
+          description: The limits in force for `limits_tier`; `null` when there is no tier. Naira strings; `null` inside means no limit.
+          properties:
+            daily_outflow_limit: { type: [string, 'null'], example: '200000.00' }
+            monthly_outflow_limit: { type: [string, 'null'] }
+            single_transfer_limit: { type: [string, 'null'], example: '200000.00' }
+            max_balance: { type: [string, 'null'], example: '500000.00' }
+
+    LimitWindow:
+      type: object
+      properties:
+        limit: { type: [string, 'null'], description: Naira, 2dp. `null` means no limit. }
+        used: { type: string, example: '15000.00' }
+        remaining: { type: [string, 'null'], description: Never negative. `null` when there is no limit. }
+        percent_used: { type: [integer, 'null'], minimum: 0, maximum: 100, description: Rounded. `null` when there is no limit. }
+
+    WalletLimits:
+      type: object
+      properties:
+        currency: { type: string, enum: [NGN] }
+        tier: { type: integer, enum: [0, 2, 3] }
+        limits_tier: { type: integer, enum: [0, 2, 3] }
+        grace_until: { type: [string, 'null'], format: date-time }
+        daily: { $ref: '#/components/schemas/LimitWindow' }
+        monthly: { $ref: '#/components/schemas/LimitWindow' }
+        single_transfer_limit: { type: [string, 'null'], description: The most one send, payout or card funding may move. }
+        max_balance: { type: [string, 'null'], description: Wallet and card balances together. }
+        next: { $ref: '#/components/schemas/KycNext' }
 
     KycProfileRequest:
       type: object
@@ -6024,6 +6186,7 @@ components:
           description: Whether the entry step is done — derived from an email being on file, not from `path`.
         email_verified: { type: boolean }
         bvn_verified: { type: boolean }
+        nin_verified: { type: boolean }
         profile_complete:
           type: boolean
           description: Derived from the address being on file.
@@ -6032,7 +6195,7 @@ components:
           description: Whether the NGN wallet exists. This is the real "is banking" signal.
         next_step:
           type: string
-          enum: [email, email_verify, bvn, profile, provisioning, done, not_eligible]
+          enum: [email, email_verify, bvn, nin, profile, provisioning, done, not_eligible]
           description: |
             The action the client should take next. `provisioning` means every
             step is done and the wallet is being created; `done` means the wallet

@@ -234,43 +234,6 @@ paths:
         '200': { $ref: '#/components/responses/RevokedOk' }
         '404': { $ref: '#/components/responses/NotFound' }
 
-  /kyc/status:
-    get:
-      tags: [KYC]
-      operationId: getKycStatus
-      summary: 'Verification tier status'
-      description: |
-        The PRD defines **two independent verification tiers** — a local-market
-        tier and an international tier — each unlocking the wallets relevant to
-        that tier. Today the only signal a client has is the opaque integer
-        `kyc_level` on `/auth/me`, which cannot express "local tier complete,
-        international tier not started", nor which currencies that unlocks.
-
-        This returns each tier with its state, the outstanding requirements, and
-        the currencies it unlocks, so the client can render the verification hub
-        and the Create Wallet gate without hard-coding rules.
-
-        **Partially superseded.** `GET /upgrade/status` shipped and covers the
-        chat_only → chat_banking ladder for the *local* tier. It does not report
-        tier state, currency unlocks, or anything international, so this remains
-        the general answer — but scope it as an extension of the shipped route
-        rather than a replacement, and consider folding `/upgrade/status` into it
-        rather than maintaining two progress endpoints.
-      externalDocs:
-        description: "PRD §1.2 Identity Verification, §1.4 Supported Currencies & Markets"
-        url: ./Beevia_PRD.md
-      responses:
-        '200':
-          description: Per-tier verification status.
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessEnvelope'
-                  - type: object
-                    properties:
-                      data: { $ref: '#/components/schemas/KycStatus' }
-
   /kyc/requirements:
     get:
       tags: [KYC]
@@ -312,7 +275,7 @@ paths:
       description: |
         Opens an international-tier verification run (passport / proof of
         address / sanctions screening, per the partner) and returns an SDK token
-        or hosted link, mirroring the shape of `POST /kyc/id/start`. Required
+        or hosted link, in the shape of a hosted workflow run (`workflow_run_id`, `sdk_token`, `link`). The local tier's document check (`POST /kyc/id/start`) was removed on 6 Nov. Required
         before USD, GBP or EUR wallets can be provisioned.
 
         Only the local (Nigerian BVN) tier exists in the codebase today; the
@@ -591,22 +554,6 @@ paths:
                       data: { $ref: '#/components/schemas/Beneficiary' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '409': { $ref: '#/components/responses/Conflict' }
-
-  /wallets/limits:
-    get:
-      tags: [Wallets]
-      operationId: getWalletLimits
-      summary: 'Effective wallet limits'
-      description: |
-        Per-currency view of the same limit data as `GET /users/me/limits`,
-        scoped to a wallet so the Send and Withdraw screens can show remaining
-        headroom inline. Kept separate because the wallet screen needs it before
-        the user opens settings.
-      externalDocs:
-        description: "PRD §3.2 Inconsistent user control across platforms"
-        url: ./Beevia_PRD.md
-      responses:
-        '200': { $ref: '#/components/responses/LimitsOk' }
 
   /wallets/transactions/{transactionId}:
     parameters:
@@ -1671,25 +1618,6 @@ components:
               label: { type: string, example: Verify your BVN }
               satisfied: { type: boolean }
               endpoint: { type: string, example: POST /kyc/bvn }
-
-    KycStatus:
-      type: object
-      properties:
-        kyc_level: { type: integer, example: 1 }
-        tiers:
-          type: array
-          items:
-            type: object
-            properties:
-              tier: { type: string, enum: [local, international] }
-              status: { type: string, enum: [not_started, in_progress, pending_review, verified, rejected] }
-              unlocks_currencies:
-                type: array
-                items: { $ref: '#/components/schemas/CurrencyCode' }
-              outstanding:
-                type: array
-                items: { type: string, example: id_document }
-              updated_at: { type: [string, 'null'], format: date-time }
 
     LedgerEntry:
       type: object
