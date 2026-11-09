@@ -630,45 +630,6 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 
-  /upgrade/nin:
-    post:
-      tags: [Upgrade]
-      operationId: upgradeVerifyNin
-      summary: Verify NIN (step 3)
-      description: |
-        The upgrade path's equivalent of `POST /kyc/nin`: looks the NIN up with
-        YouVerify and checks its name and date of birth against the verified BVN.
-        Requires an upgrade in progress with the email verified, and a verified
-        BVN (`bvn_required`). Same attempt limit and error codes as the `/kyc`
-        route.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/NinRequest' }
-      responses:
-        '200': { $ref: '#/components/responses/UserOk' }
-        '400':
-          description: '`bvn_required` / `nin_not_found` / `nin_mismatch`, or the body failed validation.'
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
-        '403':
-          description: Too many attempts in the last hour (`too_many_attempts`).
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
-        '409':
-          description: The NIN belongs to another account (`nin_already_used`).
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
-        '503':
-          description: The identity provider is unavailable (`verification_unavailable`).
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
-
   /upgrade/profile:
     post:
       tags: [Upgrade]
@@ -679,10 +640,10 @@ paths:
         customer. Unlike `POST /kyc/profile`, `email` is not resubmitted (it was
         established at `/upgrade/email`) and `gender` is optional.
 
-        Requires a verified BVN (`bvn_required`) and a verified NIN
-        (`nin_required`): the profile is the last step before provisioning, so
-        accepting it early would return a 200 that looks like a finished upgrade
-        while no account is ever opened.
+        Requires a verified BVN (`bvn_required`). The profile is the last step
+        before provisioning: once it is in, the NGN account is queued, and with
+        it the 30 days to add a NIN (`POST /kyc/nin`). The upgrade has no NIN
+        step of its own.
       requestBody:
         required: true
         content:
@@ -691,7 +652,7 @@ paths:
       responses:
         '200': { $ref: '#/components/responses/UserOk' }
         '400':
-          description: BVN or NIN not yet verified (`bvn_required` / `nin_required`), or the body failed validation.
+          description: BVN not yet verified (`bvn_required`), or the body failed validation.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
@@ -704,14 +665,17 @@ paths:
       description: |
         The user's verified tier, which steps are done, what the next tier still
         needs, any grace period, and the limits in force. There is no Tier 1:
-        banking starts at Tier 2 (a verified BVN plus a NIN that names the same
-        person), and Tier 3 adds a field-agent-confirmed address. `tier` is `0`
-        until Tier 2 is reached.
+        Tier 2 is a verified BVN plus a NIN that names the same person, and
+        Tier 3 adds a field-agent-confirmed address. `tier` is `0` until Tier 2
+        is reached.
 
-        A user who banked before the NIN was required keeps their BVN-only
-        account at `tier` 0 with a 30-day `grace_until`; `limits_tier` is then 2,
-        the tier whose limits are shown and applied. Read `limits_tier`, not
-        `tier`, to decide what to display.
+        Banking does not wait for the NIN. A BVN-only account stays at `tier` 0
+        with a 30-day `grace_until` from the day it was opened (or, for accounts
+        that predate the NIN, from the day the rule arrived); `limits_tier` is
+        then 2, the tier whose limits are shown and applied. After the 30 days
+        without a NIN, `limits_tier` drops to 0 and `limits` is `null` until
+        `POST /kyc/nin` succeeds. Read `limits_tier`, not `tier`, to decide what
+        to display.
 
         This covers the **local** ladder only. Nothing here reports an
         international tier — that remains proposed (`GET /kyc/requirements`,
@@ -834,14 +798,19 @@ paths:
     post:
       tags: [KYC]
       operationId: verifyNin
-      summary: Verify NIN (Tier 2)
+      summary: Add your NIN (Tier 2)
       description: |
+        Not part of signup or the upgrade: a banking account opened without a NIN
+        is held to Tier 2 limits for 30 days (`grace_until` on `GET /kyc/status`)
+        and adds it here, or at any time after the 30 days to get Tier 2 back.
+
         Looks the NIN up with YouVerify and compares its record with the verified
         BVN: the same date of birth, and the BVN's first and last names among the
         NIN's names (any order; case and accents ignored). Success stores the NIN,
-        sets `kyc_level` 2 and clears any grace period; the NGN account is then
-        provisioned once the profile is on file too. Calling it again after
-        success is a no-op.
+        sets `kyc_level` 2 and clears the grace period. It moves no onboarding
+        step and provisions nothing. Returns the KYC status, the same body as
+        `GET /kyc/status`, so the app can show the new tier at once. Calling it
+        again after success is a no-op.
 
         Limited to 5 attempts an hour per user (`too_many_attempts`). A provider
         outage returns `503 verification_unavailable` and alerts the team's Slack
@@ -852,7 +821,16 @@ paths:
           application/json:
             schema: { $ref: '#/components/schemas/NinRequest' }
       responses:
-        '200': { $ref: '#/components/responses/UserOk' }
+        '200':
+          description: NIN verified. The KYC state after the change.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/KycStatus' }
         '400':
           description: '`bvn_required` / `nin_not_found` / `nin_mismatch`, or the body failed validation.'
           content:
@@ -1458,10 +1436,12 @@ paths:
         wallet list. Idempotent — a repeat call returns the existing wallet.
 
         Only currencies with an implemented provider succeed today (NGN); others
-        return `provider_not_implemented`. Requires BVN verification, a verified
-        NIN and a completed KYC profile (`bvn_required` / `nin_required` /
-        `kyc_profile_required`). Existing accounts are untouched; only new NGN
-        accounts need the NIN.
+        return `provider_not_implemented`. Requires BVN verification and a
+        completed KYC profile (`bvn_required` / `kyc_profile_required`). A NIN is
+        not required: a new NGN account opened without one starts a 30-day grace
+        (`grace_until` on `GET /kyc/status`) at Tier 2 limits, in which the user
+        adds it with `POST /kyc/nin`. A grace already set, including one that has
+        run out, is never moved.
         Provisioning is queued, so the virtual account (`vba`) may be `null` on
         the first response and populate shortly after.
       requestBody:
@@ -4078,13 +4058,17 @@ paths:
 
         **Live updates.** The server emits `activity.updated` to the user's own
         socket room whenever a chat, call or payment the feed draws on changes.
-        It carries `changedType` (`chat`, `call`, `payment`) and the recomputed
+        It carries `changedType` (`chat`, `call`, `payment`, `seen`) and the recomputed
         `unattendedCount`, never the row itself: update the badge from the
         event and re-read this feed when the tab is open. Sent only to users
         with a live socket.
 
         `unattended_count` spans all three sources, not just this page, and
-        ignores `filter` and `search`. It powers the bottom-nav badge.
+        ignores `filter` and `search`. It powers the bottom-nav badge, and counts
+        only what arrived after the user last opened the tab
+        (`POST /activity/seen`); before their first visit, everything still
+        waiting on them. A row keeps its `requires_attention` flag either way,
+        until the thing is dealt with.
       parameters:
         - $ref: '#/components/parameters/DeviceIdHeader'
         - name: filter
@@ -4123,7 +4107,8 @@ paths:
         Just the badge number, for refreshing it without re-fetching the feed.
         Same value as `unattended_count` on the feed response. Takes no
         `X-Device-Id`. The `activity.updated` socket event carries the same
-        number, so a connected client need not poll this.
+        number, so a connected client need not poll this. Counts only what
+        arrived after the last `POST /activity/seen`.
       responses:
         '200':
           description: The count.
@@ -4139,6 +4124,40 @@ paths:
                         required: [count]
                         properties:
                           count: { type: integer, minimum: 0 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /activity/seen:
+    post:
+      tags: [Activity]
+      operationId: markActivitySeen
+      summary: Mark the Activity tab seen
+      description: |
+        Call when the user opens the Activity tab, and again when they leave it.
+        The badge restarts from zero: from now on `unattended_count` counts only
+        what arrives after this (messages, missed calls and money awaiting the
+        user). Rows that still need action keep `requires_attention`.
+
+        Every device of the user gets `activity.updated` with
+        `changedType: seen` and `unattendedCount: 0`, so the badge clears
+        everywhere. A client should not refetch the feed for that event.
+
+        No body. Safe to call as often as needed.
+      responses:
+        '200':
+          description: The badge is cleared.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [count, seen_at]
+                        properties:
+                          count: { type: integer, enum: [0] }
+                          seen_at: { type: string, format: date-time, description: The server's clock when the mark was set. }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
   /notifications/token:
@@ -4809,7 +4828,7 @@ components:
         unattended_count:
           type: integer
           minimum: 0
-          description: Every item needing attention across all three sources, regardless of `filter`, `search` or page.
+          description: Items needing attention that arrived after the user last marked the tab seen (`POST /activity/seen`), across all three sources, regardless of `filter`, `search` or page. Everything still waiting on them until their first visit.
 
     ActivityItem:
       type: object
@@ -5441,7 +5460,7 @@ components:
       type: object
       properties:
         tier: { type: integer, enum: [0, 2, 3], description: The verified tier. There is no Tier 1; 0 means Tier 2 is not reached. }
-        limits_tier: { type: integer, enum: [0, 2, 3], description: The tier whose limits apply. 2 for a BVN-only user inside their grace period. }
+        limits_tier: { type: integer, enum: [0, 2, 3], description: The tier whose limits apply. 2 for a BVN-only user inside their grace period; 0 once the grace has lapsed without a NIN. }
         steps:
           type: object
           properties:
@@ -5450,7 +5469,7 @@ components:
             nin: { type: boolean }
             profile: { type: boolean }
             address: { type: boolean }
-        grace_until: { type: [string, 'null'], format: date-time, description: Set only while a BVN-only user from before the NIN requirement is inside the grace period. }
+        grace_until: { type: [string, 'null'], format: date-time, description: Set only while a BVN-only user is inside the 30-day grace period to add a NIN. }
         next: { $ref: '#/components/schemas/KycNext' }
         limits:
           type: [object, 'null']
@@ -6195,11 +6214,13 @@ components:
           description: Whether the NGN wallet exists. This is the real "is banking" signal.
         next_step:
           type: string
-          enum: [email, email_verify, bvn, nin, profile, provisioning, done, not_eligible]
+          enum: [email, email_verify, bvn, profile, provisioning, done, not_eligible]
           description: |
             The action the client should take next. `provisioning` means every
             step is done and the wallet is being created; `done` means the wallet
             exists; `not_eligible` means base onboarding is incomplete. Never null.
+            There is no `nin` step: the NIN is added afterwards with
+            `POST /kyc/nin`, and `nin_verified` only says whether it has been.
 
     UpgradeProfileRequest:
       type: object

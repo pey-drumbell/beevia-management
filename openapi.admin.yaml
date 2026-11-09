@@ -2799,7 +2799,9 @@ paths:
         Assigns it to you and moves it to `in_progress`, in one conditional
         `UPDATE`, so two agents cannot both win. The loser gets
         `409 already_claimed`, with `details.assigned_to` naming the holder.
-        Re-claiming one you already hold succeeds.
+        Re-claiming one you already hold succeeds. One the assistant still holds
+        (`with_assistant`) is taken over, not claimed: see
+        `POST /admin/support/conversations/{id}/take-over`.
       x-required-permission: 'disputes:edit'
       responses:
         '200':
@@ -2819,7 +2821,53 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
         '409':
-          description: 'Held by someone else (`already_claimed`), or resolved (`conversation_closed`).'
+          description: 'Held by someone else (`already_claimed`), still with the assistant (`with_assistant`), or resolved (`conversation_closed`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /admin/support/conversations/{id}/take-over:
+    parameters:
+      - $ref: '#/components/parameters/SupportConversationId'
+    post:
+      tags: [Admin Support]
+      operationId: takeOverSupportConversation
+      summary: Take a conversation from the assistant
+      description: |
+        For one the assistant is still handling (`with_assistant`): it becomes
+        yours and `in_progress` straight away, without waiting for the
+        assistant to hand over.
+
+        The assistant signs off to the user ("Someone from the Beevia team is
+        taking over from here...") and stops. A reply it was in the middle of is
+        dropped, not posted. It then writes you a handover note in the
+        background, usually within seconds: it arrives as `support.message.new`
+        with `sender_kind: system`, and shows as `assistant_summary` on
+        `GET /admin/support/conversations/{id}`. If the assistant cannot write
+        one, a plain note says so.
+
+        **Atomic**, like a claim: of two agents at once one wins, and the other
+        gets `409 already_claimed` naming who has it.
+      x-required-permission: 'disputes:edit'
+      responses:
+        '200':
+          description: The conversation after the takeover.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/SupportConversationSummary' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such conversation (`not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '409':
+          description: 'The assistant already handed it over, so claim it instead (`not_with_assistant`), someone else has it (`already_claimed`), or it is resolved (`conversation_closed`).'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
@@ -2834,7 +2882,8 @@ paths:
       description: |
         Assigns to any admin, including yourself, and moves it to `in_progress`.
         Reassigning one someone else holds is allowed. The agent is checked for
-        existence, not for being active.
+        existence, not for being active. One the assistant still holds is taken
+        over for that agent, exactly as `take-over` does.
       x-required-permission: 'disputes:edit'
       requestBody:
         required: true
@@ -2934,7 +2983,9 @@ paths:
       description: |
         `resolved` **requires `resolutionNote`** and is final; a further change
         is `409 conversation_closed`, and a recurrence is a new conversation.
-        `with_assistant` is not settable. **This does not move money.**
+        `with_assistant` is not settable, and neither is `in_progress` on a
+        conversation the assistant holds (`409 with_assistant`): take it over
+        instead. **This does not move money.**
       x-required-permission: 'disputes:edit'
       requestBody:
         required: true
@@ -2960,7 +3011,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
         '409':
-          description: 'Already resolved (`conversation_closed`).'
+          description: 'Already resolved (`conversation_closed`), or still with the assistant (`with_assistant`).'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }

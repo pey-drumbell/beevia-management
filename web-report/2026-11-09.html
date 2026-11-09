@@ -1,0 +1,874 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beevia — Project Status — 9 Nov 2026</title>
+<meta name="description" content="The server stopped requiring a NIN to open a banking account, so every new account now starts a 30-day clock the app cannot stop. The two limits routes described on 6 Nov returned 500 for most users until 6 Nov 15:08 UTC. Sprint 1002 has been over for four days with the board untouched for 5.0 days: 36 of 44 leaves unfinished, none accepted, no successor sprint. API surface 160 / 76, route drift zero after spec updates. MVP estimate 67.32, unchanged.">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!--
+  DIRECTION CONTRACT · seed 6c4a0ed0 (carried forward unchanged)
+  THESIS: A status report whose subject is the disagreement between its sources.
+  STORY: The NIN is optional now but the app cannot send one, the limits routes had been
+  failing, and the sprint is four days over with the board untouched.
+-->
+
+<div class="topbar">
+    <div class="topbar__mark">
+      <span class="barcode" aria-hidden="true"></span>
+      <span class="topbar__wordmark">Beevia</span>
+    </div>
+    <nav class="topbar__nav label" aria-label="Report">
+      <a href="index.html">Archive</a>
+      <a href="#overview">Overview</a>
+      <a href="#s2"><span>1002 review</span></a>
+      <a href="#s1"><span>Board</span></a>
+      <a href="#method">Method</a>
+    </nav>
+</div>
+
+<header class="masthead">
+  <div class="field">
+    <div class="field__rail field__rail--l">
+      <dl>
+        <dt>Sprints open</dt>
+        <dd>1002 &middot; 21 Oct &rarr; 5 Nov &middot; ended four days ago, day 20</dd>
+        <dt>1002 leaves</dt>
+        <dd>1 To do &middot; 3 In progress &middot; 32 QA &middot; 0 Blocked &middot; 8 Done</dd>
+        <dt>Route drift</dt>
+        <dd>1 new, 1 gone, 1 admin &rarr; 0 after spec update &middot; 160 / 76</dd>
+        <dt>Window</dt>
+        <dd>3.0 days &middot; Fri &rarr; Mon</dd>
+      </dl>
+    </div>
+
+    <div class="field__stage">
+      <div class="field__title">
+        <h1>Project<br>Status</h1>
+      </div>
+      <div class="field__meta num">
+        <span>2026-11-09</span>
+        <span>1002 ended &middot; 0902 swept &middot; 0901-admin static</span>
+        <span>21 Oct&ndash;5 Nov</span>
+        <span>api 1797949 &middot; admin-api b4e9744 &middot; db-schema v0.0.53 &middot; mobile BVA-I353 f46641f</span>
+      </div>
+    </div>
+
+    <div class="field__rail field__rail--r">
+      <dl>
+        <dt>Board actions on 1002</dt>
+        <dd>0 in the window &middot; last 4 Nov 16:13 UTC &middot; 5.0 days</dd>
+        <dt>Sprint end</dt>
+        <dd>Thu 5 Nov, passed &middot; 36 of 44 leaves not Done &middot; no successor</dd>
+        <dt>1002 QA with merged code</dt>
+        <dd>11 of 32 &middot; 0 accepted</dd>
+        <dt>6 Nov recommendations moved</dt>
+        <dd>1 of 22</dd>
+      </dl>
+    </div>
+  </div>
+</header>
+
+<section class="mvp" aria-label="MVP readiness estimate">
+  <div class="mvp__head">
+    <span class="mvp__label label">MVP readiness &mdash; estimate</span>
+    <span class="mvp__pct num">&asymp;67%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 69 days past</span>
+  </div>
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged. The NIN becoming optional at account opening, the working limits route and the new support take-over route do not move a line. E2EE messaging 0.90; voice and video calling 0.92; message translation 0.60; local KYC 0.90; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.80; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
+    <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.90"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.92"><i style="width:92%"></i></span>
+    <span class="mvp__seg" style="flex:7" title="Message translation — 0.60"><i style="width:60%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.90"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
+    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.85"><i style="width:85%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.92"><i style="width:92%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
+    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0.80"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
+    <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.97"><i style="width:97%"></i></span>
+  </div>
+  <p class="mvp__read"><strong>67.32, unchanged.</strong> The NIN is optional at account opening, the limits route works, and support gained a take-over route, but the app still has no NIN step, the limits are applied nowhere and the dashboard has no screen, so no line moves. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. <a href="#mvp-method">Method and capability table</a>.</p>
+</section>
+
+<div class="shell">
+  <nav class="contents label" aria-label="Contents">
+    Contents
+    <ol>
+      <li><a href="#overview"><span>00</span> Quick overview</a></li>
+      <li><a href="#s1"><span>01</span> Board movement</a></li>
+      <li><a href="#s2"><span>02</span> Sprint 1002: review vs code</a></li>
+      <li><a href="#s3"><span>03</span> Code, API and drift</a></li>
+      <li><a href="#s4"><span>04</span> Risks</a></li>
+      <li><a href="#s5"><span>05</span> PRD gap</a></li>
+      <li><a href="#s6"><span>06</span> Team performance</a></li>
+      <li><a href="#s7"><span>07</span> Previous recommendations</a></li>
+      <li><a href="#s8"><span>08</span> What I would do this week</a></li>
+      <li><a href="#admin"><span>&mdash;</span> Admin dashboard board</a></li>
+      <li><a href="#method"><span>&mdash;</span> Method</a></li>
+    </ol>
+  </nav>
+
+  <main class="doc">
+    <section class="sec" id="overview">
+      <div class="sec__h"><span class="sec__n">00</span><h2>Quick overview</h2></div>
+
+<div class="invert" style="margin-bottom:var(--s-6)"><p class="lede"><strong>The server stopped requiring a NIN to open a banking account this morning, so Friday's headline risk is gone and a smaller one replaced it: every new account now starts a 30-day clock that the app has no way to stop. Separately, Friday's edition described two limits routes from their code, and they were returning <code>500</code> for most users until 6 Nov 15:08 UTC. Meanwhile sprint 1002 has been over for four days: the board has not been touched in 5.0 days, 36 of 44 leaves are unfinished, nothing was accepted, and there is still no successor sprint.</strong></p></div>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Metric</th>
+<th style="text-align: right;">6 Nov</th>
+<th style="text-align: right;">9 Nov</th>
+<th scope="col">Δ</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">Sprint 1002 items (leaves + parents)</th>
+<td style="text-align: right;">63 (44+19)</td>
+<td style="text-align: right;"><strong>63 (44+19)</strong></td>
+<td>none added or removed</td>
+</tr>
+<tr><th scope="row">Sprint 1002 leaves To do / In progress / REVIEW/QA / BLOCKED / Done</th>
+<td style="text-align: right;">1 / 3 / 32 / 0 / 8</td>
+<td style="text-align: right;"><strong>1 / 3 / 32 / 0 / 8</strong></td>
+<td>none. All four sidecars are byte-identical to 6 Nov</td>
+</tr>
+<tr><th scope="row">Board actions on 1002 in the window</th>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td>last action 4 Nov 16:13 UTC, <strong>5.0 days ago</strong></td>
+</tr>
+<tr><th scope="row">Transitions into REVIEW/QA, last 7 days (leaves)</th>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;"><strong>16</strong></td>
+<td>all on 3–4 Nov: 8 by the leaf's owner (Ayomikun), 6 moved by Ayomikun on others' items, 2 by board administration on David's</td>
+</tr>
+<tr><th scope="row">Owners' last submission of their <em>own</em> leaf</th>
+<td style="text-align: right;">3 Nov 16:04 UTC (Ayomikun, <code>I387</code>)</td>
+<td style="text-align: right;"><strong>3 Nov 16:04 UTC</strong> (unchanged)</td>
+<td>David's last own submission is 14 Oct, <strong>26.0 days</strong> ago</td>
+</tr>
+<tr><th scope="row">Items that left REVIEW/QA on 1002, ever</th>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td>checked in the sidecar</td>
+</tr>
+<tr><th scope="row">1002 REVIEW/QA leaves with matching <strong>merged</strong> code</th>
+<td style="text-align: right;">11 of 32</td>
+<td style="text-align: right;"><strong>11 of 32</strong></td>
+<td>none of the weekend's merges maps to a review item</td>
+</tr>
+<tr><th scope="row">Routes in code but not in the spec (consumer / admin), before today's edits</th>
+<td style="text-align: right;">4 / 0</td>
+<td style="text-align: right;"><strong>1 / 1</strong> (+1 documented route gone)</td>
+<td>now <strong>0 / 0</strong>: specs updated</td>
+</tr>
+<tr><th scope="row">API surface (consumer / admin)</th>
+<td style="text-align: right;">160 / 75</td>
+<td style="text-align: right;"><strong>160 / 76</strong></td>
+<td>+1 −1 / +1 (<code>POST /activity/seen</code> in, <code>POST /upgrade/nin</code> out; admin <code>take-over</code>)</td>
+</tr>
+<tr><th scope="row">Proposed operations (consumer / admin)</th>
+<td style="text-align: right;">32 / 18</td>
+<td style="text-align: right;"><strong>32 / 18</strong></td>
+<td>none</td>
+</tr>
+<tr><th scope="row">Backend repos that deploy or migrate production on push with no test gate</th>
+<td style="text-align: right;">3 of 3</td>
+<td style="text-align: right;"><strong>3 of 3</strong></td>
+<td>five merges and migration 0053 went through it</td>
+</tr>
+<tr><th scope="row"><code>beevia-admin</code> days since a commit</th>
+<td style="text-align: right;">7.0</td>
+<td style="text-align: right;"><strong>10.0</strong></td>
+<td></td>
+</tr>
+<tr><th scope="row"><code>beevia-mobile</code> days since a commit on <code>main</code></th>
+<td style="text-align: right;">15.2</td>
+<td style="text-align: right;"><strong>18.2</strong></td>
+<td><code>BVA-I353</code> unchanged (<code>f46641f</code>, <strong>5.2 d</strong> ago), still no PR</td>
+</tr>
+<tr><th scope="row"><code>beevia-api</code> / <code>beevia-admin-api</code> / <code>beevia-db-schema</code> days since a commit</th>
+<td style="text-align: right;">0.1 / 1.0 / 0.1</td>
+<td style="text-align: right;"><strong>0.0 / 2.1 / 0.0</strong></td>
+<td>5 merges on <code>beevia-api</code> and <code>beevia-db-schema</code> (#102–#105, #34) + 1 bot release, 1 on <code>beevia-admin-api</code> (#31)</td>
+</tr>
+<tr><th scope="row">Admin board: open sprint / days since any activity</th>
+<td style="text-align: right;">none / 53.0</td>
+<td style="text-align: right;"><strong>none / 56.0</strong></td>
+<td></td>
+</tr>
+<tr><th scope="row">Estimation points set (1002)</th>
+<td style="text-align: right;">0/63</td>
+<td style="text-align: right;"><strong>0/63</strong></td>
+<td></td>
+</tr>
+<tr><th scope="row">MVP readiness (estimate)</th>
+<td style="text-align: right;">≈67% (67.32)</td>
+<td style="text-align: right;"><strong>≈67%</strong> (67.32)</td>
+<td><strong>0</strong>: see the appendix</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Two corrections to the 6 Nov edition, and one claim that is no longer true.</strong></p>
+<ol>
+<li><strong>Correction: <code>GET /wallets/limits</code> and <code>GET /kyc/status</code> did not work for most users.</strong> The 6 Nov edition described both from their code and commit messages ("both now serve a tier and its limits"; <code>I362</code>'s text is "exactly what the route returns") and did not catch a defect that <code>beevia-api</code> #102 fixed at 15:08 UTC that day, five minutes after the cut-off. Both routes read the tier's row with <code>findById</code>, but <code>kyc_tier_limits</code> is keyed by <code>tier</code> and has no <code>id</code> column, so the data layer threw before any query ran and the filter returned <code>500 database_error</code> for every user on Tier 2 or 3 and every BVN-only user in grace, which is every existing banking user. The merge was at 12:58 UTC, so they were exposed for about 2 hours, if the deploy followed at once. The unit specs mocked the lookup that threw. This edition also withdraws a smaller claim from the same section: the branch's limits screen would not have read zeros against the published code, it would have met a <code>500</code>. The route now works (§3.1), and <strong>the screen still parses the old proposal</strong>.</li>
+<li><strong>Not an error, but no longer true: "a new banking user would finish every screen and never get an account."</strong> It was right for the code as of 6 Nov. <code>beevia-api</code> #104 (9 Nov, 09:47 UTC) removed the NIN from signup and from the upgrade, so provisioning no longer waits for it (§3.1). Nothing else in the 6 Nov headline changed: the limits are still applied nowhere.</li>
+<li><strong>Recommendation 2 of the 6 Nov list (hold the NIN requirement back until the app can send one) was met</strong>, by moving the NIN after account opening instead of behind a switch. It is the only one of the 22 that moved (§7).</li>
+</ol>
+<p><strong>Team, at a glance:</strong></p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Person</th>
+<th scope="col">Owns</th>
+<th scope="col">Board leaves</th>
+<th style="text-align: right;">Submissions (7d)</th>
+<th scope="col">Median cycle</th>
+<th scope="col">Open WIP</th>
+<th style="text-align: right;">Commits (7d)</th>
+<th scope="col">Flag</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">Ayomikun Araoye</th>
+<td>backend + admin API</td>
+<td><strong>1002: 18</strong> (1 In progress, 15 REVIEW/QA, 2 Done) · <code>I392</code> shared · 0901-admin: 1 In progress</td>
+<td style="text-align: right;"><strong>8 own</strong> (+6 moves on other items), all 3–4 Nov</td>
+<td>1.44 d (n=21)</td>
+<td><code>I362</code> (<strong>5.0 d</strong>, code merged, route fixed 6 Nov) · <code>BVA-I8</code> on 0901-admin (<strong>56.0 d</strong>)</td>
+<td style="text-align: right;"><strong>43</strong> (27 <code>beevia-api</code>, 8 <code>beevia-admin-api</code>, 8 <code>beevia-db-schema</code>)</td>
+<td>Four of the five weekend features are not items on any board. The tier limits are still applied nowhere</td>
+</tr>
+<tr><th scope="row">David Samuel</th>
+<td>mobile</td>
+<td><strong>1002: 16</strong> (1 To do, 2 In progress, 11 REVIEW/QA, 2 Done) · <code>I392</code> shared</td>
+<td style="text-align: right;">5 (<strong>0 own</strong>, 3 moved by Ayomikun, 2 by board administration)</td>
+<td>0.99 d (n=36)</td>
+<td>2: <code>I331</code> (<strong>18.2 d</strong>), <code>I361</code> (6.3 d)</td>
+<td style="text-align: right;"><strong>0 on <code>main</code></strong> · <strong>2 on <code>BVA-I353</code></strong></td>
+<td>No push in 5.2 days. The limits screen still parses a response that never shipped, and there is no NIN step to build against the 30-day clock</td>
+</tr>
+<tr><th scope="row">Philip Chidera</th>
+<td>design</td>
+<td><strong>1002: 7</strong> (4 REVIEW/QA, 3 Done) · <code>I392</code> shared (Done)</td>
+<td style="text-align: right;">1 (moved by Ayomikun)</td>
+<td>0.89 d (n=3)</td>
+<td>none</td>
+<td style="text-align: right;">n/a</td>
+<td>Zero WIP and nothing left To do. A NIN screen is now a design gap with a deadline</td>
+</tr>
+<tr><th scope="row">Promise Udo</th>
+<td>admin dashboard</td>
+<td>0901-admin: 4 (3 Done, 1 In progress) · <strong>1002: 0</strong></td>
+<td style="text-align: right;">0</td>
+<td>n/a</td>
+<td><code>BVA-I9</code> (<strong>56.0 d</strong>)</td>
+<td style="text-align: right;"><strong>0</strong> (<code>beevia-admin</code>, last 30 Oct)</td>
+<td>No commit in 10.0 days, and this may be unpushed. The server gained a take-over route over the weekend, on top of hours, unread counts, the article list and card-limit defaults, and none has a screen</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>The three questions for standup:</strong> (1) <strong>What happens to 1002, which ended on Thursday?</strong> 36 leaves are not Done, nobody has touched the board for 5 days, and the only precedent is a sweep that marked unbuilt work Done. (2) <strong>Who builds the NIN step, and who owns the 30-day clock?</strong> From today every new banking user has 30 days to add a NIN the app cannot send, then drops to Tier 0. Nothing enforces the limits yet, so nothing visible happens until it does. (3) <strong>Has anyone called <code>GET /wallets/limits</code> on a real account since Friday afternoon, and should the Activity tab call <code>POST /activity/seen</code>?</strong> The server clears the badge when asked and the app never asks.</p>
+<p><strong>The three things worth knowing:</strong></p>
+<div class="stack">
+  <div class="finding"><div class="finding__n num">1</div><div><p><strong>A banking account no longer needs a NIN, and the app still cannot send one.</strong> Signup and the upgrade stop asking; the account opens after BVN and profile; a new account without a NIN is held to Tier 2 limits for 30 days (<code>grace_until</code>) and then to Tier 0 until <code>POST /kyc/nin</code> succeeds. That route now returns the KYC status instead of the user. Existing users keep the 30 days migration 0051 gave them, ending about 6 Dec. <code>beevia-mobile</code> has no NIN step on <code>main</code> or on <code>BVA-I353</code>, and none is on the board (§3.1).</p></div></div>
+  <div class="finding"><div class="finding__n num">2</div><div><p><strong>The limits routes now work, and the limits are still applied nowhere.</strong> <code>GET /wallets/limits</code> and <code>GET /kyc/status</code> read the table; no send, payout or card funding does. The only client for the first reads the proposal's field names. The honest state is a screen that would show a correct number for a cap the server does not hold (§3.1, §3.3).</p></div></div>
+  <div class="finding"><div class="finding__n num">3</div><div><p><strong>1002 is four days over with the board untouched, and the weekend's backend work is not on it.</strong> No board action since 4 Nov 16:13 UTC, no sweep, no successor sprint, so the filter still cannot move. 32 of the 36 unfinished leaves are in review: 11 with merged code, 11 on a branch with no PR, 3 with no matching code, 4 designs whose files are not in git, 3 backend items that already existed. The weekend's four features (NIN change, limits fix, support take-over, Activity badge) map to no item. Nothing has ever left review on 1002 (§1.3, §2).</p></div></div>
+</div>
+<p><strong>If you read nothing else:</strong> decide today what 1002's 36 open leaves become, before anyone sweeps it, and put the NIN step on the board with a design and an owner, because the clock it stops has been running for new users since this morning.</p>
+    </section>
+
+    <section class="sec" id="s1">
+      <div class="sec__h"><span class="sec__n">01</span><h2>Board movement</h2></div>
+
+<h3>1.1 Sprints 0902, 0901, 0901-admin and 08-01</h3>
+<p>All static. 0902 and 0901 were re-exported for cycle times only (<code>--no-descriptions</code>) and are unchanged. The 08-01 and 0901-admin sidecars are byte-identical to 6 Nov, and the CSVs differ only in the export date. The audit's <code>SINCE</code> block compares two 08-01 exports and correctly reports no change. <code>ZOHO_SPRINT_FILTER</code> still points at 08-01. Zoho lists the same six Beevia sprints (<code>1002</code>, <code>0902</code>, <code>0901</code>, <code>08-01</code>, <code>0702</code>, <code>0701</code>) and only <code>0901-admin</code> for the admin project, checked at about 14:50 UTC today: <strong>no successor to 1002 exists.</strong></p>
+<h3>1.2 Sprint 1002</h3>
+<p><strong>63 items: 44 leaves + 19 parents</strong>, unchanged. <strong>Nothing moved in the window.</strong> The 1002 sidecar is byte-identical to the one taken on 6 Nov, so there was no status change, no owner change, no comment and no new item. 1002's board actions per day:</p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th style="text-align: right;">26 Oct</th>
+<th style="text-align: right;">27 Oct</th>
+<th style="text-align: right;">28 Oct</th>
+<th style="text-align: right;">29 Oct</th>
+<th style="text-align: right;">30 Oct</th>
+<th style="text-align: right;">31 Oct</th>
+<th style="text-align: right;">1 Nov</th>
+<th style="text-align: right;">2 Nov</th>
+<th style="text-align: right;">3 Nov</th>
+<th style="text-align: right;">4 Nov</th>
+<th style="text-align: right;">5 Nov</th>
+<th style="text-align: right;">6 Nov</th>
+<th style="text-align: right;">7–8 Nov (weekend)</th>
+<th style="text-align: right;">9 Nov (to 15:03)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">17</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;"><strong>23</strong></td>
+<td style="text-align: right;"><strong>4</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>No comments in the window, and none on 1002 ever.</strong> <code>I392</code> still shows Done with 0 of 63 ticked. <strong>Nothing has ever left REVIEW/QA on 1002.</strong></p>
+<p><strong><code>I362</code> reads In progress, and its code is merged and now works.</strong> Its text is "endpoint returning the user's tier, its limits (daily, monthly, single transfer), and today's usage". <code>GET /wallets/limits</code> returns that, and since 6 Nov 15:08 UTC it returns it for real users (§3.1). It has been In progress for 5.0 days. Moving it to review is the owner's call. Its parent <code>I359</code> (<em>Transaction Limits &amp; Tier</em>) is To do and unassigned, with <code>I360</code> Done and <code>I361</code> (the screen) In progress.</p>
+<h3>1.3 Four days past 1002's end</h3>
+<p>1002 ended <strong>Thursday 5 Nov</strong>. 36 of its 44 leaves are not Done: 32 in REVIEW/QA, 3 In progress (<code>I331</code>, <code>I361</code>, <code>I362</code>), 1 To do (<code>I373</code>, reflect card spending in the app). The only precedent is 0902. It ran six days past its end date, then a 21 Oct sweep by board administration marked its 7 REVIEW/QA leaves Done and removed 15 leaves to a destination the export cannot see. 1002 is now at day four past its end, with neither a sweep nor a carry-over. A sweep would mark Done work that has no merged code (§2) and would not say so.</p>
+<p><strong>The weekend's backend work was not on the board.</strong> #102 (the limits fix), #103 and admin-api #31 (support take-over), #104 (the NIN change) and #105 with schema #34 (the Activity badge) are not items. <code>I362</code> covers the limits route but not its fix. The closest parents are <code>I349</code> (Support Inbox, To do, unassigned) and the Activity items under the closed <code>I392</code>. This is a limit of the board, not a finding about the work.</p>
+    </section>
+
+    <section class="sec" id="s2">
+      <div class="sec__h"><span class="sec__n">02</span><h2>Sprint 1002: what is in review, and whether the code exists</h2></div>
+
+<p>Unchanged from 6 Nov: the weekend's merges map to no review item.</p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">REVIEW/QA leaves (32)</th>
+<th style="text-align: right;">Count</th>
+<th scope="col">Items</th>
+<th scope="col">Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">Backend, matching merged code</th>
+<td style="text-align: right;"><strong>11</strong></td>
+<td><code>I366</code>, <code>I335</code>, <code>I338</code>, <code>I341</code>, <code>I332</code>, <code>I344</code>, <code>I347</code>, <code>I350</code>, <code>I352</code>, <code>I387</code>, <code>I391</code></td>
+<td>Routes on <code>origin/main</code>. <code>I387</code> caps funding, not spending, and has no maximum for the user. <code>I391</code> asks for pagination, search, filter and the Activity tab's query logic, and has none of them</td>
+</tr>
+<tr><th scope="row">Backend, already existed or no identifiable change</th>
+<td style="text-align: right;">3</td>
+<td><code>I370</code>, <code>I377</code>, <code>I358</code></td>
+<td>Unchanged</td>
+</tr>
+<tr><th scope="row">Mobile, code only on <code>origin/BVA-I353</code></th>
+<td style="text-align: right;"><strong>11</strong></td>
+<td><code>I334</code>, <code>I337</code>, <code>I340</code>, <code>I343</code>, <code>I346</code>, <code>I354</code>, <code>I357</code>, <code>I365</code>, <code>I369</code>, <code>I376</code>, <code>I390</code></td>
+<td>Unmerged, no PR. <code>I390</code> is unassigned and its list would be empty (4 Nov §3.4)</td>
+</tr>
+<tr><th scope="row">Moved to review, no matching code</th>
+<td style="text-align: right;">3</td>
+<td><code>I348</code>, <code>I386</code>, <code>I372</code></td>
+<td><code>I348</code>: mock only, and its server table is gone. <code>I386</code>: nothing on the branch calls card <code>/limits</code>. <code>I372</code>: no code, and not buildable as written</td>
+</tr>
+<tr><th scope="row">Design</th>
+<td style="text-align: right;">4</td>
+<td><code>I364</code>, <code>I368</code>, <code>I375</code>, <code>I389</code></td>
+<td>Design files are not in git</td>
+</tr>
+</tbody>
+</table>
+</div>
+<ul>
+<li><strong>Done without matching merged code:</strong> <code>I380</code>, <code>I381</code> (no attempt limit or lockout on <code>POST /auth/step-up</code>, no reopen), <code>I383</code> (client on the branch) and <code>I384</code>. All unchanged.</li>
+<li><strong>Stories out of step with their children:</strong> <code>I371</code> is To do with <code>I372</code> in review. <code>BVA-I349</code> (Support Inbox) is To do and unassigned with <code>I350</code> in review, and the inbox now has a take-over route no item mentions. <code>BVA-I351</code> (FAQ CMS) is To do and unassigned with <code>I352</code> in review. <code>I359</code> is To do and unassigned with <code>I360</code> Done and <code>I362</code> carrying merged code.</li>
+<li><strong><code>origin/BVA-I353</code>:</strong> 9 ahead, 4 behind <code>main</code>, 91 files. Last commit <code>f46641f</code> <em>card history, dispute events</em> (4 Nov 10:13 UTC), unchanged for <strong>5.2 days</strong>. <strong>No PR.</strong> <code>refs/pull/54</code> and <code>55</code> are dependabot branches; the newest pull ref on <code>beevia-mobile</code> is <code>55</code>.</li>
+<li><strong>WIP ages:</strong> <code>I331</code> 18.2 d, <code>I361</code> 6.3 d, <code>I362</code> 5.0 d.</li>
+</ul>
+    </section>
+
+    <section class="sec" id="s3">
+      <div class="sec__h"><span class="sec__n">03</span><h2>Code, API surface and spec drift</h2></div>
+
+<p><strong>Audit: clean after today's edits.</strong> Against a <code>git archive</code> shadow of <code>origin/main</code> (<code>$BEEVIA_ROOT=/tmp/beevia-shadow-2026-11-09</code>), it first reported 1 consumer route undocumented (<code>POST /activity/seen</code>), 1 documented route gone (<code>POST /upgrade/nin</code>) and 1 admin route undocumented (<code>POST /admin/support/conversations/{id}/take-over</code>), exit 1. After the spec changes: 160/160 consumer, 76/76 admin, proposed 32/18, spec health clean, no <code>x-beevia-*</code> (exit 0). The in-repo audit still reports 74 phantom lines from the three <code>diverged</code> working trees (31 consumer and 41 admin "in spec, not in code", and 2 "in code, not in spec"), the same as 6 Nov, and they were not acted on.</p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Repo</th>
+<th scope="col">From → to</th>
+<th scope="col">What</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row"><code>beevia-db-schema</code> <code>main</code></th>
+<td><code>e420d4c</code> → <code>01f677c</code></td>
+<td>#34, <strong>v0.0.53</strong>: <code>users.activity_seen_at</code>, migration 0053, released 1 minute after the merge</td>
+</tr>
+<tr><th scope="row"><code>beevia-api</code> <code>main</code></th>
+<td><code>1033fe8</code> → <code>1797949</code></td>
+<td>#102 limits lookup fix. #103 support take-over worker. #104 the NIN moves after account opening. #105 <code>POST /activity/seen</code></td>
+</tr>
+<tr><th scope="row"><code>beevia-admin-api</code> <code>main</code></th>
+<td><code>a7cb08b</code> → <code>b4e9744</code></td>
+<td>#31 <code>POST /admin/support/conversations/{id}/take-over</code>; BullMQ added</td>
+</tr>
+<tr><th scope="row"><code>beevia-mobile</code> <code>BVA-I353</code></th>
+<td><code>f46641f</code></td>
+<td>Unchanged. Unmerged (§2)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code>beevia-admin</code> (<code>64304ef</code>, 30 Oct) and <code>beevia-mobile</code> <code>main</code> (<code>ccb4f63</code>, 22 Oct) did not move. #105's package pin and #34 landed in the right order by merge time (schema 14:04 UTC, release 14:05 UTC, API 14:13 UTC); whether the migration had run in production by then cannot be seen.</p>
+<h3>3.1 The NIN, the limits routes and the Activity badge</h3>
+<ul>
+<li><strong>A banking account no longer waits for a NIN (#104).</strong> Signup and the chat-to-banking upgrade stop asking for it. The account opens once BVN and profile are in, and <strong>opening it without a NIN sets <code>kyc_grace_until</code> 30 days out</strong>, held to Tier 2 limits. A grace already set (the 6 Dec one from migration 0051, or one that has lapsed) is never moved. After the 30 days without a NIN, limits drop to Tier 0 until the user adds one. <code>POST /wallets</code> no longer refuses with <code>nin_required</code>; <code>POST /upgrade/profile</code> needs only a verified BVN.</li>
+<li><strong><code>POST /upgrade/nin</code> is removed, and <code>POST /kyc/nin</code> changed.</strong> It is now NIN only: it checks the NIN against the BVN record, sets Tier 2, clears the grace, moves no onboarding step, provisions nothing and works after the 30 days. <strong>It returns the KYC status (the body of <code>GET /kyc/status</code>) instead of the user.</strong> The spec was updated in place; both specs, the RFC and <code>suggestions.md</code> §4.16 carry the change.</li>
+<li><strong>The limits routes were failing, and are fixed (#102).</strong> See correction 1. The new database-backed spec runs both services through the real data layer against the seeded rows, and fails before the fix. Both routes also return correctly for a user in grace and at Tier 2 and 3.</li>
+<li><strong><code>POST /activity/seen</code> (#105, schema 0.0.53).</strong> Sets <code>users.activity_seen_at</code> from the database clock and returns <code>{ count: 0, seen_at }</code>. From then on <code>unattended_count</code> counts only what arrived after the mark: messages, missed calls and money awaiting the user. Rows that still need action keep <code>requires_attention</code>. Every device of the user receives <code>activity.updated</code> with <code>changed_type: seen</code> and <code>unattended_count: 0</code>. <strong>Nothing on <code>beevia-mobile</code> calls it</strong>, but <code>ActivityProvider</code> already copies <code>unattended_count</code> from that event into the badge, so the app side needs only the call.</li>
+<li><strong>Support take-over (#103 and admin-api #31).</strong> A person takes a thread the assistant still holds. The admin API moves the thread and queues a handover job (BullMQ <code>support-takeover</code>, on the Redis both services share). A worker in <code>beevia-api</code> asks the assistant for a note, or posts a plain one if the assistant is off or fails, and logs the turn as <code>takeover</code>. The assistant's reply is now applied under a row lock and only while the thread is <code>with_assistant</code>, so a reply that lands after the takeover is dropped (<code>superseded</code>) instead of reaching the user or re-queuing the thread. <code>claim</code> and <code>status → in_progress</code> on an assistant-held thread now return <code>409 with_assistant</code>; <code>assign</code> runs the takeover.</li>
+<li><strong>Not touched:</strong> the tier limits are applied nowhere; <code>kyc_holds</code>, Tier 3 and any admin route for the limits have no code; <code>isSubjectConsent</code> is a constant; <code>GET /cards/{id}/transactions</code> is in kobo.</li>
+</ul>
+<h3>3.2 What the change leaves open</h3>
+<ul>
+<li><strong>The 30-day clock now runs for every new banking user, and the app cannot stop it.</strong> The consequence is invisible today only because the limits are not enforced.</li>
+<li><strong>The dashboard has no screen for take-over, the article list, the unread counts, the hours or the card-limit default.</strong> No role holds <code>disputes</code>, so even a finished screen would meet a <code>403</code> (4 Nov §3.2).</li>
+<li><strong>The queue between the two services has one fallback and no signal.</strong> If the worker is down, every take-over posts the plain note and the agent gets no summary. <code>suggestions.md</code> §4.16.</li>
+<li><strong><code>beevia-admin-api</code> pins <code>beevia-db-schema</code> 0.0.50, while the consumer API is on 0.0.53 and the database has migration 0053.</strong> Harmless until the admin API writes to a table a later migration changed (<code>suggestions.md</code> §4.16).</li>
+</ul>
+<h3>3.3 The app against the new contract</h3>
+<p><code>beevia-mobile</code> <code>main</code> and <code>BVA-I353</code> were searched for <code>/kyc/nin</code>, <code>/upgrade/nin</code>, <code>/kyc/status</code>, <code>/activity/seen</code>, <code>nin_verified</code> and the <code>nin</code> next step. None is called. <code>/wallets/limits</code> is called only on the branch, by <code>wallet_limits.dart</code>, which reads <code>per_transaction_max</code>, <code>daily_max</code>, <code>daily_remaining</code>, <code>monthly_max</code> and <code>monthly_remaining</code> from a list. The route returns one object with <code>daily.limit</code>, <code>daily.used</code> and so on, so the usage card would read 0 of 0. The screen's header cites <code>openapi.proposed.yaml</code>, which no longer holds the operation. <strong>Nothing here changed since 6 Nov.</strong></p>
+<h3>3.4 The standing checks</h3>
+<ul>
+<li><strong>Seams in the support inbox, the article list and the card list</strong>: not touched by the weekend's diff (the inbox's transaction type and <code>or</code>, the payment lookup, <code>unreadOnly</code> before paging, the <code>timezone</code> check, <code>search</code> locale, <code>meta.total</code>, the kobo field).</li>
+<li><strong><code>beevia-api</code> <code>release.yml</code></strong>: read in full. <code>sync</code> still has no <code>needs: test</code>, and its comment still says hosted runners cannot start jobs. No workflow file changed in the range.</li>
+<li><strong>Branch protection and CI results</strong>: cannot be seen from here.</li>
+</ul>
+<h3>3.5 Document changes this cycle</h3>
+<p><code>openapi.yaml</code>: added <code>POST /activity/seen</code>; removed <code>POST /upgrade/nin</code>; <code>POST /kyc/nin</code> now returns <code>KycStatus</code> and says it is not part of signup; <code>GET /kyc/status</code>, <code>POST /wallets</code>, <code>POST /upgrade/profile</code>, <code>UpgradeStatus.next_step</code> (the <code>nin</code> step removed), <code>KycStatus.grace_until</code>, <code>limits_tier</code>, <code>GET /activity</code>, <code>GET /activity/unattended-count</code> and the <code>activity.updated</code> text all updated to the new behaviour. <code>openapi.admin.yaml</code>: added <code>take-over</code>; <code>claim</code>, <code>assign</code> and <code>status</code> describe the <code>with_assistant</code> rule. <code>openapi.proposed.yaml</code> and <code>openapi.admin.proposed.yaml</code>: unchanged. <code>api-rfc.md</code>: inventory rows, a supersession note on §5.22 and a new §5.23. <code>admin-api-rfc.md</code>: 75 → 76 operations and a take-over row in §3.16. <code>suggestions.md</code>: new §4.16, and item 1 of §4.15 marked resolved on the server.</p>
+    </section>
+
+    <section class="sec" id="s4">
+      <div class="sec__h"><span class="sec__n">04</span><h2>Risks</h2></div>
+
+<ul>
+<li><strong>The 30-day NIN clock.</strong> New banking users have 30 days to add a NIN through an app that cannot send one. The effect is invisible while limits are unenforced, and sharp the day they are. Existing users reach the same cliff about 6 Dec.</li>
+<li><strong>1002 ended four days ago with nothing accepted and no successor sprint.</strong> A sweep like 0902's would mark no-code, mock-only and unmerged work as delivered, and the 36 unfinished leaves have no destination.</li>
+<li><strong>A limit that is shown and not applied.</strong> The routes report a daily cap, a monthly cap and a maximum balance that nothing enforces. Switching enforcement on later also decides what happens at the end of the grace.</li>
+<li><strong>A route that was published, announced in a report, and failed for most users, and nothing noticed for two hours.</strong> The only automated check was a mock. Any route that has only mocked specs is unproven.</li>
+<li><strong>All of mobile's sprint work is on one unreviewed branch</strong>, 91 files, with <code>main</code> 18 days behind it. Each day the server moves, the branch has more contract to catch up with.</li>
+<li><strong>Every backend repo still deploys or migrates production on push without a test gate</strong>, and one more migration (0053) used it.</li>
+<li><strong>A user can be told a person is coming when none can come.</strong> No role holds <code>disputes</code>, and take-over makes that sentence more likely to be true to the user while the agent still has no screen.</li>
+<li><strong><code>isSubjectConsent: true</code> is sent to a third party for every BVN and NIN lookup</strong> with no consent record. Unchanged.</li>
+<li><strong>A real charge could be answered with "that isn't yours".</strong> Merchant payments have no dispute path and the assistant's instructions say otherwise. Unchanged.</li>
+<li><strong>Done and REVIEW/QA on the board hide open work.</strong> <code>I381</code>'s lockout does not exist, so guessing a 4-digit PIN against <code>/auth/step-up</code> has no limit visible in the code, and that token also guards raising a card limit.</li>
+<li><strong>The FAQ is still empty in production</strong> until someone grants <code>help_center</code> and enters content.</li>
+<li><strong>The funding fix still depends on one environment variable that cannot be seen</strong> (<code>ANCHOR_POOL_ACCOUNT_ID</code>). <strong>Blocking does not reach payments.</strong></li>
+<li>Carried, unchanged: <code>call.ended</code> unconsumed; statement PDF password; FAQ search fallback; 0902's 15 removed leaves (not visible); the inbox's mock on by default; wallet-failure notices off by default; possible pre-12 Oct PII in logs; malformed path ids return <code>500</code>; production SSH (unverified); biometric step-up on <code>main</code>; Firebase keys in history; three diverged local working trees.</li>
+<li><strong>Withdrawn:</strong> the 6 Nov risk that a new banking user would get no account (the server no longer requires the NIN, §3.1). Also withdrawn: the claim that the limits routes were working when published (correction 1).</li>
+</ul>
+    </section>
+
+    <section class="sec" id="s5">
+      <div class="sec__h"><span class="sec__n">05</span><h2>PRD gap</h2></div>
+
+<p>The four structural gaps (international KYC, multi-currency/FX settlement, consent management, and virtual cards beyond what is wired) are unchanged and carry 32 of the rubric's 100 points. This weekend's changes are on the local tier and on support and are outside the four. Moving the NIN after account opening makes the local ladder easier to start and does not change the international gap: the proposed <code>GET /kyc/status</code> was meant to say which currencies a tier unlocks, and the route that shipped does not. PRD §3.2's "set limits" is still met for card funding only; the tier limits are reported and not applied. The NIN, the Tier 2 and Tier 3 ladder, the 30-day grace, the take-over of an AI-assisted support thread, and the Activity badge's seen mark are not in the PRD.</p>
+    </section>
+
+    <section class="sec" id="s6">
+      <div class="sec__h"><span class="sec__n">06</span><h2>Team performance: detail</h2></div>
+
+<p>All flow figures come from the activity sidecars (the <code>actiontime</code> of each transition), never from <code>Last Modified</code>. The 7-day window is 2 Nov 15:03 → 9 Nov 15:03 UTC. Commit counts are non-merge commits on all refs in that window, summing each person's git identities (<code>Phoenixdadhev</code> + <code>Ayomikun Araoye</code>; <code>Davidtariq96</code> + <code>David Samuel</code>), with bots excluded. Only <code>Phoenixdadhev</code> appears on the backend repos' non-merge commits in this window. WIP ages run from each item's last entry into In progress. <strong>Submissions are split by who made the move.</strong></p>
+<p><strong>Median cycle times are the same as 6 Nov</strong> (0.99 d n=36, 1.44 d n=21, 0.89 d n=3), because no item entered review. The 0901 and 0902 files were re-exported for this, so the inputs match 6 Nov's reduced set.</p>
+<h3>6.1 Ayomikun Araoye: backend + admin API</h3>
+<p><strong>43 commits in 7 days</strong>: 27 in <code>beevia-api</code>, 8 in <code>beevia-admin-api</code>, 8 in <code>beevia-db-schema</code>. <strong>8 own submissions</strong> and 6 moves on other items, all of them on 3–4 Nov. <strong>One WIP item on 1002</strong>, <code>I362</code>, started 5.0 days ago, with its code merged. The weekend (Fri 15:08 UTC to Mon 14:13 UTC) held four features and a fix on the server, none of them an item, which is a limit of the board and not a finding about the work. <code>I381</code> remains Done with no lockout. <code>BVA-I8</code> has been In progress on the closed admin board for 56.0 days.</p>
+<h3>6.2 David Samuel: mobile</h3>
+<p><strong>0 commits on <code>main</code></strong> in the window (the last, <code>8039bd7</code>, was 21 Oct, 19 days ago). <strong>2 on <code>origin/BVA-I353</code></strong>, the latest 5.2 days ago. <strong>Zero own submissions</strong>: the last was <code>I286</code> on 14 Oct, <strong>26.0 days</strong> ago. Two of this window's five "submissions" were board administration's, both on 4 Nov and both on leaves whose code is on the branch. WIP: <strong>2 items</strong>, <code>I331</code> at 18.2 days (18 times his median of 0.99 d) and <code>I361</code> at 6.3. One leaf is To do (<code>I373</code>). The server contract for his two open items (limits, onboarding) changed again over the weekend.</p>
+<h3>6.3 Philip Chidera: design</h3>
+<p><strong>One 7-day submission</strong>, <code>I389</code>, moved by its parent. <strong>Zero WIP and no leaf left To do</strong>: finished, blocked or working untracked. Worth a question, not an assumption. A NIN screen and its error states (<code>nin_not_found</code>, <code>nin_mismatch</code>, <code>nin_already_used</code>, the attempt limit, and the 30-day banner) are not on the board. Design files are not in git.</p>
+<h3>6.4 Promise Udo: admin dashboard</h3>
+<p><strong>No commits in the window</strong>; the last, <code>64304ef</code>, was 30 Oct, now 10.0 days old. The server has moved further towards the screen: hours, unread counts, the transaction view, a flat article list, a card-limits settings route and now take-over, none of which the dashboard calls. Nothing has been pushed in response, which after four corrections this report does not read as nothing having been done. The board still shows none of this: <code>I348</code> is in REVIEW/QA with no assignee, and <code>I349</code> and <code>I351</code> are To do and unassigned. <code>BVA-I9</code> has been In progress on the closed admin board for 56.0 days.</p>
+<h3>6.5 Weekly submission trend (leaves, transitions into REVIEW/QA)</h3>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">ISO week</th>
+<th style="text-align: right;">0901</th>
+<th style="text-align: right;">0902</th>
+<th style="text-align: right;">1002</th>
+<th style="text-align: right;">by the leaf's owner</th>
+<th style="text-align: right;">by another team member</th>
+<th style="text-align: right;">by board administration</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">2026-W39</th>
+<td style="text-align: right;"><strong>42</strong></td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">27</td>
+</tr>
+<tr><th scope="row">2026-W40 (28 Sep → 4 Oct)</th>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr><th scope="row">2026-W41 (5 → 11 Oct)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>10</strong></td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr><th scope="row">2026-W42 (12 → 18 Oct)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>8</strong></td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr><th scope="row">2026-W43 (19 → 25 Oct)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><strong>6</strong></td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr><th scope="row">2026-W44 (26 Oct → 1 Nov)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>10</strong></td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr><th scope="row">2026-W45 (2 → 8 Nov)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>16</strong></td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr><th scope="row">2026-W46 (9 Nov → 15:03 UTC)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>W45 is complete and unchanged since 6 Nov. <strong>Nothing has left REVIEW/QA on 1002.</strong> Leaving aside the three bulk sweeps (3 Sep, 30 Sep, 21 Oct), no item has been accepted from review by someone other than its submitter since <code>BVA-I268</code> on 16 Sep, re-derived from the sidecars today. Output stayed steady and acceptance stayed at zero. The bottleneck is the review step, not the developers.</p>
+<h3>6.6 What this does not measure</h3>
+<ul>
+<li><strong>No estimation points on any item on any board.</strong> A migration, a provider investigation and a one-line fix all count the same.</li>
+<li><strong>Who moved an item is not whether it is done.</strong> Eight of the 16 moves into review in the 7-day window were not made by the owner, and for the mobile ones the code is unmerged.</li>
+<li><strong>Unpushed and untracked work.</strong> The backend's fixes, the tier model and this weekend's features are not items on any board.</li>
+<li><strong>A quiet weekend on the board is not a quiet weekend.</strong> The server had five merges.</li>
+<li><strong>Nothing here measures correctness.</strong> No build, test or lint ran in any repository. The commits report test counts, and those were read, not run. The limits routes show why.</li>
+</ul>
+    </section>
+
+    <section class="sec" id="s7">
+      <div class="sec__h"><span class="sec__n">07</span><h2>Previous recommendations: where they stand</h2></div>
+
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Recommendation from 6 Nov</th>
+<th scope="col">Status on 9 Nov</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row"><strong>1. Close 1002 now, deliberately</strong></th>
+<td>❌ <strong>Not done, and it is now four days late.</strong> No board action, no successor sprint, filter still 08-01</td>
+</tr>
+<tr><th scope="row"><strong>2. Hold the NIN requirement back until the app can send one</strong></th>
+<td>✅ <strong>Done on the server, by a different route.</strong> #104 moved the NIN after account opening. The app still cannot send one, so this becomes recommendation 2 below</td>
+</tr>
+<tr><th scope="row"><strong>3. Decide whether the tier limits are enforced, and what the end of the grace does</strong></th>
+<td>❌ <strong>No.</strong> Still reported, not applied. #104 adds a grace for every new account</td>
+</tr>
+<tr><th scope="row"><strong>4. Fix the limits screen; move <code>I362</code> to review with a real response</strong></th>
+<td>🟡 <strong>The server half moved.</strong> #102 made the route work, so a real response exists. No client commit, <code>I362</code> still In progress</td>
+</tr>
+<tr><th scope="row"><strong>5. Open a PR for <code>BVA-I353</code></strong></th>
+<td>❌ <strong>No PR, no commit in 5.2 days</strong></td>
+</tr>
+<tr><th scope="row"><strong>6. Decide the seeded card default</strong></th>
+<td>❌ <strong>Not visible</strong></td>
+</tr>
+<tr><th scope="row"><strong>7. Confirm <code>ANCHOR_POOL_ACCOUNT_ID</code>; run a real funding and reveal</strong></th>
+<td>❌ <strong>Not visible</strong></td>
+</tr>
+<tr><th scope="row"><strong>8. Decide what a card limit is</strong></th>
+<td>❌ <strong>No</strong></td>
+</tr>
+<tr><th scope="row"><strong>9. Record the consent behind each lookup</strong></th>
+<td>❌ <strong>No</strong></td>
+</tr>
+<tr><th scope="row"><strong>10. Grant <code>disputes</code> and <code>help_center</code>; name who goes on duty</strong></th>
+<td>❌ <strong>Not visible.</strong> Migration 0053 touches neither</td>
+</tr>
+<tr><th scope="row"><strong>11. Let a merchant payment be disputed; correct the assistant's text</strong></th>
+<td>❌ <strong>No</strong></td>
+</tr>
+<tr><th scope="row"><strong>12. Fix the seams</strong></th>
+<td>❌ <strong>No.</strong> The weekend's support diff touched none of them</td>
+</tr>
+<tr><th scope="row"><strong>13. Run one real chat and one real dispute through the assistant</strong></th>
+<td>❌ <strong>Not visible</strong></td>
+</tr>
+<tr><th scope="row"><strong>14. Decide the assistant on the record</strong></th>
+<td>❌ <strong>Not visible</strong>, and take-over leans on the assistant for the handover note</td>
+</tr>
+<tr><th scope="row"><strong>15. Bring the dashboard onto the real contract</strong></th>
+<td>❌ <strong>No commit in 10.0 days.</strong> One more route without a screen</td>
+</tr>
+<tr><th scope="row"><strong>16. Reopen <code>I380</code>, <code>I381</code>, <code>I383</code>, <code>I384</code>; add an attempt limit</strong></th>
+<td>❌ <strong>No</strong></td>
+</tr>
+<tr><th scope="row"><strong>17. Agree how parent status moves work</strong></th>
+<td>❌ <strong>No.</strong> No board action at all</td>
+</tr>
+<tr><th scope="row"><strong>18. Assign <code>I348</code>, <code>I349</code>, <code>I351</code>, <code>I359</code>, <code>I390</code>; give the dashboard a sprint</strong></th>
+<td>❌ <strong>No</strong></td>
+</tr>
+<tr><th scope="row"><strong>19. Convert <code>GET /cards/{id}/transactions</code> to naira</strong></th>
+<td>❌ <strong>No.</strong> The cards code was not touched</td>
+</tr>
+<tr><th scope="row"><strong>20. <code>needs: test</code> on <code>sync</code>; verify jobs elsewhere</strong></th>
+<td>❌ <strong>Not done.</strong> Five merges and one migration used the ungated path</td>
+</tr>
+<tr><th scope="row"><strong>21. Generate <code>openapi.yaml</code> from the running app and diff it in CI</strong></th>
+<td>❌ <strong>Not done.</strong> Three spec changes and two contract changes were made by hand today</td>
+</tr>
+<tr><th scope="row"><strong>22. Carried items</strong></th>
+<td>❌ <strong>None moved</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>One of twenty-two moved, and one more has half its evidence.</strong> The backend's work was real and large and, again, almost none of it was on the list.</p>
+    </section>
+
+    <section class="sec" id="s8">
+      <div class="sec__h"><span class="sec__n">08</span><h2>What I would do this week</h2></div>
+
+<ol>
+<li><strong>Close 1002 now, deliberately (carried, now four days late).</strong> Accept or return the eleven REVIEW/QA leaves with merged code. Move <code>I372</code>, <code>I386</code>, <code>I348</code> and the eleven branch-only mobile leaves back to In progress. Create the successor sprint, carry the remainder explicitly, and do not sweep. Then set <code>ZOHO_SPRINT_FILTER</code>.</li>
+<li><strong>Put the NIN step on the board with a design and an owner (new, replaces 6 Nov's 2).</strong> From 9 Nov every new banking account has 30 days. The screen, its four error states and a "add your NIN" banner reading <code>grace_until</code> from <code>GET /kyc/status</code> are the minimum. Call <code>POST /kyc/nin</code>, and read the new response body.</li>
+<li><strong>Decide whether the tier limits are enforced, and what the end of the grace does (carried).</strong> Say where (send, payout, card funding, inflow above the cap into <code>kyc_holds</code>) and what a user whose grace has ended sees. About 6 Dec is the date for existing users.</li>
+<li><strong>Fix the limits screen to the shipped shape and read <code>limits_tier</code> and <code>grace_until</code> (carried).</strong> The route works now. Then move <code>I362</code> to review.</li>
+<li><strong>Open a PR for <code>BVA-I353</code> (carried).</strong> Fix the <code>data.items</code> parsing and <code>in</code>/<code>out</code>, read <code>source</code>, <code>default_limit</code> and <code>spend_included</code>, handle <code>card_transfer_failed</code> and <code>card_reveal_unavailable</code>, and test against a response taken from the server. Split it if that gets it merged sooner, with support first.</li>
+<li><strong>Call <code>POST /activity/seen</code> from the Activity tab (new).</strong> On entering and on leaving, as the route's text asks. The badge handler already clears on the event.</li>
+<li><strong>Call every new route once against a real account before a report says it works (new).</strong> The limits routes failed on the first call. Add the one-call check to the merge routine, or at least to the backend's release steps.</li>
+<li><strong>Decide the seeded card default on the record (carried).</strong> Is NGN 500,000 a day and a month what you want on every card?</li>
+<li><strong>Confirm <code>ANCHOR_POOL_ACCOUNT_ID</code> is set in production and run one real funding and one reveal (carried).</strong></li>
+<li><strong>Decide what a card limit is (carried).</strong> Accept funding caps and rewrite <code>I371</code>, <code>I372</code>, <code>I385</code> and <code>I387</code>, or ask the provider whether card product configuration can hold limits.</li>
+<li><strong>Record the consent behind each BVN and NIN lookup (carried).</strong></li>
+<li><strong>Grant <code>disputes</code> and <code>help_center</code> to the support role and Super Admin, and name who goes on duty (carried).</strong> Take-over makes this more urgent: the assistant now signs off to the user with "someone from the Beevia team is taking over".</li>
+<li><strong>Put a log line or a metric on the take-over fallback (new).</strong> Without it, a worker that is down reads as a quiet inbox.</li>
+<li><strong>Let a merchant payment be disputed, and correct the assistant's text (carried).</strong></li>
+<li><strong>Fix the seams (carried):</strong> the inbox's transaction type and <code>or</code>, the payment lookup, <code>unreadOnly</code> before paging, the <code>timezone</code> check, the article list's <code>search</code> locale and <code>meta.total</code>.</li>
+<li><strong>Run one real chat and one real dispute through the assistant (carried)</strong>, then pass the dispute's context, force handoff on <code>didnt_make_this_transaction</code>, and skip the empty turn.</li>
+<li><strong>Decide the assistant on the record (carried).</strong> Who approved it, what the privacy notice says, and whether users are told it is an AI. Add it to the PRD.</li>
+<li><strong>Bring the dashboard onto the real contract (carried)</strong>, default the mock off in production builds, and add screens for take-over, the card-limit default, the article list and, when a route exists, the tier limits.</li>
+<li><strong>Reopen <code>I380</code>, <code>I381</code>, <code>I383</code> and <code>I384</code> if those closes were not meant for them (carried)</strong>, decide the card verification model, and add an attempt limit to <code>/auth/step-up</code>.</li>
+<li><strong>Agree how parent status moves work on this board (carried)</strong>, and have board administration move nothing to review without the owner.</li>
+<li><strong>Assign <code>I348</code>, <code>I349</code>, <code>I351</code>, <code>I359</code> and <code>I390</code> (carried)</strong>, and give the admin dashboard a sprint or say the consumer board is its home.</li>
+<li><strong>Convert <code>GET /cards/{id}/transactions</code> to naira, or retire it for <code>/activity</code> (carried)</strong> before a client renders it.</li>
+<li><strong>Put <code>needs: test</code> back on <code>beevia-api</code>'s <code>sync</code></strong>, and give db-schema's Release and admin-api's Sync a verify job (carried). Order schema changes after the code that stops reading the old ones, and bring <code>beevia-admin-api</code> onto the current <code>beevia-db-schema</code>.</li>
+<li><strong>Generate <code>openapi.yaml</code> from the running app and diff it in CI</strong> (§5.4), and stop vendoring the client spec (§5.10) (carried).</li>
+<li><strong>Carried:</strong> send a push when an agent replies; reopen <code>I392</code>; close the payments half of blocking; handle <code>call.ended</code> on the client; add the <code>en-US</code> fallback to FAQ search; decide the statement password and delivery model; account for 0902's 15 leaves; test the iOS ring on a device; add the <code>messages.ref_id</code> index; restrict the Firebase API keys; check production logs for pre-12 Oct PII; map <code>22P02</code> to <code>400</code>; make Flutter CI a required check; check the production host's SSH settings; hide the biometric option outside mock mode; prune the §7 tables in <code>api-rfc.md</code>; and the longer tail listed on 27 Oct.</li>
+</ol>
+    </section>
+
+    <section class="sec" id="admin">
+      <div class="sec__h"><span class="sec__n">&mdash;</span><h2>Admin dashboard board</h2></div>
+
+<p><code>0901-admin</code> still has 12 items (8 leaves + 4 parents: 6 leaves Done, 2 In progress). It is closed, and nothing on it has changed since <strong>14 Sep 14:53 UTC, 56.0 days ago</strong>. <code>BVA-I8</code> (<em>Report Data Query</em>, Ayomikun) and <code>BVA-I9</code> (<em>Report Content Display</em>, Promise) have both been In progress for all 56 days. <strong>Zoho lists no successor sprint for this project.</strong> Admin-dashboard work is instead on the consumer board's 1002: <code>I349</code> Support Inbox (To do, unassigned; screen on mock; API child <code>I350</code> in review), <code>I348</code> Triage Flow Configuration (REVIEW/QA, unassigned; screen on mock, and the server now serves only its hours half) and <code>I351</code> FAQ CMS (To do, unassigned; API only). The server gained a take-over route for the inbox over the weekend, with no item and no screen. No admin route for the tier limits exists, and the dashboard's <code>/settings</code> page is still a one-line placeholder. <code>beevia-admin</code> last moved 10.0 days ago. These figures are never added to the main board's.</p>
+    </section>
+
+    <section class="sec" id="method">
+      <div class="sec__h"><span class="sec__n">&mdash;</span><h2>Appendix: method and readiness rubric</h2></div>
+
+<p><strong>Sources.</strong> <code>sprint-board-exports/beevia-sprint-board-2026-11-09.csv</code> + <code>beevia-activity-2026-11-09.json</code> (64 items, sprint 08-01, frozen); <code>sprint-board-exports/admin/beevia-admin-sprint-board-2026-11-09.csv</code> + its activity sidecar (12 items, sprint 0901-admin); a read-only scratch export of sprint <strong>1002 (63 items)</strong> in <code>/tmp/beevia-scratch/1002/</code>, diffed against the 6 Nov file in the same folder. All five repos were read at <code>origin/main</code>, plus every remote branch and <code>refs/pull/*</code>. <code>beevia-api</code>, <code>beevia-admin-api</code> and <code>beevia-db-schema</code> were read through a <code>git archive</code> shadow, because their working trees are still <code>diverged</code>. The commit messages of the weekend's merges were read as the authors' own account, and none of their production claims could be checked.</p>
+<p><a id="mvp-method"></a></p>
+
+<h3>MVP readiness: ≈67% (estimate; 67.32, unchanged)</h3>
+<p><strong>Target 2026-09-01 (provisional). The target date passed sixty-nine days ago.</strong> Weights are frozen, and <strong>this edition makes no methodology change.</strong> Scores measure build on <code>main</code>, not acceptance, and not correctness.</p>
+<p>No line moves, and three of them were considered. <strong>Line 4 (local KYC) holds at 0.90.</strong> The NIN is optional at account opening, so the server no longer blocks the app's onboarding, which is the half of 6 Nov's hold that has been removed. But Tier 2 still cannot be reached from the app (no NIN step), the Tier 3 and parked-funds mechanism have no code, and the rubric's client half, "the full onboarding/wallet flow", is not met for the NIN. Nothing here is evidence for a rise. <strong>Line 6 (multi-currency wallets) holds at 0.85:</strong> the limits route works now, and it is NGN only, reports and does not enforce, and its client reads another shape. <strong>Line 11 (admin oversight) holds at 0.97:</strong> take-over adds a server operation and no screen.</p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">#</th>
+<th scope="col">Capability</th>
+<th style="text-align: right;">Weight</th>
+<th style="text-align: right;">Score</th>
+<th style="text-align: right;">Δ</th>
+<th scope="col">Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">1</th>
+<td>E2EE messaging</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">0.90</td>
+<td style="text-align: right;">0</td>
+<td>Chat surface unchanged; support threads are a separate, plaintext carve-out</td>
+</tr>
+<tr><th scope="row">2</th>
+<td>Voice &amp; video calling</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">0.92</td>
+<td style="text-align: right;">0</td>
+<td><code>call.ended</code> push still unhandled on any branch</td>
+</tr>
+<tr><th scope="row">3</th>
+<td>Message translation</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">0.60</td>
+<td style="text-align: right;">0</td>
+<td><code>StubTranslateAdapter</code> still bound; no translate change</td>
+</tr>
+<tr><th scope="row">4</th>
+<td>Local KYC tier (BVN)</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">0.90</td>
+<td style="text-align: right;">0</td>
+<td>NIN now optional at opening, with a 30-day grace; <code>POST /kyc/nin</code> returns the status; Tier 3 and holds unbuilt; the app has no NIN step</td>
+</tr>
+<tr><th scope="row">5</th>
+<td>International KYC tier</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0</td>
+<td>Proposed only. The route it was modelled on was deleted</td>
+</tr>
+<tr><th scope="row">6</th>
+<td>Multi-currency wallets</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.85</td>
+<td style="text-align: right;">0</td>
+<td><code>activeNgn()</code> unchanged; <code>GET /wallets/limits</code> works since 6 Nov, NGN only, unenforced, and its client reads another shape</td>
+</tr>
+<tr><th scope="row">7</th>
+<td>Send / request / receive in chat</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.92</td>
+<td style="text-align: right;">0</td>
+<td>Biometric option still on <code>main</code></td>
+</tr>
+<tr><th scope="row">8</th>
+<td>Cross-currency FX settlement</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0</td>
+<td><code>/fx/*</code> proposed only</td>
+</tr>
+<tr><th scope="row">9</th>
+<td>Virtual cards</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">0.80</td>
+<td style="text-align: right;">0</td>
+<td>Funding, reveal, limits, activity and a default limit on the server. Client card management on unmerged <code>BVA-I353</code>; verification model undecided</td>
+</tr>
+<tr><th scope="row">10</th>
+<td>Consent management</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0</td>
+<td>No endpoint, record or board item. The lookups assert consent as a constant</td>
+</tr>
+<tr><th scope="row">11</th>
+<td>Admin oversight</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0.97</td>
+<td style="text-align: right;">0</td>
+<td>Take-over added to the support inbox; no role holds <code>disputes</code>; the screens still run on a mock</td>
+</tr>
+<tr><th scope="row"></th>
+<td><strong>Weighted total</strong></td>
+<td style="text-align: right;"><strong>100</strong></td>
+<td style="text-align: right;"><strong>67.32</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td><strong>≈67%</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3>What this report cannot tell you</h3>
+<ul>
+<li><strong>Whether the NIN change, the limits fix and the Activity route are live in production.</strong> Merge times and release tags are known, and workflow results are not. It also cannot tell whether <code>YOU_VERIFY</code> is configured for the NIN endpoint.</li>
+<li><strong>How many users called the limits routes while they failed</strong>, or whether anyone saw the <code>500</code>. Production logs are not visible.</li>
+<li><strong>Whether migrations 0051–0053 have run</strong>, and when, which decides the date the grace ends.</li>
+<li><strong>Whether the funding and reveal fixes work in production.</strong> Their commits report sandbox checks.</li>
+<li><strong>Whether the seeded default was a decision.</strong> No ticket or comment on the board mentions it.</li>
+<li><strong>Whether the assistant runs at all in production</strong>: whether the key is set, whether <code>SUPPORT_AI_ENABLED</code> is on, whether Redis takes the take-over job, and whether a real model call succeeds.</li>
+<li><strong>Who decided on the assistant, on funding caps, on the NIN timing, or on the consent flag, and whether a privacy or legal review happened.</strong> No record is visible here.</li>
+<li><strong>Whether any role was granted <code>disputes</code> or <code>help_center</code> by hand.</strong></li>
+<li><strong>Whether the commit-reported tests pass, or whether anything renders.</strong> Nothing was executed.</li>
+<li><strong>Whether closing or moving a parent was meant to carry its children.</strong> Same-millisecond timing is inference.</li>
+<li><strong>What the design items contain.</strong> Design files are not in git.</li>
+<li><strong>Where 0902's 15 leaves went</strong>, or what will happen to 1002's open items.</li>
+<li><strong>Whether any PR was reviewed</strong>, or whether branch protection requires CI on any <code>main</code>.</li>
+<li><strong>Velocity for any sprint.</strong> Nothing on any board is estimated.</li>
+</ul>
+<h3>Method</h3>
+<p><strong>Pipeline.</strong> The <code>beevia-refresh</code> steps ran in this order:</p>
+<ol>
+<li>Three background exports starting at about 14:45 UTC. Main board (step 1a): 64 items, sprint 08-01, exit 0, sidecar byte-identical to 6 Nov. Admin board (step 1b) with <code>--sprint 0901-admin</code>: 12 items, exit 0, sidecar byte-identical to 6 Nov. Read-only scratch export of <strong>1002</strong> with <code>--modified --activity</code> to <code>/tmp/beevia-scratch/1002/</code>: 63 items, exit 0, sidecar byte-identical to 6 Nov. Sprint lists from the <code>__nonexistent__</code> dry run for both projects: Beevia <code>['1002', '0902', '0901', '08-01', '0702', '0701']</code>, admin <code>['0901-admin']</code>. 0901 and 0902 re-exported with <code>--no-descriptions</code> for cycle times.</li>
+<li>Fast-forward sync (step 2), exit 1. <code>beevia-admin</code> and <code>beevia-mobile</code> were already current, with no branch switch. <code>beevia-api</code>, <code>beevia-admin-api</code> and <code>beevia-db-schema</code> were refused as <code>diverged</code> (unchanged since 8 Sep), and the dry run showed them 168, 60 and 92 commits behind <code>origin/main</code>.</li>
+<li>Audit (step 3) against a <code>git archive</code> shadow at <code>$BEEVIA_ROOT=/tmp/beevia-shadow-2026-11-09</code>: exit 1 before spec edits, exit 0 after. The in-repo audit ran too, for the board section (phantom lines only). All through <code>uv run --no-project --with pyyaml</code>.</li>
+<li>Board analysis (<code>flow09.py</code>, adapted from 6 Nov's): a diff of 1002 against 6 Nov, every action in the window, 7-day submissions split by actor, WIP ages, the weekly trend, and a search for any transition out of REVIEW/QA in every sidecar.</li>
+<li>Content checks. <code>git fetch</code> (by the sync), <code>ls-remote</code> of <code>refs/pull/*</code> on every repo. In <code>beevia-api</code>: the #102–#105 commit messages and the KYC, upgrade, wallet, activity and support diffs. In <code>beevia-admin-api</code>: #31. In <code>beevia-db-schema</code>: migration 0053. In <code>beevia-mobile</code>: <code>origin/main</code> and <code>origin/BVA-I353</code> searched for the NIN, status, limits and seen routes, and the Activity socket handler read. <code>grep</code> over <code>origin/main</code> for the callers of <code>kyc_tier_limits</code> and <code>OutflowService</code>.</li>
+<li>Spec and narrative updates (§3.5).</li>
+<li>This report and its web edition.</li>
+</ol>
+<p><strong>A note on who appears here.</strong> Only people whose work is tracked have rows. Board administration is done by a non-contributor, whose actions are reported without naming the actor.</p>
+<p><strong>Nothing was executed from any sub-repo.</strong> No <code>npm</code>, <code>node</code>, <code>flutter</code> or build step ran. No repository was reset, rebased or cleaned, and no sub-repo file was edited. The sync's <code>--ff-only</code> limit was not overridden. Beyond the sync's own <code>fetch</code>, the only git operations were <code>ls-remote</code>, <code>git archive</code>, and read-only <code>log</code>/<code>show</code>/<code>diff</code>/<code>grep</code>/<code>for-each-ref</code>/<code>rev-list</code>/<code>ls-tree</code>. Nothing was committed, pushed or deployed.</p>
+<p><strong>Files changed this cycle:</strong> this report, <code>web-report/2026-11-09.html</code>, <code>web-report/index.html</code>, <code>openapi.yaml</code>, <code>openapi.admin.yaml</code>, <code>api-rfc.md</code>, <code>admin-api-rfc.md</code>, <code>suggestions.md</code>, plus new board exports for 9 Nov in <code>sprint-board-exports/</code> and <code>sprint-board-exports/admin/</code>.</p>
+<p><strong>Degraded inputs.</strong></p>
+<ul>
+<li><strong><code>ZOHO_SPRINT_FILTER</code> is still <code>08-01</code></strong>, so the in-repo main export is a frozen closed sprint, and the audit's <code>SINCE</code> block compares two identical snapshots. All 1002 figures come from the scratch export.</li>
+<li><strong>The default <code>python3</code> has no PyYAML</strong>, so <code>audit.py</code> exits 2 when run exactly as the skill documents. Both audits ran through <code>uv run --no-project --with pyyaml</code>.</li>
+<li><strong>Three repositories remain unsynced.</strong> <code>beevia-api</code>, <code>beevia-admin-api</code> and <code>beevia-db-schema</code> are <code>diverged</code>. Every backend claim is made against <code>origin/main</code> through the shadow.</li>
+<li><strong>GitHub PR metadata, reviews, settings, CI results and deploy state cannot be seen from here.</strong></li>
+<li><strong>The export's "no source key" warning fired on <code>Epic</code>.</strong> This is the known sampling artefact; 1002's items genuinely have no epic.</li>
+</ul>
+<p><strong>Window.</strong> 6 Nov 15:03 UTC → 9 Nov 15:03 UTC. All <code>actiontime</code> and board figures are in UTC. <code>git log</code> timestamps were converted from their local offsets.</p>
+    </section>
+
+  </main>
+</div>
+
+<footer class="foot">
+  <span class="barcode barcode--lg" aria-hidden="true"></span>
+  <span>Beevia project status &middot; 2026-11-09 &middot; a NIN the app cannot send &middot; limits routes were failing &middot; sprint four days over, board untouched</span>
+  <span><a href="index.html">All frames</a></span>
+</footer>
+
+<script src="ui.js"></script>
+</body>
+</html>

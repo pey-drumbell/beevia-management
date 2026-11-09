@@ -152,7 +152,7 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | Platform | 1 | 2 | Only a static root route today; no real health probe |
 | Auth & Onboarding | 13 | 3 | Session listing/revocation missing |
 | KYC | **7** | **2** | Local ladder only. **+2, −1 (2026-11-06, §5.22):** `POST /kyc/nin` and `GET /kyc/status` shipped, and the Entrust document check (`POST /kyc/id/start`) was removed. `GET /kyc/status` left the proposed file; the international tier is still unbuilt |
-| **Upgrade** | **7** | 0 | **New.** Parallel KYC ladder for chat_only → chat_banking. `POST /upgrade/nin` added 2026-11-06 |
+| **Upgrade** | **6** | 0 | **New.** Parallel KYC ladder for chat_only → chat_banking. `POST /upgrade/nin` was added 2026-11-06 and **removed 2026-11-09** (§5.23): the NIN is no longer part of the upgrade |
 | Users | 14 | 7 | +2 contact-change. No consent, limits, deletion-status or export surface |
 | Contacts | 2 | **1** | **No longer complete.** `POST /contacts/sync` now accepts 25,000 entries but resolves only the first 500 inline, queueing the rest with **no completion signal** — proposed `GET /contacts/sync/status` |
 | Devices & Keys | 6 | 0 | Complete |
@@ -169,7 +169,7 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | Upload | 5 | 0 | Public, permanent objects — distinct from Attachments (encrypted, presigned-only) |
 | Translate | **7** | **1** | **+6 (2026-09-10):** the language-preference surface — `GET /translate/languages`, plus app-wide and per-conversation preferences with precedence. **−4 proposed:** `/translate/languages` moved, and all three proposed preference operations shipped under `/translate/preferences` instead. Only `/translate/batch` is left proposed, and it is probably obsolete (§5.5a). The engine itself is still a stub (§5.5) |
 | Notifications | 5 | 0 | Complete |
-| **Activity** | **2** | 0 | **New 2026-10-08.** Unified chats/calls/payments feed with keyset pagination, plus its badge count. Chat previews are per-device ciphertext, not server-read text (§5.14) |
+| **Activity** | **3** | 0 | **New 2026-10-08.** Unified chats/calls/payments feed with keyset pagination, plus its badge count. **+1 (2026-11-09):** `POST /activity/seen` clears the badge (§5.23). Chat previews are per-device ciphertext, not server-read text (§5.14) |
 | **Statements** | **2** | 0 | **New 2026-10-27.** `POST /statements` (202, emailed wallet or card statement, PDF password-protected) and `GET /statements` (request history). Not a PRD line item; see §5.16 |
 | **Help & Support** | **5** | 0 | **New 2026-10-28.** FAQ only: categories, questions in a category, full-text search, an answer, and the "Was this helpful?" vote. Content is written through the admin API (`admin-api-rfc.md`). Disputes and the support chat have no server code yet (§5.17) |
 | **Disputes** | **4** | 0 | **New 2026-10-28, rebuilt 2026-11-03.** "Report an issue" on a transaction (`POST /disputes`), the user's history, one report, and the open count for the badge. A dispute is now a support thread with a transaction attached. The snapshot of the transaction is built server-side from the reference. Shipped in place of the proposed `POST /payments/{id}/dispute` (§5.18, §5.19) |
@@ -664,6 +664,8 @@ Open points are in `suggestions.md` §4.14.
 
 ### 5.22 KYC tiers: a NIN step, a tier model, and a limits route the app cannot yet read (2026-11-06)
 
+> **Superseded in part on 2026-11-09 (§5.23).** The NIN is no longer required to open an account, `POST /upgrade/nin` is gone, and `POST /kyc/nin` now returns the KYC status. The bullets below about provisioning waiting for the NIN, `nin_required` on `POST /wallets` and `POST /upgrade/profile`, and the app being unable to complete onboarding describe the code as it was on 6 Nov. **The two limits routes described here also returned `500 database_error` for most users until 6 Nov 15:08 UTC** (§5.23).
+
 **What shipped.** `beevia-api` #100 (5 Nov, 15:13 UTC; the kobo fix) and #101 (6 Nov, 12:58 UTC) and `beevia-db-schema` #32 and #33 (v0.0.51, v0.0.52). **Consumer operations go from 158 to 160**: four added (`POST /kyc/nin`, `POST /upgrade/nin`, `GET /kyc/status`, `GET /wallets/limits`) and two removed (`POST /kyc/id/start`, `POST /kyc/entrust/webhook`). Two proposals shipped, and both left `openapi.proposed.yaml`.
 
 - **Banking now starts at Tier 2, and Tier 2 needs a NIN.** There is no Tier 1. `POST /kyc/nin` and `POST /upgrade/nin` look the NIN up with YouVerify and compare it to the BVN already verified: the same date of birth, and the BVN's first and last names among the NIN's names (any order; case and accents ignored). Five attempts an hour per user; a provider outage is `503 verification_unavailable` and alerts Slack. Onboarding and upgrade provisioning now wait for the NIN, `POST /upgrade/profile` refuses without it (`nin_required`), and `POST /wallets` refuses a **new** NGN account without it. Wallets that already exist are untouched.
@@ -677,6 +679,22 @@ Open points are in `suggestions.md` §4.14.
 - **The Transaction Limits screen on the branch reads the old proposal.** `BVA-I353`'s `wallet_limits.dart` reads `per_transaction_max`, `daily_max`, `daily_remaining`, `monthly_max` and `monthly_remaining`, and takes the first item of a list. Against the shipped object every one of those is absent, so the parser yields zeros and the usage card would read 0 of 0. The screen's own header cites `openapi.proposed.yaml`. `BVA-I362` (the endpoint) is still In progress on the board while its code is merged, and `BVA-I361` (the screen) is still In progress.
 
 Open points are in `suggestions.md` §4.15.
+
+---
+
+### 5.23 The NIN becomes optional, the limits routes get fixed, and two more routes (2026-11-09)
+
+**What shipped.** `beevia-api` #102 (6 Nov, 15:08 UTC), #103 (7 Nov, 12:19 UTC), #104 (9 Nov, 09:47 UTC) and #105 (9 Nov, 14:13 UTC); `beevia-db-schema` #34 (9 Nov, 14:04 UTC, **v0.0.53**, migration 0053); `beevia-admin-api` #31 (§3.16 of `admin-api-rfc.md`). **Consumer operations stay at 160**: `POST /activity/seen` added, `POST /upgrade/nin` removed. The admin API goes from 75 to 76.
+
+- **A banking account no longer waits for a NIN (#104).** Signup and the chat-to-banking upgrade stop asking for it. The account opens once the BVN and profile are in, and opening it without a NIN sets `kyc_grace_until` thirty days out, held to Tier 2 limits. A grace already set (the one migration 0051 put on existing users, due about 6 Dec) is never moved, and neither is one that has lapsed. After the 30 days without a NIN the limits drop to Tier 0 until the user adds one. Signup's BVN step now moves onboarding `profile_done → kyc_done`, and `POST /wallets` no longer refuses with `nin_required`. **This is the outcome the 6 Nov edition asked for (hold the requirement back until the app can send one), done by moving the NIN after account opening rather than behind a switch.**
+- **`POST /upgrade/nin` is gone, and the upgrade status no longer reports a `nin` next step.** `next_step` runs `bvn → profile → provisioning`. `nin_verified` stays on the status.
+- **`POST /kyc/nin` is the only NIN route, and it changed contract.** It checks the NIN against the BVN record, sets Tier 2, clears the grace, moves no onboarding step and provisions nothing, and works after the 30 days too. **It now returns the KYC status (the body of `GET /kyc/status`) instead of the user.** The app does not call it.
+- **The limits routes were broken for most users from publication until 6 Nov 15:08 UTC (#102).** `GET /wallets/limits` and `GET /kyc/status` read the tier's row with the generic `findById`, but `kyc_tier_limits` is keyed by `tier` and has no `id` column, so the data layer threw before any query ran and the exception filter returned `500 database_error` for every user on Tier 2 or 3 and for BVN-only users in their grace period, which is every existing banking user. The unit specs mocked `findById`, so they could not see it; the fix adds a database-backed spec. **The 6 Nov edition described both routes from the code and the commit message and did not catch this.** It also said the branch's limits screen would read zeros; against the code as published it would have met a `500`.
+- **`POST /activity/seen` (#105, with schema 0.0.53).** Sets `users.activity_seen_at` from the database clock and returns `{ count: 0, seen_at }`. From then on `unattended_count` (on `GET /activity`, `GET /activity/unattended-count` and `activity.updated`) counts only messages, missed calls and money awaiting the user that arrived **after** that mark; before a user's first visit it is unchanged. `requires_attention` on each row is unchanged. Every device of the user receives `activity.updated` with `changed_type: seen` and `unattended_count: 0`. **Nothing on `beevia-mobile` calls it**, so the badge behaves as before; the client's `activity.updated` handler already copies `unattended_count` into the badge, which is the half of the work that is in place.
+- **The support assistant can be taken over (#103, with admin-api #31).** `POST /admin/support/conversations/{id}/take-over` moves a thread the assistant holds to the agent at once. The admin API queues a job on the Redis both services share (BullMQ `support-takeover`); a worker in `beevia-api` asks the assistant for a handover note and posts it as the system note the inbox already shows, or posts a plain note if the assistant is off or fails. The assistant's own reply is now applied under a row lock and only while the thread is still `with_assistant`; a reply that arrives after the takeover is dropped and logged as `superseded`. No consumer route changed.
+- **Not touched, and still true from 6 Nov.** Nothing applies the tier limits (no send, payout or card funding reads them). `kyc_holds`, Tier 3 and any admin route for the limits have no code. `isSubjectConsent` is still a constant. `GET /cards/{id}/transactions` still returns kobo.
+
+Open points are in `suggestions.md` §4.16.
 
 ---
 
@@ -735,8 +753,7 @@ Parallel ladder for `chat_only` users adopting banking. See §5.1 for why this s
 | | POST | `/upgrade/email/verify` | 🔑 | ✅ |
 | | POST | `/upgrade/bvn` | 🔑 | ✅ Lookup only |
 | | POST | `/upgrade/bvn/verify` | 🔑 | 🟡 Same `phone` gap as §6.3; path segment differs from KYC |
-| | POST | `/upgrade/nin` | 🔑 | ✅ **New 2026-11-06.** Step 3, between the BVN and the profile |
-| | POST | `/upgrade/profile` | 🔑 | ✅ No `email`; `gender` optional. Requires a verified BVN (`bvn_required`) and, since 2026-11-06, a verified NIN (`nin_required`) — see §5.1 |
+| | POST | `/upgrade/profile` | 🔑 | ✅ No `email`; `gender` optional. Requires a verified BVN (`bvn_required`). The NIN requirement added on 2026-11-06 was removed on 2026-11-09 (§5.23) |
 
 ### 6.4 Users
 
@@ -779,7 +796,7 @@ Parallel ladder for `chat_only` users adopting banking. See §5.1 for why this s
 | | Method | Path | Auth | Status |
 |---|---|---|---|---|
 | | GET | `/wallets` | 🔑 | ✅ |
-| | POST | `/wallets` | 🔑 | 🟡 Idempotent, but only NGN succeeds; a new account needs a verified NIN (`nin_required`) |
+| | POST | `/wallets` | 🔑 | 🟡 Idempotent, but only NGN succeeds; a new account opens without a NIN and starts a 30-day grace (§5.23) |
 | | GET | `/wallets/limits` | 🔑 | 🟡 **New 2026-11-06.** NGN only; reports usage and does not enforce (§5.22) |
 | | GET | `/wallets/payin-details` | 🔑 | ✅ Returns object with `?walletId`, array without |
 | | GET | `/wallets/beneficiaries` | 🔑 | 🟡 Read-only; rows appear only after a withdrawal |
