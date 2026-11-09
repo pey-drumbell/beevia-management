@@ -3,6 +3,7 @@ beevia-mobile/
 beevia-admin/
 beevia-admin-api/
 beevia-db-schema/
+devops-images/
 
 # Local secrets
 .env
