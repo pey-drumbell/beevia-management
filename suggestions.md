@@ -390,6 +390,15 @@ Not built: dispute messaging (`BVA-I344`, `I343`'s thread), the open-dispute cou
 6. **A reply the assistant was writing is silently dropped on takeover** (logged as `superseded`). That is the right behaviour for the user, and the log is the only evidence. Worth a count in whatever dashboard watches the assistant.
 7. **`POST /activity/seen` is meant to be called on entering and on leaving the tab.** If the client calls it only on entry, anything that arrives while the tab is open will count from the next visit. Say which in the client brief when the work is scheduled.
 
+### 4.17 A reset route and test identities, and half of §4.16 moved on the client (2026-11-10)
+
+`beevia-api` #106 and #107 (`api-rfc.md` §5.24), and `beevia-mobile` `origin/BVA-I353` at `c04e207`. From reading the code; nothing was run.
+
+1. **`DELETE /kyc/nin` lets any signed-in user clear their own NIN and restart their own grace, wherever `KYC_RESET_ENABLED` is true.** It defaults to false and is a `404` otherwise, which is the right shape. But it is guarded the way `OTP_ECHO` is (§1.2), by a default and a comment saying it must be off in real production, and nothing fails startup if `NODE_ENV` is `production` and the flag is on. Add the same cross-field refinement that §1.2 asks for, for both. `KYC_TEST_IDS_ENABLED` already does the right thing, because the code ignores it unless `ANCHOR_BASE_URL` is the sandbox.
+2. **The reset interacts with the tier limits the day they are enforced.** `grace=expired` sets every limit to zero for that account, which is a useful test and a quick way to lock a real tester out of a live account. Say which environment the flag is on.
+3. **§4.16 items 1 and 7 now have client code, on a branch.** `c04e207` adds a NIN screen (`verify_nin.dart`), a banner that reads `grace_until`, and a call to `POST /activity/seen` on entering and leaving the Activity tab; the limits model reads the shipped `daily.limit` shape. None of it is on `main`, and it was read, not run. Item 2 (a route with only mocked specs is unproven) stands, and the branch's own mock server answers the new routes, so its tests do not prove them either.
+4. **The branch is the only place the client meets the contract**, and its mock fixtures were written from the specs. Call each of `GET /wallets/limits`, `GET /kyc/status`, `POST /kyc/nin` and `POST /activity/seen` once from a real build against the sandbox before the branch is merged.
+
 ## 5. Maintainability
 
 ### 5.1 Zod schemas and Swagger DTO classes are duplicated by hand

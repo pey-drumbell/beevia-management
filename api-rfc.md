@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft — for review · **updated 2026-08-05** |
 | **Scope** | The complete HTTP surface of `beevia-api` (the consumer API): what exists today, and what the PRD requires that does not exist yet |
-| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, **160 operations** · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, **32 operations** (29 net-new + 3 live-endpoint modifications) · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
+| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, **161 operations** · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, **32 operations** (29 net-new + 3 live-endpoint modifications) · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
 | **Sibling RFC** | [`admin-api-rfc.md`](./admin-api-rfc.md) — the `beevia-admin-api` back-office service |
 | **Sources** | `beevia-api/src/**/*.controller.ts`, `beevia-api/src/**/dto/*.ts`, `beevia-db-schema/src/schema/*`, `beevia-api/postman/Beevia.postman_collection.json`, `Beevia_PRD.pdf` |
 | **Base path** | `/api/v1` (global prefix set in `src/main.ts`; `/i/:code` is explicitly excluded) |
@@ -151,7 +151,7 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 |---|---:|---:|---|
 | Platform | 1 | 2 | Only a static root route today; no real health probe |
 | Auth & Onboarding | 13 | 3 | Session listing/revocation missing |
-| KYC | **7** | **2** | Local ladder only. **+2, −1 (2026-11-06, §5.22):** `POST /kyc/nin` and `GET /kyc/status` shipped, and the Entrust document check (`POST /kyc/id/start`) was removed. `GET /kyc/status` left the proposed file; the international tier is still unbuilt |
+| KYC | **8** | **2** | Local ladder only. **+1 (2026-11-10, §5.24):** `DELETE /kyc/nin`, a test-only reset that is a `404` unless `KYC_RESET_ENABLED` is on. **+2, −1 (2026-11-06, §5.22):** `POST /kyc/nin` and `GET /kyc/status` shipped, and the Entrust document check (`POST /kyc/id/start`) was removed. `GET /kyc/status` left the proposed file; the international tier is still unbuilt |
 | **Upgrade** | **6** | 0 | **New.** Parallel KYC ladder for chat_only → chat_banking. `POST /upgrade/nin` was added 2026-11-06 and **removed 2026-11-09** (§5.23): the NIN is no longer part of the upgrade |
 | Users | 14 | 7 | +2 contact-change. No consent, limits, deletion-status or export surface |
 | Contacts | 2 | **1** | **No longer complete.** `POST /contacts/sync` now accepts 25,000 entries but resolves only the first 500 inline, queueing the rest with **no completion signal** — proposed `GET /contacts/sync/status` |
@@ -175,7 +175,7 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | **Disputes** | **4** | 0 | **New 2026-10-28, rebuilt 2026-11-03.** "Report an issue" on a transaction (`POST /disputes`), the user's history, one report, and the open count for the badge. A dispute is now a support thread with a transaction attached. The snapshot of the transaction is built server-side from the reference. Shipped in place of the proposed `POST /payments/{id}/dispute` (§5.18, §5.19) |
 | **Support** | **5** | 0 | **New 2026-11-03.** Chat with Support, availability, and the thread both chats and disputes run on. An AI assistant answers first. Shipped in place of the proposed `/support/tickets` (§5.19) |
 | Webhooks | **3** | 1 | **+1:** `POST /webhooks/paystack` for card top-ups. **−1 (2026-11-06):** `POST /kyc/entrust/webhook` removed with the Entrust check. Card issuer callback still missing |
-| **Total** | **160** | **29** | +3 live-endpoint modifications = 32 operations in the proposed file |
+| **Total** | **161** | **29** | +3 live-endpoint modifications = 32 operations in the proposed file |
 
 ---
 
@@ -698,6 +698,18 @@ Open points are in `suggestions.md` §4.16.
 
 ---
 
+### 5.24 A test-only way back from a verified NIN, test identities, and the account name (2026-11-10)
+
+**What shipped.** `beevia-api` #106 (9 Nov, 17:24 UTC) and #107 (9 Nov, 19:59 UTC), after the 9 Nov edition's cut-off. **Consumer operations go from 160 to 161**: `DELETE /kyc/nin` added. No other route changed.
+
+- **`DELETE /kyc/nin` is a reset for testing on live data.** Once a NIN is verified it is unique to the account and the grace is cleared, so the no-NIN states cannot be tried again. The route clears the NIN, puts `kyc_level` back to 1 and, for an account that is open, restarts the 30 days (`grace=running`, the default) or ends them (`grace=expired`, every limit to zero). It returns the KYC status. **It is a `404` unless `KYC_RESET_ENABLED=true`, which defaults to false and has no startup check against production**; the only guard is the default and a comment in `env.ts`. See `suggestions.md` §4.17.
+- **Test BVNs and NINs (`KYC_TEST_IDS_ENABLED`).** A number starting `0000`, then an outcome digit (1 found, 2 not found, 3 found but no selfie matches), is answered by the YouVerify adapter without a paid lookup. Everything after the lookup runs as usual. Unlike the reset, this switch **is** checked in code: it is ignored unless `ANCHOR_BASE_URL` is the sandbox. It adds no route.
+- **The bank account is named as Anchor names it (#107).** Account opening and the `virtualNuban.created` webhook now store the deposit account's name from Anchor, falling back to the BVN name, not the display name the user typed at signup. No route or schema changed.
+
+Open points are in `suggestions.md` §4.17.
+
+---
+
 ## 6. Implemented surface
 
 Status legend: **✅ Complete** · **🟡 Partial** — works but materially narrower than the PRD describes · **🔴 Facade** — the route is real and the behaviour behind it is not.
@@ -737,6 +749,7 @@ Auth: 🔓 public · 🔑 access token · 🔐 access + step-up token.
 | | POST | `/kyc/bvn` | 🔑 | ✅ Lookup only |
 | | POST | `/kyc/bvn/verify-ownership` | 🔑 | 🟡 `face` + `record`; `phone` declared but unavailable |
 | | POST | `/kyc/nin` | 🔑 | ✅ **New 2026-11-06.** Matched to the BVN's record; 5 attempts an hour |
+| | DELETE | `/kyc/nin` | 🔑 | 🧪 **New 2026-11-10.** Test only: `404` unless `KYC_RESET_ENABLED=true` |
 | | POST | `/kyc/profile` | 🔑 | ✅ |
 | | GET | `/kyc/status` | 🔑 | 🟡 **New 2026-11-06.** Local ladder only; no international tier or unlocked currencies |
 

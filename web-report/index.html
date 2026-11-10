@@ -34,7 +34,7 @@
       <span class="topbar__wordmark">Beevia</span>
     </div>
     <nav class="topbar__nav label" aria-label="Report">
-      <a href="2026-11-09.html">Latest frame</a>
+      <a href="2026-11-10.html">Latest frame</a>
     </nav>
 </div>
 
@@ -43,9 +43,9 @@
     <div class="field__rail field__rail--l">
       <dl>
         <dt>Frames held</dt>
-        <dd>63</dd>
+        <dd>64</dd>
         <dt>Latest</dt>
-        <dd>2026-11-09 · The NIN is optional now but the app cannot send one, the limits routes had been failing, and sprint 1002 is four days over with the board untouched</dd>
+        <dd>2026-11-10 · The client has caught up with the server on an unmerged branch, a test-only route that clears a NIN has no production guard, and sprint 1002 is five days over with the board untouched</dd>
       </dl>
     </div>
 
@@ -55,7 +55,7 @@
       </div>
       <div class="field__meta num">
         <span>Beevia project status</span>
-        <span>2026-08-05 &rarr; 2026-11-09</span>
+        <span>2026-08-05 &rarr; 2026-11-10</span>
         <span>Newest first</span>
       </div>
     </div>
@@ -75,9 +75,9 @@
   <div class="mvp__head">
     <span class="mvp__label label">MVP readiness &mdash; estimate</span>
     <span class="mvp__pct num">&asymp;67%</span>
-    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 69 days past</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 70 days past</span>
   </div>
-  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged. The NIN becoming optional at account opening, the working limits route and the new support take-over route do not move a line. E2EE messaging 0.90; voice and video calling 0.92; message translation 0.60; local KYC 0.90; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.80; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged. The client NIN step, limits screen and card limits form exist only on an unmerged branch, and the new test-only reset route is tooling, so no line moves. E2EE messaging 0.90; voice and video calling 0.92; message translation 0.60; local KYC 0.90; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.80; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
     <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.90"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.92"><i style="width:92%"></i></span>
     <span class="mvp__seg" style="flex:7" title="Message translation — 0.60"><i style="width:60%"></i></span>
@@ -90,10 +90,27 @@
     <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
     <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.97"><i style="width:97%"></i></span>
   </div>
-  <p class="mvp__read"><strong>67.32, unchanged.</strong> The NIN is optional at account opening, the limits route works, and support gained a take-over route, but the app still has no NIN step, the limits are applied nowhere and the dashboard has no screen, so no line moves. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 9 Nov 2026 &mdash; <a href="2026-11-09.html#mvp-method">method and capability table</a>.</p>
+  <p class="mvp__read"><strong>67.32, unchanged.</strong> The app now has a NIN step, a limits screen on the shipped shape and a card limits form, but on an unmerged branch, so no line moves; when it merges, local KYC is the first line to reconsider. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 10 Nov 2026 &mdash; <a href="2026-11-10.html#mvp-method">method and capability table</a>.</p>
 </section>
 
 <main class="frames">
+
+  <a class="frame" href="2026-11-10.html">
+    <span class="frame__idx num">64</span>
+    <span>
+      <span class="frame__date">10 Nov 2026</span>
+      <span class="frame__sum"><strong>The mobile app has caught up with the server's NIN, limits and Activity contract, but only on an unmerged branch pushed nine minutes after Monday's cut-off.</strong> The backend added a test-only route that clears a verified NIN, guarded only by a default-off flag. Sprint 1002 is five days over with the board untouched for 6.0 days: 36 of 44 leaves unfinished, none accepted, no successor sprint. Spec at 161 / 76.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:32"></i><u style="flex:12"></u></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>1002 &middot; ended 5 Nov &middot; 1 To do &middot; 3 In progress &middot; 32 QA &middot; 0 Blocked &middot; 8 Done</span></div>
+      <div><span>MVP est</span><span>&asymp;67% &middot; &Delta; 0</span></div>
+      <div><span>Test-gated deploys</span><span>0 of 3 backend repos</span></div>
+      <div><span>Recommendations</span><span>2 of 25 met</span></div>
+      <div><span>Board actions</span><span>0 in 1.0 day &middot; last 4 Nov 16:13 UTC &middot; 0 out of review</span></div>
+      <div><span>API surface</span><span>161 / 76 &middot; route drift 0 after spec update</span></div>
+    </span>
+  </a>
 
   <a class="frame" href="2026-11-09.html">
     <span class="frame__idx num">63</span>
@@ -1169,7 +1186,7 @@
 <footer class="foot">
   <span class="barcode barcode--lg" aria-hidden="true"></span>
   <span>Frames are written by the <code>beevia-refresh</code> skill alongside the Markdown in <code>project-status/</code>.</span>
-  <span><a href="2026-11-09.html">Latest</a></span>
+  <span><a href="2026-11-10.html">Latest</a></span>
 </footer>
 
 <script src="ui.js"></script>

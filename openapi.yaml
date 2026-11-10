@@ -851,6 +851,50 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    delete:
+      tags: [KYC]
+      operationId: removeNin
+      summary: Remove your NIN (test only)
+      description: |
+        For testing on live data: takes the NIN off the account so
+        `POST /kyc/nin` and the no-NIN states can be tried again. Works only on
+        a server with `KYC_RESET_ENABLED=true` (off by default); elsewhere it
+        is a `404`. It must never be switched on where real users are, because
+        any caller can clear their own NIN and restart their own grace period.
+
+        Clears the NIN and its verified time and puts `kyc_level` back to 1.
+        `grace=running` (the default) restarts an open account's 30 days from
+        now; `grace=expired` ends them now, so every limit drops to zero. An
+        account not opened yet gets its 30 days when it opens, as usual. Works
+        with or without a NIN on file. The BVN, profile, account and money are
+        untouched, and the 5 NIN attempts an hour still apply. Returns the KYC
+        status, the same body as `GET /kyc/status`.
+      parameters:
+        - name: grace
+          in: query
+          required: false
+          schema: { type: string, enum: [running, expired], default: running }
+      responses:
+        '200':
+          description: NIN removed. The KYC state after the change.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/KycStatus' }
+        '400':
+          description: '`grace` is not `running` or `expired`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '404':
+          description: Removing a NIN is off on this server (`not_found`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 
   /kyc/profile:
     post:
