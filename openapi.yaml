@@ -916,7 +916,11 @@ paths:
       tags: [Users]
       operationId: updateMe
       summary: Update my profile
-      description: Display name and/or avatar. At least one field is required.
+      description: |
+        Display name and/or avatar. At least one field is required.
+        `avatarUrl: null` removes the photo. A removed or replaced photo that
+        the caller uploaded is deleted from storage once no profile or group
+        still shows it.
       requestBody:
         required: true
         content:
@@ -3403,6 +3407,16 @@ paths:
         The body is opaque ciphertext — either a single `ciphertext` blob
         (group / sender-key) or per-device `envelopes` (1:1). At least one is
         required. `clientId` is the idempotency key. Mirrors `message.send`.
+
+        **Voice notes.** A `type: audio` message must carry exactly one
+        attachment (`voice_note_one_attachment`), uploaded as `audio/*`
+        (`voice_note_not_audio`), of at most `VOICE_NOTE_MAX_BYTES` (10 MB,
+        `voice_note_too_large`), with its length in `contentMeta.durationMs`,
+        a positive whole number of milliseconds (`voice_note_duration_required`)
+        up to `VOICE_NOTE_MAX_SECONDS` (10 minutes, `voice_note_too_long`).
+        Each is a `400`, checked before anything is stored. The audio is
+        end-to-end encrypted, so the declared length is all the server can
+        check; the size cap bounds the real one.
       parameters:
         - $ref: '#/components/parameters/DeviceIdHeader'
       requestBody:
@@ -3627,6 +3641,32 @@ paths:
                         type: array
                         items: { $ref: '#/components/schemas/Call' }
 
+  /calls/{id}/ringing:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    post:
+      tags: [Calls]
+      operationId: reportCallRinging
+      summary: Report that a call is ringing
+      description: |
+        The callee's app calls this as soon as it shows the incoming call
+        (after the push or `call.incoming`). Works right after a push wakes
+        the app, before its socket connects. Mirrors the `call.ringing`
+        socket command.
+
+        While the call is `ringing`, the caller's devices get the
+        `call.ringing` event `{ call_id, conversation_id, user_id, at }`,
+        where `user_id` is whose phone is ringing. A late report (call
+        already answered, declined, ended or missed) tells nobody and
+        returns the call's current status, so a phone still ringing for a
+        finished call can stop. Nothing is stored.
+
+        The caller cannot report their own call: `400 own_call`.
+      responses:
+        '200': { $ref: '#/components/responses/CallOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
   /calls/{id}/answer:
     parameters:
       - $ref: '#/components/parameters/PathId'
@@ -3847,6 +3887,10 @@ paths:
         Anything else is rejected with `invalid_key`: the bucket also holds
         encrypted attachment ciphertext, and this route must not be able to
         reach it.
+
+        Only files the caller uploaded: `403 upload_not_yours` otherwise,
+        including files uploaded before uploads were attributed to their
+        uploader, and `404 upload_not_found` for a key with no file.
       parameters:
         - name: key
           in: query
@@ -3873,6 +3917,8 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
 
   /translate:
     post:
@@ -6537,7 +6583,7 @@ components:
       minProperties: 1
       properties:
         displayName: { type: string, minLength: 1, maxLength: 255 }
-        avatarUrl: { type: string, format: uri, maxLength: 2048 }
+        avatarUrl: { type: [string, 'null'], format: uri, maxLength: 2048, description: '`null` removes the photo.' }
 
     UpdateNotificationPreferencesRequest:
       type: object

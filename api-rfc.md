@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft — for review · **updated 2026-08-05** |
 | **Scope** | The complete HTTP surface of `beevia-api` (the consumer API): what exists today, and what the PRD requires that does not exist yet |
-| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, **161 operations** · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, **32 operations** (29 net-new + 3 live-endpoint modifications) · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
+| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, **162 operations** · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, **32 operations** (29 net-new + 3 live-endpoint modifications) · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
 | **Sibling RFC** | [`admin-api-rfc.md`](./admin-api-rfc.md) — the `beevia-admin-api` back-office service |
 | **Sources** | `beevia-api/src/**/*.controller.ts`, `beevia-api/src/**/dto/*.ts`, `beevia-db-schema/src/schema/*`, `beevia-api/postman/Beevia.postman_collection.json`, `Beevia_PRD.pdf` |
 | **Base path** | `/api/v1` (global prefix set in `src/main.ts`; `/i/:code` is explicitly excluded) |
@@ -164,7 +164,7 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | Payments | **9** | 4 | Direct transfer + recipient picker shipped 17 Aug. Still no read path — no `GET /payments`. (Plus the 3 live-endpoint modifications counted below.) |
 | Cards | **16** | 0 | **New, and larger than proposed.** Issue, list, get, rename, reveal, reveal-PIN, freeze, unfreeze, terminate, fund, withdraw, transfers, transactions, plus **limits (read and change) and activity, 2026-11-03/04** (§5.20). Each card carries its **own 4-digit PIN**, a model the proposal did not anticipate |
 | Chat (REST) | 19 | 0 | +2 clear, delete. Message deletion now shipped |
-| Calls | 5 | 0 | Complete |
+| Calls | **6** | 0 | Complete. **+1 (2026-11-11, §5.25):** `POST /calls/{id}/ringing`, the callee's "my phone rang" report |
 | Attachments | 2 | 1 | No single-attachment download presign |
 | Upload | 5 | 0 | Public, permanent objects — distinct from Attachments (encrypted, presigned-only) |
 | Translate | **7** | **1** | **+6 (2026-09-10):** the language-preference surface — `GET /translate/languages`, plus app-wide and per-conversation preferences with precedence. **−4 proposed:** `/translate/languages` moved, and all three proposed preference operations shipped under `/translate/preferences` instead. Only `/translate/batch` is left proposed, and it is probably obsolete (§5.5a). The engine itself is still a stub (§5.5) |
@@ -175,7 +175,7 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | **Disputes** | **4** | 0 | **New 2026-10-28, rebuilt 2026-11-03.** "Report an issue" on a transaction (`POST /disputes`), the user's history, one report, and the open count for the badge. A dispute is now a support thread with a transaction attached. The snapshot of the transaction is built server-side from the reference. Shipped in place of the proposed `POST /payments/{id}/dispute` (§5.18, §5.19) |
 | **Support** | **5** | 0 | **New 2026-11-03.** Chat with Support, availability, and the thread both chats and disputes run on. An AI assistant answers first. Shipped in place of the proposed `/support/tickets` (§5.19) |
 | Webhooks | **3** | 1 | **+1:** `POST /webhooks/paystack` for card top-ups. **−1 (2026-11-06):** `POST /kyc/entrust/webhook` removed with the Entrust check. Card issuer callback still missing |
-| **Total** | **161** | **29** | +3 live-endpoint modifications = 32 operations in the proposed file |
+| **Total** | **162** | **29** | +3 live-endpoint modifications = 32 operations in the proposed file |
 
 ---
 
@@ -710,6 +710,19 @@ Open points are in `suggestions.md` §4.17.
 
 ---
 
+### 5.25 Ringing, voice notes, and photos only their uploader can delete (2026-11-11)
+
+**What shipped.** `beevia-api` #108 (11 Nov, 07:18 UTC) and #109 (11 Nov, 07:53 UTC). **Consumer operations go from 161 to 162**: `POST /calls/{id}/ringing` added. Three existing operations changed their contract.
+
+- **`POST /calls/{id}/ringing` and the `call.ringing` socket command.** The callee's app reports that it is showing the incoming call; while the call is still `ringing`, the caller's devices get `call.ringing` `{ call_id, conversation_id, user_id, at }`. A late report tells nobody and returns the call's current status. The caller reporting their own call is `400 own_call`. Nothing is stored, and the 60-second ring timeout is unchanged. **`beevia-mobile` `main` neither sends the command nor handles the event.**
+- **`DELETE /upload` deletes only the caller's own files** (`403 upload_not_yours`, `404 upload_not_found`). Before #108 it checked only the key's format, and public URLs carry the key, so **any signed-in user could delete any other user's profile or group photo.** That is closed. Files uploaded before uploads were attributed (object metadata, no schema change) can now be deleted by nobody through this route.
+- **`PATCH /users/me` takes `avatarUrl: null`** to remove the photo. A removed or replaced photo that the user uploaded is deleted from storage once no profile or group shows it; account deletion does the same.
+- **Voice notes (`type: audio` messages, #109)** need exactly one `audio/*` attachment of at most 10 MB (`VOICE_NOTE_MAX_BYTES`) and a whole-millisecond `contentMeta.durationMs` up to 10 minutes (`VOICE_NOTE_MAX_SECONDS`), each failure a distinct `400`. The audio stays end-to-end encrypted, so the server checks the declared length and bounds the real one only by size. An offline recipient's push now reads "🎤 Voice message". **It would break any client that sends `type: audio` without `durationMs`.** `beevia-mobile` `main` has no path that sends `type: audio` (its attachment picker never chooses it), so nothing breaks today, and the app has no voice-note recorder to send one.
+
+Open points are in `suggestions.md` §4.18.
+
+---
+
 ## 6. Implemented surface
 
 Status legend: **✅ Complete** · **🟡 Partial** — works but materially narrower than the PRD describes · **🔴 Facade** — the route is real and the behaviour behind it is not.
@@ -772,7 +785,7 @@ Parallel ladder for `chat_only` users adopting banking. See §5.1 for why this s
 
 | | Method | Path | Auth | Status |
 |---|---|---|---|---|
-| | PATCH | `/users/me` | 🔑 | ✅ |
+| | PATCH | `/users/me` | 🔑 | ✅ `avatarUrl: null` removes the photo (2026-11-11) |
 | | DELETE | `/users/me` | 🔐 | 🟡 Synchronous ack; no progress surface |
 | | POST | `/users/me/contact-change` | 🔐 | ✅ **New.** Step-up gated; sends a code to the new contact |
 | | POST | `/users/me/contact-change/verify` | 🔑 | ✅ **New.** Commits the change |
@@ -860,6 +873,7 @@ Escrow mechanics themselves are sound: a 24-hour hold scheduled through BullMQ, 
 | | DELETE | `/messages/{id}/reactions/{emoji}` | 🔑 | ✅ |
 | | POST | `/conversations/{id}/calls` | 🔑 | ✅ **One live call per conversation** (2026-10-23): a repeat tap returns your own call, the other side's live call is `400 call_already_in_progress`. A blocked direct pair gets `403 blocked` (2026-10-27) |
 | | GET | `/conversations/{id}/calls` | 🔑 | ✅ |
+| | POST | `/calls/{id}/ringing` | 🔑 | ✅ **New 2026-11-11.** Tells the caller the callee's phone rang; `400 own_call` for the caller; nothing stored |
 | | POST | `/calls/{id}/answer` | 🔑 | ✅ |
 | | POST | `/calls/{id}/decline` | 🔑 | ✅ |
 | | POST | `/calls/{id}/end` | 🔑 | ✅ |

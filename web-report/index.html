@@ -34,7 +34,7 @@
       <span class="topbar__wordmark">Beevia</span>
     </div>
     <nav class="topbar__nav label" aria-label="Report">
-      <a href="2026-11-10.html">Latest frame</a>
+      <a href="2026-11-11.html">Latest frame</a>
     </nav>
 </div>
 
@@ -43,9 +43,9 @@
     <div class="field__rail field__rail--l">
       <dl>
         <dt>Frames held</dt>
-        <dd>64</dd>
+        <dd>65</dd>
         <dt>Latest</dt>
-        <dd>2026-11-10 · The client has caught up with the server on an unmerged branch, a test-only route that clears a NIN has no production guard, and sprint 1002 is five days over with the board untouched</dd>
+        <dd>2026-11-11 · Three weeks of mobile work reached main in one merge, 24 of 33 review items now have code and none is accepted, and a hole that let any user delete any photo was closed</dd>
       </dl>
     </div>
 
@@ -55,7 +55,7 @@
       </div>
       <div class="field__meta num">
         <span>Beevia project status</span>
-        <span>2026-08-05 &rarr; 2026-11-10</span>
+        <span>2026-08-05 &rarr; 2026-11-11</span>
         <span>Newest first</span>
       </div>
     </div>
@@ -74,26 +74,43 @@
 <section class="mvp" aria-label="MVP readiness estimate">
   <div class="mvp__head">
     <span class="mvp__label label">MVP readiness &mdash; estimate</span>
-    <span class="mvp__pct num">&asymp;67%</span>
-    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 70 days past</span>
+    <span class="mvp__pct num">&asymp;68%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 71 days past</span>
   </div>
-  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 67 percent built, unchanged. The client NIN step, limits screen and card limits form exist only on an unmerged branch, and the new test-only reset route is tooling, so no line moves. E2EE messaging 0.90; voice and video calling 0.92; message translation 0.60; local KYC 0.90; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.80; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 68 percent built, up 1.04 points. The client NIN step and card management reached main in pull request 58, so local KYC rises to 0.93 and virtual cards to 0.88. E2EE messaging 0.90; voice and video calling 0.92; message translation 0.60; local KYC 0.93; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.88; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
     <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.90"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.92"><i style="width:92%"></i></span>
     <span class="mvp__seg" style="flex:7" title="Message translation — 0.60"><i style="width:60%"></i></span>
-    <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.90"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.93"><i style="width:93%"></i></span>
     <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
     <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.85"><i style="width:85%"></i></span>
     <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.92"><i style="width:92%"></i></span>
     <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
-    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0.80"><i style="width:80%"></i></span>
+    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0.88"><i style="width:88%"></i></span>
     <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
     <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.97"><i style="width:97%"></i></span>
   </div>
-  <p class="mvp__read"><strong>67.32, unchanged.</strong> The app now has a NIN step, a limits screen on the shipped shape and a card limits form, but on an unmerged branch, so no line moves; when it merges, local KYC is the first line to reconsider. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 10 Nov 2026 &mdash; <a href="2026-11-10.html#mvp-method">method and capability table</a>.</p>
+  <p class="mvp__read"><strong>68.36, up 1.04.</strong> The NIN step and card management reached <code>main</code> in #58, so local KYC moves 0.90 &rarr; 0.93 and virtual cards 0.80 &rarr; 0.88; wallets hold at 0.85 because every new screen is NGN only. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 11 Nov 2026 &mdash; <a href="2026-11-11.html#mvp-method">method and capability table</a>.</p>
 </section>
 
 <main class="frames">
+
+  <a class="frame" href="2026-11-11.html">
+    <span class="frame__idx num">65</span>
+    <span>
+      <span class="frame__date">11 Nov 2026</span>
+      <span class="frame__sum"><strong>Three weeks of mobile work reached main in one 335-file merge, four minutes after the previous cut-off.</strong> 24 of 1002's 33 review items now have merged code, and none has been accepted. The backend closed a hole that let any signed-in user delete anyone's profile photo, and added call ringing and voice-note limits. Sprint 1002 is six days over with no successor. Spec at 162 / 76.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:33"></i><u style="flex:11"></u></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>1002 &middot; ended 5 Nov &middot; 1 To do &middot; 2 In progress &middot; 33 QA &middot; 0 Blocked &middot; 8 Done</span></div>
+      <div><span>MVP est</span><span>&asymp;68% &middot; &Delta; +1.04</span></div>
+      <div><span>Test-gated deploys</span><span>0 of 3 backend repos</span></div>
+      <div><span>Recommendations</span><span>0 of 24 met &middot; 4 in part</span></div>
+      <div><span>Board actions</span><span>1 in 1.0 day &middot; I362 to review &middot; 0 out of review</span></div>
+      <div><span>API surface</span><span>162 / 76 &middot; route drift 0 after spec update</span></div>
+    </span>
+  </a>
 
   <a class="frame" href="2026-11-10.html">
     <span class="frame__idx num">64</span>
@@ -1186,7 +1203,7 @@
 <footer class="foot">
   <span class="barcode barcode--lg" aria-hidden="true"></span>
   <span>Frames are written by the <code>beevia-refresh</code> skill alongside the Markdown in <code>project-status/</code>.</span>
-  <span><a href="2026-11-10.html">Latest</a></span>
+  <span><a href="2026-11-11.html">Latest</a></span>
 </footer>
 
 <script src="ui.js"></script>

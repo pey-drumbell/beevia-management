@@ -399,6 +399,16 @@ Not built: dispute messaging (`BVA-I344`, `I343`'s thread), the open-dispute cou
 3. **§4.16 items 1 and 7 now have client code, on a branch.** `c04e207` adds a NIN screen (`verify_nin.dart`), a banner that reads `grace_until`, and a call to `POST /activity/seen` on entering and leaving the Activity tab; the limits model reads the shipped `daily.limit` shape. None of it is on `main`, and it was read, not run. Item 2 (a route with only mocked specs is unproven) stands, and the branch's own mock server answers the new routes, so its tests do not prove them either.
 4. **The branch is the only place the client meets the contract**, and its mock fixtures were written from the specs. Call each of `GET /wallets/limits`, `GET /kyc/status`, `POST /kyc/nin` and `POST /activity/seen` once from a real build against the sandbox before the branch is merged.
 
+### 4.18 The client merged; ringing and voice notes arrive with no client (2026-11-11)
+
+`beevia-mobile` #58 (merged to `main` 10 Nov 15:07 UTC) and `beevia-api` #108 and #109 (`api-rfc.md` §5.25). From reading the code; nothing was run.
+
+1. **§4.17 items 3 and 4 are now on `main`.** #58 carried `BVA-I353` (NIN screen, deadline banner, limits screen, the Activity "seen" call, card management) together with the test and UI-audit branches. The debug `print` in the Activity provider is gone. `verify_nin.dart` still matches only `too_many_attempts`, `nin_mismatch` and `nin_already_used` by name; `nin_not_found`, `bvn_required` and `verification_unavailable` fall to a generic message. The "call each route once against a real account" check is still not shown to have happened.
+2. **Voice notes are now validated, and the app has no voice notes yet.** `durationMs` appears nowhere in `beevia-mobile/lib`, and no send path on `main` chooses `type: audio` (the attachment picker never does), so nothing breaks today. When a recorder is built, it must send `contentMeta.durationMs` and a single `audio/*` file under 10 MB, or every note is a `400`.
+3. **`call.ringing` has no client.** Nothing on `main` sends the command or handles the event, so the caller still cannot tell "ringing" from "delivered nowhere". Small, and a natural pair with the still-unhandled `call.ended` push.
+4. **The upload fix is good, and it leaves orphans.** Files uploaded before attribution can no longer be deleted through `DELETE /upload` by anyone, including their owner. #108's cleanup on photo replacement covers attributed files only. A one-off backfill of uploader metadata from `avatar_url` / group photo columns would let both paths reach the old files.
+5. **Was the photo-deletion hole exploited?** Until #108 any signed-in user could delete another user's or group's photo by key. Storage access logs, if kept, would show it. Worth one look.
+
 ## 5. Maintainability
 
 ### 5.1 Zod schemas and Swagger DTO classes are duplicated by hand
