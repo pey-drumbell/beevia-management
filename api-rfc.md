@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft — for review · **updated 2026-08-05** |
 | **Scope** | The complete HTTP surface of `beevia-api` (the consumer API): what exists today, and what the PRD requires that does not exist yet |
-| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, **162 operations** · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, **32 operations** (29 net-new + 3 live-endpoint modifications) · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
+| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, **165 operations** · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, **32 operations** (29 net-new + 3 live-endpoint modifications) · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
 | **Sibling RFC** | [`admin-api-rfc.md`](./admin-api-rfc.md) — the `beevia-admin-api` back-office service |
 | **Sources** | `beevia-api/src/**/*.controller.ts`, `beevia-api/src/**/dto/*.ts`, `beevia-db-schema/src/schema/*`, `beevia-api/postman/Beevia.postman_collection.json`, `Beevia_PRD.pdf` |
 | **Base path** | `/api/v1` (global prefix set in `src/main.ts`; `/i/:code` is explicitly excluded) |
@@ -150,7 +150,7 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | Domain | Implemented | Proposed | Notes |
 |---|---:|---:|---|
 | Platform | 1 | 2 | Only a static root route today; no real health probe |
-| Auth & Onboarding | 13 | 3 | Session listing/revocation missing |
+| Auth & Onboarding | **16** | 3 | Session listing/revocation missing. **+3 (2026-11-12, §5.26):** Forgot PIN (`/auth/pin/reset/request`, `/verify`, `/auth/pin/reset`) |
 | KYC | **8** | **2** | Local ladder only. **+1 (2026-11-10, §5.24):** `DELETE /kyc/nin`, a test-only reset that is a `404` unless `KYC_RESET_ENABLED` is on. **+2, −1 (2026-11-06, §5.22):** `POST /kyc/nin` and `GET /kyc/status` shipped, and the Entrust document check (`POST /kyc/id/start`) was removed. `GET /kyc/status` left the proposed file; the international tier is still unbuilt |
 | **Upgrade** | **6** | 0 | **New.** Parallel KYC ladder for chat_only → chat_banking. `POST /upgrade/nin` was added 2026-11-06 and **removed 2026-11-09** (§5.23): the NIN is no longer part of the upgrade |
 | Users | 14 | 7 | +2 contact-change. No consent, limits, deletion-status or export surface |
@@ -175,7 +175,7 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | **Disputes** | **4** | 0 | **New 2026-10-28, rebuilt 2026-11-03.** "Report an issue" on a transaction (`POST /disputes`), the user's history, one report, and the open count for the badge. A dispute is now a support thread with a transaction attached. The snapshot of the transaction is built server-side from the reference. Shipped in place of the proposed `POST /payments/{id}/dispute` (§5.18, §5.19) |
 | **Support** | **5** | 0 | **New 2026-11-03.** Chat with Support, availability, and the thread both chats and disputes run on. An AI assistant answers first. Shipped in place of the proposed `/support/tickets` (§5.19) |
 | Webhooks | **3** | 1 | **+1:** `POST /webhooks/paystack` for card top-ups. **−1 (2026-11-06):** `POST /kyc/entrust/webhook` removed with the Entrust check. Card issuer callback still missing |
-| **Total** | **162** | **29** | +3 live-endpoint modifications = 32 operations in the proposed file |
+| **Total** | **165** | **29** | +3 live-endpoint modifications = 32 operations in the proposed file |
 
 ---
 
@@ -723,6 +723,20 @@ Open points are in `suggestions.md` §4.18.
 
 ---
 
+### 5.26 Forgot PIN and a wrong-PIN lock (2026-11-12)
+
+**What shipped.** `beevia-db-schema` #35 (v0.0.54, 11 Nov 15:05 UTC: the `pin_reset` OTP purpose, `users.pin_failed_attempts`, `users.pin_locked_until`) and `beevia-api` #110 (12 Nov, 10:38 UTC). **Consumer operations go from 162 to 165.** Four existing operations changed their contract.
+
+- **Forgot PIN, for a signed-in user, in three steps.** `POST /auth/pin/reset/request` sends a `pin_reset` code to the account phone and returns the number masked (`+234 812 *** 6789`). `POST /auth/pin/reset/verify` trades the code for a `reset_token` (JWT type `pin_reset`, `JWT_PIN_RESET_TTL`, default 5m) that can only set a PIN. `POST /auth/pin/reset` sets the new PIN with it, no old PIN needed, clears any lock and sends a "Your PIN was changed" security push. `pin_reset` is not accepted by the public `POST /auth/otp/request`.
+- **A wrong-PIN lock on every PIN check.** `POST /auth/pin/verify`, `POST /auth/step-up` and `currentPin` on `POST /auth/pin` share one count, incremented with a single atomic `UPDATE`. Each wrong PIN is `pin_invalid` with `details.attempts_remaining`; the fifth (`PIN_MAX_ATTEMPTS`) locks PIN entry for 30 minutes (`PIN_LOCK_MINUTES`) as `403 pin_locked` with `details.locked_until`, even for the right PIN. A right PIN clears the count; a reset unlocks at once. **This is the first limit on step-up guesses**, which the 30 Oct close of `I381` assumed and which did not exist until now.
+- **Every wrong phone code now reports the tries left** (`otp_invalid` with `details.attempts_remaining`), and the last allowed one is `otp_too_many_attempts`. This applies to every phone code the OTP service checks: sign-up, login, phone change and Forgot PIN. BVN and email codes are checked elsewhere and are unchanged.
+
+**Read, not run, and three limits worth knowing** (`suggestions.md` §4.19): the lock is checked against the user row read *before* the PIN is compared, so requests sent together are all compared before the first lock lands; the count resets to zero when the lock is set, so the lock does not escalate (5 guesses per 30 minutes, indefinitely); and a `reset_token` is not single-use within its 5 minutes. `beevia-mobile` `main` still shows "coming soon" on Forgot PIN; the branch `feat-forget-pin-fixes` (12 Nov) has the client.
+
+Open points are in `suggestions.md` §4.19.
+
+---
+
 ## 6. Implemented surface
 
 Status legend: **✅ Complete** · **🟡 Partial** — works but materially narrower than the PRD describes · **🔴 Facade** — the route is real and the behaviour behind it is not.
@@ -746,9 +760,12 @@ Auth: 🔓 public · 🔑 access token · 🔐 access + step-up token.
 | | POST | `/auth/refresh` | 🔓 | ✅ Rotating; old session revoked |
 | | GET | `/auth/me` | 🔑 | ✅ `email` present only when set — key absent, not null (§5.8) |
 | | POST | `/auth/logout` | 🔑 | ✅ Idempotent |
-| | POST | `/auth/pin` | 🔑 | ✅ `currentPin` required to change |
-| | POST | `/auth/pin/verify` | 🔑 | ✅ Does not mint step-up |
-| | POST | `/auth/step-up` | 🔑 | ✅ |
+| | POST | `/auth/pin` | 🔑 | ✅ `currentPin` required to change; a wrong one counts toward the PIN lock (2026-11-12) |
+| | POST | `/auth/pin/verify` | 🔑 | ✅ Does not mint step-up. `pin_invalid` carries `attempts_remaining`; `403 pin_locked` after 5 (2026-11-12) |
+| | POST | `/auth/pin/reset/request` | 🔑 | ✅ **New 2026-11-12.** Forgot PIN step 1: code to the account phone, number returned masked |
+| | POST | `/auth/pin/reset/verify` | 🔑 | ✅ **New 2026-11-12.** Step 2: code → 5-minute `reset_token` |
+| | POST | `/auth/pin/reset` | 🔑 | ✅ **New 2026-11-12.** Step 3: new PIN with the token; unlocks; security push |
+| | POST | `/auth/step-up` | 🔑 | ✅ Shares the PIN lock (2026-11-12) |
 | | GET | `/onboarding/state` | 🔑 | ✅ |
 | | POST | `/onboarding/path` | 🔑 | ✅ |
 | | POST | `/onboarding/profile` | 🔑 | ✅ Age ≥ 16 enforced |

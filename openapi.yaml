@@ -290,7 +290,7 @@ paths:
                     properties:
                       data: { $ref: '#/components/schemas/SessionGrant' }
         '400':
-          description: 'Bad or expired code — `otp_invalid`, `otp_expired`, `otp_too_many_attempts`.'
+          description: 'Bad or expired code — `otp_invalid` (with `details.attempts_remaining`), `otp_expired`, `otp_too_many_attempts` (the last allowed wrong code).'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
@@ -368,7 +368,9 @@ paths:
       description: |
         Onboarding step 3/4. Sets the 4-digit PIN and optionally enables
         biometrics. Changing an existing PIN requires `currentPin`
-        (`pin_invalid` otherwise).
+        (`pin_invalid` otherwise). A wrong `currentPin` counts toward the
+        wrong-PIN lock; a user who has forgotten it uses
+        `POST /auth/pin/reset/request` instead.
       requestBody:
         required: true
         content:
@@ -378,13 +380,25 @@ paths:
         '200': { $ref: '#/components/responses/UserOk' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403':
+          description: |
+            `pin_locked`: `PIN_MAX_ATTEMPTS` (default 5) wrong PINs in a row lock
+            PIN entry for `PIN_LOCK_MINUTES` (default 30), even for the right PIN.
+            `details.locked_until` gives the end; a Forgot PIN reset unlocks at once.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 
   /auth/pin/verify:
     post:
       tags: [Auth & Onboarding]
       operationId: verifyPin
       summary: Verify PIN
-      description: Confirms the PIN (app unlock / new-device owner confirmation). Does **not** mint a step-up token.
+      description: |
+        Confirms the PIN (app unlock / new-device owner confirmation). Does **not**
+        mint a step-up token. A wrong PIN is `pin_invalid` with
+        `details.attempts_remaining`; wrong PINs here, on step-up and as
+        `currentPin` share one count.
       requestBody:
         required: true
         content:
@@ -405,6 +419,103 @@ paths:
                         properties:
                           verified: { type: boolean, example: true }
         '400': { $ref: '#/components/responses/BadRequest' }
+        '403':
+          description: |
+            `pin_locked`: `PIN_MAX_ATTEMPTS` (default 5) wrong PINs in a row lock
+            PIN entry for `PIN_LOCK_MINUTES` (default 30), even for the right PIN.
+            `details.locked_until` gives the end; a Forgot PIN reset unlocks at once.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /auth/pin/reset/request:
+    post:
+      tags: [Auth & Onboarding]
+      operationId: requestPinReset
+      summary: 'Forgot PIN: send a code'
+      description: |
+        Step 1 of 3 of Forgot PIN, for a signed-in user. Sends a `pin_reset` code
+        to the account phone and returns the number masked for display
+        ("+234 812 *** 6789"). Call again to resend; `otp_cooldown` (400) carries
+        the seconds to wait. The `pin_reset` purpose is not accepted by the
+        public `POST /auth/otp/request`.
+      responses:
+        '200':
+          description: Code sent.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          phone: { type: string, example: '+234 812 *** 6789' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/pin/reset/verify:
+    post:
+      tags: [Auth & Onboarding]
+      operationId: verifyPinReset
+      summary: 'Forgot PIN: check the code'
+      description: |
+        Step 2 of 3. Trades the code for a `reset_token` (a JWT of type
+        `pin_reset`, `JWT_PIN_RESET_TTL`, default 5m) that can only set a new
+        PIN. A wrong code is `otp_invalid` with `details.attempts_remaining`;
+        the last allowed wrong code is `otp_too_many_attempts`, after which a
+        new code must be requested.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PinResetVerifyRequest' }
+      responses:
+        '200':
+          description: Code verified.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          reset_token: { type: string, example: 'eyJhbGciOiJIUzI1NiJ9.pinreset' }
+        '400':
+          description: '`otp_invalid` (with `details.attempts_remaining`) / `otp_expired` / `otp_too_many_attempts`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/pin/reset:
+    post:
+      tags: [Auth & Onboarding]
+      operationId: resetPin
+      summary: 'Forgot PIN: set the new PIN'
+      description: |
+        Step 3 of 3. Sets the new PIN with the `resetToken` from step 2; the old
+        PIN is not needed. Clears the wrong-PIN count and any lock, and sends a
+        "Your PIN was changed" security push to the account's devices. A
+        missing, expired or another user's token is `pin_reset_invalid` (401).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PinResetRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/UserOk' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401':
+          description: '`pin_reset_invalid`, or no valid session.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 
   /auth/step-up:
     post:
@@ -419,7 +530,9 @@ paths:
         token expires.
 
         The PIN is the only accepted factor. There is no biometric variant of
-        this request: a body without `pin` fails validation.
+        this request: a body without `pin` fails validation. A wrong PIN is
+        `pin_invalid` with `details.attempts_remaining` and counts toward the
+        wrong-PIN lock (`403 pin_locked`).
       requestBody:
         required: true
         content:
@@ -440,6 +553,14 @@ paths:
                         properties:
                           step_up_token: { type: string, example: 'eyJhbGciOiJIUzI1NiJ9.stepup' }
         '400': { $ref: '#/components/responses/BadRequest' }
+        '403':
+          description: |
+            `pin_locked`: `PIN_MAX_ATTEMPTS` (default 5) wrong PINs in a row lock
+            PIN entry for `PIN_LOCK_MINUTES` (default 30), even for the right PIN.
+            `details.locked_until` gives the end; a Forgot PIN reset unlocks at once.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 
   /onboarding/state:
     get:
@@ -5860,6 +5981,19 @@ components:
       required: [pin]
       properties:
         pin: { type: string, pattern: '^\d{4}$', example: '1234' }
+
+    PinResetRequest:
+      type: object
+      required: [resetToken, pin]
+      properties:
+        resetToken: { type: string, minLength: 10, description: 'The `reset_token` from `POST /auth/pin/reset/verify` (valid 5 minutes).' }
+        pin: { type: string, pattern: '^\d{4}$', example: '1234', description: The new 4-digit PIN. }
+
+    PinResetVerifyRequest:
+      type: object
+      required: [code]
+      properties:
+        code: { type: string, pattern: '^\d{4,8}$', example: '483920', description: The code sent to the account phone. }
 
     ContactUserProfile:
       type: object

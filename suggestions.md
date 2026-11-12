@@ -219,7 +219,7 @@ Money-moving routes are the *last* place that should have the loosest input vali
 Unprotected and reachable without authentication or with a single valid session:
 
 - `POST /auth/register`, `/auth/login`, `/auth/otp/request` — SMS cost amplification, phone enumeration.
-- `POST /auth/pin/verify`, `/auth/step-up` — PIN brute force. A 4-digit PIN has 10,000 combinations; without a lockout, exhausting it is seconds of work.
+- `POST /auth/pin/verify`, `/auth/step-up` — PIN brute force. A 4-digit PIN has 10,000 combinations; without a lockout, exhausting it is seconds of work. **Update 2026-11-12:** a 5-attempt, 30-minute lock exists since `beevia-api` #110, but without a rate limit a burst of parallel requests is compared before it lands (§4.19).
 - `POST /users/lookup`, `POST /contacts/sync` (500 numbers per call) — bulk phone enumeration of the user base.
 - `GET /keys/{userId}` — **consumes a one-time prekey per call.** An authenticated attacker can drain a victim's entire prekey pool in a loop, degrading their forward secrecy until the pool is replenished.
 - `POST /translate` — third-party cost amplification.
@@ -408,6 +408,15 @@ Not built: dispute messaging (`BVA-I344`, `I343`'s thread), the open-dispute cou
 3. **`call.ringing` has no client.** Nothing on `main` sends the command or handles the event, so the caller still cannot tell "ringing" from "delivered nowhere". Small, and a natural pair with the still-unhandled `call.ended` push.
 4. **The upload fix is good, and it leaves orphans.** Files uploaded before attribution can no longer be deleted through `DELETE /upload` by anyone, including their owner. #108's cleanup on photo replacement covers attributed files only. A one-off backfill of uploader metadata from `avatar_url` / group photo columns would let both paths reach the old files.
 5. **Was the photo-deletion hole exploited?** Until #108 any signed-in user could delete another user's or group's photo by key. Storage access logs, if kept, would show it. Worth one look.
+
+### 4.19 The PIN lock: right idea, three gaps (2026-11-12)
+
+`beevia-api` #110 and `beevia-db-schema` #35 (`api-rfc.md` §5.26). From reading `AuthService.checkPin`; nothing was run.
+
+1. **Requests sent together are all compared before the lock lands.** `checkPin` reads `pin_locked_until` from the user row loaded at the start of the request, then runs scrypt, and only a *wrong* answer touches the counter. The counter is atomic, as the commit says, but the comparison is not gated by it: every request that loaded the row before the fifth wrong answer was written gets its PIN compared, and a right one among them succeeds. With no HTTP rate limit (§4.1), a single session can send a burst far larger than five. Reserve the attempt first (`UPDATE users SET pin_failed_attempts = pin_failed_attempts + 1 WHERE id = $1 AND (pin_locked_until IS NULL OR pin_locked_until < now()) AND pin_failed_attempts < $max RETURNING …`), compare only if a row came back, and give the attempt back on a right PIN.
+2. **The lock does not escalate.** Locking sets the count back to zero, so the pattern is five guesses per 30 minutes, indefinitely: about 240 a day, all 10,000 PINs in about 42 days, half in about 21. Count consecutive locks and lengthen them, or require Forgot PIN after the second or third.
+3. **A `reset_token` can be used more than once in its 5 minutes**, and a reset does not end other sessions. Record a `jti` on use, and consider revoking the account's other refresh sessions on reset, since the reset is exactly what a session thief would do next.
+4. **The client is on a branch.** `beevia-mobile` `main` still answers "Forgot PIN?" with "coming soon" (`wallet_widgets.dart`). `feat-forget-pin-fixes` (pushed 12 Nov 06:49 UTC) calls the three routes and handles `pin_locked`, `attempts_remaining` and `pin_reset_invalid`. Until it merges, a user who trips the lock waits 30 minutes with no way out.
 
 ## 5. Maintainability
 
