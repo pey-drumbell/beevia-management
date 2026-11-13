@@ -3493,9 +3493,12 @@ paths:
       description: |
         Seq-cursored history. `X-Device-Id` is required so per-device ciphertext
         can be resolved for the caller's device. `unresolved` counts returned
-        messages this device holds no envelope for (their `ciphertext` is
-        `null`); with the header mandatory, a non-zero count means the envelope
-        is genuinely absent rather than that the device was not named. Mirrors
+        messages of an encrypted type (`text`, `image`, `audio`, `file`,
+        `location`, `contact`, `key_exchange`), not deleted for everyone, that
+        this device holds no envelope for (their `ciphertext` is `null`). Calls,
+        payment cards and system notices carry no ciphertext by design and never
+        count. With the header mandatory, a non-zero count means the envelope is
+        genuinely absent rather than that the device was not named. Mirrors
         `sync.messages`.
       parameters:
         - $ref: '#/components/parameters/DeviceIdHeader'
@@ -5830,7 +5833,10 @@ components:
         unresolved:
           type: integer
           minimum: 0
-          description: Returned messages this device holds no envelope for, so cannot decrypt.
+          description: |
+            Returned messages of an encrypted type, not deleted for everyone, that
+            this device holds no envelope for, so cannot decrypt. Calls, payment
+            cards and system notices never count.
         has_more: { type: boolean }
 
     Money:

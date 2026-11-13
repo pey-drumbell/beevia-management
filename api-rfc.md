@@ -735,6 +735,14 @@ Open points are in `suggestions.md` §4.18.
 
 Open points are in `suggestions.md` §4.19.
 
+### 5.27 Calls and payment cards no longer count as unreadable (2026-11-13)
+
+**What shipped.** `beevia-api` #111 (`6806b42`, merged 12 Nov 15:53 UTC). **No operation added or removed; 165 stays 165.** The meaning of `unresolved` on `GET /conversations/{id}/messages` (and `sync.messages`) changed in place.
+
+- **Before:** every returned row with no ciphertext for the device counted, including the ones the server writes in the clear by design: call entries, payment cards, system notices and messages deleted for everyone. The app shows "Some messages can't be shown on this device" whenever the count is above zero, so a chat of calls and payments showed the banner with nothing missing. The commit cites one dev chat where 34 of 112 counted rows were calls and payment cards.
+- **Now:** only the encrypted types (`text`, `image`, `audio`, `file`, `location`, `contact`, `key_exchange`) that were not deleted for everyone count. `openapi.yaml`'s operation description and `MessageHistory.unresolved` were updated in place.
+- **What it does not fix:** a device registered after a message was sent still has no envelope for it. The commit names that as history backfill, a separate piece of work. It is the multi-device gap from §5 and is unchanged.
+
 ---
 
 ## 6. Implemented surface

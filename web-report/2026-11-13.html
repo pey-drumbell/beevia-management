@@ -1,0 +1,866 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beevia — Project Status — 13 Nov 2026</title>
+<meta name="description" content="A quiet day. beevia-api #111 stops the app warning that messages cannot be shown from firing for calls and payment cards, which carry no ciphertext by design. The board had no action for a second full day; sprint 1002 is eight days over, 24 of 33 review items have merged code, none accepted. The Forgot PIN client is still on a branch with no PR, and the PIN lock race is unchanged. API surface 165 / 76, drift zero. MVP estimate 68.36, unchanged.">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!--
+  DIRECTION CONTRACT · seed 6c4a0ed0 (carried forward unchanged)
+  THESIS: A status report whose subject is the disagreement between its sources.
+  STORY: A one-commit day: a false unreadable-message warning fixed on the server; no board action,
+  no PR for the Forgot PIN client, and the PIN lock race untouched.
+-->
+
+<div class="topbar">
+    <div class="topbar__mark">
+      <span class="barcode" aria-hidden="true"></span>
+      <span class="topbar__wordmark">Beevia</span>
+    </div>
+    <nav class="topbar__nav label" aria-label="Report">
+      <a href="index.html">Archive</a>
+      <a href="#overview">Overview</a>
+      <a href="#s2"><span>1002 review</span></a>
+      <a href="#s1"><span>Board</span></a>
+      <a href="#method">Method</a>
+    </nav>
+</div>
+
+<header class="masthead">
+  <div class="field">
+    <div class="field__rail field__rail--l">
+      <dl>
+        <dt>Sprints open</dt>
+        <dd>1002 &middot; 21 Oct &rarr; 5 Nov &middot; ended eight days ago, day 24</dd>
+        <dt>1002 leaves</dt>
+        <dd>1 To do &middot; 2 In progress &middot; 33 QA &middot; 0 Blocked &middot; 8 Done</dd>
+        <dt>Route drift</dt>
+        <dd>0 &middot; one field&rsquo;s meaning changed in place &middot; 165 / 76</dd>
+        <dt>Window</dt>
+        <dd>1.0 day &middot; Thu &rarr; Fri</dd>
+      </dl>
+    </div>
+
+    <div class="field__stage">
+      <div class="field__title">
+        <h1>Project<br>Status</h1>
+      </div>
+      <div class="field__meta num">
+        <span>2026-11-13</span>
+        <span>1002 ended &middot; 0902 swept &middot; 0901-admin static</span>
+        <span>21 Oct&ndash;5 Nov</span>
+        <span>api a4b11cb &middot; admin-api b4e9744 &middot; db-schema v0.0.54 &middot; mobile main e40116d</span>
+      </div>
+    </div>
+
+    <div class="field__rail field__rail--r">
+      <dl>
+        <dt>Board actions on 1002</dt>
+        <dd>0 in the window &middot; last 11 Nov 06:53 UTC</dd>
+        <dt>Forgot PIN client</dt>
+        <dd>on a branch &middot; no PR &middot; unchanged 1.3 days</dd>
+        <dt>1002 QA with merged code</dt>
+        <dd>24 of 33 &middot; 0 accepted</dd>
+        <dt>12 Nov recommendations met</dt>
+        <dd>0 of 24 &middot; none in part</dd>
+      </dl>
+    </div>
+  </div>
+</header>
+
+<section class="mvp" aria-label="MVP readiness estimate">
+  <div class="mvp__head">
+    <span class="mvp__label label">MVP readiness &mdash; estimate</span>
+    <span class="mvp__pct num">&asymp;68%</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 73 days past</span>
+  </div>
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 68 percent built, unchanged. The one change, beevia-api 111, corrects the unreadable-message count, a correctness fix the rubric does not score. E2EE messaging 0.90; voice and video calling 0.92; message translation 0.60; local KYC 0.93; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.88; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
+    <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.90"><i style="width:90%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.92"><i style="width:92%"></i></span>
+    <span class="mvp__seg" style="flex:7" title="Message translation — 0.60"><i style="width:60%"></i></span>
+    <span class="mvp__seg" style="flex:8" title="Local KYC tier (BVN) — 0.93"><i style="width:93%"></i></span>
+    <span class="mvp__seg" style="flex:6" title="International KYC tier — 0"></span>
+    <span class="mvp__seg" style="flex:12" title="Multi-currency wallets — 0.85"><i style="width:85%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Send / request / receive — 0.92"><i style="width:92%"></i></span>
+    <span class="mvp__seg" style="flex:12" title="Cross-currency FX — 0"></span>
+    <span class="mvp__seg" style="flex:10" title="Virtual cards — 0.88"><i style="width:88%"></i></span>
+    <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
+    <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.97"><i style="width:97%"></i></span>
+  </div>
+  <p class="mvp__read"><strong>68.36, unchanged.</strong> #111 corrects the unreadable-message count on line 1, a correctness fix the rubric does not score; the voice-note recorder and the ringing client are still on an unmerged branch. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. <a href="#mvp-method">Method and capability table</a>.</p>
+</section>
+
+<div class="shell">
+  <nav class="contents label" aria-label="Contents">
+    Contents
+    <ol>
+      <li><a href="#overview"><span>00</span> Quick overview</a></li>
+      <li><a href="#s1"><span>01</span> Board movement</a></li>
+      <li><a href="#s2"><span>02</span> Sprint 1002: review vs code</a></li>
+      <li><a href="#s3"><span>03</span> Code, API and drift</a></li>
+      <li><a href="#s4"><span>04</span> Risks</a></li>
+      <li><a href="#s5"><span>05</span> PRD gap</a></li>
+      <li><a href="#s6"><span>06</span> Team performance</a></li>
+      <li><a href="#s7"><span>07</span> Previous recommendations</a></li>
+      <li><a href="#s8"><span>08</span> What I would do this week</a></li>
+      <li><a href="#admin"><span>&mdash;</span> Admin dashboard board</a></li>
+      <li><a href="#method"><span>&mdash;</span> Method</a></li>
+    </ol>
+  </nav>
+
+  <main class="doc">
+    <section class="sec" id="overview">
+      <div class="sec__h"><span class="sec__n">00</span><h2>Quick overview</h2></div>
+
+<div class="invert" style="margin-bottom:var(--s-6)"><p class="lede"><strong>A quiet day. One small server fix landed: <code>beevia-api</code> #111 stops the app's "Some messages can't be shown on this device" banner from appearing for calls and payment cards, which have no ciphertext by design. Nothing else moved. The board had no action for a second full day, 1002 is eight days past its end, and none of its 33 review items has been accepted. The Forgot PIN client is still on a branch with no pull request, so a user who trips yesterday's PIN lock on <code>main</code> still has no way out but to wait 30 minutes. The lock's race is unchanged.</strong></p></div>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Metric</th>
+<th style="text-align: right;">12 Nov</th>
+<th style="text-align: right;">13 Nov</th>
+<th scope="col">Δ</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">Sprint 1002 items (leaves + parents)</th>
+<td style="text-align: right;">63 (44+19)</td>
+<td style="text-align: right;"><strong>63 (44+19)</strong></td>
+<td>none added or removed</td>
+</tr>
+<tr><th scope="row">Sprint 1002 leaves To do / In progress / REVIEW/QA / BLOCKED / Done</th>
+<td style="text-align: right;">1 / 2 / 33 / 0 / 8</td>
+<td style="text-align: right;"><strong>1 / 2 / 33 / 0 / 8</strong></td>
+<td>no change</td>
+</tr>
+<tr><th scope="row">Board actions on 1002 in the window</th>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td>sidecar byte-identical to 12 Nov; last action 11 Nov 06:53 UTC</td>
+</tr>
+<tr><th scope="row">Transitions into REVIEW/QA, last 7 days (leaves)</th>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;"><strong>1</strong></td>
+<td><code>I362</code>, by its owner, 11 Nov</td>
+</tr>
+<tr><th scope="row">Owners' last submission of their <em>own</em> leaf</th>
+<td style="text-align: right;">11 Nov 06:53 UTC</td>
+<td style="text-align: right;"><strong>11 Nov 06:53 UTC</strong> (Ayomikun, <code>I362</code>)</td>
+<td>David's last own submission is still 14 Oct, <strong>30.0 days</strong> ago</td>
+</tr>
+<tr><th scope="row">Items that left REVIEW/QA on 1002, ever</th>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td>checked in the sidecar</td>
+</tr>
+<tr><th scope="row">1002 REVIEW/QA leaves with matching <strong>merged</strong> code</th>
+<td style="text-align: right;">24 of 33</td>
+<td style="text-align: right;"><strong>24 of 33</strong></td>
+<td></td>
+</tr>
+<tr><th scope="row">Routes in code but not in the spec (consumer / admin), before today's edits</th>
+<td style="text-align: right;">3 / 0</td>
+<td style="text-align: right;"><strong>0 / 0</strong></td>
+<td>#111 changed one field's meaning; updated in place</td>
+</tr>
+<tr><th scope="row">API surface (consumer / admin)</th>
+<td style="text-align: right;">165 / 76</td>
+<td style="text-align: right;"><strong>165 / 76</strong></td>
+<td>one contract changed in place (<code>unresolved</code>)</td>
+</tr>
+<tr><th scope="row">Proposed operations (consumer / admin)</th>
+<td style="text-align: right;">32 / 18</td>
+<td style="text-align: right;"><strong>32 / 18</strong></td>
+<td>none</td>
+</tr>
+<tr><th scope="row">Limit on wrong PINs at <code>/auth/pin/verify</code> and <code>/auth/step-up</code></th>
+<td style="text-align: right;">5, then a 30-minute lock</td>
+<td style="text-align: right;"><strong>unchanged</strong></td>
+<td>the three gaps in <code>suggestions.md</code> §4.19 remain; no auth code changed</td>
+</tr>
+<tr><th scope="row">Backend repos that deploy or migrate production on push with no test gate</th>
+<td style="text-align: right;">3 of 3</td>
+<td style="text-align: right;"><strong>3 of 3</strong></td>
+<td>#111 went through it; no workflow file changed</td>
+</tr>
+<tr><th scope="row"><code>beevia-admin</code> days since a commit</th>
+<td style="text-align: right;">13.0</td>
+<td style="text-align: right;"><strong>14.0</strong></td>
+<td></td>
+</tr>
+<tr><th scope="row"><code>beevia-mobile</code> days since a commit on <code>main</code> / on any branch</th>
+<td style="text-align: right;">2.0 / 0.3</td>
+<td style="text-align: right;"><strong>3.0 / 1.3</strong></td>
+<td><code>feat-forget-pin-fixes</code> unchanged since 12 Nov 06:49 UTC; still no PR</td>
+</tr>
+<tr><th scope="row"><code>beevia-api</code> / <code>beevia-admin-api</code> / <code>beevia-db-schema</code> days since a commit</th>
+<td style="text-align: right;">0.2 / 5.1 / 1.0</td>
+<td style="text-align: right;"><strong>1.0 / 6.1 / 2.0</strong></td>
+<td>#111 on <code>beevia-api</code> (12 Nov 15:53 UTC)</td>
+</tr>
+<tr><th scope="row">Admin board: open sprint / days since any activity</th>
+<td style="text-align: right;">none / 59.0</td>
+<td style="text-align: right;"><strong>none / 60.0</strong></td>
+<td></td>
+</tr>
+<tr><th scope="row">Estimation points set (1002)</th>
+<td style="text-align: right;">0/63</td>
+<td style="text-align: right;"><strong>0/63</strong></td>
+<td></td>
+</tr>
+<tr><th scope="row">MVP readiness (estimate)</th>
+<td style="text-align: right;">≈68% (68.36)</td>
+<td style="text-align: right;"><strong>≈68%</strong> (68.36)</td>
+<td><strong>no change</strong>: #111 is a correctness fix on an existing capability (appendix)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>No correction to the 12 Nov edition is needed.</strong> #111 merged at 15:53 UTC on 12 Nov, 49 minutes after that edition's cut-off and after its final 15:08 UTC fetch, so its absence there was correct at the time.</p>
+<p><strong>Team, at a glance:</strong></p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Person</th>
+<th scope="col">Owns</th>
+<th scope="col">Board leaves</th>
+<th style="text-align: right;">Submissions (7d)</th>
+<th scope="col">Median cycle</th>
+<th scope="col">Open WIP</th>
+<th style="text-align: right;">Commits (7d)</th>
+<th scope="col">Flag</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">Ayomikun Araoye</th>
+<td>backend + admin API</td>
+<td><strong>1002: 18</strong> (16 REVIEW/QA, 2 Done) · <code>I392</code> shared · 0901-admin: 1 In progress</td>
+<td style="text-align: right;"><strong>1 own</strong> (<code>I362</code>)</td>
+<td>1.48 d (n=22)</td>
+<td>none on 1002 · <code>BVA-I8</code> on 0901-admin (<strong>60.0 d</strong>)</td>
+<td style="text-align: right;"><strong>16</strong> (13 <code>beevia-api</code>, 1 <code>beevia-admin-api</code>, 2 <code>beevia-db-schema</code>)</td>
+<td>#110 and #111 are not items on any board</td>
+</tr>
+<tr><th scope="row">David Samuel</th>
+<td>mobile</td>
+<td><strong>1002: 16</strong> (1 To do, 2 In progress, 11 REVIEW/QA, 2 Done) · <code>I392</code> shared</td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td>0.99 d (n=36)</td>
+<td>2: <code>I331</code> (<strong>22.2 d</strong>), <code>I361</code> (10.3 d). Both have code on <code>main</code></td>
+<td style="text-align: right;"><strong>3</strong> (<code>c04e207</code>, <code>36b03ff</code>, <code>3e23414</code>)</td>
+<td>Branch with the Forgot PIN client is 1.3 days old with no PR. Last own submission 30 days ago</td>
+</tr>
+<tr><th scope="row">Philip Chidera</th>
+<td>design</td>
+<td><strong>1002: 7</strong> (4 REVIEW/QA, 3 Done) · <code>I392</code> shared (Done)</td>
+<td style="text-align: right;">0</td>
+<td>0.89 d (n=3)</td>
+<td>none</td>
+<td style="text-align: right;">n/a</td>
+<td>No board action in 11.0 days</td>
+</tr>
+<tr><th scope="row">Promise Udo</th>
+<td>admin dashboard</td>
+<td>0901-admin: 4 (3 Done, 1 In progress) · <strong>1002: 0</strong></td>
+<td style="text-align: right;">0</td>
+<td>n/a</td>
+<td><code>BVA-I9</code> (<strong>60.0 d</strong>)</td>
+<td style="text-align: right;"><strong>0</strong> (<code>beevia-admin</code>, last 30 Oct)</td>
+<td>No commit in 14.0 days; possibly unpushed work</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>The three questions for standup:</strong> (1) <strong>Who reviews the 24 REVIEW/QA leaves with merged code, and when?</strong> Two full days have now passed with no board action. (2) <strong>When does <code>feat-forget-pin-fixes</code> get a PR?</strong> The lock it is the way out of has been live since yesterday morning. (3) <strong>Has anyone picked up the PIN check's race (§3.2 of 12 Nov, <code>suggestions.md</code> §4.19)?</strong> No auth code changed today.</p>
+<p><strong>The three things worth knowing:</strong></p>
+<div class="stack">
+  <div class="finding"><div class="finding__n num">1</div><div><p><strong>The "can't be shown" banner should stop firing for calls and payments.</strong> The sync route's <code>unresolved</code> count used to include every row with no ciphertext for the device, and that includes call entries, payment cards, system notices and deleted messages, which the server writes in the clear on purpose. The app on <code>main</code> shows "Some messages can't be shown on this device" whenever the count is above zero, so a chat of calls and payments showed the warning with nothing missing. #111 counts only encrypted types that were not deleted. It is server-only, so it reaches users without an app release. It still counts history sent before a device was registered. That is the real case, and the app's existing <code>message.backfill</code> path is what fixes it. Read, not run (§3.1).</p></div></div>
+  <div class="finding"><div class="finding__n num">2</div><div><p><strong>The Forgot PIN client is still not on <code>main</code>, a day after the lock went live.</strong> <code>feat-forget-pin-fixes</code> has not changed since 12 Nov 06:49 UTC and has no pull request (<code>beevia-mobile</code> pull refs end at Dependabot's #63). On <code>main</code>, "Forgot PIN?" still says "coming soon". The lock's three gaps from 12 Nov are unchanged: parallel requests are all compared, the lock does not escalate, and a <code>reset_token</code> is reusable within its 5 minutes. There is still no HTTP rate limiter.</p></div></div>
+  <div class="finding"><div class="finding__n num">3</div><div><p><strong>Two days with no board action, eight days after 1002 ended.</strong> Zero actions on any board since 11 Nov 06:53 UTC. 24 of 33 REVIEW/QA leaves have merged code, and nothing has ever left review on 1002. Output continues in code (#110, #111, the client branch); acceptance stays at zero. The bottleneck is still the review step, not the developers (§1, §2).</p></div></div>
+</div>
+<p><strong>If you read nothing else:</strong> get <code>feat-forget-pin-fixes</code> into review, make the PIN check reserve its attempt before it compares, and spend this week's review time on the 24 items whose code is on <code>main</code>.</p>
+    </section>
+
+    <section class="sec" id="s1">
+      <div class="sec__h"><span class="sec__n">01</span><h2>Board movement</h2></div>
+
+<h3>1.1 Sprints 0902, 0901, 0901-admin and 08-01</h3>
+<p>All static. The 08-01 and 0901-admin sidecars are byte-identical to 12 Nov. The audit's <code>SINCE</code> block compares two 08-01 exports and correctly reports no change. 0901 and 0902 were not re-exported, because they are closed; the 19 and 27 Oct copies feed the cycle times. <code>ZOHO_SPRINT_FILTER</code> still points at 08-01. The admin export found only <code>0901-admin</code>. <strong>No successor to 1002 has appeared on either board.</strong></p>
+<h3>1.2 Sprint 1002</h3>
+<p><strong>63 items: 44 leaves + 19 parents</strong>, unchanged. <strong>No action in the window.</strong> The 1002 sidecar is byte-identical to 12 Nov, and the CSV body is identical too. 1002's board actions per day:</p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th style="text-align: right;">27 Oct</th>
+<th style="text-align: right;">28 Oct</th>
+<th style="text-align: right;">29 Oct</th>
+<th style="text-align: right;">30 Oct</th>
+<th style="text-align: right;">31 Oct–1 Nov</th>
+<th style="text-align: right;">2 Nov</th>
+<th style="text-align: right;">3 Nov</th>
+<th style="text-align: right;">4 Nov</th>
+<th style="text-align: right;">5–10 Nov</th>
+<th style="text-align: right;">11 Nov</th>
+<th style="text-align: right;">12 Nov</th>
+<th style="text-align: right;">13 Nov (to 15:03)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">17</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;"><strong>23</strong></td>
+<td style="text-align: right;"><strong>4</strong></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><strong>1</strong></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>There are no comments on 1002, ever.</strong> <code>I392</code> still shows Done with 0 of 63 ticked. <strong>Nothing has ever left REVIEW/QA on 1002</strong>, and no sidecar on any board shows a transition out of review since the 21 Oct sweep.</p>
+<h3>1.3 Eight days past 1002's end</h3>
+<p>1002 ended <strong>Thursday 5 Nov</strong>. 36 of its 44 leaves are not Done: 33 in REVIEW/QA, 2 In progress (<code>I331</code>, <code>I361</code>) and 1 To do (<code>I373</code>). 0902, the one precedent, was swept six days after its end; 1002 is now two days beyond that with no sweep and no successor. A sweep would still mark <code>I348</code> (mock only) and <code>I372</code> (no code, not buildable as written) Done, and it would say nothing about review.</p>
+<p><strong>Work that is not on the board:</strong> <code>beevia-api</code> #111 (the unreadable-message count), #110 and <code>beevia-db-schema</code> #35 (Forgot PIN, the PIN lock); <code>beevia-mobile</code> <code>feat-forget-pin-fixes</code>; Dependabot PRs #59–#63. This is a limit of the board, not a finding about the work.</p>
+    </section>
+
+    <section class="sec" id="s2">
+      <div class="sec__h"><span class="sec__n">02</span><h2>Sprint 1002: what is in review, and whether the code exists</h2></div>
+
+<p>Unchanged since 11 Nov.</p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">REVIEW/QA leaves (33)</th>
+<th style="text-align: right;">Count</th>
+<th scope="col">Items</th>
+<th scope="col">Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">Backend, matching merged code</th>
+<td style="text-align: right;">12</td>
+<td><code>I366</code>, <code>I335</code>, <code>I338</code>, <code>I341</code>, <code>I332</code>, <code>I344</code>, <code>I347</code>, <code>I350</code>, <code>I352</code>, <code>I387</code>, <code>I391</code>, <code>I362</code></td>
+<td>Routes on <code>origin/main</code>. <code>I387</code> caps funding, not spending. <code>I391</code> lacks the pagination, search and filter it asks for. <code>I362</code> reports limits and does not enforce them</td>
+</tr>
+<tr><th scope="row">Mobile, matching merged code</th>
+<td style="text-align: right;">12</td>
+<td><code>I334</code>, <code>I337</code>, <code>I340</code>, <code>I343</code>, <code>I346</code>, <code>I354</code>, <code>I357</code>, <code>I365</code>, <code>I369</code>, <code>I376</code>, <code>I390</code>, <code>I386</code></td>
+<td>On <code>main</code> since #58 (10 Nov). <code>I390</code> is still unassigned</td>
+</tr>
+<tr><th scope="row">Backend, already existed or no identifiable change</th>
+<td style="text-align: right;">3</td>
+<td><code>I370</code>, <code>I377</code>, <code>I358</code></td>
+<td>Unchanged</td>
+</tr>
+<tr><th scope="row">Moved to review, no matching code</th>
+<td style="text-align: right;">2</td>
+<td><code>I348</code>, <code>I372</code></td>
+<td><code>I348</code>: the dashboard screen is mock only. <code>I372</code>: no code, and not buildable as written</td>
+</tr>
+<tr><th scope="row">Design</th>
+<td style="text-align: right;">4</td>
+<td><code>I364</code>, <code>I368</code>, <code>I375</code>, <code>I389</code></td>
+<td>Design files are not in git</td>
+</tr>
+</tbody>
+</table>
+</div>
+<ul>
+<li><strong>In progress, with merged code:</strong> <code>I331</code> (Help &amp; Support home) and <code>I361</code> (limits screen). WIP ages 22.2 d and 10.3 d.</li>
+<li><strong>Done without matching merged code:</strong> <code>I380</code>, <code>I384</code>, and <strong><code>I381</code> in part</strong> (the wrong-PIN lock exists since #110; the biometric credential does not).</li>
+<li><strong>Stories out of step with their children:</strong> <code>I371</code> (To do; <code>I372</code> in review), <code>BVA-I349</code> and <code>BVA-I351</code> (To do, unassigned; <code>I350</code>/<code>I352</code> in review), <code>I359</code> (To do, unassigned; <code>I360</code> Done, <code>I362</code> in review). Unchanged.</li>
+<li><strong><code>I373</code></strong> (<em>Reflect card spending in the app</em>) is To do. Unchanged.</li>
+</ul>
+    </section>
+
+    <section class="sec" id="s3">
+      <div class="sec__h"><span class="sec__n">03</span><h2>Code, API surface and spec drift</h2></div>
+
+<p><strong>Audit: clean, before and after today's edit.</strong> Against a <code>git archive</code> shadow of <code>origin/main</code> (<code>$BEEVIA_ROOT=/tmp/beevia-shadow-2026-11-13</code>) it reported 165/165 consumer and 76/76 admin, proposed 32/18, clean spec health and no <code>x-beevia-*</code> (exit 0). #111 adds no route; it changes what one response field means, which a route-level audit cannot see, so the spec was updated by hand. The in-repo audit still reports phantom lines from the three <code>diverged</code> working trees. They were not acted on.</p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Repo</th>
+<th scope="col">From → to</th>
+<th scope="col">What</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row"><code>beevia-api</code> <code>main</code></th>
+<td><code>b5c046f</code> → <code>a4b11cb</code></td>
+<td>#111 (merged 12 Nov 15:53 UTC): only encrypted, undeleted messages count as <code>unresolved</code></td>
+</tr>
+<tr><th scope="row"><code>beevia-admin-api</code> <code>main</code></th>
+<td><code>b4e9744</code></td>
+<td>Unchanged. Still pins <code>beevia-db-schema</code> 0.0.50</td>
+</tr>
+<tr><th scope="row"><code>beevia-db-schema</code> <code>main</code></th>
+<td><code>a871f3e</code> (v0.0.54)</td>
+<td>Unchanged</td>
+</tr>
+<tr><th scope="row"><code>beevia-admin</code> <code>main</code></th>
+<td><code>64304ef</code> (30 Oct)</td>
+<td>Unchanged</td>
+</tr>
+<tr><th scope="row"><code>beevia-mobile</code> <code>main</code></th>
+<td><code>e40116d</code></td>
+<td>Unchanged. <code>feat-forget-pin-fixes</code> unchanged at <code>3e23414</code>, no PR</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3>3.1 The unreadable-message count (<code>beevia-api</code> #111)</h3>
+<ul>
+<li><strong>What changed.</strong> <code>GET /conversations/{id}/messages</code> and the <code>sync.messages</code> socket call return <code>unresolved</code>: how many of the returned messages this device cannot decrypt. It counted every row whose ciphertext for the device was <code>null</code>. Calls, payment cards and system notices are written in the clear by the server and render from <code>content_meta</code>, and messages deleted for everyone have no content; all of them counted. It now counts only <code>text</code>, <code>image</code>, <code>audio</code>, <code>file</code>, <code>location</code>, <code>contact</code> and <code>key_exchange</code> messages not deleted for everyone.</li>
+<li><strong>Why it matters to users.</strong> The app on <code>main</code> reads <code>unresolved</code> in <code>conversation_provider.dart</code> and shows "Some messages can't be shown on this device" (<code>someMessagesUnavailableOnDevice</code>) when it is above zero. The commit cites a dev chat where 34 of 112 counted rows were calls and payment cards. Any chat with a call or a payment showed the warning. The fix is server-only.</li>
+<li><strong>What it leaves.</strong> Messages sent before a device was registered still count, correctly. The commit calls that history backfill and separate work. The app already has a backfill path on <code>main</code> (an existing device answers <code>device.backfill_requested</code> in <code>BackfillService</code> by re-encrypting its local history to the new device and sending it with <code>message.backfill</code>), so whether that case recovers in practice is a question for a real two-device test, not a missing feature.</li>
+<li><strong>Read, not run.</strong> The commit reports a new end-to-end test (<code>test/sync-unresolved.e2e-spec.ts</code>) that fails on the old code. That was not executed here.</li>
+</ul>
+<h3>3.2 The standing checks</h3>
+<ul>
+<li><strong>PIN lock (#110):</strong> no auth file changed in <code>b5c046f..a4b11cb</code>. The three gaps in <code>suggestions.md</code> §4.19 stand. No HTTP rate limiter exists (<code>ThrottlerModule</code>, <code>express-rate-limit</code>: no match).</li>
+<li><strong><code>beevia-api</code> <code>release.yml</code></strong>: read in full. <code>sync</code> still has no <code>needs: test</code>, and its comment still says hosted runners cannot start jobs. It deploys and runs <code>pnpm db:migrate</code> on push to <code>main</code>. No workflow file changed in <code>b5c046f..a4b11cb</code>; #111 went through the ungated path. No commit on <code>beevia-db-schema</code> or <code>beevia-admin-api</code>.</li>
+<li><strong><code>beevia-admin-api</code></strong> still pins <code>beevia-db-schema</code> 0.0.50; the consumer API is on 0.0.54.</li>
+<li><strong>Branch protection, PR reviews and CI results</strong>: cannot be seen from here.</li>
+</ul>
+<h3>3.3 Document changes this cycle</h3>
+<p><code>openapi.yaml</code>: <code>getMessageHistory</code>'s description and <code>MessageHistory.unresolved</code> now say which message types count. No operation added, removed or moved. <code>openapi.admin.yaml</code>, <code>openapi.proposed.yaml</code> and <code>openapi.admin.proposed.yaml</code> are unchanged. <code>api-rfc.md</code>: a new §5.27; totals unchanged at 165. <code>admin-api-rfc.md</code> and <code>suggestions.md</code>: unchanged.</p>
+    </section>
+
+    <section class="sec" id="s4">
+      <div class="sec__h"><span class="sec__n">04</span><h2>Risks</h2></div>
+
+<ul>
+<li><strong>The PIN lock can be raced, and there is no rate limit behind it.</strong> Unchanged since 12 Nov (<code>suggestions.md</code> §4.19).</li>
+<li><strong>A locked-out user has no way out on <code>main</code>.</strong> The lock is live; the app's Forgot PIN on <code>main</code> still says "coming soon". The client branch has no PR.</li>
+<li><strong>A review queue with code behind it and nobody accepting.</strong> 24 REVIEW/QA leaves have merged code. If review does not start, the next sweep will mark them Done unseen, as on 21 Oct.</li>
+<li><strong>1002 ended eight days ago with no successor sprint.</strong> The filter cannot move, and <code>I348</code>/<code>I372</code> would be swept Done with no code.</li>
+<li><strong>A 62-file client branch with no PR</strong>, now 1.3 days without a commit.</li>
+<li><strong>Every backend repo still deploys or migrates production on push without a test gate.</strong> #111 went through it today.</li>
+<li><strong>A reset route with no production guard.</strong> <code>KYC_RESET_ENABLED</code> is still a default and a comment. Unchanged.</li>
+<li><strong>The 30-day NIN clock.</strong> The client is on <code>main</code>; whether it has shipped to users is not visible, and the limits are still not enforced.</li>
+<li><strong>A user can be told a person is coming when none can come.</strong> No role holds <code>disputes</code>. Unchanged.</li>
+<li><strong><code>isSubjectConsent: true</code> is sent to a third party for every BVN and NIN lookup</strong> with no consent record. Unchanged.</li>
+<li>Carried, unchanged: the photo-hole check and the undeletable old photos; <code>call.ended</code> unconsumed; statement PDF password; FAQ search fallback; 0902's 15 removed leaves (not visible); the dashboard inbox's mock on by default; wallet-failure notices off by default; possible pre-12 Oct PII in logs; malformed path ids return <code>500</code>; production SSH (unverified); biometric step-up on <code>main</code>; Firebase keys in history; three diverged local working trees; <code>ANCHOR_POOL_ACCOUNT_ID</code> unseen; blocking does not reach payments; merchant payments cannot be disputed.</li>
+<li><strong>Withdrawn:</strong> none.</li>
+</ul>
+    </section>
+
+    <section class="sec" id="s5">
+      <div class="sec__h"><span class="sec__n">05</span><h2>PRD gap</h2></div>
+
+<p>The four structural gaps are unchanged and carry 32 of the rubric's 100 points: international KYC, multi-currency/FX settlement, consent management, and virtual cards beyond what is wired. #111 corrects a count on existing E2EE messaging and adds no capability. <code>activeNgn()</code> is unchanged.</p>
+    </section>
+
+    <section class="sec" id="s6">
+      <div class="sec__h"><span class="sec__n">06</span><h2>Team performance: detail</h2></div>
+
+<p>All flow figures come from the activity sidecars (the <code>actiontime</code> of each transition), never from <code>Last Modified</code>. The 7-day window is 6 Nov 15:04 → 13 Nov 15:04 UTC. Commit counts are non-merge commits on all remote refs in that window. Each person's git identities are summed (<code>Phoenixdadhev</code> + <code>Ayomikun Araoye</code>; <code>Davidtariq96</code> + <code>David Samuel</code>), and bots are excluded (2 on <code>beevia-db-schema</code>, 5 Dependabot on <code>beevia-mobile</code>). WIP ages run from each item's last entry into In progress. <strong>Submissions are split by who made the move.</strong></p>
+<p><strong>Median cycle times</strong> are unchanged, because no item entered review: Ayomikun 1.48 d (n=22), David 0.99 d (n=36), Philip 0.89 d (n=3).</p>
+<h3>6.1 Ayomikun Araoye: backend + admin API</h3>
+<p><strong>16 commits in 7 days</strong>: 13 in <code>beevia-api</code>, 1 in <code>beevia-admin-api</code> and 2 in <code>beevia-db-schema</code>. The drop from 20 is the window moving past 5–6 Nov, not a slowdown. <strong>One own submission</strong>, <code>I362</code> on 11 Nov. <strong>No WIP on 1002.</strong> Since the last cut-off: <code>beevia-api</code> #111, not an item on any board. Last commit 1.0 d old. <code>BVA-I8</code> has been In progress on the closed admin board for 60.0 days.</p>
+<h3>6.2 David Samuel: mobile</h3>
+<p><strong>3 commits</strong> in 7 days: <code>c04e207</code> (9 Nov, on <code>main</code> via #58) and the two on <code>feat-forget-pin-fixes</code> (11 Nov 19:09, 12 Nov 06:49 UTC). Nothing pushed in the window. <strong>Zero submissions.</strong> His last own submission was <code>I286</code> on 14 Oct, <strong>30.0 days</strong> ago. <strong>WIP: 2 items, both with code on <code>main</code></strong>: <code>I331</code> at 22.2 days and <code>I361</code> at 10.3 days. As before, this reads as items left in the wrong column rather than stuck work; that is for him to say. The branch's work has no item. A quiet day on the remote is not a quiet day: local commits are invisible here.</p>
+<h3>6.3 Philip Chidera: design</h3>
+<p><strong>No submission, no WIP, nothing To do.</strong> His last board action was on 2 Nov 15:58 UTC, <strong>11.0 days</strong> ago: finished, blocked or working untracked. Worth a question, not an assumption. Forgot PIN, the PIN lock message and voice-note recording have screens on a branch and no design item. Design files are not in git.</p>
+<h3>6.4 Promise Udo: admin dashboard</h3>
+<p><strong>No commits in the window.</strong> The last, <code>64304ef</code> on 30 Oct, is <strong>14.0 days</strong> old, with no new branch or pull ref on <code>beevia-admin</code>. This report does not read that as nothing having been done. <code>I348</code> is in REVIEW/QA with no assignee; <code>I349</code> and <code>I351</code> are To do and unassigned. <code>BVA-I9</code> has been In progress on the closed admin board for 60.0 days.</p>
+<h3>6.5 Weekly submission trend (leaves, transitions into REVIEW/QA)</h3>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">ISO week</th>
+<th style="text-align: right;">0901</th>
+<th style="text-align: right;">0902</th>
+<th style="text-align: right;">1002</th>
+<th style="text-align: right;">by the leaf's owner</th>
+<th style="text-align: right;">by another team member</th>
+<th style="text-align: right;">by board administration</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">2026-W39</th>
+<td style="text-align: right;"><strong>42</strong></td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">27</td>
+</tr>
+<tr><th scope="row">2026-W40 (28 Sep → 4 Oct)</th>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr><th scope="row">2026-W41 (5 → 11 Oct)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>10</strong></td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr><th scope="row">2026-W42 (12 → 18 Oct)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>8</strong></td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr><th scope="row">2026-W43 (19 → 25 Oct)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><strong>6</strong></td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr><th scope="row">2026-W44 (26 Oct → 1 Nov)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>10</strong></td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr><th scope="row">2026-W45 (2 → 8 Nov)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>16</strong></td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr><th scope="row">2026-W46 (9 Nov → 13 Nov 15:03 UTC)</th>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><strong>1</strong></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Nothing has left REVIEW/QA on 1002.</strong> Leaving aside the three bulk sweeps (3 Sep, 30 Sep, 21 Oct), no item has been accepted from review by anyone other than its submitter since <code>BVA-I268</code> on 16 Sep. Output continues in code; acceptance stays at zero. The bottleneck is the review step, not the developers.</p>
+<h3>6.6 What this does not measure</h3>
+<ul>
+<li><strong>No estimation points on any item on any board.</strong> A one-line count fix and an 88-file branch count the same.</li>
+<li><strong>Who moved an item is not whether it is done.</strong></li>
+<li><strong>Untracked work.</strong> #110, #111 and <code>feat-forget-pin-fixes</code> are not items on any board.</li>
+<li><strong>Commit counts reward small commits.</strong> David's 3 commits carry 88 files; #111 is one commit of 179 lines, most of them a test.</li>
+<li><strong>Unpushed work.</strong> A day with no remote commit says nothing about local work.</li>
+<li><strong>Nothing here measures correctness.</strong> No build, test, lint or app run took place in any repository.</li>
+</ul>
+    </section>
+
+    <section class="sec" id="s7">
+      <div class="sec__h"><span class="sec__n">07</span><h2>Previous recommendations: where they stand</h2></div>
+
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">Recommendation from 12 Nov</th>
+<th scope="col">Status on 13 Nov</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row"><strong>1. Make the PIN check reserve its attempt before comparing</strong></th>
+<td>❌ <strong>No.</strong> No auth file changed</td>
+</tr>
+<tr><th scope="row"><strong>2. Open a PR for <code>feat-forget-pin-fixes</code> and review it</strong></th>
+<td>❌ <strong>No.</strong> Branch unchanged, no PR</td>
+</tr>
+<tr><th scope="row"><strong>3. Review the 24 REVIEW/QA leaves with merged code</strong></th>
+<td>❌ <strong>No board action at all</strong></td>
+</tr>
+<tr><th scope="row"><strong>4. Close 1002 deliberately</strong></th>
+<td>❌ <strong>Not done, eight days late.</strong> No successor, no sweep, filter still 08-01</td>
+</tr>
+<tr><th scope="row"><strong>5. HTTP rate limiting on PIN, OTP and lookup routes</strong></th>
+<td>❌ <strong>No.</strong> No limiter in <code>beevia-api</code></td>
+</tr>
+<tr><th scope="row"><strong>6. Call each new route from a real build; handle three NIN errors</strong></th>
+<td>❌ <strong>Not visible</strong></td>
+</tr>
+<tr><th scope="row"><strong>7. Check storage logs for the photo hole; backfill uploader metadata</strong></th>
+<td>❌ <strong>Not visible</strong></td>
+</tr>
+<tr><th scope="row"><strong>8. Startup check for <code>KYC_RESET_ENABLED</code> in production</strong></th>
+<td>❌ <strong>No</strong></td>
+</tr>
+<tr><th scope="row"><strong>9. Grant <code>disputes</code> and <code>help_center</code>; name who goes on duty</strong></th>
+<td>❌ <strong>Not visible.</strong> <code>beevia-admin-api</code> unchanged</td>
+</tr>
+<tr><th scope="row"><strong>10. Handle <code>call.ended</code> in the app</strong></th>
+<td>❌ <strong>No</strong></td>
+</tr>
+<tr><th scope="row"><strong>11. NIN step, support screens and Forgot PIN on the board</strong></th>
+<td>❌ <strong>No</strong></td>
+</tr>
+<tr><th scope="row"><strong>12. Decide whether the tier limits are enforced</strong></th>
+<td>❌ <strong>No</strong></td>
+</tr>
+<tr><th scope="row"><strong>13. Decide the seeded card default and what a card limit is</strong></th>
+<td>❌ <strong>No</strong></td>
+</tr>
+<tr><th scope="row"><strong>14. Confirm <code>ANCHOR_POOL_ACCOUNT_ID</code>; one real funding and reveal</strong></th>
+<td>❌ <strong>Not visible</strong></td>
+</tr>
+<tr><th scope="row"><strong>15. Record the consent behind each lookup</strong></th>
+<td>❌ <strong>No</strong></td>
+</tr>
+<tr><th scope="row"><strong>16. Take-over fallback metric; merchant payment disputes; the seams</strong></th>
+<td>❌ <strong>No</strong></td>
+</tr>
+<tr><th scope="row"><strong>17. Run one real chat and dispute through the assistant; decide it on the record</strong></th>
+<td>❌ <strong>Not visible</strong></td>
+</tr>
+<tr><th scope="row"><strong>18. Bring the dashboard onto the real contract</strong></th>
+<td>❌ <strong>No commit in 14.0 days</strong></td>
+</tr>
+<tr><th scope="row"><strong>19. Reopen <code>I380</code>/<code>I384</code>; narrow <code>I381</code> to the biometric credential</strong></th>
+<td>❌ <strong>No</strong></td>
+</tr>
+<tr><th scope="row"><strong>20. Parent status moves; assign <code>I348</code>, <code>I349</code>, <code>I351</code>, <code>I359</code>, <code>I390</code>; admin sprint</strong></th>
+<td>❌ <strong>No</strong></td>
+</tr>
+<tr><th scope="row"><strong>21. Retire <code>GET /cards/{id}/transactions</code></strong></th>
+<td>❌ <strong>No</strong></td>
+</tr>
+<tr><th scope="row"><strong>22. <code>needs: test</code> on <code>sync</code>; current schema on <code>beevia-admin-api</code></strong></th>
+<td>❌ <strong>Not done.</strong> #111 went through the ungated path</td>
+</tr>
+<tr><th scope="row"><strong>23. Generate <code>openapi.yaml</code> from the running app and diff it in CI</strong></th>
+<td>❌ <strong>Not done.</strong> Today's contract change was found by reading the commit, not by any check</td>
+</tr>
+<tr><th scope="row"><strong>24. Carried items</strong></th>
+<td>❌ <strong>None moved</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>None of the 24 is met, and none moved in part.</strong> #111 was not on the list: it fixes a problem the reports had not raised.</p>
+    </section>
+
+    <section class="sec" id="s8">
+      <div class="sec__h"><span class="sec__n">08</span><h2>What I would do this week</h2></div>
+
+<ol>
+<li><strong>Open a PR for <code>feat-forget-pin-fixes</code> and review it (carried, now first).</strong> It is the only way out of the lock for users on <code>main</code>. Ask whether the in-app Paystack WebView was a decision.</li>
+<li><strong>Make the PIN check reserve its attempt before comparing (carried).</strong> One conditional <code>UPDATE … RETURNING</code>, before scrypt. Then lengthen repeated locks, make <code>reset_token</code> single-use and consider ending other sessions on reset (<code>suggestions.md</code> §4.19).</li>
+<li><strong>Review the 24 REVIEW/QA leaves that have merged code, and accept or return each one (carried).</strong> Return <code>I348</code> and <code>I372</code>, which have no code.</li>
+<li><strong>Then close 1002 deliberately (carried, eight days late).</strong> Move <code>I331</code> and <code>I361</code> to review if David agrees. Create the successor, carry <code>I373</code>, anything returned and items for #35/#110/#111 and the branch. Do not sweep. Set <code>ZOHO_SPRINT_FILTER</code>.</li>
+<li><strong>Add HTTP rate limiting, starting with the PIN, OTP and lookup routes (carried, <code>suggestions.md</code> §4.1).</strong></li>
+<li><strong>Run one two-device chat on a real build (new).</strong> Open a chat with calls and payment cards on a fresh device: the banner should now appear only for history sent before that device existed, and backfill from the other device should clear it. Then call each new route once against the sandbox, and handle <code>nin_not_found</code>, <code>bvn_required</code> and <code>verification_unavailable</code> by name (carried).</li>
+<li><strong>Check the storage logs for the photo hole, and backfill uploader metadata for old photos (carried).</strong></li>
+<li><strong>Add a startup check that <code>KYC_RESET_ENABLED</code> is off in production (carried).</strong></li>
+<li><strong>Grant <code>disputes</code> and <code>help_center</code> to the support role and Super Admin, and name who goes on duty (carried).</strong></li>
+<li><strong>Handle <code>call.ended</code> in the app (carried).</strong></li>
+<li><strong>Put the NIN step, the support screens and Forgot PIN on the board with a design and an owner (carried).</strong></li>
+<li><strong>Decide whether the tier limits are enforced, and what the end of the grace does (carried).</strong> About 6 Dec is the date for existing users.</li>
+<li><strong>Decide the seeded card default and what a card limit is, on the record (carried).</strong></li>
+<li><strong>Confirm <code>ANCHOR_POOL_ACCOUNT_ID</code> in production and run one real funding and one reveal (carried).</strong></li>
+<li><strong>Record the consent behind each BVN and NIN lookup (carried).</strong></li>
+<li><strong>Put a log line or metric on the take-over fallback; let a merchant payment be disputed; fix the seams (carried).</strong></li>
+<li><strong>Run one real chat and one real dispute through the assistant, and decide the assistant on the record (carried).</strong></li>
+<li><strong>Bring the dashboard onto the real contract (carried)</strong>, default the mock off in production builds, and add the agent side of support chat, take-over and the card-limit default.</li>
+<li><strong>Reopen <code>I380</code> and <code>I384</code> if those closes were not meant for them, and narrow <code>I381</code> to the biometric credential (carried).</strong></li>
+<li><strong>Agree how parent status moves work; assign <code>I348</code>, <code>I349</code>, <code>I351</code>, <code>I359</code> and <code>I390</code>; give the admin dashboard a sprint (carried).</strong></li>
+<li><strong>Retire <code>GET /cards/{id}/transactions</code> (carried).</strong></li>
+<li><strong>Put <code>needs: test</code> back on <code>beevia-api</code>'s <code>sync</code></strong>, give db-schema's Release and admin-api's Sync a verify job, and bring <code>beevia-admin-api</code> onto <code>beevia-db-schema</code> 0.0.54 (carried).</li>
+<li><strong>Generate <code>openapi.yaml</code> from the running app and diff it in CI (carried).</strong> It would not have caught today's change either, since a field's meaning moved, not its shape; the commit's own docs and Postman edits did.</li>
+<li><strong>Carried:</strong> remove the biometric option in Chat Send; send a push when an agent replies; reopen <code>I392</code>; close the payments half of blocking; add the <code>en-US</code> fallback to FAQ search; decide the statement password; account for 0902's 15 leaves; test the iOS ring on a device; add the <code>messages.ref_id</code> index; restrict the Firebase API keys; check production logs for pre-12 Oct PII; map <code>22P02</code> to <code>400</code>; make Flutter CI a required check; check the production host's SSH settings; prune the §7 tables in <code>api-rfc.md</code>.</li>
+</ol>
+    </section>
+
+    <section class="sec" id="admin">
+      <div class="sec__h"><span class="sec__n">&mdash;</span><h2>Admin dashboard board</h2></div>
+
+<p><code>0901-admin</code> still has 12 items (8 leaves + 4 parents: 6 leaves Done, 2 In progress). It is closed, and nothing on it has changed since <strong>14 Sep 14:53 UTC, 60.0 days ago</strong>. <code>BVA-I8</code> (<em>Report Data Query</em>, Ayomikun) and <code>BVA-I9</code> (<em>Report Content Display</em>, Promise) have both been In progress for all 60 days. <strong>Zoho lists no successor sprint for this project.</strong> Admin-dashboard work sits on the consumer board's 1002 instead: <code>I349</code> Support Inbox (To do, unassigned; screen on mock; API child <code>I350</code> in review), <code>I348</code> Triage Flow Configuration (REVIEW/QA, unassigned; screen on mock) and <code>I351</code> FAQ CMS (To do, unassigned; API only). <code>beevia-admin</code> last moved 14.0 days ago and has no new branch or pull ref. These figures are never added to the main board's.</p>
+    </section>
+
+    <section class="sec" id="method">
+      <div class="sec__h"><span class="sec__n">&mdash;</span><h2>Appendix: method and readiness rubric</h2></div>
+
+<p><strong>Sources.</strong> <code>sprint-board-exports/beevia-sprint-board-2026-11-13.csv</code> + <code>beevia-activity-2026-11-13.json</code> (64 items, sprint 08-01, frozen); <code>sprint-board-exports/admin/beevia-admin-sprint-board-2026-11-13.csv</code> + its activity sidecar (12 items, sprint 0901-admin); a read-only scratch export of sprint <strong>1002 (63 items)</strong> in <code>/tmp/beevia-scratch/1002/</code>, diffed against the 12 Nov file in the same folder. All five repos were read at <code>origin/main</code>, plus every remote branch and <code>refs/pull/*</code>. <code>beevia-api</code>, <code>beevia-admin-api</code> and <code>beevia-db-schema</code> were read through a <code>git archive</code> shadow, because their working trees are still <code>diverged</code>. Commit messages were read as the authors' own account, and none of their claims about tests, production or live environments could be checked.</p>
+<p><a id="mvp-method"></a></p>
+
+<h3>MVP readiness: ≈68% (estimate; 68.36, no change)</h3>
+<p><strong>Target 2026-09-01 (provisional). The target date passed seventy-three days ago.</strong> Weights are frozen, and <strong>this edition makes no methodology change.</strong> Scores measure build on <code>main</code>, not acceptance, and not correctness.</p>
+<p><strong>No line moves.</strong> #111 corrects a count on line 1 (E2EE messaging). The rubric scores whether the design is implemented and wired, not whether it is correct, so a correctness fix does not raise it. Line 1 is held at 0.90 for the voice-note recorder, which is still on the unmerged branch.</p>
+<div class="tbl-wrap scrolls">
+  <table class="wide">
+<thead>
+<tr>
+<th scope="col">#</th>
+<th scope="col">Capability</th>
+<th style="text-align: right;">Weight</th>
+<th style="text-align: right;">Score</th>
+<th style="text-align: right;">Δ</th>
+<th scope="col">Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">1</th>
+<td>E2EE messaging</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">0.90</td>
+<td style="text-align: right;">0</td>
+<td>#111 fixes the unreadable count; the voice-note recorder is on a branch</td>
+</tr>
+<tr><th scope="row">2</th>
+<td>Voice &amp; video calling</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">0.92</td>
+<td style="text-align: right;">0</td>
+<td>Ringing client on a branch; <code>call.ended</code> unhandled</td>
+</tr>
+<tr><th scope="row">3</th>
+<td>Message translation</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">0.60</td>
+<td style="text-align: right;">0</td>
+<td><code>StubTranslateAdapter</code> still bound</td>
+</tr>
+<tr><th scope="row">4</th>
+<td>Local KYC tier (BVN)</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">0.93</td>
+<td style="text-align: right;">0</td>
+<td>Unchanged. Tier 3 and holds unbuilt; limits unenforced</td>
+</tr>
+<tr><th scope="row">5</th>
+<td>International KYC tier</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0</td>
+<td>Proposed only</td>
+</tr>
+<tr><th scope="row">6</th>
+<td>Multi-currency wallets</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.85</td>
+<td style="text-align: right;">0</td>
+<td><code>activeNgn()</code> unchanged</td>
+</tr>
+<tr><th scope="row">7</th>
+<td>Send / request / receive in chat</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.92</td>
+<td style="text-align: right;">0</td>
+<td>Step-up has a lock (#110); biometric option still on <code>main</code></td>
+</tr>
+<tr><th scope="row">8</th>
+<td>Cross-currency FX settlement</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0</td>
+<td><code>/fx/*</code> proposed only</td>
+</tr>
+<tr><th scope="row">9</th>
+<td>Virtual cards</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">0.88</td>
+<td style="text-align: right;">0</td>
+<td>Unchanged. Verification model undecided; limits cap funding only</td>
+</tr>
+<tr><th scope="row">10</th>
+<td>Consent management</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0</td>
+<td>No endpoint, record or board item</td>
+</tr>
+<tr><th scope="row">11</th>
+<td>Admin oversight</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0.97</td>
+<td style="text-align: right;">0</td>
+<td>No admin code changed</td>
+</tr>
+<tr><th scope="row"></th>
+<td><strong>Weighted total</strong></td>
+<td style="text-align: right;"><strong>100</strong></td>
+<td style="text-align: right;"><strong>68.36</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td><strong>≈68%</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3>What this report cannot tell you</h3>
+<ul>
+<li><strong>Whether #111 is live, and whether the banner is gone in practice.</strong> The workflow deploys on push; its result is not visible, and nothing was run.</li>
+<li><strong>Whether history backfill recovers a new device's chats.</strong> The code path exists on both ends; it was not exercised.</li>
+<li><strong>Whether the PIN lock can be raced in practice</strong>, or whether a proxy in front of the API limits request rates.</li>
+<li><strong>Whether any of the merged or branched client screens work against the API.</strong></li>
+<li><strong>Whether #58 has shipped to users</strong>, in which build, and to which stores.</li>
+<li><strong>Whether the pull requests were reviewed or approved.</strong></li>
+<li><strong>Whether <code>KYC_RESET_ENABLED</code> or <code>KYC_TEST_IDS_ENABLED</code> is on anywhere.</strong></li>
+<li><strong>Who decided on the assistant, on funding caps, on the NIN timing, on the reset route, on the consent flag or on the in-app Paystack checkout, and whether a privacy or legal review happened.</strong></li>
+<li><strong>Whether any role was granted <code>disputes</code> or <code>help_center</code> by hand.</strong></li>
+<li><strong>What the design items contain.</strong> Design files are not in git.</li>
+<li><strong>Where 0902's 15 leaves went</strong>, or what will happen to 1002's open items.</li>
+<li><strong>Whether branch protection requires CI on any <code>main</code>.</strong></li>
+<li><strong>Velocity for any sprint.</strong> Nothing on any board is estimated.</li>
+</ul>
+<h3>Method</h3>
+<p><strong>Pipeline.</strong> The <code>beevia-refresh</code> steps ran in this order:</p>
+<ol>
+<li>Three background exports starting at about 14:57 UTC. Main board (step 1a): 64 items, sprint 08-01, exit 0, sidecar byte-identical to 12 Nov. Admin board (step 1b) with <code>--sprint 0901-admin</code>: 12 items, exit 0, sidecar byte-identical. A read-only scratch export of <strong>1002</strong> with <code>--modified --activity</code> to <code>/tmp/beevia-scratch/1002/</code>: 63 items, exit 0, sidecar and CSV body byte-identical. 0901 and 0902 were not re-exported.</li>
+<li>Fast-forward sync (step 2), exit 1. <code>beevia-admin</code> and <code>beevia-mobile</code> were already current on <code>main</code>, with no branch switch. <code>beevia-api</code>, <code>beevia-admin-api</code> and <code>beevia-db-schema</code> were refused as <code>diverged</code>, unchanged since 8 Sep.</li>
+<li>Audit (step 3) against a <code>git archive</code> shadow at <code>$BEEVIA_ROOT=/tmp/beevia-shadow-2026-11-13</code>: exit 0 before and after the spec edit. The in-repo audit also ran, for the board section (exit 1, phantom lines only). Both ran through <code>uv run --no-project --with pyyaml</code>.</li>
+<li>Board analysis (<code>flow13.py</code>, a date-shifted copy of 12 Nov's). It diffed 1002 against 12 Nov, listed every action in the window (none), split 7-day submissions by actor, and computed WIP ages and the weekly trend.</li>
+<li>Content checks. <code>fetch</code> and <code>ls-remote</code> of heads and <code>refs/pull/*</code> in all five repos. In <code>beevia-api</code>: #111's commit message and its service, docs and Postman diffs; that no auth, env or workflow file changed; the absence of any HTTP rate limiter; <code>release.yml</code> in full; both services' schema pins. In <code>beevia-mobile</code>: where <code>main</code> and <code>feat-forget-pin-fixes</code> read <code>unresolved</code> and show the banner, and the backfill path (<code>BackfillService</code>, <code>message.backfill</code>).</li>
+<li>Spec and narrative updates (§3.3).</li>
+<li>This report and its web edition.</li>
+</ol>
+<p><strong>A note on who appears here.</strong> Only people whose work is tracked have rows. Board administration is done by a non-contributor, and their actions are reported without naming the actor. Commits under the project owner's identity on <code>beevia-mobile</code> are not a row.</p>
+<p><strong>Nothing was executed from any sub-repo.</strong> No <code>npm</code>, <code>node</code>, <code>flutter</code> or build step ran. No repository was reset, rebased or cleaned, and no sub-repo file was edited. The sync's <code>--ff-only</code> limit was not overridden. Beyond the sync's own <code>fetch</code> and fast-forward, the only git operations were <code>fetch</code>, <code>ls-remote</code>, <code>git archive</code>, and read-only <code>log</code>/<code>show</code>/<code>diff</code>/<code>grep</code>/<code>for-each-ref</code>. Nothing was committed, pushed or deployed. A final <code>fetch</code> of all five repos at 15:05 UTC found nothing new, and a fast 1002 re-export at the same time found no board action (last <code>actiontime</code> still 11 Nov 06:53 UTC).</p>
+<p><strong>Files changed this cycle:</strong> this report, <code>web-report/2026-11-13.html</code>, <code>web-report/index.html</code>, <code>openapi.yaml</code> and <code>api-rfc.md</code>. New board exports for 13 Nov were written to <code>sprint-board-exports/</code> and <code>sprint-board-exports/admin/</code>.</p>
+<p><strong>Degraded inputs.</strong></p>
+<ul>
+<li><strong><code>ZOHO_SPRINT_FILTER</code> is still <code>08-01</code>.</strong> The in-repo main export is therefore a frozen closed sprint, and the audit's <code>SINCE</code> block compares two identical snapshots. All 1002 figures come from the scratch export.</li>
+<li><strong>The default <code>python3</code> has no PyYAML</strong>, so <code>audit.py</code> exits 2 when run exactly as the skill documents. Both audits ran through <code>uv run --no-project --with pyyaml</code>.</li>
+<li><strong>Three repositories remain unsynced.</strong> <code>beevia-api</code>, <code>beevia-admin-api</code> and <code>beevia-db-schema</code> are <code>diverged</code>. Every backend claim is made against <code>origin/main</code> through the shadow.</li>
+<li><strong>GitHub PR metadata, reviews, settings, CI results and deploy state cannot be seen from here.</strong></li>
+<li><strong>The export's "no source key" warning fired on <code>Epic</code>.</strong> This is the known sampling artefact; 1002's items genuinely have no epic.</li>
+<li><strong>The mobile item-to-code mapping for the 12 REVIEW/QA leaves was carried from 10 Nov.</strong> It was not re-derived item by item.</li>
+</ul>
+<p><strong>Window.</strong> 12 Nov 15:04 UTC → 13 Nov 15:03 UTC. All <code>actiontime</code> and board figures are in UTC. <code>git log</code> timestamps were converted from their local offsets (−07:00).</p>
+    </section>
+
+  </main>
+</div>
+
+<footer class="foot">
+  <span class="barcode barcode--lg" aria-hidden="true"></span>
+  <span>Beevia project status &middot; 2026-11-13 &middot; a false warning fixed on the server &middot; Forgot PIN client still on a branch &middot; no board action</span>
+  <span><a href="index.html">All frames</a></span>
+</footer>
+
+<script src="ui.js"></script>
+</body>
+</html>
