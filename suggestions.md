@@ -418,6 +418,16 @@ Not built: dispute messaging (`BVA-I344`, `I343`'s thread), the open-dispute cou
 3. **A `reset_token` can be used more than once in its 5 minutes**, and a reset does not end other sessions. Record a `jti` on use, and consider revoking the account's other refresh sessions on reset, since the reset is exactly what a session thief would do next.
 4. **The client is on a branch.** `beevia-mobile` `main` still answers "Forgot PIN?" with "coming soon" (`wallet_widgets.dart`). `feat-forget-pin-fixes` (pushed 12 Nov 06:49 UTC) calls the three routes and handles `pin_locked`, `attempts_remaining` and `pin_reset_invalid`. Until it merges, a user who trips the lock waits 30 minutes with no way out.
 
+### 4.20 Edit and delete fixed on the server; the app reads only half of it (2026-11-16)
+
+`beevia-api` #112 and `beevia-db-schema` #36 (`api-rfc.md` §5.28). From reading the code; nothing was run.
+
+1. **The app cannot edit.** `beevia-mobile` `main` has no edit action, no `message.edit` call and no `message.edited` handler. The server half is complete; the feature is not in users' hands. It is not an item on any board.
+2. **Catch-up `changes` are not read.** The app's catch-up (`fetchPendingMessages(afterSeq: …)`) reads `messages` and ignores `changes`, so a phone that was offline when a message was deleted or edited still shows the old message. The server now sends what is needed.
+3. **`deleted_for` is read as a list.** The app on `main` treats `deleted_for` as user ids, or looks for a `deleted_for_everyone` flag that the server does not send. The server sends the string `everyone`. The history rows of messages deleted for everyone therefore reach the app's decrypt path with no ciphertext rather than being removed. The workspace spec was also wrong here until today (it said list); the commit says the Postman example was too, and that the app followed it.
+4. **An edit replaces every envelope.** A recipient device the sender's app does not include in the edit (for instance one registered since the original send) loses the message's content and counts as `unresolved`. Worth a line in the client's edit code when it is written: encrypt to the current device list, as for a send.
+5. **The migration ran through the ungated path.** 0.0.55 rewrites existing rows (`deleted_for = 'sender'` → `message_hides`) and was applied by `beevia-api`'s `sync` job on push, with no test job before it (§7.7).
+
 ## 5. Maintainability
 
 ### 5.1 Zod schemas and Swagger DTO classes are duplicated by hand

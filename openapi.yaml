@@ -3500,6 +3500,14 @@ paths:
         count. With the header mandatory, a non-zero count means the envelope is
         genuinely absent rather than that the device was not named. Mirrors
         `sync.messages`.
+
+        Messages the caller deleted for themselves ("delete for me") are left
+        out of their pages on every device. **With `afterSeq`, `changes`** lists
+        what happened since that cursor to older messages the device already
+        holds: each entry is the live event that announced it (`message.edited`,
+        `message.updated` or `message.deleted`) with that event's payload, so an
+        offline device learns of edits and deletes on catch-up. Without
+        `afterSeq` it is empty.
       parameters:
         - $ref: '#/components/parameters/DeviceIdHeader'
         - name: afterSeq
@@ -3603,24 +3611,88 @@ paths:
       description: |
         Mirrors the WS `message.delete` command.
 
-        `?forEveryone=true` destroys the ciphertext and every per-device envelope
-        and fans out `message.deleted` to the conversation. Omitted or `false`
-        hides it for the sender only.
+        **Without `forEveryone` it is "delete for me":** any member, any
+        message. It is recorded per user (`message_hides`), disappears from the
+        caller's history on all their devices (`message.deleted` with
+        `deleted_for: "me"` to their devices only), and nobody else is told.
 
-        **Sender-only in both modes.** `deleted_for` is a single scope on the
-        message row, not a per-user flag, so a recipient has nowhere to record
-        hiding it and receives 403 rather than a no-op that looks like it
-        worked. Idempotent.
+        **`?forEveryone=true` is for the sender's own messages.** It destroys
+        the ciphertext, every per-device envelope and the attached files, and
+        `message.deleted` (`deleted_for: "everyone"`) goes to every member's
+        devices. Calls, payment cards and system notices cannot be deleted for
+        everyone (`400 message_not_deletable`); someone else's message is
+        `403 not_message_sender`. Idempotent.
       parameters:
         - name: forEveryone
           in: query
           required: false
           schema: { type: boolean, default: false }
-          description: Destroy the ciphertext for every participant, rather than hiding it for the sender.
+          description: Destroy the message for every member (sender only), rather than hiding it for the caller.
       responses:
-        '200': { $ref: '#/components/responses/RemovedOk' }
+        '200':
+          description: Deleted, or already deleted.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message_id: { type: string, format: uuid }
+                          deleted_for: { type: string, enum: [me, everyone] }
+        '400':
+          description: '`message_not_deletable`: a call, payment card or notice cannot be deleted for everyone.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
         '403':
-          description: The caller is not the sender.
+          description: '`not_message_sender`: `forEveryone` on someone else''s message.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Chat (REST fallback)]
+      operationId: editMessage
+      summary: Edit a message
+      description: |
+        Mirrors the WS `message.edit` command. The sender sends the new text
+        encrypted exactly like a send (per-device `envelopes`, or one
+        `ciphertext` blob). It replaces the stored blob and every envelope,
+        sets `edited_at`, and `message.edited` goes to each recipient device
+        with its own ciphertext (not to the device that edited).
+
+        Text messages only, by their sender, within
+        `MESSAGE_EDIT_WINDOW_MINUTES` (default 15; `0` means no limit) of
+        sending. Repeating the same edit changes nothing.
+      parameters:
+        - $ref: '#/components/parameters/DeviceIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EditMessageRequest' }
+      responses:
+        '200':
+          description: The edited message.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Message' }
+        '400':
+          description: '`message_not_editable` (not a text message), `message_deleted` (deleted for everyone), `edit_window_closed`, or a validation error.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '403':
+          description: '`not_message_sender`, or the conversation is blocked.'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
@@ -5592,6 +5664,22 @@ components:
         created_at: { type: string, format: date-time }
         prekey_count: { type: integer, description: Remaining one-time prekeys. Replenish before this hits zero. }
 
+    EditMessageRequest:
+      type: object
+      description: At least one of `ciphertext` or `envelopes` is required. The new text, encrypted like a send.
+      properties:
+        ciphertext: { type: string, maxLength: 64000, description: Base64. Single blob for group / sender-key delivery. }
+        envelopes:
+          type: array
+          maxItems: 64
+          description: Per-device ciphertext of the new text. Replaces every envelope the message had.
+          items:
+            type: object
+            required: [deviceId, ciphertext]
+            properties:
+              deviceId: { type: string, format: uuid }
+              ciphertext: { type: string, maxLength: 64000 }
+
     ErrorEnvelope:
       type: object
       description: Applied to every error by `AllExceptionsFilter`.
@@ -5819,9 +5907,13 @@ components:
         sent_at: { type: string, format: date-time }
         edited_at: { type: [string, 'null'], format: date-time }
         deleted_for:
-          type: array
-          description: Populated once message deletion is implemented; always empty today.
-          items: { type: string, format: uuid }
+          type: string
+          enum: [none, everyone]
+          description: |
+            A single string, not a list. `everyone` once the sender deleted it
+            for everyone (no ciphertext). "Delete for me" is not shown here: such
+            messages are left out of the caller's pages instead. Rows once marked
+            `sender` were moved to per-user hides by `beevia-db-schema` 0.0.55.
 
     MessageHistory:
       type: object
@@ -5830,6 +5922,12 @@ components:
         messages:
           type: array
           items: { $ref: '#/components/schemas/Message' }
+        changes:
+          type: array
+          description: |
+            Only with `afterSeq`: edits and deletes since that cursor to older
+            messages, each as the live event that announced it. Empty otherwise.
+          items: { $ref: '#/components/schemas/MessageChange' }
         unresolved:
           type: integer
           minimum: 0
@@ -5838,6 +5936,27 @@ components:
             this device holds no envelope for, so cannot decrypt. Calls, payment
             cards and system notices never count.
         has_more: { type: boolean }
+
+    MessageChange:
+      type: object
+      required: [event, data]
+      properties:
+        event:
+          type: string
+          enum: [message.edited, message.updated, message.deleted]
+        data:
+          description: |
+            The event's own payload: a `Message` for `message.edited` and
+            `message.updated`; `{ message_id, conversation_id, deleted_for
+            (me | everyone), deleted_by }` for `message.deleted`.
+          oneOf:
+            - $ref: '#/components/schemas/Message'
+            - type: object
+              properties:
+                message_id: { type: string, format: uuid }
+                conversation_id: { type: string, format: uuid }
+                deleted_for: { type: string, enum: [me, everyone] }
+                deleted_by: { type: string, format: uuid }
 
     Money:
       type: string

@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft — for review · **updated 2026-08-05** |
 | **Scope** | The complete HTTP surface of `beevia-api` (the consumer API): what exists today, and what the PRD requires that does not exist yet |
-| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, **165 operations** · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, **32 operations** (29 net-new + 3 live-endpoint modifications) · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
+| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, **166 operations** · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, **32 operations** (29 net-new + 3 live-endpoint modifications) · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
 | **Sibling RFC** | [`admin-api-rfc.md`](./admin-api-rfc.md) — the `beevia-admin-api` back-office service |
 | **Sources** | `beevia-api/src/**/*.controller.ts`, `beevia-api/src/**/dto/*.ts`, `beevia-db-schema/src/schema/*`, `beevia-api/postman/Beevia.postman_collection.json`, `Beevia_PRD.pdf` |
 | **Base path** | `/api/v1` (global prefix set in `src/main.ts`; `/i/:code` is explicitly excluded) |
@@ -163,7 +163,7 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | FX | **0** | 3 | Does not exist |
 | Payments | **9** | 4 | Direct transfer + recipient picker shipped 17 Aug. Still no read path — no `GET /payments`. (Plus the 3 live-endpoint modifications counted below.) |
 | Cards | **16** | 0 | **New, and larger than proposed.** Issue, list, get, rename, reveal, reveal-PIN, freeze, unfreeze, terminate, fund, withdraw, transfers, transactions, plus **limits (read and change) and activity, 2026-11-03/04** (§5.20). Each card carries its **own 4-digit PIN**, a model the proposal did not anticipate |
-| Chat (REST) | 19 | 0 | +2 clear, delete. Message deletion now shipped |
+| Chat (REST) | **20** | 0 | +2 clear, delete. Message deletion now shipped. **+1 (2026-11-16, §5.28):** `PATCH /messages/{id}` edits a text message; "delete for me" now works for any member |
 | Calls | **6** | 0 | Complete. **+1 (2026-11-11, §5.25):** `POST /calls/{id}/ringing`, the callee's "my phone rang" report |
 | Attachments | 2 | 1 | No single-attachment download presign |
 | Upload | 5 | 0 | Public, permanent objects — distinct from Attachments (encrypted, presigned-only) |
@@ -175,7 +175,7 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | **Disputes** | **4** | 0 | **New 2026-10-28, rebuilt 2026-11-03.** "Report an issue" on a transaction (`POST /disputes`), the user's history, one report, and the open count for the badge. A dispute is now a support thread with a transaction attached. The snapshot of the transaction is built server-side from the reference. Shipped in place of the proposed `POST /payments/{id}/dispute` (§5.18, §5.19) |
 | **Support** | **5** | 0 | **New 2026-11-03.** Chat with Support, availability, and the thread both chats and disputes run on. An AI assistant answers first. Shipped in place of the proposed `/support/tickets` (§5.19) |
 | Webhooks | **3** | 1 | **+1:** `POST /webhooks/paystack` for card top-ups. **−1 (2026-11-06):** `POST /kyc/entrust/webhook` removed with the Entrust check. Card issuer callback still missing |
-| **Total** | **165** | **29** | +3 live-endpoint modifications = 32 operations in the proposed file |
+| **Total** | **166** | **29** | +3 live-endpoint modifications = 32 operations in the proposed file |
 
 ---
 
@@ -323,6 +323,8 @@ The implementation notes it plainly: `deleted_for` is a *single scope on the mes
 That is the right call — a no-op that returns 200 would be worse. But it means **"delete for me" is unavailable to the person most likely to want it**: the recipient of an unwanted message. Making that work needs a per-user table (or a `deleted_for_user_ids` array), not a new endpoint. Worth deciding deliberately rather than inheriting the current shape by default.
 
 Note also the query parameter is `?forEveryone=true`, whereas this RFC had proposed `?scope=sender|everyone`. The shipped form is fine; `openapi.yaml` documents the real one.
+
+**Update 2026-11-16 — resolved the way this section suggested.** `beevia-db-schema` 0.0.55 added a per-user `message_hides` table and `beevia-api` #112 moved "delete for me" onto it: any member can now hide any message for themselves. "Delete for everyone" stays sender-only. See §5.28.
 
 ### 5.3 The contact profile's relationship-scoped `phone` is good design
 
@@ -743,6 +745,19 @@ Open points are in `suggestions.md` §4.19.
 - **Now:** only the encrypted types (`text`, `image`, `audio`, `file`, `location`, `contact`, `key_exchange`) that were not deleted for everyone count. `openapi.yaml`'s operation description and `MessageHistory.unresolved` were updated in place.
 - **What it does not fix:** a device registered after a message was sent still has no envelope for it. The commit names that as history backfill, a separate piece of work. It is the multi-device gap from §5 and is unchanged.
 
+### 5.28 Message editing, and deletion that reaches the other person (2026-11-16)
+
+**What shipped.** `beevia-db-schema` #36 (v0.0.55, merged 16 Nov 11:47 UTC: a `message_hides` table and `messages.changed_seq`) and `beevia-api` #112 (`a5cf9b5`, merged 16 Nov 13:35 UTC). **Consumer operations go from 165 to 166**: `PATCH /messages/{id}` added. One operation changed its contract, and the message history gained a field. WebSocket commands go from 46 to 47 (`message.edit`).
+
+- **Editing.** `PATCH /messages/{id}` and the `message.edit` socket command. The sender sends the new text encrypted like a send. It replaces the stored blob and every envelope, sets `edited_at`, and `message.edited` goes to each recipient device with its own ciphertext. Text only, own messages, within `MESSAGE_EDIT_WINDOW_MINUTES` (default 15). Errors: `403 not_message_sender`; `400 message_not_editable`, `message_deleted` or `edit_window_closed`. A retry of the same edit is a no-op. The server still sees no plaintext, only that an edit happened and when.
+- **"Delete for me" works for recipients.** It was a `403` for anyone but the sender, because `deleted_for` was one scope on the row (§5.2). It is now a per-user hide: any member, any message, the caller's own devices only. The migration moves every old `sender`-scoped row into `message_hides`.
+- **"Delete for everyone" now reaches the other person.** Per the commit, `message.deleted` went to the conversation room, which the app never joins, so nobody else's device was told. It now goes to every member's devices, and so does a payment card's `message.updated`, which had the same problem. The attached files are deleted, and calls, payment cards and notices cannot be deleted for everyone (`400 message_not_deletable`).
+- **Catch-up carries edits and deletes.** History and `sync.messages` with `afterSeq` now return `changes`: each older message changed since the cursor, as the live event that announced it. An offline phone used to learn of neither.
+- **Also:** hidden messages are left out of the viewer's pages and inbox preview; deleted and hidden messages no longer count as unread; the media gallery skips them; socket errors are sent as text in the user's language, not as catalogue keys.
+- **Spec corrections that were wrong before today.** `Message.deleted_for` was documented as a list of user ids "always empty today". The server has sent a single string (`none` / `sender` / `everyone`) since deletion shipped, and now sends `none` or `everyone`. `DELETE /messages/{id}` returns `{ message_id, deleted_for }`, not `{ removed }`. Both are fixed in `openapi.yaml`.
+
+**Client.** Read, not run. `beevia-mobile` `main` handles a live `message.deleted` by deleting the message by id, so delete for everyone should now reach the other person on an open socket. It has no edit action and does not handle `message.edited`, does not read `changes` on catch-up, and reads `deleted_for` as a list of user ids or a `deleted_for_everyone` flag, neither of which matches the string the server sends. Open points are in `suggestions.md` §4.20.
+
 ---
 
 ## 6. Implemented surface
@@ -892,7 +907,8 @@ Escrow mechanics themselves are sound: a 24-hour hold scheduled through BullMQ, 
 | | GET | `/conversations/{id}/messages` | 🔑 | ✅ Seq-cursored |
 | | POST | `/conversations/{id}/messages` | 🔑 | ✅ |
 | | POST | `/messages/backfill` | 🔑 | ✅ Gated by the history-sync setting |
-| | DELETE | `/messages/{id}` | 🔑 | 🟡 **New.** `?forEveryone`. Sender-only in both modes — recipients get 403 (§5.2) |
+| | PATCH | `/messages/{id}` | 🔑 | ✅ **New 2026-11-16.** Edit own text message within 15 minutes; `message.edited` per device (§5.28) |
+| | DELETE | `/messages/{id}` | 🔑 | ✅ `?forEveryone` (sender only). **Since 2026-11-16** "delete for me" works for any member, and delete for everyone reaches every member's devices (§5.2, §5.28) |
 | | POST | `/messages/{id}/receipts` | 🔑 | ✅ |
 | | POST | `/messages/{id}/reactions` | 🔑 | ✅ |
 | | DELETE | `/messages/{id}/reactions/{emoji}` | 🔑 | ✅ |
@@ -939,7 +955,7 @@ Escrow mechanics themselves are sound: a 24-hour hold scheduled through BullMQ, 
 
 ### 6.9 WebSocket surface
 
-**38 client commands** (re-counted from `@SubscribeMessage` on `origin/main`, 2026-09-28 — this line previously said 30 and had not been updated since before `conversation.clear`, `message.delete` and the six `payment.*` commands landed). Commands: `sync.bootstrap`, `sync.messages`, `number.lookup`, `conversation.{create,get,update,join,leave,archive,unarchive,mute,report,media,clear}`, `conversation.members.{add,remove}`, `conversations.{list,bulk}`, `message.{send,backfill,delete}`, `receipt.send`, `reaction.{add,remove}`, `call.{start,answer,decline,end}`, `typing.{start,stop}`, `presence.ping`, `ping`, `payment.{request,accept,decline,cancel,step_up,send}`.
+**47 client commands** (re-counted from `@SubscribeMessage` on `origin/main`, 2026-11-16, after `message.edit`; the list below was last itemised on 2026-09-28 at 38 and omits the commands added since, such as `call.ringing`).   Commands: `sync.bootstrap`, `sync.messages`, `number.lookup`, `conversation.{create,get,update,join,leave,archive,unarchive,mute,report,media,clear}`, `conversation.members.{add,remove}`, `conversations.{list,bulk}`, `message.{send,backfill,delete,edit}`, `receipt.send`, `reaction.{add,remove}`, `call.{start,answer,decline,end}`, `typing.{start,stop}`, `presence.ping`, `ping`, `payment.{request,accept,decline,cancel,step_up,send}`.
 
 **`payment.step_up` and `payment.send` (2026-09-25, `beevia-api` #57).** Until this merge the gateway carried every money command *except* the ones that debit the caller, because the step-up credential is an HTTP header and a socket message has none. #57 moves the gate onto the connection: `payment.step_up { stepUpToken }` verifies the token `POST /auth/step-up` mints (same `TokenService.verifyStepUp` the header guard now calls — one implementation, not two) and records `stepUpUntil` on that socket, set to the token's own expiry and never extended. `payment.send` takes the `POST /payments/send` body and answers `step_up_required` until the socket is armed. The arming is per socket, so a second connection is not armed by the first. `payment.pay` does not exist; paying a request stays REST-only.
 
