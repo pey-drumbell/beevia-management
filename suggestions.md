@@ -428,6 +428,8 @@ Not built: dispute messaging (`BVA-I344`, `I343`'s thread), the open-dispute cou
 4. **An edit replaces every envelope.** A recipient device the sender's app does not include in the edit (for instance one registered since the original send) loses the message's content and counts as `unresolved`. Worth a line in the client's edit code when it is written: encrypt to the current device list, as for a send.
 5. **The migration ran through the ungated path.** 0.0.55 rewrites existing rows (`deleted_for = 'sender'` → `message_hides`) and was applied by `beevia-api`'s `sync` job on push, with no test job before it (§7.7).
 
+**Update 2026-11-17: points 1–4 are written on a branch, not on `main`.** `beevia-mobile` `feat-forget-pin-fixes` gained `d55630e` (17 Nov 05:51 UTC, 47 files). It adds an edit action (text only, the sender's own, a 15-minute window), `message.edit` with `{requestId, messageId, envelopes}`, which matches `wsEditMessageSchema`, and a `message.edited` handler. Catch-up now applies each `changes` entry (`ChatEvents.applyChange`: edited, deleted, updated), and `deleted_for` is read as the string the server sends. Edit envelopes go through the same builder as a send, which answers point 4 as far as reading can tell. Two notes for the review. The client hard-codes the 15-minute window, but the server reads `MESSAGE_EDIT_WINDOW_MINUTES`, so changing that setting alone would make the two disagree. And none of this reaches users until the branch is merged: it has no pull request. Read, not run.
+
 ## 5. Maintainability
 
 ### 5.1 Zod schemas and Swagger DTO classes are duplicated by hand

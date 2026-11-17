@@ -34,7 +34,7 @@
       <span class="topbar__wordmark">Beevia</span>
     </div>
     <nav class="topbar__nav label" aria-label="Report">
-      <a href="2026-11-16.html">Latest frame</a>
+      <a href="2026-11-17.html">Latest frame</a>
     </nav>
 </div>
 
@@ -43,9 +43,9 @@
     <div class="field__rail field__rail--l">
       <dl>
         <dt>Frames held</dt>
-        <dd>68</dd>
+        <dd>69</dd>
         <dt>Latest</dt>
-        <dd>2026-11-16 · Message edit and a working delete on the server (#112); the app reads only the live delete; no board action for 5.3 days</dd>
+        <dd>2026-11-17 · The app side of message edit and delete is written on feat-forget-pin-fixes, which has no PR; nothing reached main; no board action for 6.3 days</dd>
       </dl>
     </div>
 
@@ -55,7 +55,7 @@
       </div>
       <div class="field__meta num">
         <span>Beevia project status</span>
-        <span>2026-08-05 &rarr; 2026-11-16</span>
+        <span>2026-08-05 &rarr; 2026-11-17</span>
         <span>Newest first</span>
       </div>
     </div>
@@ -75,9 +75,9 @@
   <div class="mvp__head">
     <span class="mvp__label label">MVP readiness &mdash; estimate</span>
     <span class="mvp__pct num">&asymp;68%</span>
-    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 76 days past</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 77 days past</span>
   </div>
-  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 68 percent built, unchanged. beevia-api 112 adds message editing with no client yet and makes deletion work across devices, a correctness fix the rubric does not score. E2EE messaging 0.90; voice and video calling 0.92; message translation 0.60; local KYC 0.93; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.88; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 68 percent built, unchanged. Nothing reached main in any repo; the client for message editing, offline delete and the voice-note recorder is on an unmerged branch. E2EE messaging 0.90; voice and video calling 0.92; message translation 0.60; local KYC 0.93; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.88; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
     <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.90"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.92"><i style="width:92%"></i></span>
     <span class="mvp__seg" style="flex:7" title="Message translation — 0.60"><i style="width:60%"></i></span>
@@ -90,10 +90,27 @@
     <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
     <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.97"><i style="width:97%"></i></span>
   </div>
-  <p class="mvp__read"><strong>68.36, unchanged.</strong> #112 adds message editing on the server with no client yet, and makes deletion reach every device, a correctness fix the rubric does not score. The voice-note recorder and the ringing client are still on an unmerged branch. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 16 Nov 2026 &mdash; <a href="2026-11-16.html#mvp-method">method and capability table</a>.</p>
+  <p class="mvp__read"><strong>68.36, unchanged.</strong> Nothing reached <code>main</code> in any repo. The client for message editing and offline delete, and the voice-note recorder, are on <code>feat-forget-pin-fixes</code>, which has no pull request; line 1 is the one to revisit when it merges. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 17 Nov 2026 &mdash; <a href="2026-11-17.html#mvp-method">method and capability table</a>.</p>
 </section>
 
 <main class="frames">
+
+  <a class="frame" href="2026-11-17.html">
+    <span class="frame__idx num">69</span>
+    <span>
+      <span class="frame__date">17 Nov 2026</span>
+      <span class="frame__sum"><strong>The app side of yesterday's message editing was written overnight, but on a branch: beevia-mobile feat-forget-pin-fixes gained d55630e, which adds edit, reads the catch-up changes and reads deleted_for as the server sends it.</strong> The branch is now 109 files ahead of main with no pull request. Nothing reached main in any repo; no board action for 6.3 days; 1002 is twelve days over and 24 of 33 review items have merged code, none accepted. Audit clean at 166 / 76.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:33"></i><u style="flex:11"></u></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>1002 &middot; ended 5 Nov &middot; 1 To do &middot; 2 In progress &middot; 33 QA &middot; 0 Blocked &middot; 8 Done</span></div>
+      <div><span>MVP est</span><span>&asymp;68% &middot; &Delta; 0</span></div>
+      <div><span>Test-gated deploys</span><span>0 of 3 backend repos</span></div>
+      <div><span>Recommendations</span><span>0 of 26 met &middot; 1 in part</span></div>
+      <div><span>Board actions</span><span>0 in 1.0 day &middot; 0 out of review</span></div>
+      <div><span>API surface</span><span>166 / 76 &middot; route drift 0</span></div>
+    </span>
+  </a>
 
   <a class="frame" href="2026-11-16.html">
     <span class="frame__idx num">68</span>
@@ -1254,7 +1271,7 @@
 <footer class="foot">
   <span class="barcode barcode--lg" aria-hidden="true"></span>
   <span>Frames are written by the <code>beevia-refresh</code> skill alongside the Markdown in <code>project-status/</code>.</span>
-  <span><a href="2026-11-16.html">Latest</a></span>
+  <span><a href="2026-11-17.html">Latest</a></span>
 </footer>
 
 <script src="ui.js"></script>
