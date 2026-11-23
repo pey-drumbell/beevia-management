@@ -54,9 +54,9 @@ info:
     Every protected route declares `@RequirePermission(module, action)` and is
     checked by `PermissionGuard` against the caller's role.
 
-    * **Modules** (13): `dashboard`, `users`, `chats`, `wallets`, `transactions`,
+    * **Modules** (14): `dashboard`, `users`, `chats`, `wallets`, `transactions`,
       `kyc`, `reports`, `analytics`, `roles_permissions`, `admin_accounts`,
-      `system_settings`, `help_center`, `disputes`.
+      `system_settings`, `help_center`, `disputes`, `statuses`.
     * **Actions** (7): `view`, `create`, `edit`, `delete`, `approve`, `export`,
       `manage`.
     * `can_manage` on a module is a superset flag — it satisfies any action check
@@ -144,6 +144,23 @@ tags:
       A socket on this service pushes `support.conversation.new`,
       `support.message.new` and `support.conversation.updated` to any active
       admin. Agents act over REST only.
+  - name: Status Moderation
+    description: |
+      Compliance's side of reports on Status (24-hour posts, consumer API tag
+      `Statuses`): the queue, a case with its evidence, closing it, posting
+      suspensions, and how long evidence is kept. All routes need the
+      `statuses` module, which shipped with db-schema v0.0.58 and, like
+      `help_center` and `disputes`, is granted to **no role** by its migration.
+
+      Status is end-to-end encrypted. A case can be read here only because a
+      reporter handed over that status's key; the evidence (the sealed status,
+      the key, a copy of the file) is opened on this server at review time.
+      The media route needs the optional `S3_*` settings (the consumer API's
+      bucket and keys).
+
+      Closing a case pushes `status.report_reviewed` to each reporter's phone,
+      and `status.removed` or `status.posted` to the status's recipients when
+      it is hidden or brought back, through the shared Redis adapter.
   - name: Admin Settings
     description: |
       Platform settings an admin manages. Today that is the default card
@@ -3021,6 +3038,324 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 
+  # ===========================================================================
+  # Status moderation (beevia-admin-api #33, 23 Nov 2026; schema 0.0.58)
+  # ===========================================================================
+
+  /admin/statuses/reports:
+    get:
+      tags: [Status Moderation]
+      operationId: listStatusReportCases
+      summary: Status report queue
+      description: |
+        One case per reported status. Open cases first; within that,
+        auto-hidden cases (three reporters) on top, then urgent ones, then by
+        deadline. `overdue` is an open case past `due_at`. With no `state`
+        filter, closed cases follow the open ones.
+      x-required-permission: 'statuses:view'
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - name: state
+          in: query
+          schema: { type: string, enum: [open, closed] }
+        - name: priority
+          in: query
+          schema: { type: string, enum: [urgent, normal] }
+      responses:
+        '200':
+          description: A page of cases.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          cases:
+                            type: array
+                            items:
+                              allOf:
+                                - $ref: '#/components/schemas/StatusReportCase'
+                                - type: object
+                                  properties:
+                                    reasons:
+                                      type: array
+                                      description: The distinct reasons given across its reports.
+                                      items: { $ref: '#/components/schemas/StatusReportReason' }
+                          pagination: { $ref: '#/components/schemas/TransactionsPagination' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/statuses/reports/{caseId}:
+    parameters:
+      - $ref: '#/components/parameters/StatusReportCaseId'
+    get:
+      tags: [Status Moderation]
+      operationId: getStatusReportCase
+      summary: A status report case
+      description: |
+        The reports (who, reason, note, whether they also blocked) and the
+        evidence: the status as it was posted, opened with the key the first
+        reporter handed over. `evidence.content` is the decrypted text or
+        caption object; a photo or video is fetched from `evidence.media.path`.
+        `evidence.unreadable` is true if the stored payload does not open or is
+        not a JSON object. After the retention period the evidence is gone
+        (`evidence.deleted_at`) and the case, its reports and its outcome
+        remain. Reading a case is not logged on the activity feed.
+      x-required-permission: 'statuses:view'
+      responses:
+        '200':
+          description: The case.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/StatusReportCaseDetail' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such case (`case_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /admin/statuses/reports/{caseId}/evidence/media:
+    parameters:
+      - $ref: '#/components/parameters/StatusReportCaseId'
+    get:
+      tags: [Status Moderation]
+      operationId: getStatusReportEvidenceMedia
+      summary: The reported photo or video
+      description: |
+        The file as it was posted, read from storage and decrypted in memory
+        for review. **Not enveloped**: the body is the file, sent with
+        `Cache-Control: no-store`. Its `Content-Type` is `media.mime` from the
+        decrypted status, which the poster's phone wrote, or
+        `application/octet-stream` when that is missing; the value is not
+        checked against a list. A file that does not open with the stored key
+        is an unmapped `500`.
+      x-required-permission: 'statuses:view'
+      responses:
+        '200':
+          description: The decrypted file.
+          content:
+            '*/*':
+              schema: { type: string, format: binary }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such case (`case_not_found`), or the report has no photo or video (`evidence_media_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '410':
+          description: 'The evidence was deleted after the retention period (`evidence_deleted`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '503':
+          description: 'Storage is not configured on this server (`evidence_storage_unavailable`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /admin/statuses/reports/{caseId}/close:
+    parameters:
+      - $ref: '#/components/parameters/StatusReportCaseId'
+    post:
+      tags: [Status Moderation]
+      operationId: closeStatusReportCase
+      summary: Close a case
+      description: |
+        `action_taken` hides the status until it expires (it stays hidden if
+        it already was). `no_breach` brings a hidden status back for its
+        viewers, if it is still live. Every reporter is told
+        (`status.report_reviewed`, with the outcome and nothing about the
+        poster). `suspendPoster` is allowed with `action_taken` only. Logged on
+        the activity feed. The evidence retention period starts here.
+
+        Both bodies are strict: an unknown key (`ends_at` for `endsAt`, say) is
+        a `400`, never a suspension with no end date.
+      x-required-permission: 'statuses:edit'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CloseStatusReportRequest' }
+      responses:
+        '200':
+          description: The case after closing.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/StatusReportCaseDetail' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such case (`case_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '409':
+          description: 'Already closed (`case_already_closed`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /admin/statuses/users/{userId}/suspensions:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        description: A consumer `users.id`.
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Status Moderation]
+      operationId: listStatusPostingSuspensions
+      summary: A user's status posting suspensions
+      description: Newest first, lifted and ended ones included. `active` marks the one in force.
+      x-required-permission: 'statuses:view'
+      responses:
+        '200':
+          description: The suspensions.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/StatusPostingSuspension' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Status Moderation]
+      operationId: suspendStatusPosting
+      summary: Suspend status posting
+      description: |
+        The user can still chat and pay; `POST /statuses` on the consumer API
+        answers `403 status_posting_suspended` with a message naming `reason`.
+        Omit `endsAt` to suspend until lifted. A second suspension is a second
+        row; the longest-lasting one is the one in force. `caseId` is not
+        checked before the insert. Logged on the activity feed.
+      x-required-permission: 'statuses:edit'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateStatusSuspensionRequest' }
+      responses:
+        '201':
+          description: The suspension.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/StatusPostingSuspension' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such user (`user_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /admin/statuses/suspensions/{suspensionId}/lift:
+    parameters:
+      - name: suspensionId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [Status Moderation]
+      operationId: liftStatusPostingSuspension
+      summary: Lift a suspension
+      description: Posting works again at once, unless another suspension is still in force. Idempotent. Logged on the activity feed.
+      x-required-permission: 'statuses:edit'
+      responses:
+        '200':
+          description: The suspension, lifted.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/StatusPostingSuspension' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 'No such suspension (`suspension_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /admin/statuses/settings:
+    get:
+      tags: [Status Moderation]
+      operationId: getStatusSettings
+      summary: Status settings
+      description: How many days report evidence is kept after its case closes. 90 until someone changes it.
+      x-required-permission: 'statuses:view'
+      responses:
+        '200':
+          description: The settings.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/StatusSettings' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    put:
+      tags: [Status Moderation]
+      operationId: setStatusSettings
+      summary: Set how long report evidence is kept
+      description: |
+        `evidenceRetentionDays`, 1 to 3650. No release is needed: the consumer
+        API's sweep reads it every minute, so shortening it deletes evidence
+        already past the new period within a minute, and that cannot be undone.
+        Each deletion is logged on the activity feed; the change of setting
+        itself is not.
+      x-required-permission: 'statuses:edit'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SetStatusSettingsRequest' }
+      responses:
+        '200':
+          description: The settings after the change.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/StatusSettings' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
 # =============================================================================
 # Components
 # =============================================================================
@@ -3038,6 +3373,12 @@ components:
         secret with the consumer API — see `admin-api-rfc.md` §4.1.
 
   parameters:
+    StatusReportCaseId:
+      name: caseId
+      in: path
+      required: true
+      description: A status report case.
+      schema: { type: string, format: uuid }
     AdminId:
       name: id
       in: path
@@ -3462,6 +3803,155 @@ components:
         day: { type: string, enum: [sun, mon, tue, wed, thu, fri, sat] }
         open: { type: string, nullable: true, pattern: '^([01]\d|2[0-3]):[0-5]\d$', example: '09:00' }
         close: { type: string, nullable: true, pattern: '^([01]\d|2[0-3]):[0-5]\d$', example: '18:00' }
+    StatusReportReason:
+      type: string
+      description: The reasons on the report sheet, in the order shown.
+      enum: [spam_or_scam, nudity_or_sexual_content, harassment_or_threats, violence, impersonation, other]
+
+    StatusModerationRef:
+      type: object
+      description: A person or an admin, by id and display name.
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: [string, 'null'] }
+
+    StatusReportCase:
+      type: object
+      description: One case per reported status. It keeps its own copy of who posted the status and when, so it outlives it.
+      properties:
+        id: { type: string, format: uuid }
+        status_id: { type: string, format: uuid }
+        status_type: { type: string, enum: [text, image, video] }
+        status_posted_at: { type: string, format: date-time }
+        poster:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/StatusModerationRef'
+        state: { type: string, enum: [open, closed] }
+        priority: { type: string, enum: [urgent, normal] }
+        due_at: { type: string, format: date-time, description: '24 hours after an urgent report, 72 after any other; the earliest wins.' }
+        overdue: { type: boolean }
+        report_count: { type: integer, description: Distinct reporters. }
+        auto_hidden_at: { type: [string, 'null'], format: date-time, description: Set when the third reporter hid the status. }
+        outcome: { type: [string, 'null'], enum: [action_taken, no_breach, null] }
+        closed_at: { type: [string, 'null'], format: date-time }
+        evidence_deleted_at: { type: [string, 'null'], format: date-time }
+        created_at: { type: string, format: date-time }
+
+    StatusReportCaseDetail:
+      allOf:
+        - $ref: '#/components/schemas/StatusReportCase'
+        - type: object
+          properties:
+            review_note: { type: [string, 'null'], description: Internal. }
+            reviewed_by:
+              oneOf:
+                - type: 'null'
+                - $ref: '#/components/schemas/StatusModerationRef'
+            status:
+              type: object
+              properties:
+                live: { type: boolean, description: The status still exists and has not expired. }
+                hidden: { type: boolean }
+            reports:
+              type: array
+              description: Oldest first.
+              items:
+                type: object
+                properties:
+                  id: { type: string, format: uuid }
+                  reporter: { $ref: '#/components/schemas/StatusModerationRef' }
+                  reason: { $ref: '#/components/schemas/StatusReportReason' }
+                  note: { type: [string, 'null'], description: Cleared with the evidence. }
+                  blocked_poster: { type: boolean }
+                  created_at: { type: string, format: date-time }
+                  outcome_notified_at: { type: [string, 'null'], format: date-time }
+            evidence:
+              type: object
+              properties:
+                deleted_at: { type: [string, 'null'], format: date-time }
+                content:
+                  type: [object, 'null']
+                  description: The decrypted text or caption, as the phone wrote it. The shape is the client's (status encryption v1) and is not validated here.
+                  additionalProperties: true
+                unreadable: { type: boolean }
+                media:
+                  type: [object, 'null']
+                  properties:
+                    size_bytes: { type: [integer, 'null'] }
+                    path: { type: string, example: /api/v1/admin/statuses/reports/6f1c…/evidence/media }
+            poster_suspension:
+              type: [object, 'null']
+              description: |
+                The suspension in force for the poster, or null. This is the
+                **stored row**, not `StatusPostingSuspension`: it carries
+                `user_id`, `created_by_admin_id` and `lifted_by_admin_id`
+                instead of `active`, `created_by` and `lifted_by`.
+              additionalProperties: true
+
+    CloseStatusReportRequest:
+      type: object
+      required: [outcome]
+      additionalProperties: false
+      properties:
+        outcome: { type: string, enum: [action_taken, no_breach] }
+        note: { type: string, maxLength: 2000, description: Internal. }
+        suspendPoster:
+          type: object
+          description: With `action_taken` only.
+          required: [reason]
+          additionalProperties: false
+          properties:
+            reason: { $ref: '#/components/schemas/StatusReportReason' }
+            endsAt: { type: string, format: date-time, description: In the future. Omit to suspend until lifted. }
+            note: { type: string, maxLength: 2000, description: Internal. }
+
+    CreateStatusSuspensionRequest:
+      type: object
+      required: [reason]
+      additionalProperties: false
+      properties:
+        reason: { $ref: '#/components/schemas/StatusReportReason' }
+        endsAt: { type: string, format: date-time, description: In the future. Omit to suspend until lifted. }
+        note: { type: string, maxLength: 2000, description: Internal; the user never sees it. }
+        caseId: { type: string, format: uuid }
+
+    StatusPostingSuspension:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        reason: { $ref: '#/components/schemas/StatusReportReason' }
+        note: { type: [string, 'null'] }
+        case_id: { type: [string, 'null'], format: uuid }
+        ends_at: { type: [string, 'null'], format: date-time, description: Null means until lifted. }
+        active: { type: boolean }
+        created_by:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/StatusModerationRef'
+        created_at: { type: string, format: date-time }
+        lifted_at: { type: [string, 'null'], format: date-time }
+        lifted_by:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/StatusModerationRef'
+
+    StatusSettings:
+      type: object
+      properties:
+        evidence_retention_days: { type: integer, example: 90 }
+        updated_by:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/StatusModerationRef'
+        updated_at: { type: [string, 'null'], format: date-time }
+
+    SetStatusSettingsRequest:
+      type: object
+      required: [evidenceRetentionDays]
+      properties:
+        evidenceRetentionDays: { type: integer, minimum: 1, maximum: 3650 }
+
     SupportHours:
       type: object
       properties:
@@ -4519,12 +5009,20 @@ components:
             - admin_invited
             - admin_deactivated
             - admin_reactivated
+            - chat_report_reviewed
+            - status_report_reviewed
+            - status_auto_hidden
+            - status_posting_suspended
+            - status_posting_unsuspended
+            - status_evidence_deleted
         module:
           type: string
           description: |
             The permission module the event belongs to — the feed gates on it.
-            The enum is the full module list; only `users`, `roles_permissions`
-            and `admin_accounts` are currently ever written.
+            The enum is the full module list; only `users`, `roles_permissions`,
+            `admin_accounts`, `chats` and `statuses` are currently ever written.
+            `status_auto_hidden` and `status_evidence_deleted` are written by
+            the consumer API with no actor.
           enum:
             - dashboard
             - users
@@ -4539,6 +5037,7 @@ components:
             - system_settings
             - help_center
             - disputes
+            - statuses
         actor:
           type: object
           description: The admin who performed it; both fields are `null` for a system-originated event.
@@ -4548,7 +5047,7 @@ components:
         target:
           type: object
           properties:
-            entity_type: { type: string, enum: [user, role, admin] }
+            entity_type: { type: string, enum: [user, role, admin, report] }
             entity_id: { type: string, format: uuid }
         summary:
           type: string

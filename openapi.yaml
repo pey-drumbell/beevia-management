@@ -130,6 +130,41 @@ tags:
     description: Conversations, messages, receipts and reactions. Mirrors the WebSocket commands.
   - name: Calls
     description: Call signaling. Media is relayed by the SFU, never by this API.
+  - name: Statuses
+    description: |
+      Status: posts that last 24 hours, seen by the people the poster has
+      written to. Not in the PRD. End-to-end encrypted: the phone seals the
+      text or caption and the file with a key of the status's own (v1:
+      `iv (12) ‖ AES-256-GCM ciphertext ‖ tag (16)`), and seals that key once
+      per viewer device. The server stores the sealed status, the file and
+      the sealed keys and can open none of them, **except** a status someone
+      reports: the reporter hands over the status key and the server keeps it
+      with a copy of the status as evidence (`POST /statuses/{id}/report`).
+
+      The sealed JSON is the phones' contract, stated in the Postman
+      collection's Statuses folder and validated nowhere on the server:
+      `{ v: 1, kind: text, text, background, font }`, or
+      `{ v: 1, kind: image | video, caption, media: { mime, width, height,
+      duration_ms, thumbnail } }`; text and captions at most 700 characters.
+      The file is sealed the same way with the same key, so `sizeBytes` is the
+      file plus 28. Each envelope is `{ v: 1, k: <base64 key> }` sent through
+      the poster device's existing session with that device.
+
+      The audience is fixed at posting. Eligible: every current member of a
+      1:1 or group chat the poster has sent a message in (payments included;
+      system, call and key-exchange rows do not count) who had joined by the
+      poster's last message there, minus blocks either way and accounts that
+      cannot sign in. Of those, only the people the phone sealed a key for
+      become recipients. Whether the poster is still in that chat is not
+      checked. Expiry, blocks, moderation hides and the poster's account
+      state are checked on every read.
+
+      There is no socket command for Status; REST is the only transport. The
+      server pushes `status.posted`, `status.removed` (`reason`: `deleted`,
+      `expired` or `hidden`), `status.viewed` (to the poster, first receipt
+      only) and, from the admin API, `status.report_reviewed`. There are no
+      push notifications. Reactions and replies are ordinary chat messages
+      (see `SendMessageRequest`).
   - name: Attachments
     description: Presigned upload/download of client-encrypted blobs.
   - name: Upload
@@ -1165,14 +1200,22 @@ paths:
       tags: [Users]
       operationId: getMySettings
       summary: Get my chat settings
-      description: Currently only multi-device history sync.
+      description: Multi-device history sync, read receipts and status Seen by.
       responses:
         '200': { $ref: '#/components/responses/ChatSettingsOk' }
     patch:
       tags: [Users]
       operationId: updateMySettings
       summary: Update my chat settings
-      description: Toggle `messageHistorySyncEnabled` — whether a newly-added device is backfilled with history by the user's existing devices.
+      description: |
+        Patch one or more; at least one field is required.
+        `messageHistorySyncEnabled`: whether a newly-added device is backfilled
+        with history by the user's existing devices. `readReceiptsEnabled`:
+        when false, the caller's `read` receipts stop reaching the sender
+        (delivered receipts and the caller's own unread count are unaffected).
+        `statusSeenByEnabled`: status Seen by. When false, or while read
+        receipts are off, the caller's status views are not shared with the
+        poster and the caller gets no viewer list for their own statuses.
       requestBody:
         required: true
         content:
@@ -3937,6 +3980,604 @@ paths:
         '200': { $ref: '#/components/responses/CallOk' }
         '404': { $ref: '#/components/responses/NotFound' }
 
+  # ===========================================================================
+  # Statuses (beevia-api #114-#118, 23 Nov 2026; schema 0.0.58)
+  #
+  # Fixed paths are declared before `/statuses/{id}` in the controller, so
+  # `uploads`, `audience`, `feed`, `mine`, `mutes` and `reports` are never
+  # read as an id.
+  # ===========================================================================
+
+  /statuses/uploads:
+    post:
+      tags: [Statuses]
+      operationId: startStatusUpload
+      summary: Start a photo or video upload
+      description: |
+        Opens an S3 multipart upload for the **encrypted** file and returns one
+        presigned `PUT` URL per 5 MB part (the last part may be smaller). PUT
+        each part, then call complete. `sizeBytes` is the declared size and
+        sets the number of parts; it is refused above 5 MB for a photo and
+        16 MB for a video, and the stored object is measured again at
+        complete. The part URLs themselves carry no size limit. An upload
+        never posted is cleared after 24 hours.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StartStatusUploadRequest' }
+      responses:
+        '201':
+          description: The upload, with a URL for every part.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/StatusUpload' }
+        '400':
+          description: 'Validation failure, or the declared size is over the limit (`status_media_too_large`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /statuses/uploads/{id}:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    get:
+      tags: [Statuses]
+      operationId: getStatusUpload
+      summary: Resume an upload
+      description: Which parts storage holds, with fresh URLs for the ones still missing. Once completed, `parts` is empty and every part is listed as uploaded.
+      responses:
+        '200':
+          description: Where the upload stands.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/StatusUpload' }
+        '404':
+          description: "No such upload, or not the caller's (`status_upload_not_found`)."
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    delete:
+      tags: [Statuses]
+      operationId: cancelStatusUpload
+      summary: Cancel an upload
+      description: Aborts the multipart upload (or deletes the joined file) and removes the row.
+      responses:
+        '200':
+          description: Cancelled.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          cancelled: { type: boolean, const: true }
+        '404':
+          description: "No such upload, or not the caller's (`status_upload_not_found`)."
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /statuses/uploads/{id}/complete:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    post:
+      tags: [Statuses]
+      operationId: completeStatusUpload
+      summary: Complete an upload
+      description: |
+        Joins the parts and measures the stored file. A file over the limit is
+        deleted with its row (`status_media_too_large`). Parts storage refuses
+        to join (a non-final part under 5 MB, a bad part) discard the upload
+        (`status_upload_invalid`). Repeating the call on a completed upload
+        returns it unchanged.
+      responses:
+        '200':
+          description: The completed upload, with the measured `size_bytes`.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/StatusUpload' }
+        '400':
+          description: 'Parts are missing (`status_upload_incomplete`, with `details.missing_parts`), storage refused the parts (`status_upload_invalid`), or the stored file is over the limit (`status_media_too_large`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '404':
+          description: "No such upload, or not the caller's (`status_upload_not_found`)."
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /statuses/audience:
+    get:
+      tags: [Statuses]
+      operationId: getStatusAudience
+      summary: Who a new status would reach
+      description: |
+        The people the caller has written to, each with the devices to seal the
+        status key for. Only devices used in the last 30 days are listed here;
+        `POST /statuses` accepts a key for any signed-in device of the same
+        people. `own_device_ids` are the caller's other devices.
+      parameters:
+        - $ref: '#/components/parameters/DeviceIdHeader'
+      responses:
+        '200':
+          description: The audience.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/StatusAudience' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403':
+          description: "The device is not one of the caller's signed-in devices (`device_invalid`)."
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /statuses:
+    post:
+      tags: [Statuses]
+      operationId: createStatus
+      summary: Post a status
+      description: |
+        Text, or a completed photo or video upload. Lives for exactly 24 hours
+        on the database clock.
+
+        **The audience is whoever the phone seals a key for.** The server works
+        out who is eligible (see the tag description), drops envelopes for any
+        other device without an error, and records as recipients only the
+        people at least one kept envelope belongs to. A mention must be one of
+        those recipients and is private: only the person tagged is told.
+
+        A video needs `durationMs`, at most 30 000 (500 ms of slack); the
+        server cannot read encrypted media, so the length is the phone's word.
+        An upload backs one status only. At most 30 statuses in any 24 hours,
+        counted over statuses that still exist, so a deleted or expired one no
+        longer counts. Refused while Compliance has suspended the caller's
+        posting.
+
+        Emits `status.posted` to the poster and every recipient.
+      parameters:
+        - $ref: '#/components/parameters/DeviceIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateStatusRequest' }
+      responses:
+        '201':
+          description: The status, as its poster sees it.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/OwnStatus' }
+        '400':
+          description: 'Validation failure, or one of `status_text_has_media`, `status_media_required`, `status_video_duration_required`, `status_video_too_long`, `status_upload_type_mismatch`, `status_upload_not_complete`, `status_mention_not_in_audience`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '403':
+          description: "Posting is suspended (`status_posting_suspended`; `details.reason` and `details.ends_at`, null when until lifted), or the device is not the caller's (`device_invalid`)."
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '404':
+          description: "No such upload, or not the caller's (`status_upload_not_found`)."
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '409':
+          description: 'The upload was claimed by another post in the meantime (`status_upload_used`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '429':
+          description: 'Thirty statuses already posted in the last 24 hours (`status_daily_limit`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /statuses/feed:
+    get:
+      tags: [Statuses]
+      operationId: getStatusFeed
+      summary: Status feed
+      description: |
+        People with live statuses for the caller, one group each, their
+        statuses oldest first. Groups are ordered unseen, then viewed, then
+        muted (the Hidden section), newest first within each. Only statuses
+        this device holds a key for are listed. Paged by person: pass
+        `next_cursor` back as `cursor`. Each status carries a download link for
+        its file that is valid for one hour.
+      parameters:
+        - $ref: '#/components/parameters/DeviceIdHeader'
+        - name: cursor
+          in: query
+          description: Opaque, from a previous page's `next_cursor`.
+          schema: { type: string, maxLength: 300 }
+        - name: limit
+          in: query
+          description: People per page.
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+      responses:
+        '200':
+          description: A page of the feed.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/StatusFeed' }
+        '400':
+          description: 'Missing or malformed device header, or a cursor that does not decode (`invalid_cursor`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '403':
+          description: "The device is not one of the caller's signed-in devices (`device_invalid`)."
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /statuses/mine:
+    get:
+      tags: [Statuses]
+      operationId: listMyStatuses
+      summary: My live statuses
+      description: Oldest first, each with this device's key envelope, who was tagged, the moderation state and the view count.
+      parameters:
+        - $ref: '#/components/parameters/DeviceIdHeader'
+      responses:
+        '200':
+          description: The caller's live statuses.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/OwnStatus' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403':
+          description: "The device is not one of the caller's signed-in devices (`device_invalid`)."
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /statuses/mutes:
+    get:
+      tags: [Statuses]
+      operationId: listStatusMutes
+      summary: People I muted
+      description: In the order they were muted. Their statuses sit in the Hidden section of the feed.
+      responses:
+        '200':
+          description: The muted people.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/StatusMute' }
+    post:
+      tags: [Statuses]
+      operationId: muteStatuses
+      summary: Mute someone's statuses
+      description: Moves them to the Hidden section. Idempotent. No event is sent, so the muted person is never told.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MuteStatusesRequest' }
+      responses:
+        '200':
+          description: Muted.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          muted: { type: boolean, const: true }
+        '400':
+          description: 'Validation failure, or the caller named themselves (`cannot_mute_self`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '404':
+          description: 'No such user (`user_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /statuses/mutes/{userId}:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        description: The muted person.
+        schema: { type: string, format: uuid }
+    delete:
+      tags: [Statuses]
+      operationId: unmuteStatuses
+      summary: Unmute someone
+      description: Idempotent; unmuting someone who was not muted also answers 200.
+      responses:
+        '200':
+          description: Unmuted.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          muted: { type: boolean, const: false }
+
+  /statuses/reports:
+    get:
+      tags: [Statuses]
+      operationId: listMyStatusReports
+      summary: My reports
+      description: The caller's last 50 reports, newest first, in review or closed with the outcome, and a sentence in the caller's language (`Accept-Language`). It never says anything about the person reported.
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguageHeader'
+      responses:
+        '200':
+          description: The caller's reports.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/MyStatusReport' }
+
+  /statuses/{id}:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    get:
+      tags: [Statuses]
+      operationId: getStatus
+      summary: One status
+      description: |
+        For its poster (`OwnStatus`), or for someone it was shared with who can
+        still see it (`ReceivedStatus`). Anyone else, an expired status, a
+        hidden one and a blocked pair all get the same 404.
+      parameters:
+        - $ref: '#/components/parameters/DeviceIdHeader'
+      responses:
+        '200':
+          description: The status.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        oneOf:
+                          - $ref: '#/components/schemas/OwnStatus'
+                          - $ref: '#/components/schemas/ReceivedStatus'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403':
+          description: "The device is not one of the caller's signed-in devices (`device_invalid`)."
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '404':
+          description: 'Not found, expired, or not visible to the caller (`status_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    delete:
+      tags: [Statuses]
+      operationId: deleteStatus
+      summary: Delete my status
+      description: |
+        Poster only. The file is deleted first, then the row with its keys,
+        audience, views and reactions, and `status.removed` (`reason: deleted`)
+        goes to the poster and every recipient. A report's evidence copy is
+        **not** deleted. If storage refuses the file delete, nothing is removed.
+      responses:
+        '200':
+          description: Deleted.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          deleted: { type: boolean, const: true }
+        '404':
+          description: "Not found, or not the caller's (`status_not_found`)."
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '503':
+          description: "The file could not be deleted from storage, so the status is still there (`status_delete_failed`)."
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /statuses/{id}/viewers:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    get:
+      tags: [Statuses]
+      operationId: listStatusViewers
+      summary: Who has seen my status
+      description: |
+        Poster only, newest first, each with the viewer's reaction if any.
+        Settings are applied when the list is read, not when the view was
+        recorded: a viewer who has since turned Seen by or read receipts off,
+        a block either way, or a closed account drops off at once. While the
+        poster's own Seen by (or read receipts) is off the list is empty and
+        `seen_by_enabled` is false.
+      responses:
+        '200':
+          description: The viewer list.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/StatusViewers' }
+        '404':
+          description: "Not found, expired, or not the caller's (`status_not_found`)."
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /statuses/{id}/view:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    post:
+      tags: [Statuses]
+      operationId: markStatusViewed
+      summary: Mark a status viewed
+      description: |
+        Marks it seen for the caller, privately. The poster gets a receipt
+        (and one `status.viewed` event, on the first receipt only) only while
+        **both** people have Seen by and read receipts on at that moment. A
+        view recorded privately becomes a receipt if the status is viewed
+        again after both turn the settings on. The poster viewing their own
+        status is a no-op.
+      responses:
+        '200':
+          description: Seen.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          seen: { type: boolean, const: true }
+        '404':
+          description: 'Not found, expired, or not visible to the caller (`status_not_found`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /statuses/{id}/report:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    post:
+      tags: [Statuses]
+      operationId: reportStatus
+      summary: Report a status
+      description: |
+        The reporter sends a reason, an optional note and **the status's own
+        key**. The server checks the key opens the stored text or caption (the
+        AES-GCM tag proves it is that status's key), then keeps as evidence the
+        sealed status, the key, and a copy of the file made inside storage.
+        From that point Beevia can read that status. The file itself is not
+        checked against the key.
+
+        One case per status and one report per person: a repeat from the same
+        person returns the same `report_id` and changes nothing. A new reporter
+        reopens a closed case. `harassment_or_threats` and
+        `nudity_or_sexual_content` are due for review in 24 hours, the rest in
+        72; the earliest deadline wins. **The third different reporter hides
+        the status** from everyone but its poster until the case is reviewed
+        (`status.removed`, `reason: hidden`). `blockPoster` also blocks the
+        poster.
+
+        Only a live status the caller can currently see can be reported; a
+        status its poster has already deleted, or one that has expired,
+        answers 404. A poster cannot report their own status.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReportStatusRequest' }
+      responses:
+        '200':
+          description: The report was received (or already existed).
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          report_id: { type: string, format: uuid }
+        '400':
+          description: 'Validation failure, or the key does not open the status (`status_report_key_invalid`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '404':
+          description: "Not found, expired, the caller's own, or not visible to the caller (`status_not_found`)."
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '503':
+          description: 'The evidence copy of the file could not be made (`status_report_failed`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
   /attachments/upload-url:
     post:
       tags: [Attachments]
@@ -4819,6 +5460,8 @@ components:
                     type: object
                     properties:
                       message_history_sync_enabled: { type: boolean, example: true }
+                      read_receipts_enabled: { type: boolean, example: true }
+                      status_seen_by_enabled: { type: boolean, example: true, description: Status Seen by. It only takes effect while read receipts are on too. }
     Conflict:
       description: 'State conflict or uniqueness violation (`unique_constraint_violation`, `nonzero_balance`, …).'
       content:
@@ -5591,6 +6234,11 @@ components:
                 required: [blocked]
                 properties:
                   blocked: { type: boolean }
+        status:
+          description: "A 1:1 peer's live statuses, for the ring around their avatar (since 2026-11-23). Null when they have none the calling device can open, and always null for a group."
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/StatusRing'
 
     CreateConversationRequest:
       type: object
@@ -6474,10 +7122,22 @@ components:
               ciphertext: { type: string, maxLength: 64000 }
         contentMeta:
           type: object
-          description: Server-visible, non-sensitive metadata only (mime, sizes, payment ref). Never plaintext body.
+          description: |
+            Server-visible, non-sensitive metadata only (mime, sizes, payment
+            ref). Never plaintext body.
+
+            `kind: status_reaction` or `kind: status_reply` marks the message as
+            an answer to a status (since 2026-11-23). It then needs `refId` =
+            the status id (`400 status_response_needs_status`), the status must
+            be live and visible to the sender and not their own
+            (`404 status_not_found`), and the message must go to the 1:1 chat
+            with its poster (`400 status_response_wrong_chat`). The emoji or
+            text stays in the ciphertext. A reaction is recorded for the
+            poster's viewer list (the latest one wins) and leaves it when the
+            message is deleted for everyone.
           additionalProperties: true
         replyToMessageId: { type: string, format: uuid }
-        refId: { type: string, format: uuid }
+        refId: { type: string, format: uuid, description: 'The payment, call or status this message refers to.' }
         attachmentIds:
           type: array
           maxItems: 16
@@ -6630,6 +7290,217 @@ components:
         firstName: { type: string, minLength: 1, maxLength: 255, example: Ada }
         lastName: { type: string, minLength: 1, maxLength: 255, example: Lovelace }
         dob: { type: string, pattern: '^\d{4}-\d{2}-\d{2}$', description: Must be at least 16 years ago., example: '1990-03-31' }
+    StatusReportReason:
+      type: string
+      description: The reasons on the report sheet, in the order shown.
+      enum: [spam_or_scam, nudity_or_sexual_content, harassment_or_threats, violence, impersonation, other]
+
+    StartStatusUploadRequest:
+      type: object
+      required: [type, sizeBytes]
+      properties:
+        type: { type: string, enum: [image, video] }
+        sizeBytes: { type: integer, minimum: 1, example: 9437184, description: 'Bytes of the encrypted file. At most 5 MB (5 242 880) for a photo and 16 MB (16 777 216) for a video.' }
+
+    StatusUpload:
+      type: object
+      description: A multipart upload as the phone sees it.
+      properties:
+        id: { type: string, format: uuid }
+        type: { type: string, enum: [image, video] }
+        size_bytes: { type: integer, description: The declared size until completed, then the measured one. }
+        part_size_bytes: { type: integer, example: 5242880 }
+        part_count: { type: integer }
+        completed: { type: boolean }
+        uploaded_parts:
+          type: array
+          items: { type: integer }
+        parts:
+          type: array
+          description: Fresh URLs for the parts still missing; empty once completed.
+          items:
+            type: object
+            properties:
+              part_number: { type: integer, minimum: 1 }
+              url: { type: string, format: uri }
+        url_expires_in: { type: integer, example: 3600, description: Seconds. }
+
+    StatusAudience:
+      type: object
+      properties:
+        recipients:
+          type: array
+          description: People with no device used in the last 30 days are left out.
+          items:
+            type: object
+            properties:
+              user_id: { type: string, format: uuid }
+              device_ids:
+                type: array
+                items: { type: string, format: uuid }
+        own_device_ids:
+          type: array
+          description: The caller's other devices, so they can open the status too.
+          items: { type: string, format: uuid }
+
+    CreateStatusRequest:
+      type: object
+      required: [type, ciphertext, envelopes]
+      properties:
+        type: { type: string, enum: [text, image, video] }
+        ciphertext: { type: string, maxLength: 64000, description: 'The text or caption as JSON, sealed with the status key (base64).' }
+        uploadId: { type: string, format: uuid, description: A completed upload of the same type. Required for a photo or video, refused for text. }
+        durationMs: { type: integer, minimum: 1, maximum: 30500, example: 18000, description: Video length. Required for a video, refused for text. }
+        envelopes:
+          type: array
+          maxItems: 5000
+          description: 'The status key sealed once per viewer device, one per device. May be empty: the status then has no recipients.'
+          items:
+            type: object
+            required: [deviceId, ciphertext]
+            properties:
+              deviceId: { type: string, format: uuid }
+              ciphertext: { type: string, maxLength: 4096, description: Base64. }
+        mentions:
+          type: array
+          maxItems: 5
+          description: People tagged privately. Each must be a recipient.
+          items: { type: string, format: uuid }
+
+    StatusMedia:
+      type: object
+      properties:
+        url: { type: string, format: uri, description: Presigned link to the encrypted file, valid for one hour. }
+        size_bytes: { type: [integer, 'null'], description: Measured by the server at upload. }
+        duration_ms: { type: [integer, 'null'], description: Declared by the phone; video only. }
+
+    Status:
+      type: object
+      description: A status as any viewer gets it. The key envelope is the one for the calling device.
+      properties:
+        id: { type: string, format: uuid }
+        poster_user_id: { type: string, format: uuid }
+        poster_device_id: { type: string, format: uuid, description: The device whose sessions sealed the key envelopes. }
+        type: { type: string, enum: [text, image, video] }
+        ciphertext: { type: string, description: Base64. }
+        key_envelope: { type: [string, 'null'], description: 'Null when this device was given no key: it cannot open the status.' }
+        media:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/StatusMedia'
+        posted_at: { type: string, format: date-time }
+        expires_at: { type: string, format: date-time, description: Exactly 24 hours after `posted_at`. }
+
+    OwnStatus:
+      description: The poster's own copy.
+      allOf:
+        - $ref: '#/components/schemas/Status'
+        - type: object
+          properties:
+            hidden: { type: boolean, description: Hidden by moderation. The poster still sees it and is not told why. }
+            mentioned_user_ids:
+              type: array
+              items: { type: string, format: uuid }
+            view_count: { type: [integer, 'null'], description: "Null while the poster's Seen by (or read receipts) is off: nothing is counted." }
+
+    ReceivedStatus:
+      description: Someone else's status. Only whether the caller was tagged, never who else was.
+      allOf:
+        - $ref: '#/components/schemas/Status'
+        - type: object
+          properties:
+            mentioned: { type: boolean }
+            seen: { type: boolean, description: Present in the feed only. }
+
+    StatusFeedGroup:
+      type: object
+      description: One person's live statuses, as one ring in the feed.
+      properties:
+        section: { type: string, enum: [unseen, viewed, muted] }
+        poster: { $ref: '#/components/schemas/PublicProfile' }
+        latest_posted_at: { type: string, format: date-time }
+        unseen_count: { type: integer }
+        statuses:
+          type: array
+          description: Oldest first.
+          items: { $ref: '#/components/schemas/ReceivedStatus' }
+
+    StatusFeed:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/StatusFeedGroup' }
+        next_cursor: { type: [string, 'null'], description: Null at the end. }
+
+    StatusRing:
+      type: object
+      description: What the conversation list needs to draw the ring around a 1:1 peer's avatar.
+      properties:
+        count: { type: integer }
+        unseen_count: { type: integer }
+        latest_posted_at: { type: string, format: date-time }
+        muted: { type: boolean }
+        items:
+          type: array
+          description: Oldest first, one ring segment each.
+          items:
+            type: object
+            properties:
+              id: { type: string, format: uuid }
+              posted_at: { type: string, format: date-time }
+              seen: { type: boolean }
+
+    StatusViewers:
+      type: object
+      properties:
+        seen_by_enabled: { type: boolean, description: False means the list stays empty until the poster turns Seen by and read receipts on. }
+        count: { type: integer }
+        viewers:
+          type: array
+          items:
+            type: object
+            properties:
+              user: { $ref: '#/components/schemas/PublicProfile' }
+              viewed_at: { type: string, format: date-time }
+              reaction:
+                type: [object, 'null']
+                description: The chat message carrying the reaction; the poster's phone reads the emoji from it.
+                properties:
+                  message_id: { type: string, format: uuid }
+                  reacted_at: { type: string, format: date-time }
+
+    MuteStatusesRequest:
+      type: object
+      required: [userId]
+      properties:
+        userId: { type: string, format: uuid }
+
+    StatusMute:
+      type: object
+      properties:
+        user: { $ref: '#/components/schemas/PublicProfile' }
+        muted_at: { type: string, format: date-time }
+
+    ReportStatusRequest:
+      type: object
+      required: [reason, statusKey]
+      properties:
+        reason: { $ref: '#/components/schemas/StatusReportReason' }
+        note: { type: string, minLength: 1, maxLength: 500, description: "Optional, in the reporter's words." }
+        blockPoster: { type: boolean, default: false, description: Also block the poster. }
+        statusKey: { type: string, maxLength: 64, description: "The status's own key (base64, 32 bytes). Handing it over lets Beevia read this status." }
+
+    MyStatusReport:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        reason: { $ref: '#/components/schemas/StatusReportReason' }
+        reported_at: { type: string, format: date-time }
+        state: { type: string, enum: [in_review, closed] }
+        outcome: { type: [string, 'null'], enum: [action_taken, no_breach, null] }
+        message: { type: string, description: "Already in the reader's language. Never says anything about the other person." }
+
     SuccessEnvelope:
       type: object
       description: Applied to every non-webhook JSON response by `ResponseInterceptor`.
@@ -6865,9 +7736,12 @@ components:
 
     UpdateSettingsRequest:
       type: object
-      required: [messageHistorySyncEnabled]
+      description: At least one field is required.
+      minProperties: 1
       properties:
         messageHistorySyncEnabled: { type: boolean }
+        readReceiptsEnabled: { type: boolean }
+        statusSeenByEnabled: { type: boolean }
 
     UploadPrekeysRequest:
       type: object

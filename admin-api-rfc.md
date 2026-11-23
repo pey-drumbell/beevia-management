@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft — for review · created 2026-08-05 |
 | **Scope** | The HTTP surface of `beevia-admin-api`: what exists today, and what "Beevia Admin Dashboard.md" specifies that does not exist yet |
-| **Companion artifacts** | [`openapi.admin.yaml`](./openapi.admin.yaml) — implemented, **76 operations** · [`openapi.admin.proposed.yaml`](./openapi.admin.proposed.yaml) — designed but unbuilt, 18 operations |
+| **Companion artifacts** | [`openapi.admin.yaml`](./openapi.admin.yaml) — implemented, **85 operations** · [`openapi.admin.proposed.yaml`](./openapi.admin.proposed.yaml) — designed but unbuilt, 18 operations |
 | **Sibling RFC** | [`api-rfc.md`](./api-rfc.md) — the consumer API |
 | **Sources** | `beevia-admin-api/src/**`, `beevia-db-schema/src/schema/*`, `Beevia Admin Dashboard.md` |
 | **Base path** | `/api/v1`, with every business route further prefixed `/admin` |
@@ -15,9 +15,9 @@
 
 ## 1. Summary
 
-`beevia-admin-api` is a **separate NestJS service** from the consumer API, sharing the database through the published `@drumbell-technologies/beevia-db-schema` package. It is **76 operations** across fifteen controllers, backing the admin dashboard specified in `Beevia Admin Dashboard.md`.
+`beevia-admin-api` is a **separate NestJS service** from the consumer API, sharing the database through the published `@drumbell-technologies/beevia-db-schema` package. It is **85 operations** across sixteen controllers, backing the admin dashboard specified in `Beevia Admin Dashboard.md`.
 
-**Three of the spec's eight modules are built, a fourth opened on 2026-09-02** when the cross-module activity feed merged (§5.4a), **and a fifth opened on 2026-09-04** when transaction oversight and reconciliation landed (§3.9, §3.10, §5.2) — the first money-oversight surface this service has ever had. Module 5 widened again on **2026-09-06** with the wallets screen (§3.12), leaving flagging as its only unbuilt operation. **On 2026-09-08 a sixth module opened, and it is the one this RFC has called blocking since 5 August**: the `/admin/chats` module merged to `main` (§3.13), implementing Module 4 as the metadata-only Option A of §5.1 — no message content, and the first reader `conversation_reports` has ever had. **On 2026-09-09/10 a seventh opened**: the Reports screen merged (§3.14), giving Module 7 its first exportable dataset and taking this service from 42 to 47 operations in two days. **On 2026-09-17 Module 4 became a workflow and the E2EE question was answered** (§3.13, §5.1b): report detail and a review decision shipped, taking the service to 49 operations, and the consumer app was changed the same night so that a reporter can hand over the messages they chose to disclose — Option B of §5.1, which had waited since 5 August for exactly that consumer change. **On 2026-10-28 the service grew to 60 operations** with eleven Help & Support content routes (§3.15). That work is outside the spec's eight modules and was the first admin-api change in 20 days. **Later the same day it grew to 63** with the dispute queue (§3.16), the admin half of the consumer app's "Report an issue". **On 2026-11-03 it reached 69**: the nine-route support inbox replaced that queue (§3.16). **Later the same day it reached 72** with support hours and the disputed-transaction view. **On 2026-11-05 it reached 75**: a flat, searchable article list (§3.15) and the default card limits (§3.17). **On 2026-11-07 it reached 76** with a take-over route for the support inbox (§3.16). What exists is well-made: the permission model is more capable than the spec asked for, KYC values are masked by default with reveals logged, case notes are append-only, and account actions require a structured reason and land in a queryable history.
+**Three of the spec's eight modules are built, a fourth opened on 2026-09-02** when the cross-module activity feed merged (§5.4a), **and a fifth opened on 2026-09-04** when transaction oversight and reconciliation landed (§3.9, §3.10, §5.2) — the first money-oversight surface this service has ever had. Module 5 widened again on **2026-09-06** with the wallets screen (§3.12), leaving flagging as its only unbuilt operation. **On 2026-09-08 a sixth module opened, and it is the one this RFC has called blocking since 5 August**: the `/admin/chats` module merged to `main` (§3.13), implementing Module 4 as the metadata-only Option A of §5.1 — no message content, and the first reader `conversation_reports` has ever had. **On 2026-09-09/10 a seventh opened**: the Reports screen merged (§3.14), giving Module 7 its first exportable dataset and taking this service from 42 to 47 operations in two days. **On 2026-09-17 Module 4 became a workflow and the E2EE question was answered** (§3.13, §5.1b): report detail and a review decision shipped, taking the service to 49 operations, and the consumer app was changed the same night so that a reporter can hand over the messages they chose to disclose — Option B of §5.1, which had waited since 5 August for exactly that consumer change. **On 2026-10-28 the service grew to 60 operations** with eleven Help & Support content routes (§3.15). That work is outside the spec's eight modules and was the first admin-api change in 20 days. **Later the same day it grew to 63** with the dispute queue (§3.16), the admin half of the consumer app's "Report an issue". **On 2026-11-03 it reached 69**: the nine-route support inbox replaced that queue (§3.16). **Later the same day it reached 72** with support hours and the disputed-transaction view. **On 2026-11-05 it reached 75**: a flat, searchable article list (§3.15) and the default card limits (§3.17). **On 2026-11-07 it reached 76** with a take-over route for the support inbox (§3.16). **On 2026-11-23 it reached 85** with status moderation (§3.18): nine routes for Status, a consumer feature that is in neither the PRD nor the dashboard spec, and the first place this service decrypts user content (§5.1c). What exists is well-made: the permission model is more capable than the spec asked for, KYC values are masked by default with reveals logged, case notes are append-only, and account actions require a structured reason and land in a queryable history.
 
 Against that, three findings need attention before this service is exposed to real staff:
 
@@ -34,7 +34,7 @@ Against that, three findings need attention before this service is exposed to re
 | 1 | Authentication & Access Control | 🟡 **Partial** — login and invite work; **no 2FA** | 2 |
 | 2 | Admin Account Management | ✅ **Built** — re-invite added 2026-09-08 | 4 |
 | 3 | User Management & Support Tools | 🟡 **Partial** — no assisted PIN reset | 18 |
-| 4 | Trust & Safety / Content Moderation | 🟡 **Option A merged 2026-09-08, Option B and the workflow 2026-09-17** (§3.13, §5.1b); not buildable *as written*. Now a workable queue — status, filter, detail, review decision — **and, since 2026-09-21, a dashboard that calls it** (`beevia-admin` `c1b0aeb`, §5.1b). Still no enforcement link and no prior-report history | **6** |
+| 4 | Trust & Safety / Content Moderation | 🟡 **Option A merged 2026-09-08, Option B and the workflow 2026-09-17** (§3.13, §5.1b); not buildable *as written*. Now a workable queue — status, filter, detail, review decision — **and, since 2026-09-21, a dashboard that calls it** (`beevia-admin` `c1b0aeb`, §5.1b). Still no enforcement link and no prior-report history. **Status moderation (§3.18, 2026-11-23) is the same kind of work for a feature the spec does not have, and is not counted here** | **6** |
 | 5 | Transaction & Wallet Oversight | 🟡 **Partial** — feeds and reconciliation shipped 2026-09-04, wallets 2026-09-06, **the support inbox 2026-11-03, replacing the dispute queue** (§3.16); no flagging, no partner-balance comparison | **18** |
 | 6 | Country & Feature Configuration | ⛔ **Not built** | 0 |
 | 7 | Analytics & Reporting Dashboard | 🟡 **Partial** — activity feed, the landing-screen summary (2026-09-06) and **the Reports screen, merged 2026-09-09/10** (§3.14). Still no time-series analytics: four exportable datasets, no trend anywhere | **7** |
@@ -402,6 +402,31 @@ Things to know (`suggestions.md` §4.12, §5.16):
 
 ---
 
+### 3.18 Status moderation (9): Trust & Safety for a feature the spec does not have, shipped 2026-11-23
+
+| Method | Path | Permission | Notes |
+|---|---|---|---|
+| GET | `/admin/statuses/reports` | `statuses:view` | The queue. Open first: auto-hidden cases on top, then urgent, then by deadline; `overdue` flag; `state` and `priority` filters |
+| GET | `/admin/statuses/reports/{caseId}` | `statuses:view` | The reports and the evidence, **decrypted here with the key a reporter handed over** |
+| GET | `/admin/statuses/reports/{caseId}/evidence/media` | `statuses:view` | The reported photo or video, decrypted and streamed. Not enveloped. `410` after retention, `503` without the `S3_*` settings |
+| POST | `/admin/statuses/reports/{caseId}/close` | `statuses:edit` | `action_taken` keeps the status hidden; `no_breach` brings it back if it is still live. Can suspend the poster. Reporters are told. `409` once closed |
+| GET | `/admin/statuses/users/{userId}/suspensions` | `statuses:view` | History, newest first; `active` marks the one in force |
+| POST | `/admin/statuses/users/{userId}/suspensions` | `statuses:edit` | Until a date, or until lifted. The user can still chat and pay |
+| POST | `/admin/statuses/suspensions/{suspensionId}/lift` | `statuses:edit` | Idempotent |
+| GET | `/admin/statuses/settings` | `statuses:view` | Evidence retention in days (90 by default) |
+| PUT | `/admin/statuses/settings` | `statuses:edit` | 1 to 3650. Read by the consumer API's sweep every minute |
+
+`beevia-admin-api` #33 (merged 23 Nov 10:14 UTC) over `beevia-db-schema` #39 (v0.0.58). The consumer half is `api-rfc.md` §5.29. It is guarded at controller level (`AdminAuthGuard`, `PermissionGuard`), and every route declares a permission. #32, a few hours earlier, was a package update that also moved this service from schema 0.0.50 to 0.0.55; #33 took it to 0.0.58, so the two APIs are on the same schema again.
+
+- **No role holds `statuses`.** Migration 0056 adds the module to the enum and grants it to nobody, exactly as with `help_center` (v0.0.44) and `disputes` (v0.0.45). The seed script grants every module to Super Admin when it is run; no workflow runs it. Until someone grants it, reports are accepted and the third reporter hides a status, but no one can open or close a case.
+- **This is where the server reads user content.** The case route and the media route decrypt a status on this service. That is by design and is bounded to statuses someone reported with a valid key (§5.1c). Two things follow. Reading a case or its media writes neither a log line nor an activity row, although the KYC unmask route logs the admin id. And the media route answers with the content type the poster's phone wrote inside the sealed status, unchecked (`suggestions.md` §4.21).
+- **Closing is logged; changing the retention period is not.** Shortening it deletes evidence past the new period within a minute, and only the deletions appear on the feed.
+- **Deadlines.** Urgent reasons are due in 24 hours and the rest in 72. A status lives 24 hours, so a `no_breach` decision inside the deadline will usually find nothing left to bring back.
+- **Nothing in `beevia-admin` calls it.** There is no Status moderation screen.
+- **Not a spec module.** `Beevia Admin Dashboard.md` has no Status. In kind this is Module 4 work (trust and safety), and it is counted separately from Module 4's six chat routes in the coverage table.
+
+---
+
 ## 4. Findings
 
 ### 4.1 Admin and consumer tokens share a signing secret
@@ -505,6 +530,14 @@ Admin side (`beevia-admin-api`): `GET /admin/chats/reports/{reportId}` returns t
 2. **The consumer *client* has not shipped its half.** As of 2026-09-18 the Flutter app still posts `{"reason": reason}` and nothing else — no `messages`, no `blockContact`, no count picker. Until it does, every report reaching the queue carries `message_count: 0` and an empty `messages` array, so the admin detail route is correct and empty. Option B is built on the server and absent on the device that is supposed to originate the consent.
 
 **Update 2026-09-22 — the dashboard half landed; the device half still has not.** `beevia-admin` `c1b0aeb` (21 Sep) added the Module 4 screens — conversations list and detail, a per-user chat activity view, the report queue, report detail with a `reported-messages` panel, and a review form — and all six chat operations are called through `liveClient`, i.e. against the real service rather than fixtures. The same day `beevia-admin-api` `b4c545e` fixed `GET /admin/chats` and `GET /admin/chats/{conversationId}` reporting 0 participants, 0 messages and 0 reports for every conversation (a correlated subquery bound to its own `id`; no contract change). So the admin side is now end-to-end, and the gap in point 2 is the only thing between Option B and a moderator actually seeing evidence: re-checked on 2026-09-22, `chat_service.dart:258` at `beevia-mobile` `origin/main` still posts `{"reason": reason}`, and no mobile commit has landed since 15 September. One client detail worth removing once confirmed: `useReportDetail` carries a `TODO(backend)` fallback that unwraps a list envelope from the detail route, written against the Postman sample that `e128cc6` has since corrected — the service has always returned a bare report there.
+
+#### 5.1c Status reports are a third shape: the reporter hands over a key, and the server checks it (2026-11-23)
+
+Status (24-hour posts, `api-rfc.md` §5.29) shipped with its own moderation path (§3.18), and it is neither A nor B as written above.
+
+A reporter sends the status's own key. The consumer API checks that the key opens the sealed status it already stores (the AES-GCM tag proves it), then keeps the sealed status, the key and a copy of the file. This service opens them when a reviewer reads the case. Compared with Option B, the evidence **cannot be fabricated** (the server holds the ciphertext; the reporter supplies only the key) and it is **exactly what was posted**, not an excerpt. Compared with Option C, nothing is escrowed in advance: the server gains the ability to read one status, after one of its recipients chose to report it.
+
+It is still a step past B. Under B the server stores plaintext a user typed into a report. Under this design the server stores a key, and decrypts on its own side. The PRD's "limits any form of message moderation" (§1.5) and "not a content policing platform" (§2.2) were written about chat, and Status is not in the PRD at all, so no document says whether this is acceptable. Three specifics are worth deciding on the record (`suggestions.md` §4.21): the key is stored as received, next to the ciphertext; evidence is kept until 90 days after a case **closes**, and a case nobody closes is kept without limit; and three reporters hide a status with no reviewer involved.
 
 ### 5.2 Module 5 — Transaction & Wallet Oversight (1 proposed, 6 shipped 2026-09-04 → 09-06)
 

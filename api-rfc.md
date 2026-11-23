@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft — for review · **updated 2026-08-05** |
 | **Scope** | The complete HTTP surface of `beevia-api` (the consumer API): what exists today, and what the PRD requires that does not exist yet |
-| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, **166 operations** · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, **32 operations** (29 net-new + 3 live-endpoint modifications) · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
+| **Companion artifacts** | [`openapi.yaml`](./openapi.yaml) — implemented, **183 operations** · [`openapi.proposed.yaml`](./openapi.proposed.yaml) — designed but unbuilt, **32 operations** (29 net-new + 3 live-endpoint modifications) · [`suggestions.md`](./suggestions.md) · [`Beevia_PRD.md`](./Beevia_PRD.md) |
 | **Sibling RFC** | [`admin-api-rfc.md`](./admin-api-rfc.md) — the `beevia-admin-api` back-office service |
 | **Sources** | `beevia-api/src/**/*.controller.ts`, `beevia-api/src/**/dto/*.ts`, `beevia-db-schema/src/schema/*`, `beevia-api/postman/Beevia.postman_collection.json`, `Beevia_PRD.pdf` |
 | **Base path** | `/api/v1` (global prefix set in `src/main.ts`; `/i/:code` is explicitly excluded) |
@@ -175,7 +175,8 @@ Consumer API only. The admin service is inventoried in [`admin-api-rfc.md`](./ad
 | **Disputes** | **4** | 0 | **New 2026-10-28, rebuilt 2026-11-03.** "Report an issue" on a transaction (`POST /disputes`), the user's history, one report, and the open count for the badge. A dispute is now a support thread with a transaction attached. The snapshot of the transaction is built server-side from the reference. Shipped in place of the proposed `POST /payments/{id}/dispute` (§5.18, §5.19) |
 | **Support** | **5** | 0 | **New 2026-11-03.** Chat with Support, availability, and the thread both chats and disputes run on. An AI assistant answers first. Shipped in place of the proposed `/support/tickets` (§5.19) |
 | Webhooks | **3** | 1 | **+1:** `POST /webhooks/paystack` for card top-ups. **−1 (2026-11-06):** `POST /kyc/entrust/webhook` removed with the Entrust check. Card issuer callback still missing |
-| **Total** | **166** | **29** | +3 live-endpoint modifications = 32 operations in the proposed file |
+| **Statuses** | **17** | 0 | **New 2026-11-23, not in the PRD.** 24-hour posts to the people the poster has written to: resumable uploads, posting with one sealed key per viewer device, feed, viewer list and Seen by, mutes, and reports that hand over the status key (§5.29, §6.8a). No client calls it yet |
+| **Total** | **183** | **29** | +3 live-endpoint modifications = 32 operations in the proposed file |
 
 ---
 
@@ -888,6 +889,28 @@ Escrow mechanics themselves are sound: a 24-hour hold scheduled through BullMQ, 
 
 **But no production payment has used them.** Per the #57 commit (2026-09-25), all six sends on production went through `POST /payments/transfer` — the mobile client's in-chat Send posts there — and each completed in the same millisecond it was created. The PRD's *Transfer Acceptance & Escrow* feature (§10.2, MVP Phase 3) is built on the server and bypassed by the client. See §5.11.
 
+### 5.29 Status: 24-hour posts, end to end encrypted, with reports that hand over the key (2026-11-23)
+
+**What shipped.** `beevia-db-schema` #39 (v0.0.58, merged 23 Nov 08:08 UTC: migration `0056_statuses`, twelve tables, `users.status_seen_by_enabled`, the admin module `statuses`), `beevia-api` #115 (09:09 UTC, which carries #114's commit) and #118 (10:13 UTC, which carries #117's), and `beevia-admin-api` #33 (10:14 UTC). A package update went ahead of them in all three repos a few hours earlier (`beevia-api` #113, `beevia-admin-api` #32, `beevia-db-schema` #37 and #38; no major version changed, and `beevia-admin-api` moved from schema 0.0.50 to 0.0.58). **Consumer operations go from 166 to 183** and admin from 76 to 85. WebSocket commands are unchanged: Status has no socket command, only four server events.
+
+Status is **not in the PRD**, is not an item on any board, and has no client: neither `beevia-mobile` (`main` or `feat-forget-pin-fixes`) nor `beevia-admin` calls any of the 26 routes. It does not touch the four structural gaps of §4. `activeNgn()` is unchanged.
+
+- **Posting.** `POST /statuses` takes text, or a completed photo (5 MB) or video (16 MB, 30 s) upload. The phone seals the text or caption and the file with a key made for that status, and seals that key once per viewer device. The server stores all three and can open none of them. A status lives exactly 24 hours on the database clock; a sweep every minute deletes expired ones with their files. Thirty a day.
+- **Uploads resume.** `POST /statuses/uploads` opens an S3 multipart upload and returns one URL per 5 MB part; `GET /statuses/uploads/{id}` says which parts are stored; complete joins them and measures the file. This is the first multipart upload in the API.
+- **Audience.** Eligible viewers are the current members of any 1:1 or group chat the poster has sent a message in, minus blocks either way and accounts that cannot sign in. It is fixed at posting. Of those, only the people the phone sealed a key for become recipients, so the phone can narrow the audience and the server cannot widen it.
+- **Feed and rings.** `GET /statuses/feed` groups by person: unseen, viewed, then muted. Every 1:1 row of `GET /conversations` and `GET /conversations/{id}` now carries a `status` block for the ring around the avatar. This is a change to two live operations.
+- **Seen by.** `POST /statuses/{id}/view` always marks a status seen for the viewer. The poster gets a receipt only while both people have Seen by and read receipts on, and the viewer list applies those settings when it is read, not when the view happened. `statusSeenByEnabled` is a new field on `/users/me/settings`.
+- **Reactions and replies** are ordinary encrypted chat messages to the poster's 1:1 chat, marked with `refId` and `contentMeta.kind`. The server records only who reacted.
+- **Reports.** `POST /statuses/{id}/report` takes the status key from the reporter. The server checks the key opens the stored status, then keeps the sealed status, the key and a copy of the file as evidence. The third different reporter hides the status until review. Evidence is deleted a set number of days after the case closes (90 by default, changed from the admin API).
+
+**Why the report design matters.** This is the third way this codebase has answered "how do you moderate what you cannot read" (`admin-api-rfc.md` §5.1). A conversation report carries plaintext the reporter typed in, which they could have made up. A status report carries a key the server can check against what it already stores, so the evidence cannot be fabricated and nothing is disclosed that the poster did not post. It is still a deliberate, per-report exception to "the server can read nothing": after a report, Beevia holds the key and the content of that one status. That is a product and privacy decision, and it is recorded only in the code.
+
+**Spec corrections that were wrong before today.** `GET`/`PATCH /users/me/settings` were documented with `messageHistorySyncEnabled` only. `readReceiptsEnabled` has been accepted and returned since `ae348eb` (30 Jul). The spec now has all three fields, and `UpdateSettingsRequest` no longer marks one of them required. The audit compares routes, so it could not see this.
+
+**Open points.** From reading the code; nothing was run. They are in `suggestions.md` §4.21: no role holds `statuses`; the review deadlines are as long as a status lives; a deleted status cannot be reported; the evidence key is stored in the clear; the evidence file is served with a content type the poster chose; upload size is enforced only at complete; and the daily limit can be reset by deleting.
+
+---
+
 ### 6.8 Chat, Calls, Attachments, Translate, Notifications, Activity, Statements, Help & Support, Disputes, Webhooks
 
 | | Method | Path | Auth | Status |
@@ -952,6 +975,30 @@ Escrow mechanics themselves are sound: a 24-hour hold scheduled through BullMQ, 
 | | POST | `/support/threads/{id}/messages` | 🔑 | ✅ **New 2026-11-03.** Body, attachments or both; the assistant's reply is in the response while it holds the thread; `409 thread_resolved` |
 | | POST | `/webhooks/anchor` | 🔓 | ✅ HMAC over raw body; deduped. **Processed no real delivery until 2026-09-03** — envelope mismatch, see §5.6. Now also syncs card lifecycle events |
 | | POST | `/webhooks/livekit` | 🔓 | ✅ JWT in `Authorization` |
+
+### 6.8a Statuses (17) — new 2026-11-23, not in the PRD
+
+| | Method | Path | Auth | Status |
+|---|---|---|---|---|
+| | POST | `/statuses/uploads` | 🔑 | ✅ Opens a multipart upload; one URL per 5 MB part. Photo 5 MB, video 16 MB, checked on the declared size |
+| | GET | `/statuses/uploads/{id}` | 🔑 | ✅ Which parts are stored, fresh URLs for the rest |
+| | POST | `/statuses/uploads/{id}/complete` | 🔑 | 🟡 Joins the parts and measures the file. **The only point the real size is enforced** (`suggestions.md` §4.21) |
+| | DELETE | `/statuses/uploads/{id}` | 🔑 | ✅ Cancel |
+| | GET | `/statuses/audience` | 🔑 + device | ✅ Who a new status would reach, with devices used in the last 30 days |
+| | POST | `/statuses` | 🔑 + device | 🟡 Text, photo or video; one sealed key per device; up to 5 private mentions. `403` while posting is suspended, `429` at 30 a day. **The count drops when a status is deleted** |
+| | GET | `/statuses/feed` | 🔑 + device | ✅ Grouped by person: unseen, viewed, muted. Cursor paged |
+| | GET | `/statuses/mine` | 🔑 + device | ✅ Own live statuses with `hidden`, mentions and `view_count` |
+| | GET | `/statuses/mutes` | 🔑 | ✅ |
+| | POST | `/statuses/mutes` | 🔑 | ✅ Idempotent; the muted person is never told |
+| | DELETE | `/statuses/mutes/{userId}` | 🔑 | ✅ Idempotent |
+| | GET | `/statuses/reports` | 🔑 | ✅ The caller's last 50 reports, with the outcome in their language |
+| | GET | `/statuses/{id}` | 🔑 + device | ✅ Poster or recipient; everything else is the same `404` |
+| | DELETE | `/statuses/{id}` | 🔑 | ✅ File, keys and audience go at once. **A report's evidence copy stays** |
+| | GET | `/statuses/{id}/viewers` | 🔑 | ✅ Poster only; settings applied at read time |
+| | POST | `/statuses/{id}/view` | 🔑 | ✅ Private seen mark; a receipt only while both share views |
+| | POST | `/statuses/{id}/report` | 🔑 | 🟡 Reason, note, **the status key**. Third reporter hides the status. **Only a live status can be reported; no role can review yet** (`suggestions.md` §4.21) |
+
+"🔑 + device" means `X-Device-Id` is required, as on the chat routes (§5.12). The server pushes `status.posted`, `status.removed` (`deleted`, `expired`, `hidden`), `status.viewed` and, from the admin API, `status.report_reviewed`. There are no push notifications for Status.
 
 ### 6.9 WebSocket surface
 
