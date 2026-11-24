@@ -34,7 +34,7 @@
       <span class="topbar__wordmark">Beevia</span>
     </div>
     <nav class="topbar__nav label" aria-label="Report">
-      <a href="2026-11-23.html">Latest frame</a>
+      <a href="2026-11-24.html">Latest frame</a>
     </nav>
 </div>
 
@@ -43,9 +43,9 @@
     <div class="field__rail field__rail--l">
       <dl>
         <dt>Frames held</dt>
-        <dd>73</dd>
+        <dd>74</dd>
         <dt>Latest</dt>
-        <dd>2026-11-23 · Status, a 24-hour posts feature, shipped whole on the server and outside the PRD; the estimate does not move, and the boards could not be read</dd>
+        <dd>2026-11-24 · the boards could be read again and had not moved in four days; Status is where it was; one mobile commit landed on the unmerged branch, which is at iOS build 15 against 10 on main</dd>
       </dl>
     </div>
 
@@ -55,7 +55,7 @@
       </div>
       <div class="field__meta num">
         <span>Beevia project status</span>
-        <span>2026-08-05 &rarr; 2026-11-23</span>
+        <span>2026-08-05 &rarr; 2026-11-24</span>
         <span>Newest first</span>
       </div>
     </div>
@@ -75,9 +75,9 @@
   <div class="mvp__head">
     <span class="mvp__label label">MVP readiness &mdash; estimate</span>
     <span class="mvp__pct num">&asymp;68%</span>
-    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 83 days past</span>
+    <span class="mvp__meta num">target 2026-09-01 &middot; provisional &middot; 84 days past</span>
   </div>
-  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 68 percent built, unchanged. Three backend main branches moved for Status, a feature that is not one of the eleven capabilities, so no score moves. E2EE messaging 0.90; voice and video calling 0.92; message translation 0.60; local KYC 0.93; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.88; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
+  <div class="mvp__bar" role="img" aria-label="Weighted capability bar: roughly 68 percent built, unchanged. No main branch moved in any repository, and the one new commit is on an unmerged mobile branch, so no score moves. E2EE messaging 0.90; voice and video calling 0.92; message translation 0.60; local KYC 0.93; multi-currency wallets 0.85; send-request-receive 0.92; virtual cards 0.88; admin oversight 0.97. International KYC, cross-currency FX and consent management remain at zero. Scores measure built code, not acceptance.">
     <span class="mvp__seg" style="flex:15" title="E2EE messaging — 0.90"><i style="width:90%"></i></span>
     <span class="mvp__seg" style="flex:8" title="Voice &amp; video calling — 0.92"><i style="width:92%"></i></span>
     <span class="mvp__seg" style="flex:7" title="Message translation — 0.60"><i style="width:60%"></i></span>
@@ -90,10 +90,27 @@
     <span class="mvp__seg" style="flex:4" title="Consent management — 0"></span>
     <span class="mvp__seg" style="flex:6" title="Admin oversight — 0.97"><i style="width:97%"></i></span>
   </div>
-  <p class="mvp__read"><strong>68.36, unchanged.</strong> About 7,500 lines merged today for Status, which is not one of the PRD&rsquo;s eleven capabilities, so it has no segment to fill; the three empty segments were not touched. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 23 Nov 2026 &mdash; <a href="2026-11-23.html#mvp-method">method and capability table</a>.</p>
+  <p class="mvp__read"><strong>68.36, unchanged.</strong> No <code>main</code> moved in any repository. The one new commit is on an unmerged mobile branch, and the estimate scores merged code only; the three empty segments were not touched. Segment width = weight &middot; fill = build evidence, <em>not</em> board status. From the latest frame, 24 Nov 2026 &mdash; <a href="2026-11-24.html#mvp-method">method and capability table</a>.</p>
 </section>
 
 <main class="frames">
+
+  <a class="frame" href="2026-11-24.html">
+    <span class="frame__idx num">74</span>
+    <span>
+      <span class="frame__date">24 Nov 2026</span>
+      <span class="frame__sum"><strong>The boards could be read again, and nothing on them had moved in four days.</strong> All three exports are byte-identical to 20 Nov: sprint 1002 was last touched on 11 Nov and ended nineteen days ago with 33 leaves in review and no successor. Status is where it was a day earlier, with no reviewer role, no client, no board item and no written decision. The one new commit is on the unmerged mobile branch (hands-free voice notes, redesigned chat bubbles, tests); that branch is at iOS build 15 against 10 on main, which earlier editions had not reported. No spec changed.</span>
+      <span class="frame__bar" aria-hidden="true"><i style="flex:33"></i><u style="flex:11"></u></span>
+    </span>
+    <span class="frame__stats">
+      <div><span>Sprint</span><span>1002 &middot; ended 5 Nov &middot; 1 To do &middot; 2 In progress &middot; 33 QA &middot; 0 Blocked &middot; 8 Done</span></div>
+      <div><span>MVP est</span><span>&asymp;68% &middot; &Delta; 0</span></div>
+      <div><span>Test-gated deploys</span><span>0 of 3 backend repos</span></div>
+      <div><span>Recommendations</span><span>0 of 32 met &middot; 1 in part</span></div>
+      <div><span>Board actions</span><span>0 since 20 Nov &middot; all three boards</span></div>
+      <div><span>API surface</span><span>183 / 85 &middot; drift 0 &middot; no edits</span></div>
+    </span>
+  </a>
 
   <a class="frame" href="2026-11-23.html">
     <span class="frame__idx num">73</span>
@@ -1339,7 +1356,7 @@
 <footer class="foot">
   <span class="barcode barcode--lg" aria-hidden="true"></span>
   <span>Frames are written by the <code>beevia-refresh</code> skill alongside the Markdown in <code>project-status/</code>.</span>
-  <span><a href="2026-11-23.html">Latest</a></span>
+  <span><a href="2026-11-24.html">Latest</a></span>
 </footer>
 
 <script src="ui.js"></script>
